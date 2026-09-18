@@ -1,18 +1,18 @@
 # Greenwood School +
 
-An enhanced version of the Greenwood School APP.
+Une version améliorée de l'application Greenwood School.
 
-## About this app
+## À propos de cette application
 
-This application allows parents of school students to follow in real time all the activity of their children at school:
+Cette application permet aux parents d'élèves de suivre en temps réel toute l'activité de leurs enfants à l'école :
 
-- 📔 Liaison and homework notebook
-- 📰 School news
-- 📁 Document space
-- 📝 Follow-up of administrative requests
-- ✉️ Contact the school administration online
+- 📔 Cahier de liaison et de devoirs
+- 📰 Actualités de l'école
+- 📁 Espace documents
+- 📝 Suivi des demandes administratives
+- ✉️ Contacter l'administration de l'école en ligne
 
-## Current focus
+## Priorité actuelle
 
-- 🧭 **Fix Android system back-gesture navigation** — opening the homework section and then using Android's system back gesture doesn't work; navigation must behave correctly across app sections.
-- 🖼️ **Add `emojiesImage` asset** — emoji image resource included under `assets/`.
+- 🧭 **Correction de la navigation par le geste de retour Android** — l'ouverture de la section des devoirs puis l'utilisation du geste de retour système d'Android ne fonctionne pas ; la navigation doit se comporter correctement dans toutes les sections de l'application.
+- 🖼️ **Ajout de la ressource `emojiesImage`** — image d'émojis incluse sous `assets/`.
