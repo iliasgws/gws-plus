@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Le monogramme du registre : une page d'encre, le point rouge du stylo.
+     Le rouge ne décore jamais — il marque l'action requise, même sur l'icône. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Page encre, arrondie 12 dp -->
+    <path
+        android:fillColor="#1F3D2B"
+        android:pathData="M36,34 h36 a8,8 0 0 1 8,8 v24 a8,8 0 0 1 -8,8 h-36 a8,8 0 0 1 -8,-8 v-24 a8,8 0 0 1 8,-8 z" />
+    <!-- Point stylo rouge -->
+    <path
+        android:fillColor="#B3382A"
+        android:pathData="M66,64 m-5,0 a5,5 0 1 0 10,0 a5,5 0 1 0 -10,0" />
+    <!-- Ligne d'écriture claire sur la page -->
+    <path
+        android:fillColor="#E9EFE7"
+        android:pathData="M36,46 h24 a3,3 0 0 1 0,6 h-24 a3,3 0 0 1 0,-6 z" />
+    <path
+        android:fillColor="#E9EFE7"
+        android:pathData="M36,56 h16 a3,3 0 0 1 0,6 h-16 a3,3 0 0 1 0,-6 z" />
+</vector>

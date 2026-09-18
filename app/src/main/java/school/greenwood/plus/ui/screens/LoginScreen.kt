@@ -1,0 +1,188 @@
+package school.greenwood.plus.ui.screens
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Error
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import school.greenwood.plus.AppContainer
+import school.greenwood.plus.ui.ConnexionViewModel
+import school.greenwood.plus.ui.components.ErrorInline
+import school.greenwood.plus.ui.components.GwsCard
+import school.greenwood.plus.ui.theme.ControlShape
+import school.greenwood.plus.ui.theme.RegistreTheme
+
+/*
+ * Connexion (DESIGN.md §4) : téléphone + mot de passe, un champ « retenir »,
+ * pas de case « privacy » exposée (elle part à true), pas de création de
+ * compte — l'inscription passe par l'école. Erreurs en ligne, stylo rouge.
+ */
+@Composable
+fun LoginScreen(
+    onConnecté: () -> Unit,
+    container: AppContainer,
+) {
+    val vm: ConnexionViewModel = viewModel { ConnexionViewModel(container) }
+    val état by vm.état.collectAsStateWithLifecycle()
+
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(RegistreTheme.colors.paper)
+            .imePadding(),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+        ) {
+            Text(
+                text = "GWS+",
+                style = MaterialTheme.typography.displayLarge,
+                color = RegistreTheme.colors.ink,
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = "Connexion à l'espace famille.",
+                style = MaterialTheme.typography.bodySmall,
+                color = RegistreTheme.colors.chalk,
+            )
+
+            GwsCard(modifier = Modifier
+                .widthIn(max = 420.dp)
+                .padding(top = 24.dp)) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp),
+                ) {
+                    OutlinedTextField(
+                        value = état.téléphone,
+                        onValueChange = vm::modifierTéléphone,
+                        label = { Text("Numéro de téléphone") },
+                        shape = ControlShape,
+                        singleLine = true,
+                        enabled = !état.chargement,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    OutlinedTextField(
+                        value = état.motDePasse,
+                        onValueChange = vm::modifierMotDePasse,
+                        label = { Text("Mot de passe") },
+                        shape = ControlShape,
+                        singleLine = true,
+                        enabled = !état.chargement,
+                        visualTransformation = PasswordVisualTransformation(),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Checkbox(
+                            checked = état.retenir,
+                            onCheckedChange = vm::modifierRetenir,
+                            colors = CheckboxDefaults.colors(
+                                checkedColor = RegistreTheme.colors.ink,
+                                checkmarkColor = RegistreTheme.colors.page,
+                                uncheckedColor = RegistreTheme.colors.chalk,
+                            ),
+                        )
+                        Text(
+                            text = "Retenir ma session",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = RegistreTheme.colors.ink,
+                        )
+                    }
+
+                    Button(
+                        onClick = vm::seConnecter,
+                        enabled = !état.chargement,
+                        shape = ControlShape,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = RegistreTheme.colors.ink,
+                            contentColor = RegistreTheme.colors.page,
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp),
+                    ) {
+                        if (état.chargement) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(18.dp),
+                                strokeWidth = 2.dp,
+                                color = RegistreTheme.colors.page,
+                            )
+                        } else {
+                            Text(
+                                text = "Se connecter",
+                                style = MaterialTheme.typography.labelLarge,
+                            )
+                        }
+                    }
+
+                    état.erreur?.let { message ->
+                        ErrorInline(message = message, icone = Icons.Rounded.Error)
+                    }
+
+                    TextButton(
+                        onClick = vm::demanderRappel,
+                                                modifier = Modifier.align(Alignment.CenterHorizontally),
+                    ) {
+                        Text(
+                            text = "Mot de passe oublié ?",
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    }
+
+                    if (état.rappelEnvoyé) {
+                        Text(
+                            text = "L'école t'enverra un rappel par SMS.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = RegistreTheme.colors.chalk,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,6 +1,7 @@
 # Greenwood School +
 
-Une version améliorée de l'application Greenwood School.
+Une version améliorée de l'application Greenwood School — un client Android
+propre (Kotlin + Jetpack Compose) qui remplace le wrapper Capacitor.
 
 ## À propos de cette application
 
@@ -14,15 +15,37 @@ Cette application permet aux parents d'élèves de suivre en temps réel toute l
 
 ## Priorité actuelle
 
-- 🧭 **Correction de la navigation par le geste de retour Android** — l'ouverture de la section des devoirs puis l'utilisation du geste de retour système d'Android ne fonctionne pas ; la navigation doit se comporter correctement dans toutes les sections de l'application.
+- 🧭 **Correction de la navigation par le geste de retour Android** — le contrat
+  du DESIGN.md §3 est désormais codé dans l'application : quatre onglets à
+  piles indépendantes (saveState/restoreState), retour propre vers le Registre
+  depuis chaque onglet, quitte l'app depuis le Registre, transitions
+  prédictives activées (`enableOnBackInvokedCallback`). À vérifier sur un vrai
+  téléphone au premier essai.
+- 📱 **Premier essai sur l'appareil** — la fonte d'affichage Fraunces y est
+  confrontée au substitut Bricolage Grotesque (les deux sont embarquées ; le
+  basculement se fait d'une ligne dans
+  `app/src/main/java/school/greenwood/plus/ui/theme/Type.kt`).
+
+## Construire
+
+Prérequis : JDK 17+, SDK Android (API 37) et `local.properties` pointant vers
+ce SDK (non versionné). Le wrapper Gradle télécharge le reste.
+
+```bash
+./gradlew :app:assembleDebug      # APK de debug
+./gradlew :app:testDebugUnitTest  # tests unitaires
+```
+
+L'APK sort dans `app/build/outputs/apk/debug/`.
 
 ## Documentation API
 
 L'application officielle Greenwood School (éditée par Boti Education) est un
 wrapper web : son protocole réseau a été documenté par rétro-ingénierie
-statique. La spécification dont ce projet s'inspire vit dans [`docs/`](docs/) :
+statique, puis vérifié sur appel réel. La spécification vit dans [`docs/`](docs/) :
 
-- [`docs/BOTI-API.md`](docs/BOTI-API.md) — protocole : base URL, authentification (`keyToken`), enveloppe de requête, média signés, pièges connus (`paltform`, corps des annonces uniquement dans `admin_nouveautes`, …) et table de correspondance fonction → endpoints
+- [`docs/BOTI-API.md`](docs/BOTI-API.md) — protocole : base URL, authentification (`keyToken`), enveloppe de requête, médias signés, pièges connus (`paltform`, corps des annonces uniquement dans `admin_nouveautes`, …) et table de correspondance fonction → endpoints
+- [`docs/ENDPOINT-MAP.md`](docs/ENDPOINT-MAP.md) — carte des points d'accès utilisés par l'app parent, avec les formes de réponses observées
 - [`docs/endpoints.md`](docs/endpoints.md) — inventaire des 100 endpoints de l'app officielle
 - [`docs/SECURITY-NOTES.md`](docs/SECURITY-NOTES.md) — constats de sécurité sur l'app officielle et ce que gws-plus doit faire mieux
 
@@ -31,3 +54,7 @@ API non documentée côté éditeur : elle peut changer sans préavis ; garder
 tous les appels derrière une couche client dédiée, et jamais d'identifiants
 dans le dépôt.
 
+## Documentation du projet
+
+- [DESIGN.md](DESIGN.md) — direction visuelle « Le registre », navigation, périmètre
+- [TASKS.md](TASKS.md) — état de la construction (milestone en cours)
