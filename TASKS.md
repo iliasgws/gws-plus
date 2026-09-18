@@ -103,8 +103,8 @@ raw probe responses stay out of the repository (personal data).
 
 ## 9. Delivery
 
-- [ ] Branch, commits in French, imperative
-- [ ] PR referencing issue #8, describing what is verified vs unverified
+- [x] Branch `app-v1-foundation`, commits in French, imperative
+- [x] PR #9 referencing issue #8, describing what is verified vs unverified
 
 ## 10. Docs (done by a subagent)
 
