@@ -116,12 +116,13 @@ subset this project needs:
 
 | gws-plus feature | endpoints |
 |---|---|
-| Cahier de liaison / devoirs | `devoirs` (GET/POST), `devoirs_date_v2` (POST), `cours_v2` (GET) |
+| Cahier de liaison / devoirs | `devoirs` (GET — the server ignores any date param, filter client-side on `date_remise`), `devoirs_date_v2` (POST — **homework submission**, server answers `{"status": 202, "message": "Travail envoyé"}`; not a date selector), `cours_v2` (GET) |
 | Actualités de l'école | `nouveautes` (GET/POST), `pinned_posts`, `post_view` — **bodies only via `admin_nouveautes`**, see below |
 | Espace documents | `ressources_v2` (GET/POST), `ressource_details`, `bibliotheque`, `cartable_numeriques`, `cartable_split` |
+| Objets perdus (lost & found) | `objects` (GET) — feed of found items (`all_objects` + `types`), **not** the document space |
 | Demandes administratives | `demandes` (GET), `nouvelle-demande` (GET/POST) |
 | Contact administration | `messages` (GET), `nouveau-message` (POST) |
-| Session / compte | `login` (POST), `logout` (POST), `acces_check` (GET), `compte` (GET/POST) |
+| Session / compte | `login` (POST), `logout` (POST), `acces_check` (GET — session bootstrap/validation: returns a fresh keyToken and the full `eleves[]` list), `compte` (GET/POST) |
 
 ### `nouveautes` trap: announcement bodies live in `admin_nouveautes`
 
@@ -142,11 +143,41 @@ GET {base}/admin_nouveautes      params: user_id, parent_id, eleve_id, key
 - Many announcements have no PDF at all; the content is only in `description`
   (HTML with emojis, `<p style="text-align: justify">`).
 
+### Verified shapes (2026-09-18 probe)
+
+A read-only probe with a real parent account (single-account sample —
+indicative, not exhaustive) pinned down several assumptions. Full
+per-endpoint shapes live in [`ENDPOINT-MAP.md`](ENDPOINT-MAP.md); the
+corrections that matter:
+
+- **`devoirs_date_v2` is the homework-submission endpoint, not a date
+  selector.** A POST — even a stray one carrying only a `date` param — is
+  answered with `{"status": 202, "message": "Travail envoyé"}`. The
+  date-filtered listing is done by **GET `devoirs`**: the server ignores
+  the date param, filter client-side on `date_remise`.
+- **`acces_check` (GET) is the session bootstrap/validation call.** It
+  returns a fresh `keyToken` plus the full payload (`eleves[]`, `parent`,
+  menu, colors) — call it at app start to validate/refresh a stored
+  session.
+- **`objects` is the lost-and-found feed** (`all_objects` + `types`
+  categories; the app menu itself labels it « Objets perdus »), not the
+  document space.
+- **`devoirs` returns three buckets**: raw items in `data` (due date under
+  the key `"de "` — trailing space, sic), parsed cards in
+  `devoirs_remettre` / `devoirs_ancien` with ISO `date_remise` (= échéance)
+  and the submission state `devoir_fait{fait, file_sent, files}`.
+- **The parent `nouveautes` list is confirmed body-less**: items carry a
+  display `date` (« 📥 le 01/09/2026 à 12:47 »), an `intro` that is null or
+  a « Vu le … » HTML badge, `image`, `files` — `description` only exists in
+  `admin_nouveautes` (~19 MB).
+
 ## Usage & attribution
 
 - Spec produced by static analysis of the publicly distributed APK plus **one**
   live login call by the original author; no other requests were made against
-  the school server.
+  the school server. **2026-09-18:** one further read-only probe (GETs plus
+  one accidental POST, run with the account holder's own credentials) added
+  the shapes recorded in [`ENDPOINT-MAP.md`](ENDPOINT-MAP.md).
 - gws-plus, as an unofficial client, should stay on the parent's own account
   and keep credentials out of the repository (local config file, `chmod 600`).
 - Credit the source repo when this doc informs public-facing work.

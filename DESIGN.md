@@ -121,16 +121,22 @@ Flux chronologique du jour : entrées d'actualité (GET `nouveautes`, détail
 `post_view`, épinglés `pinned_posts`), devoirs donnés aujourd'hui (GET
 `devoirs`), absences (GET `absences`), messages récents (GET `messages`).
 Focal : carte « Ce soir ». Les slides promo du backend (`showSLides`) sont
-ignorées — c'est notre app.
+ignorées — c'est notre app. Sémantique des dates vérifiée par sonde le
+18/09/2026 : dans les réponses `devoirs`, `date_remise` est la date de
+rendu (échéance) et `date`/`publication` la date de don (publication) — la
+carte « Ce soir » filtre sur `date_remise`.
 
 ### Devoirs
-Liste par jour avec sélecteur de date (POST `devoirs_date_v2`), pièce jointe
-téléchargeable (média signé, PDF ouvert nativement — pas de pdf.js webview).
+Liste par jour (GET `devoirs` + filtre client sur `date_remise` —
+`devoirs_date_v2` en POST est l'envoi de travail, pas un sélecteur de
+date), pièce jointe téléchargeable (média signé, PDF ouvert nativement —
+pas de pdf.js webview).
 
 ### Documents
-Arborescence plate et recherche (GET `objects`, `ressources_v2`,
-`ressource_details`, `bibliotheque`), vignettes via URLs signées
-`media.boti.education`, téléchargement dans le système de fichiers.
+Arborescence plate et recherche (GET `ressources_v2`, `ressource_details`,
+`bibliotheque` — `objects` est le flux des objets trouvés, pas l'espace
+documents), vignettes via URLs signées `media.boti.education`,
+téléchargement dans le système de fichiers.
 
 ### Messages et contact admin
 Fil avec l'administration (GET `messages`, POST `nouveau-message`,

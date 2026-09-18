@@ -12,7 +12,7 @@ Greenwood School + is an application that lets parents of pupils follow their ch
 - 📝 Suivi des demandes administratives (administrative request tracking)
 - ✉️ Contacter l'administration de l'école en ligne (online contact with school administration)
 
-**Current status:** the repository is in its documentation/planning phase — there is no application code yet. Do not assume frameworks, build tools, or dependency files exist; verify against the actual repository state before acting.
+**Current status:** the first application milestone exists — a Kotlin/Jetpack Compose app (single `:app` module) implementing the DESIGN.md foundation: « Le registre » theme, session + network layer for the Boti API, 4-tab navigation with per-tab back stacks, login/onboarding, and the Registre/Devoirs/Documents/Messages/Demandes screens. Sending messages and creating demandes are deliberately NOT wired yet (write-path field names unverified — see `docs/ENDPOINT-MAP.md` UNVERIFIED entries).
 
 **Current priority (from README):** fix Android back-gesture navigation — opening the homework section and then using the Android system back gesture must behave correctly in every section of the app. Do not regress this behaviour.
 
@@ -28,11 +28,29 @@ Current contents (update this section whenever files are added or removed):
 
 | Path | Purpose |
 | --- | --- |
-| `README.md` | Project description, in French |
+| `README.md` | Project description + build instructions, in French |
 | `app-description.png` | Screenshot/illustration of the app description |
 | `AGENTS.md` | This file — rules for AI agents |
-
-When application code lands, document its layout, key directories, and entry points here so agents can orient in seconds.
+| `DESIGN.md` | Design document « Le registre » (visual direction, navigation contract, scope) |
+| `TASKS.md` | Living checklist of the current milestone (issue #8) |
+| `settings.gradle.kts`, `build.gradle.kts`, `gradle.properties`, `gradlew`, `gradle/wrapper/` | Gradle 9.6 build (AGP 9.4.1, Kotlin 2.4.20, built-in Kotlin — no `kotlin.android` plugin) |
+| `app/` | The Android application (`:app` module), namespace `school.greenwood.plus` |
+| `app/src/main/java/school/greenwood/plus/` | Sources — key entries below |
+| `…/GwsApplication.kt` | Manual DI container (`AppContainer`) |
+| `…/MainActivity.kt` | Single activity, edge-to-edge, Compose |
+| `…/ui/AppNav.kt` | Root state (onboarding → connexion → registre) + 4-tab shell, back-stack contract |
+| `…/ui/AppViewModels.kt` | One ViewModel per screen |
+| `…/ui/theme/` | « Le registre » tokens: colors, Fraunces/Bricolage/Public Sans type, 20/12/6 shapes |
+| `…/ui/components/Components.kt` | Shared composables (GwsCard, Puce, EmptyState, ErrorInline, GwsAvatar…) |
+| `…/ui/screens/` | Login, Onboarding, registre (+ Post detail), devoirs, documents, messages, demandes |
+| `…/data/api/` | BotiApi/BotiClient (generic GET/POST + envelope), BotiEnvelope, MediaUrls (single-decode) |
+| `…/data/session/SessionStore.kt` | DataStore session (keyToken, user, eleves; never passwords) |
+| `…/data/repo/` | Repositories + Normalizers (raw JSON → domain models) |
+| `…/logic/CeSoir.kt` | The focal card's due-date window (Friday → Monday) |
+| `…/util/` | Dates (tolerant parsing), Html, Fichiers (download + FileProvider) |
+| `app/src/test/` | Unit tests (dates, CeSoir, media URLs, envelope) |
+| `app/fonts-licenses/` | OFL texts for the bundled fonts |
+| `docs/` | `BOTI-API.md` (protocol), `ENDPOINT-MAP.md` (observed shapes), `endpoints.md` (100-endpoint inventory), `SECURITY-NOTES.md` |
 
 ## Ground rules for agents
 
@@ -47,11 +65,16 @@ When application code lands, document its layout, key directories, and entry poi
 
 ## How to verify work
 
-There is no build or test suite yet. Until code exists, verify changes by:
+The app builds. These commands must pass before a PR can be merged (JDK 17+, Android SDK with platform 37, `local.properties` pointing at the SDK):
 
-- Checking Markdown renders correctly (valid syntax, tables, and links).
-- Confirming no file references point to paths that don't exist.
-- Re-checking every French word for correct accents (see Language rules).
+```bash
+./gradlew :app:assembleDebug       # must succeed
+./gradlew :app:testDebugUnitTest   # must pass, zero failures
+```
+
+Additional checks before opening a PR:
+
+- **Accent audit** on every French string you touched (see Language rules) — UI strings live in Kotlin sources, screens under `ui/screens/`.
+- **No secrets / no personal data** in the tree; never log tokens or request params (see `docs/SECURITY-NOTES.md`, F3).
+- **Protocol facts** must come from `docs/BOTI-API.md` / `docs/ENDPOINT-MAP.md`; anything marked UNVERIFIED there needs a live check before being wired into a user-facing path.
 - Reviewing the diff for accidental scope creep.
-
-Once the application code is added, replace this section with the real commands (build, lint, test) and mark which ones must pass before a PR can be merged.
