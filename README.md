@@ -1,4 +1,4 @@
-# gws-plus
+# Greenwood School +
 
 An enhanced version of the Greenwood School APP.
 
