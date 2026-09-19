@@ -3,6 +3,7 @@ package school.greenwood.plus.data.repo
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import school.greenwood.plus.data.api.BotiClient
+import school.greenwood.plus.data.cache.CachesSession
 import school.greenwood.plus.model.Devoir
 import school.greenwood.plus.util.extractDate
 import school.greenwood.plus.util.extractDateTime
@@ -15,7 +16,10 @@ import java.time.LocalDate
  * vérifiée le 18/09/2026) ; les bruts portent la publication exacte. On
  * fusionne par id, on dédoublonne.
  */
-class DevoirsRepository(private val client: BotiClient) {
+class DevoirsRepository(
+    private val client: BotiClient,
+    private val caches: CachesSession,
+) {
 
     suspend fun liste(): List<Devoir> {
         val rep = client.get("devoirs", mapOf("start" to "0", "limit" to "60"))
@@ -28,7 +32,7 @@ class DevoirsRepository(private val client: BotiClient) {
         val bruts: List<JsonObject> =
             (rep["data"] as? JsonArray)?.filterIsInstance<JsonObject>() ?: emptyList()
 
-        return if (parsés.isNotEmpty()) {
+        val résultat = if (parsés.isNotEmpty()) {
             parsés.mapNotNull { o ->
                 Normalizers.devoir(o, brutes[Normalizers.str(o, "id")])
             }.distinctBy { it.id }
@@ -40,6 +44,16 @@ class DevoirsRepository(private val client: BotiClient) {
                 }
             }.distinctBy { it.id }
         }
+        // Dernière liste connue (issue #21) — une liste vide est un état valide.
+        caches.clé()?.let { clé -> caches.devoirs.écrire(clé, résultat) }
+        return résultat
+    }
+
+    /** Dernière liste connue, estampillée session — null si rien en cache ou
+     *  si la session a changé depuis l'écriture. */
+    suspend fun listeEnCache(): List<Devoir>? {
+        val clé = caches.clé() ?: return null
+        return caches.devoirs.lire(clé)
     }
 
     /** Filtre client sur l'échéance — le paramètre `date` du serveur est ignoré. */

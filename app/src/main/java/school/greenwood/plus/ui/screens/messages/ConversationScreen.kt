@@ -50,8 +50,10 @@ import school.greenwood.plus.model.Attachment
 import school.greenwood.plus.model.Message
 import school.greenwood.plus.model.MessageEnvoi
 import school.greenwood.plus.ui.ConversationViewModel
+import school.greenwood.plus.ui.components.BandeauErreur
 import school.greenwood.plus.ui.components.EmptyState
 import school.greenwood.plus.ui.components.ErrorInline
+import school.greenwood.plus.ui.components.SqueletteConversation
 import school.greenwood.plus.ui.theme.ControlShape
 import school.greenwood.plus.ui.theme.RegistreTheme
 import school.greenwood.plus.util.Fichiers
@@ -127,10 +129,8 @@ fun ConversationScreen(
         }
 
         when {
-            état.chargement -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = RegistreTheme.colors.ink)
-            }
-            état.erreur != null -> Column(
+            état.chargement -> SqueletteConversation()
+            état.erreur != null && état.conversation == null -> Column(
                 Modifier
                     .fillMaxWidth()
                     .padding(16.dp),
@@ -138,7 +138,7 @@ fun ConversationScreen(
             ) {
                 ErrorInline(message = état.erreur ?: "")
                 Button(
-                    onClick = { vm.charger() },
+                    onClick = { vm.charger(force = true) },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = RegistreTheme.colors.ink,
                         contentColor = RegistreTheme.colors.page,
@@ -149,11 +149,26 @@ fun ConversationScreen(
                 }
             }
             état.conversation?.messages?.isEmpty() != false ->
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    EmptyState(
-                        titre = "Aucun message",
-                        message = "Les échanges de ce fil apparaîtront ici.",
-                    )
+                Column(Modifier.fillMaxSize()) {
+                    état.erreur?.let { message ->
+                        // Le fil reste en place malgré l'échec (issue #21).
+                        BandeauErreur(
+                            message = message,
+                            réessayer = { vm.charger(force = true) },
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                        )
+                    }
+                    Box(
+                        Modifier
+                            .fillMaxWidth()
+                            .weight(1f),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        EmptyState(
+                            titre = "Aucun message",
+                            message = "Les échanges de ce fil apparaîtront ici.",
+                        )
+                    }
                 }
             else -> {
                 val conversation = état.conversation
@@ -176,6 +191,16 @@ fun ConversationScreen(
                 }
                 LaunchedEffect(conversation?.id, compteÉléments) {
                     if (compteÉléments > 0) liste.scrollToItem(compteÉléments - 1)
+                }
+
+                // Bandeau discret au-dessus du fil quand un échec réseau laisse
+                // la conversation connue affichée (issue #21).
+                état.erreur?.let { message ->
+                    BandeauErreur(
+                        message = message,
+                        réessayer = { vm.charger(force = true) },
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    )
                 }
 
                 LazyColumn(

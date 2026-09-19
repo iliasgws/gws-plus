@@ -4,6 +4,7 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.serialization.json.JsonArray
 import school.greenwood.plus.data.api.BotiClient
 import school.greenwood.plus.data.api.BotiErreur
+import school.greenwood.plus.data.cache.CachesSession
 import school.greenwood.plus.data.session.SessionState
 import school.greenwood.plus.data.session.SessionStore
 import school.greenwood.plus.model.Eleve
@@ -16,6 +17,7 @@ import school.greenwood.plus.model.ParentInfo
 class AuthRepository(
     private val client: BotiClient,
     private val session: SessionStore,
+    private val caches: CachesSession,
 ) {
 
     suspend fun connexion(
@@ -46,6 +48,9 @@ class AuthRepository(
             ?: emptyList()
         val eleveChoisi = eleveId.ifBlank { eleves.firstOrNull()?.id ?: "" }
 
+        // Les caches de dernière donnée connue appartiennent à la session
+        // précédente (issue #21) — purgés avant d'écrire la nouvelle.
+        caches.vider()
         session.enregistrer(
             keyToken = keyToken,
             userId = userId,
@@ -69,6 +74,7 @@ class AuthRepository(
 
     suspend fun déconnexion() {
         runCatching { client.post("logout") }
+        caches.vider()
         session.effacer()
     }
 

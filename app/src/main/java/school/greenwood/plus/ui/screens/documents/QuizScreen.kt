@@ -52,6 +52,7 @@ import school.greenwood.plus.ui.components.EmptyState
 import school.greenwood.plus.ui.components.ErrorInline
 import school.greenwood.plus.ui.components.GwsCard
 import school.greenwood.plus.ui.components.Puce
+import school.greenwood.plus.ui.components.SqueletteQuiz
 import school.greenwood.plus.ui.theme.ControlShape
 import school.greenwood.plus.ui.theme.PageShape
 import school.greenwood.plus.ui.theme.RegistreTheme
@@ -99,9 +100,7 @@ fun QuizScreen(
         }
 
         when {
-            état.chargement -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = RegistreTheme.colors.ink)
-            }
+            état.chargement -> SqueletteQuiz()
             état.erreur != null -> Column(
                 Modifier
                     .fillMaxWidth()

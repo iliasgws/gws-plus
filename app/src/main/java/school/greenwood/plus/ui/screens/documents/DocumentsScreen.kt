@@ -20,7 +20,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -40,11 +39,13 @@ import school.greenwood.plus.ui.DocumentsViewModel
 import school.greenwood.plus.ui.FiltreDocuments
 import school.greenwood.plus.ui.estQuiz
 import school.greenwood.plus.ui.filtrerRessources
+import school.greenwood.plus.ui.components.BandeauErreur
 import school.greenwood.plus.ui.components.EmptyState
 import school.greenwood.plus.ui.components.ErrorInline
 import school.greenwood.plus.ui.components.GwsCard
 import school.greenwood.plus.ui.components.Puce
 import school.greenwood.plus.ui.components.SectionLabel
+import school.greenwood.plus.ui.components.SqueletteDocuments
 import school.greenwood.plus.ui.theme.AnnotationShape
 import school.greenwood.plus.ui.theme.ControlShape
 import school.greenwood.plus.ui.theme.RegistreTheme
@@ -92,10 +93,8 @@ fun DocumentsScreen(
         }
 
         when {
-            état.chargement -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = RegistreTheme.colors.ink)
-            }
-            état.erreur != null -> Column(
+            état.chargement -> SqueletteDocuments()
+            état.erreur != null && état.ressources.isEmpty() -> Column(
                 Modifier
                     .fillMaxWidth()
                     .padding(16.dp),
@@ -103,7 +102,7 @@ fun DocumentsScreen(
             ) {
                 ErrorInline(message = état.erreur ?: "")
                 Button(
-                    onClick = { vm.charger() },
+                    onClick = { vm.charger(force = true) },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = RegistreTheme.colors.ink,
                         contentColor = RegistreTheme.colors.page,
@@ -114,45 +113,68 @@ fun DocumentsScreen(
                 }
             }
             else -> {
+                // Bandeau discret sous la recherche et les filtres quand un
+                // échec réseau laisse le contenu connu affiché (issue #21).
                 val filtrées = filtrerRessources(état.ressources, état.recherche, état.filtre)
-                if (état.ressources.isEmpty()) {
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        EmptyState(
-                            titre = "Aucun document",
-                            message = "Les ressources de la classe apparaîtront ici.",
+                Column(Modifier.fillMaxSize()) {
+                    état.erreur?.let { message ->
+                        BandeauErreur(
+                            message = message,
+                            réessayer = { vm.charger(force = true) },
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                         )
                     }
-                } else if (filtrées.isEmpty()) {
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        EmptyState(
-                            titre = "Rien trouvé",
-                            message = if (état.recherche.isBlank()) {
-                                "Aucune ressource de ce type pour le moment."
-                            } else {
-                                "Essaie un autre mot."
-                            },
-                        )
-                    }
-                } else {
-                    // Groupement par matière, ordre du serveur préservé.
-                    val groupes = filtrées.groupBy { it.matiere.ifBlank { "Général" } }
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                    ) {
-                        groupes.forEach { (matiere, items) ->
-                            item(key = "section-$matiere") {
-                                SectionLabel(matiere)
-                            }
-                            items(
-                                items.size,
-                                key = { i -> "${items[i].id}-$i" },
-                            ) { i ->
-                                LigneRessource(
-                                    items[i],
-                                    ouvrirQuiz = onOuvrirQuiz,
-                                )
+                    if (état.ressources.isEmpty()) {
+                        Box(
+                            Modifier
+                                .fillMaxWidth()
+                                .weight(1f),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            EmptyState(
+                                titre = "Aucun document",
+                                message = "Les ressources de la classe apparaîtront ici.",
+                            )
+                        }
+                    } else if (filtrées.isEmpty()) {
+                        Box(
+                            Modifier
+                                .fillMaxWidth()
+                                .weight(1f),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            EmptyState(
+                                titre = "Rien trouvé",
+                                message = if (état.recherche.isBlank()) {
+                                    "Aucune ressource de ce type pour le moment."
+                                } else {
+                                    "Essaie un autre mot."
+                                },
+                            )
+                        }
+                    } else {
+                        // Groupement par matière, ordre du serveur préservé.
+                        val groupes = filtrées.groupBy { it.matiere.ifBlank { "Général" } }
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f),
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            groupes.forEach { (matiere, items) ->
+                                item(key = "section-$matiere") {
+                                    SectionLabel(matiere)
+                                }
+                                items(
+                                    items.size,
+                                    key = { i -> "${items[i].id}-$i" },
+                                ) { i ->
+                                    LigneRessource(
+                                        items[i],
+                                        ouvrirQuiz = onOuvrirQuiz,
+                                    )
+                                }
                             }
                         }
                     }
