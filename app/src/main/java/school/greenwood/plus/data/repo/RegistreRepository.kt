@@ -11,7 +11,7 @@ import school.greenwood.plus.model.Post
 import java.time.LocalDate
 
 /*
- * Le registre du jour (DESIGN.md §2) : le flux chronologique de ce qui s'est
+ * Le registre du jour (docs/product/DESIGN.md §2) : le flux chronologique de ce qui s'est
  * passé aujourd'hui, avec la carte « Ce soir » en tête. Une seule classe
  * agrège les quatre sources (nouveautes, devoirs, absences, messages) — l'UI
  * ne connaît que le registre.

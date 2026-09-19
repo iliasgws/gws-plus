@@ -107,7 +107,9 @@ est fixé ici pour ne pas le reperdre :
 
 ## 4. Écrans
 
-Chaque écran est adossé aux points d'accès réels (`greenwood-school-re/docs/endpoints.md`).
+Chaque écran est adossé aux points d'accès réels (inventaire complet :
+[`../api/ENDPOINTS.md`](../api/ENDPOINTS.md), formes observées dans
+[`../api/ENDPOINT-MAP.md`](../api/ENDPOINT-MAP.md)).
 
 ### Connexion
 Téléphone + mot de passe (POST `login`, multipart, `rememberMe`). Un champ

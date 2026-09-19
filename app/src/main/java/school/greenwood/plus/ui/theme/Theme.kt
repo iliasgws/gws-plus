@@ -9,7 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 
 /*
- * Thème « Le registre » (DESIGN.md §2) : encre et papier réinventés.
+ * Thème « Le registre » (docs/product/DESIGN.md §2) : encre et papier réinventés.
  * Material 3 porte la mécanique (composants, ripple, accessibilité) ; les
  * six jetons du registre circulent en plus via CompositionLocal.
  */

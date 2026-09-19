@@ -6,7 +6,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 
 /*
- * Jetons étendus (DESIGN.md §5) : les six rôles du registre exposés au-delà
+ * Jetons étendus (docs/product/DESIGN.md §5) : les six rôles du registre exposés au-delà
  * du MaterialTheme, pour que « redPen » reste sémantique dans tout le code UI.
  */
 

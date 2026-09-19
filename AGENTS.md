@@ -12,7 +12,7 @@ Greenwood School + is an application that lets parents of pupils follow their ch
 - 📝 Suivi des demandes administratives (administrative request tracking)
 - ✉️ Contacter l'administration de l'école en ligne (online contact with school administration)
 
-**Current status:** the first application milestone exists — a Kotlin/Jetpack Compose app (single `:app` module) implementing the DESIGN.md foundation: « Le registre » theme, session + network layer for the Boti API, 4-tab navigation with per-tab back stacks, login/onboarding, and the Registre/Devoirs/Documents/Messages/Demandes screens, plus a dedicated Conversation screen (issue #10, PR 1) and the message composer (PR 2): reply in a thread, new thread (sujet + category from server `themes[]`), attachments (SAF, 1 MB limit on the new-thread path) and voice messages (RECORD_AUDIO at runtime, MediaRecorder m4a), optimistic send with failed-retry. The composer is **ON by default** since the live send was validated (2026-09-19 — a real message reached the administration); the Messages title-bar icon is the on/off switch. The POST `nouveau-message` fields are statically verified from the official bundle and now exercised live (see `TASKS.md` issue-#10 section). Creating demandes remains unwired (write-path fields unverified).
+**Current status:** the first application milestone exists — a Kotlin/Jetpack Compose app (single `:app` module) implementing the `docs/product/DESIGN.md` foundation: « Le registre » theme, session + network layer for the Boti API, 4-tab navigation with per-tab back stacks, login/onboarding, and the Registre/Devoirs/Documents/Messages/Demandes screens, plus a dedicated Conversation screen (issue #10, PR 1) and the message composer (PR 2): reply in a thread, new thread (sujet + category from server `themes[]`), attachments (SAF, 1 MB limit on the new-thread path) and voice messages (RECORD_AUDIO at runtime, MediaRecorder m4a), optimistic send with failed-retry. The composer is **ON by default** since the live send was validated (2026-09-19 — a real message reached the administration); the Messages title-bar icon is the on/off switch. The POST `nouveau-message` fields are statically verified from the official bundle and now exercised live (see `docs/product/ROADMAP.md` issue-#10 section). Creating demandes remains unwired (write-path fields unverified).
 
 **Current priority (from README):** fix Android back-gesture navigation — opening the homework section and then using the Android system back gesture must behave correctly in every section of the app. Do not regress this behaviour.
 
@@ -28,11 +28,14 @@ Current contents (update this section whenever files are added or removed):
 
 | Path | Purpose |
 | --- | --- |
-| `README.md` | Project description + build instructions, in French |
-| `app-description.png` | Screenshot/illustration of the app description |
+| `README.md` | The front door — what the app is, screenshots, how to run it (French) |
+| `CONTRIBUTING.md`, `CHANGELOG.md`, `LICENSE` | Standard project files (MIT) |
 | `AGENTS.md` | This file — rules for AI agents |
-| `DESIGN.md` | Design document « Le registre » (visual direction, navigation contract, scope) |
-| `TASKS.md` | Living checklist of the current milestone (issue #8) |
+| `docs/README.md` | Documentation index — start any doc dive here |
+| `docs/product/` | `OVERVIEW.md` (what & why), `DESIGN.md` (« Le registre » design system), `ROADMAP.md` (living milestone + roadmap checklist) |
+| `docs/development/` | `SETUP.md` (toolchain), `ARCHITECTURE.md` (layers), `NAVIGATION.md` (back-stack contract) |
+| `docs/api/` | `BOTI-API.md` (protocol), `ENDPOINT-MAP.md` (observed shapes), `ENDPOINTS.md` (100-endpoint inventory) |
+| `docs/security/` | `SECURITY-NOTES.md` |
 | `settings.gradle.kts`, `build.gradle.kts`, `gradle.properties`, `gradlew`, `gradle/wrapper/` | Gradle 9.6 build (AGP 9.4.1, Kotlin 2.4.20, built-in Kotlin — no `kotlin.android` plugin) |
 | `app/` | The Android application (`:app` module), namespace `school.greenwood.plus` |
 | `app/src/main/java/school/greenwood/plus/` | Sources — key entries below |
@@ -42,15 +45,14 @@ Current contents (update this section whenever files are added or removed):
 | `…/ui/AppViewModels.kt` | One ViewModel per screen |
 | `…/ui/theme/` | « Le registre » tokens: colors, Fraunces/Bricolage/Public Sans type, 20/12/6 shapes |
 | `…/ui/components/Components.kt` | Shared composables (GwsCard, Puce, EmptyState, ErrorInline, GwsAvatar…) |
-| `…/ui/screens/` | Login, Onboarding, registre (+ Post detail), devoirs, documents, messages (+ Conversation detail), demandes |
-| `…/data/api/` | BotiApi/BotiClient (generic GET/POST + envelope), BotiEnvelope, MediaUrls (single-decode) |
-| `…/data/session/SessionStore.kt` | DataStore session (keyToken, user, eleves; never passwords) |
+| `…/ui/screens/` | Login, Onboarding, registre (+ Post detail), devoirs, documents, messages (+ Conversation + composer), demandes |
+| `…/data/api/` | BotiApi/BotiClient (generic GET/POST multipart + envelope), BotiEnvelope, MediaUrls (single-decode) |
+| `…/data/session/SessionStore.kt` | DataStore session (keyToken, user, eleves; never passwords) + composer switch |
 | `…/data/repo/` | Repositories + Normalizers (raw JSON → domain models) |
 | `…/logic/CeSoir.kt` | The focal card's due-date window (Friday → Monday) |
-| `…/util/` | Dates (tolerant parsing), Html, Fichiers (download + FileProvider), Audio (message playback) |
-| `app/src/test/` | Unit tests (dates, CeSoir, media URLs, envelope, message normalizers) |
+| `…/util/` | Dates (tolerant parsing), Html, Fichiers (download + FileProvider + SAF staging), Audio (playback), EnregistreurAudio (MediaRecorder) |
+| `app/src/test/` | Unit tests (dates, CeSoir, media URLs, envelope, message normalizers, composer data) |
 | `app/fonts-licenses/` | OFL texts for the bundled fonts |
-| `docs/` | `BOTI-API.md` (protocol), `ENDPOINT-MAP.md` (observed shapes), `endpoints.md` (100-endpoint inventory), `SECURITY-NOTES.md` |
 
 ## Ground rules for agents
 
@@ -61,7 +63,7 @@ Current contents (update this section whenever files are added or removed):
 5. **Commit and PR style.** Short, imperative messages, consistently in one language per commit (French or English), e.g. « Corriger la navigation par geste de retour Android » or "Fix Android back-gesture navigation".
 6. **No secrets.** Never commit credentials, API keys, tokens, or other sensitive data.
 7. **Stay surgical.** Make precise, complete changes that fully address the task; avoid unrelated changes and do not fix unrelated pre-existing issues.
-8. **Keep documentation in sync.** When you add or change features, update `README.md` (including « Priorité actuelle ») and this file's structure section in the same PR.
+8. **Keep documentation in sync.** When you add or change features, update `docs/product/ROADMAP.md` (living checklist), `CHANGELOG.md`, and this file's structure section in the same PR.
 
 ## How to verify work
 
@@ -75,6 +77,6 @@ The app builds. These commands must pass before a PR can be merged (JDK 17+, And
 Additional checks before opening a PR:
 
 - **Accent audit** on every French string you touched (see Language rules) — UI strings live in Kotlin sources, screens under `ui/screens/`.
-- **No secrets / no personal data** in the tree; never log tokens or request params (see `docs/SECURITY-NOTES.md`, F3).
-- **Protocol facts** must come from `docs/BOTI-API.md` / `docs/ENDPOINT-MAP.md`; anything marked UNVERIFIED there needs a live check before being wired into a user-facing path.
+- **No secrets / no personal data** in the tree; never log tokens or request params (see `docs/security/SECURITY-NOTES.md`, F3).
+- **Protocol facts** must come from `docs/api/BOTI-API.md` / `docs/api/ENDPOINT-MAP.md`; anything marked UNVERIFIED there needs a live check before being wired into a user-facing path.
 - Reviewing the diff for accidental scope creep.

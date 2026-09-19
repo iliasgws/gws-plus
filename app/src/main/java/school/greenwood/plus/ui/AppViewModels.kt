@@ -22,7 +22,7 @@ import school.greenwood.plus.model.Ressource
 import java.time.LocalDate
 
 /*
- * Un ViewModel par écran (DESIGN.md §5). État unique par VM, suspend dans
+ * Un ViewModel par écran (docs/product/DESIGN.md §5). État unique par VM, suspend dans
  * viewModelScope, erreurs en message lisible pour l'écran.
  */
 

@@ -14,7 +14,7 @@ import school.greenwood.plus.data.repo.RegistreRepository
 import school.greenwood.plus.data.session.SessionStore
 
 /*
- * Conteneur manuel — un module :app, pas de framework DI (DESIGN.md §5).
+ * Conteneur manuel — un module :app, pas de framework DI (docs/product/DESIGN.md §5).
  */
 class AppContainer(context: Context) {
     val session = SessionStore(context)

@@ -86,7 +86,7 @@ import school.greenwood.plus.util.htmlToPlainSingleLine
 import java.time.LocalDate
 
 /*
- * Le registre du jour (DESIGN.md §2) : un flux chronologique à lire de haut
+ * Le registre du jour (docs/product/DESIGN.md §2) : un flux chronologique à lire de haut
  * en bas, avec une seule chose en avant — la carte « Ce soir ». Le reste est
  * plus discret. L'encre écrit ; le stylo rouge signale l'action requise.
  */
@@ -150,7 +150,7 @@ fun RegistreScreen(
         else -> {
             val registre = état.registre ?: return
             // La cascade ne joue qu'à la première ouverture de l'accueil
-            // (DESIGN.md §2) — survive aux changements d'onglet.
+            // (docs/product/DESIGN.md §2) — survive aux changements d'onglet.
             val cascade = rememberSaveable { mutableStateOf(false) }
             LaunchedEffect(Unit) {
                 delay(40)
@@ -250,7 +250,7 @@ private fun EnTête(
                 tint = RegistreTheme.colors.chalk,
             )
         }
-        // Bascule d'enfant : fondu (DESIGN.md §4).
+        // Bascule d'enfant : fondu (docs/product/DESIGN.md §4).
         AnimatedContent(
             targetState = eleve,
             transitionSpec = { fadeIn(tween(300)) togetherWith fadeOut(tween(300)) },
@@ -291,7 +291,7 @@ private fun EnTête(
 }
 
 /**
- * La carte focale (DESIGN.md §2) : fond sage, liseré encre. Le rouge n'y
+ * La carte focale (docs/product/DESIGN.md §2) : fond sage, liseré encre. Le rouge n'y
  * apparaît que sur les devoirs pas encore faits — l'action requise.
  */
 @Composable

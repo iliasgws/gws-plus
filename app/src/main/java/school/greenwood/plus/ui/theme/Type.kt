@@ -10,7 +10,7 @@ import androidx.compose.ui.unit.sp
 import school.greenwood.plus.R
 
 /*
- * Typographie (DESIGN.md §2) : Fraunces pour l'affichage, Public Sans pour le
+ * Typographie (docs/product/DESIGN.md §2) : Fraunces pour l'affichage, Public Sans pour le
  * texte et l'interface — chiffres tabulaires pour les dates, tranches et
  * comptes. Hiérarchie par écarts francs : 28 / 17 / 15 / 13, jamais deux
  * niveaux adjacents à 1 sp d'écart.

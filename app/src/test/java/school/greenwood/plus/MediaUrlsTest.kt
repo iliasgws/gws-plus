@@ -8,7 +8,7 @@ import school.greenwood.plus.data.api.MediaUrls
 /*
  * Les liens média sont double-encodés et passent par un Google Docs viewer.
  * Le décodage doit être unique : %2B / %2F / %3D restent littéraux, la
- * signature porte dessus (docs/BOTI-API.md).
+ * signature porte dessus (docs/api/BOTI-API.md).
  */
 class MediaUrlsTest {
 

@@ -56,7 +56,7 @@ import school.greenwood.plus.util.Fichiers
 import school.greenwood.plus.util.frenchShort
 
 /*
- * L'onglet Devoirs (DESIGN.md §4) : liste par jour, sélection côté client sur
+ * L'onglet Devoirs (docs/product/DESIGN.md §4) : liste par jour, sélection côté client sur
  * `date_remise` — le paramètre `date` du serveur est ignoré. Une pièce jointe
  * se télécharge dans l'espace privé de l'app puis s'ouvre en natif.
  */
@@ -227,7 +227,7 @@ private fun CarteDevoir(
                     color = RegistreTheme.colors.chalk,
                 )
             }
-            // Le rouge ne marque que l'action requise (DESIGN.md §2).
+            // Le rouge ne marque que l'action requise (docs/product/DESIGN.md §2).
             when {
                 devoir.fait -> Puce("Travail fait")
                 devoir.dateRemise != null && !devoir.dateRemise.isAfter(aujourdhui) ->

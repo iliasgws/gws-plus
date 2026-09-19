@@ -6,7 +6,7 @@ import android.media.MediaPlayer
 /*
  * Lecteur des messages vocaux. L'URL signée du serveur est jouée en flux :
  * elle expire après 15–20 minutes, mais elle est toujours fraîche au moment
- * du GET `messages` qui l'a apportée (docs/BOTI-API.md). La forme du champ
+ * du GET `messages` qui l'a apportée (docs/api/BOTI-API.md). La forme du champ
  * `audio` n'a jamais été observée non-nulle en production — tout échec de
  * préparation reste silencieux (état Fini), le lecteur ne s'affiche que
  * quand une pièce audio existe.

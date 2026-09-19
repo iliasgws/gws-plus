@@ -1,79 +1,68 @@
 # Greenwood School +
 
-Une version améliorée de l'application Greenwood School — un client Android
-propre (Kotlin + Jetpack Compose) qui remplace le wrapper Capacitor.
+> Un client Android natif moderne pour Greenwood School.
 
-## À propos de cette application
+<!-- TODO: capture d'écran d'accueil ici (docs/images/) — sans données personnelles -->
 
-Cette application permet aux parents d'élèves de suivre en temps réel toute l'activité de leurs enfants à l'école :
+Greenwood School + reconstruit l'expérience de l'app Greenwood School en
+application native **Kotlin + Jetpack Compose** : le registre du jour, les
+devoirs, les documents, les demandes administratives et la messagerie avec
+l'administration — dans une interface « Le registre » rapide et sobre.
 
-- 📔 Cahier de liaison et de devoirs
-- 📰 Actualités de l'école
-- 📁 Espace documents
-- 📝 Suivi des demandes administratives
-- ✉️ Contacter l'administration de l'école en ligne
+## Fonctionnalités
 
-## Priorité actuelle
+- 📔 **Registre** — le fil du jour : actualités, devoirs donnés, absences, messages
+- 📚 **Devoirs** — par échéance, pièces jointes ouvrables nativement
+- 📰 **Actualités** — corps complets, images, PDF
+- 📁 **Documents** — ressources par matière, recherche
+- 📝 **Demandes** — suivi des demandes administratives et de leurs réponses
+- ✉️ **Messagerie** — fils de conversation avec l'administration, réponse,
+  nouveau message (sujet + catégorie), pièces jointes, messages vocaux
 
-- 🧭 **Correction de la navigation par le geste de retour Android** — le contrat
-  du DESIGN.md §3 est désormais codé dans l'application : quatre onglets à
-  piles indépendantes (saveState/restoreState), retour propre vers le Registre
-  depuis chaque onglet, quitte l'app depuis le Registre, transitions
-  prédictives activées (`enableOnBackInvokedCallback`). À vérifier sur un vrai
-  téléphone au premier essai.
-- 📱 **Premier essai sur l'appareil** — la fonte d'affichage Fraunces y est
-  confrontée au substitut Bricolage Grotesque (les deux sont embarquées ; le
-  basculement se fait d'une ligne dans
-  `app/src/main/java/school/greenwood/plus/ui/theme/Type.kt`).
-- ✉️ **Conversations avec l'administration** — chaque fil s'ouvre
-  dans un écran de conversation dédié : bulles, séparateurs de date, accusés
-  de lecture, pièces jointes et messages vocaux en lecture — **et le
-  composeur** : réponse, nouveau fil (sujet + catégorie), pièces jointes
-  (1 Mo max), message vocal, envoi optimiste avec relance en cas d'échec.
-  Envoi réel validé le 19/09/2026 ; l'icône de réglage en haut de l'onglet
-  Messages permet de désactiver le composeur si besoin.
+## Captures d'écran
 
-## Construire
+<!-- TODO: ajouter 2–3 captures (docs/images/, sans données personnelles) :
+     [ Registre ] [ Devoirs ] [ Messages ] -->
 
-Prérequis : JDK 17+, SDK Android (API 37) et `local.properties` pointant vers
-ce SDK (non versionné). Le wrapper Gradle télécharge le reste.
+## État
+
+🚧 **Développement actif** — utilisable au quotidien, mais pas encore abouti
+pour une diffusion large. Les envois de messages ont été validés en
+conditions réelles ; les demandes administratives restent en lecture seule.
+
+Voir la [feuille de route](docs/product/ROADMAP.md).
+
+## Stack technique
+
+Kotlin · Jetpack Compose · Material 3 · Retrofit/OkHttp · DataStore
+
+## Démarrage
 
 ```bash
-./gradlew :app:assembleDebug      # APK de debug
-./gradlew :app:testDebugUnitTest  # tests unitaires
+git clone https://github.com/iliasgws/gws-plus.git
+cd gws-plus
+./gradlew :app:assembleDebug
 ```
 
-L'APK sort dans `app/build/outputs/apk/debug/`.
+L'APK sort dans `app/build/outputs/apk/debug/`. Guide complet
+(JDK, SDK, `local.properties`) → [docs/development/SETUP.md](docs/development/SETUP.md).
 
-## Documentation API
+## Documentation
 
-L'application officielle Greenwood School (éditée par Boti Education) est un
-wrapper web : son protocole réseau a été documenté par rétro-ingénierie
-statique, puis vérifié sur appel réel. La spécification vit dans [`docs/`](docs/) :
+| | |
+| --- | --- |
+| 🧭 [Index de la documentation](docs/README.md) | point d'entrée de toute la doc |
+| 🎨 [Product & design](docs/product/OVERVIEW.md) | ce que l'app fait, direction visuelle, feuille de route |
+| 🏗️ [Architecture](docs/development/ARCHITECTURE.md) | couches, session, navigation |
+| 🔌 [Recherche API Boti](docs/api/BOTI-API.md) | protocole, carte des endpoints, inventaire |
+| 🔐 [Sécurité](docs/security/SECURITY-NOTES.md) | observations de sécurité |
 
-- [`docs/BOTI-API.md`](docs/BOTI-API.md) — protocole : base URL, authentification (`keyToken`), enveloppe de requête, médias signés, pièges connus (`paltform`, corps des annonces uniquement dans `admin_nouveautes`, …) et table de correspondance fonction → endpoints
-- [`docs/ENDPOINT-MAP.md`](docs/ENDPOINT-MAP.md) — carte des points d'accès utilisés par l'app parent, avec les formes de réponses observées
-- [`docs/endpoints.md`](docs/endpoints.md) — inventaire des 100 endpoints de l'app officielle
-- [`docs/SECURITY-NOTES.md`](docs/SECURITY-NOTES.md) — constats de sécurité sur l'app officielle et ce que gws-plus doit faire mieux
+## Historique des versions
 
-Source publique : [greenwood-school-re](https://gitea.oimcloud.myaddr.tools/Omarchy-Big-PC/greenwood-school-re).
-API non documentée côté éditeur : elle peut changer sans préavis ; garder
-tous les appels derrière une couche client dédiée, et jamais d'identifiants
-dans le dépôt.
+Voir [CHANGELOG.md](CHANGELOG.md) — ou les [releases GitHub](https://github.com/iliasgws/gws-plus/releases).
 
-## Documentation du projet
+## Avertissement
 
-- [DESIGN.md](DESIGN.md) — direction visuelle « Le registre », navigation, périmètre
-- [TASKS.md](TASKS.md) — état de la construction (milestone en cours)
-
-## Feuille de route
-
-Les prochaines pistes vivent dans [TASKS.md](TASKS.md), section « Roadmap » —
-rien n'est câblé, chaque idée attend sa passe de conception :
-
-- **File d'envoi** avec fenêtre d'annulation (délai 5 min par défaut) et « Envoyer maintenant »
-- **Aide à la rédaction par IA** — jamais d'envoi automatique, posture de vie privée à décider d'abord
-- **Source alternative de devoirs** pour les matières que certains enseignants n'écrivent jamais dans l'app
-- **Retours des parents sur l'emploi du temps** (provisoire, disent-ils)
-- **« Tout télécharger »** pour les pièces jointes des devoirs et des documents
-
+Client **non officiel**, indépendant. Pas affilié à Greenwood School ni à
+Boti Education. Le protocole réseau a été reconstitué par observation ;
+aucune donnée personnelle n'est conservée dans ce dépôt.

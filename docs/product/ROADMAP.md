@@ -1,7 +1,7 @@
 # TASKS — Issue #8 « Start building the actual app »
 
 Living checklist for the first application milestone. Agent-facing doc (English).
-Probe findings are distilled into `docs/BOTI-API.md` and `docs/ENDPOINT-MAP.md`;
+Probe findings are distilled into `docs/api/BOTI-API.md` and `docs/api/ENDPOINT-MAP.md`;
 raw probe responses stay out of the repository (personal data).
 
 ## Legend
@@ -10,7 +10,7 @@ raw probe responses stay out of the repository (personal data).
 
 ## 1. Groundwork
 
-- [x] Read DESIGN.md, AGENTS.md, docs/BOTI-API.md, greenwood-school-re protocol docs
+- [x] Read DESIGN.md, AGENTS.md, docs/api/BOTI-API.md, greenwood-school-re protocol docs
 - [x] Live shape probe (own parent account, GET only) → `~/dev/shape-probe/*.json`
 - [x] Resolve DESIGN.md §4 open question: `date_remise` = due date (ISO `yyyy-mm-dd`),
       `date`/`publication` = publication. Client-side filtering (server `date` param ignored).
@@ -108,10 +108,10 @@ raw probe responses stay out of the repository (personal data).
 
 ## 10. Docs (done by a subagent)
 
-- [x] `docs/BOTI-API.md` corrections: devoirs_date_v2 POST = submission,
+- [x] `docs/api/BOTI-API.md` corrections: devoirs_date_v2 POST = submission,
       date param ignored on GET devoirs, objects = lost & found,
       acces_check = session bootstrap (returns fresh keyToken)
-- [x] `docs/ENDPOINT-MAP.md`: complete parent-relevant endpoint map with
+- [x] `docs/api/ENDPOINT-MAP.md`: complete parent-relevant endpoint map with
       observed shapes (from `~/dev/shape-probe`), no personal data
 
 # TASKS — Issue #10 « Messages tab misses sending option »
