@@ -61,6 +61,11 @@ class SessionStore(private val context: Context) {
         val eleveIndex = intPreferencesKey("eleve_index")
         val retenir = booleanPreferencesKey("retenir")
         val onboardingVu = booleanPreferencesKey("onboarding_vu")
+
+        /** Composeur activé (issue #10) — désormais par défaut. L'envoi réel a
+         *  été validé en conditions réelles (test du 19/09/2026) ; le réglage
+         *  sert d'interrupteur, pas de verrou. Survit à une purge de session. */
+        val composeurActivé = booleanPreferencesKey("composeur_active")
     }
 
     val events = MutableSharedFlow<SessionEvent>(extraBufferCapacity = 4)
@@ -93,6 +98,12 @@ class SessionStore(private val context: Context) {
     val retenir: Flow<Boolean> = context.dataStore.data.map { it[Clefs.retenir] ?: true }
 
     val onboardingVu: Flow<Boolean> = context.dataStore.data.map { it[Clefs.onboardingVu] ?: false }
+
+    val composeurActivé: Flow<Boolean> = context.dataStore.data.map { it[Clefs.composeurActivé] ?: true }
+
+    suspend fun définirComposeur(actif: Boolean) {
+        context.dataStore.edit { it[Clefs.composeurActivé] = actif }
+    }
 
     suspend fun enregistrer(
         keyToken: String,

@@ -241,6 +241,10 @@ data class MessagesÉtat(
     val erreur: String? = null,
     val conversations: List<Conversation> = emptyList(),
     val contact: ContactEcole? = null,
+    /** Catégories du composeur (serveur themes[]). */
+    val themes: List<school.greenwood.plus.model.ThemeMessage> = emptyList(),
+    /** Composeur actif par défaut (issue #10, envoi validé le 19/09/2026). */
+    val composeurActivé: Boolean = false,
 )
 
 class MessagesViewModel(private val container: AppContainer) : ViewModel() {
@@ -249,21 +253,38 @@ class MessagesViewModel(private val container: AppContainer) : ViewModel() {
 
     init {
         charger()
+        viewModelScope.launch {
+            container.session.composeurActivé.collect { actif ->
+                _état.update { it.copy(composeurActivé = actif) }
+            }
+        }
     }
 
     fun charger() {
         viewModelScope.launch {
             _état.update { it.copy(chargement = it.conversations.isEmpty()) }
             try {
-                val conversations = container.messages.conversations()
+                val page = container.messages.conversations()
                 val contact = runCatching { container.messages.contact() }.getOrNull()
-                _état.update { it.copy(chargement = false, conversations = conversations, contact = contact) }
+                _état.update {
+                    it.copy(
+                        chargement = false,
+                        conversations = page.conversations,
+                        themes = page.themes,
+                        contact = contact,
+                    )
+                }
             } catch (err: BotiErreur) {
                 _état.update { it.copy(chargement = false, erreur = err.messageUtilisateur) }
             } catch (err: Exception) {
                 _état.update { it.copy(chargement = false, erreur = "Messages indisponibles pour le moment") }
             }
         }
+    }
+
+    /** Interrupteur du composeur — persistant (issue #10). */
+    fun définirComposeur(actif: Boolean) {
+        viewModelScope.launch { container.session.définirComposeur(actif) }
     }
 
 }
@@ -273,6 +294,15 @@ data class ConversationÉtat(
     val chargement: Boolean = true,
     val erreur: String? = null,
     val conversation: Conversation? = null,
+    /** Composeur (collecté depuis la session — actif par défaut). */
+    val composeurActif: Boolean = false,
+    val texte: String = "",
+    val pièces: List<java.io.File> = emptyList(),
+    val audio: java.io.File? = null,
+    val enregistre: Boolean = false,
+    /** Envois optimistes : affichés au bas du fil jusqu'à confirmation serveur,
+     *  marqués Échec (relance manuelle) si le POST rate. */
+    val envois: List<school.greenwood.plus.model.MessageEnvoi> = emptyList(),
 )
 
 class ConversationViewModel(
@@ -282,8 +312,15 @@ class ConversationViewModel(
     private val _état = MutableStateFlow(ConversationÉtat())
     val état: StateFlow<ConversationÉtat> = _état.asStateFlow()
 
+    private var enregistreur: school.greenwood.plus.util.EnregistreurAudio? = null
+
     init {
         charger()
+        viewModelScope.launch {
+            container.session.composeurActivé.collect { actif ->
+                _état.update { it.copy(composeurActif = actif) }
+            }
+        }
     }
 
     fun charger() {
@@ -300,6 +337,105 @@ class ConversationViewModel(
         }
     }
 
+    /** — Composeur --------------------------------------------------------- */
+
+    fun modifierTexte(valeur: String) = _état.update { it.copy(texte = valeur) }
+
+    fun retirerPièce(fichier: java.io.File) =
+        _état.update { it.copy(pièces = it.pièces - fichier) }
+
+    fun ajouterPièces(context: android.content.Context, uris: List<android.net.Uri>) {
+        viewModelScope.launch {
+            val copiées = uris.mapNotNull { school.greenwood.plus.util.Fichiers.copierDepuisSaf(context, it) }
+            _état.update { it.copy(pièces = it.pièces + copiées) }
+        }
+    }
+
+    fun démarrerEnregistrement(context: android.content.Context): Boolean {
+        val rec = enregistreur ?: school.greenwood.plus.util.EnregistreurAudio(context).also { enregistreur = it }
+        val ok = rec.démarrer()
+        if (ok) _état.update { it.copy(enregistre = true) }
+        return ok
+    }
+
+    fun arrêterEnregistrement() {
+        val fichier = enregistreur?.arrêter()
+        _état.update { it.copy(enregistre = false, audio = fichier) }
+    }
+
+    fun annulerEnregistrement() {
+        enregistreur?.annuler()
+        _état.update { it.copy(enregistre = false, audio = null) }
+    }
+
+    fun retirerAudio() = _état.update { it.copy(audio = null) }
+
+    /** Envoi : push optimiste au bas du fil, puis remplacement par la version
+     *  serveur (`conversation[index] = _.message` du bundle). Un envoi à la
+     *  fois ; en échec l'élément reste affiché, marqué, relançable. */
+    fun envoyer() {
+        val e = _état.value
+        if (e.envois.any { it.statut == school.greenwood.plus.model.MessageEnvoi.Statut.EnCours }) return
+        val texte = e.texte.trim()
+        if (texte.isEmpty() && e.pièces.isEmpty() && e.audio == null) return
+        val envoi = school.greenwood.plus.model.MessageEnvoi(
+            texte = texte,
+            pièces = e.pièces,
+            audio = e.audio,
+        )
+        _état.update { it.copy(texte = "", pièces = emptyList(), audio = null, envois = it.envois + envoi) }
+        lancerEnvoi(envoi)
+    }
+
+    fun relancer(envoi: school.greenwood.plus.model.MessageEnvoi) {
+        _état.update { st ->
+            st.copy(
+                envois = st.envois.map {
+                    if (it == envoi) it.copy(statut = school.greenwood.plus.model.MessageEnvoi.Statut.EnCours) else it
+                },
+            )
+        }
+        lancerEnvoi(envoi)
+    }
+
+    private fun lancerEnvoi(envoi: school.greenwood.plus.model.MessageEnvoi) {
+        viewModelScope.launch {
+            try {
+                val conversation = _état.value.conversation ?: return@launch
+                val servi = container.messages.envoyerRéponse(
+                    conversation = conversation,
+                    texte = envoi.texte,
+                    pièces = envoi.pièces,
+                    audio = envoi.audio,
+                )
+                _état.update { st ->
+                    val fil = servi?.let { m ->
+                        conversation.copy(messages = conversation.messages + m)
+                    } ?: conversation
+                    st.copy(envois = st.envois - envoi, conversation = fil)
+                }
+                if (servi == null) charger() // réponse sans .message : refetch
+            } catch (err: Exception) {
+                _état.update { st ->
+                    st.copy(
+                        envois = st.envois.map {
+                            if (it == envoi) {
+                                it.copy(statut = school.greenwood.plus.model.MessageEnvoi.Statut.Échec)
+                            } else {
+                                it
+                            }
+                        },
+                    )
+                }
+            }
+        }
+    }
+
+    override fun onCleared() {
+        enregistreur?.annuler()
+        super.onCleared()
+    }
+
     fun téléchargerPièce(
         pièce: school.greenwood.plus.model.Attachment,
         context: android.content.Context,
@@ -313,6 +449,122 @@ class ConversationViewModel(
             }
             onFait(fichier)
         }
+    }
+}
+
+/** — Nouveau message (fil vierge vers l'administration) -------------------- */
+data class NouveauMessageÉtat(
+    val sujet: String = "",
+    val texte: String = "",
+    val themeChoisi: school.greenwood.plus.model.ThemeMessage? = null,
+    val themes: List<school.greenwood.plus.model.ThemeMessage> = emptyList(),
+    val pièces: List<java.io.File> = emptyList(),
+    val audio: java.io.File? = null,
+    val enregistre: Boolean = false,
+    val envoi: Boolean = false,
+    val erreur: String? = null,
+    val envoyé: Boolean = false,
+)
+
+class NouveauMessageViewModel(private val container: AppContainer) : ViewModel() {
+    private val _état = MutableStateFlow(NouveauMessageÉtat())
+    val état: StateFlow<NouveauMessageÉtat> = _état.asStateFlow()
+
+    private var enregistreur: school.greenwood.plus.util.EnregistreurAudio? = null
+
+    init {
+        viewModelScope.launch {
+            try {
+                val page = container.messages.conversations()
+                _état.update { it.copy(themes = page.themes) }
+            } catch (err: Exception) {
+                // Les catégories manquantes ne bloquent pas l'envoi : champ
+                // libre. Le fil s'ouvre quand même.
+            }
+        }
+    }
+
+    fun modifierSujet(valeur: String) = _état.update { it.copy(sujet = valeur) }
+    fun modifierTexte(valeur: String) = _état.update { it.copy(texte = valeur) }
+    fun choisirTheme(theme: school.greenwood.plus.model.ThemeMessage?) =
+        _état.update { it.copy(themeChoisi = theme) }
+
+    fun ajouterPièces(context: android.content.Context, uris: List<android.net.Uri>) {
+        viewModelScope.launch {
+            val refusées = mutableListOf<String>()
+            val copiées = uris.mapNotNull { uri ->
+                val fichier = school.greenwood.plus.util.Fichiers.copierDepuisSaf(context, uri)
+                    ?: return@mapNotNull null
+                if (school.greenwood.plus.util.Fichiers.dépasseLimite1Mo(fichier)) {
+                    fichier.delete()
+                    refusées.add(fichier.name)
+                    null
+                } else {
+                    fichier
+                }
+            }
+            _état.update {
+                it.copy(
+                    pièces = it.pièces + copiées,
+                    erreur = refusées.takeIf { r -> r.isNotEmpty() }?.joinToString(
+                        prefix = "Pièce trop lourde (1 Mo max) : ",
+                        separator = ", ",
+                    ),
+                )
+            }
+        }
+    }
+
+    fun retirerPièce(fichier: java.io.File) = _état.update { it.copy(pièces = it.pièces - fichier) }
+
+    fun retirerAudio() = _état.update { it.copy(audio = null) }
+
+    fun démarrerEnregistrement(context: android.content.Context): Boolean {
+        val rec = enregistreur ?: school.greenwood.plus.util.EnregistreurAudio(context).also { enregistreur = it }
+        val ok = rec.démarrer()
+        if (ok) _état.update { it.copy(enregistre = true) }
+        return ok
+    }
+
+    fun arrêterEnregistrement() {
+        val fichier = enregistreur?.arrêter()
+        _état.update { it.copy(enregistre = false, audio = fichier) }
+    }
+
+    fun annulerEnregistrement() {
+        enregistreur?.annuler()
+        _état.update { it.copy(enregistre = false, audio = null) }
+    }
+
+    fun envoyer() {
+        val e = _état.value
+        if (e.envoi) return
+        if (e.sujet.isBlank() || e.texte.isBlank()) {
+            _état.update { it.copy(erreur = "Sujet et message requis") }
+            return
+        }
+        _état.update { it.copy(envoi = true, erreur = null) }
+        viewModelScope.launch {
+            try {
+                container.messages.envoyerNouveau(
+                    sujet = e.sujet.trim(),
+                    texte = e.texte.trim(),
+                    theme = e.themeChoisi?.id ?: "",
+                    pièces = e.pièces,
+                    audio = e.audio,
+                )
+                _état.update { it.copy(envoi = false, envoyé = true) }
+            } catch (err: BotiErreur) {
+                _état.update { it.copy(envoi = false, erreur = err.messageUtilisateur) }
+            } catch (err: Exception) {
+                _état.update { it.copy(envoi = false, erreur = "Envoi impossible — réessaie") }
+            }
+        }
+    }
+
+    override fun onCleared() {
+        enregistreur?.annuler()
+        super.onCleared()
     }
 }
 

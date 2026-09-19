@@ -66,12 +66,17 @@ class BotiClient(
      * POST multipart : champs plats ajoutés tels quels (la convention imbriquée
      * clé[sous-clé] du bundle d'origine n'est utile qu'aux formulaires riches,
      * hors v1), `key` en champ comme l'ApiService d'origine.
+     *
+     * [partiesMultiples] : le même nom de champ répété, une part par fichier —
+     * la convention `files[]` du bundle (une part par pièce, nom conservé),
+     * et l'audio envoyé sous `{file, name}` (bundle ApiService).
      */
     suspend fun post(
         endpoint: String,
         fields: Map<String, String> = emptyMap(),
         fichiers: Map<String, File> = emptyMap(),
         mimeType: String = "application/octet-stream",
+        partiesMultiples: List<PartieFichier> = emptyList(),
     ): JsonObject {
         val base = baseParams()
         val builder = MultipartBody.Builder()
@@ -85,9 +90,24 @@ class BotiClient(
                 fichier.asRequestBody(mimeType.toMediaType()),
             )
         }
+        partiesMultiples.forEach { partie ->
+            builder.addFormDataPart(
+                partie.champ,
+                partie.nom,
+                partie.fichier.asRequestBody(partie.mime.toMediaType()),
+            )
+        }
         val body: RequestBody = builder.build()
         return unwrap(api.post(endpoint, body), endpoint)
     }
+
+    /** Une part de fichier répétée : `files[]` (pièces jointes) ou `audio`. */
+    class PartieFichier(
+        val champ: String,
+        val fichier: File,
+        val nom: String,
+        val mime: String,
+    )
 
     private suspend fun unwrap(body: ResponseBody, endpoint: String): JsonObject {
         val texte = runCatching { body.string() }.getOrDefault("")

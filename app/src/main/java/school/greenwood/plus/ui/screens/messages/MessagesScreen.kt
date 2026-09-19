@@ -17,11 +17,14 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.Send
 import androidx.compose.material.icons.rounded.Call
+import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -51,11 +54,15 @@ import school.greenwood.plus.util.htmlToPlainSingleLine
 
 /*
  * Messages avec l'administration (DESIGN.md §4) — la liste des fils s'ouvre
- * sur l'écran de conversation dédié (issue #10, première partie). L'envoi
- * n'est pas encore ouvert : les champs du POST nouveau-message sont désormais
- * connus (lus depuis le bundle officiel) mais un envoi réel doit d'abord être
- * validé avant d'ouvrir le composeur. La carte contact rend l'administration
- * joignable tout de suite (téléphone, Facebook, site).
+ * sur l'écran de conversation dédié (issue #10, première partie) et une carte
+ * « Écrire » ouvre un fil vierge (composeur, seconde partie).
+ *
+ * Le composeur est actif par défaut : l'envoi réel a été validé le 19/09/2026
+ * (test vers l'administration). L'icône de réglage de la barre de titre sert
+ * d'interrupteur pour le désactiver/réactiver. La carte contact rend
+ * l'administration joignable tout de suite (téléphone, Facebook, site) ; elle
+ * ne s'affiche que si le serveur renseigne quelque chose ou si le composeur
+ * est actif.
  */
 
 @Composable
@@ -63,6 +70,7 @@ fun MessagesScreen(
     container: AppContainer,
     padding: PaddingValues,
     onOuvrirConversation: (String) -> Unit,
+    onNouveauMessage: () -> Unit,
 ) {
     val vm: MessagesViewModel = viewModel { MessagesViewModel(container) }
     val état by vm.état.collectAsStateWithLifecycle()
@@ -74,12 +82,25 @@ fun MessagesScreen(
             .background(RegistreTheme.colors.paper)
             .padding(padding),
     ) {
-        Column(Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             Text(
                 text = "Messages",
                 style = MaterialTheme.typography.displayLarge,
                 color = RegistreTheme.colors.ink,
+                modifier = Modifier.weight(1f),
             )
+            IconButton(onClick = { vm.définirComposeur(!état.composeurActivé) }) {
+                Icon(
+                    imageVector = Icons.Rounded.Tune,
+                    contentDescription = if (état.composeurActivé) "Désactiver le composeur" else "Activer le composeur",
+                    tint = if (état.composeurActivé) RegistreTheme.colors.ink else RegistreTheme.colors.chalk,
+                )
+            }
         }
 
         when {
@@ -125,26 +146,33 @@ fun MessagesScreen(
                         )
                     }
                     état.contact?.let { contact ->
-                        item(key = "contact") {
-                            SectionLabel("Joindre l'administration")
-                            CarteContact(
-                                texte = contact.texte,
-                                tel = contact.tel,
-                                facebook = contact.facebook,
-                                siteWeb = contact.siteWeb,
-                                onOuvrir = { url ->
-                                    runCatching {
-                                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
-                                    }
-                                },
-                                onAppeler = {
-                                    contact.tel?.let {
+                        val contactRenseigné = listOfNotNull(
+                            contact.texte, contact.tel, contact.facebook, contact.siteWeb,
+                        ).any { it.isNotBlank() }
+                        if (contactRenseigné || état.composeurActivé) {
+                            item(key = "contact") {
+                                SectionLabel("Joindre l'administration")
+                                CarteContact(
+                                    texte = contact.texte,
+                                    tel = contact.tel,
+                                    facebook = contact.facebook,
+                                    siteWeb = contact.siteWeb,
+                                    composeurActif = état.composeurActivé,
+                                    onÉcrire = onNouveauMessage,
+                                    onOuvrir = { url ->
                                         runCatching {
-                                            context.startActivity(Intent(Intent.ACTION_DIAL, Uri.parse("tel:$it")))
+                                            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
                                         }
-                                    }
-                                },
-                            )
+                                    },
+                                    onAppeler = {
+                                        contact.tel?.let {
+                                            runCatching {
+                                                context.startActivity(Intent(Intent.ACTION_DIAL, Uri.parse("tel:$it")))
+                                            }
+                                        }
+                                    },
+                                )
+                            }
                         }
                     }
                 }
@@ -222,6 +250,8 @@ private fun CarteContact(
     tel: String?,
     facebook: String?,
     siteWeb: String?,
+    composeurActif: Boolean,
+    onÉcrire: () -> Unit,
     onOuvrir: (String) -> Unit,
     onAppeler: () -> Unit,
 ) {
@@ -235,6 +265,13 @@ private fun CarteContact(
                 )
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (composeurActif) {
+                    PuceAction(
+                        label = "Écrire",
+                        icone = Icons.AutoMirrored.Rounded.Send,
+                        onClick = onÉcrire,
+                    )
+                }
                 if (tel != null) {
                     PuceAction(label = "Appeler", icone = Icons.Rounded.Call, onClick = onAppeler)
                 }

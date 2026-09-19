@@ -118,8 +118,8 @@ raw probe responses stay out of the repository (personal data).
 
 Living checklist for the message-composing milestone. Split in two PRs per
 user decision (2026-09-19): PR 1 = conversation screen (read-only), PR 2 =
-composer + sending + attachments + voice. The write path is verified
-**statically** (bundle), not yet **live**.
+composer + sending + attachments + voice. The write path was verified
+**statically** (bundle), then **live** (first real send, 2026-09-19).
 
 ## Verification of the write path (2026-09-19)
 
@@ -137,9 +137,10 @@ composer + sending + attachments + voice. The write path is verified
       `key` only — **no** `paltform`/`versionCode` envelope.
 - [x] `hidesend` is dead code in v2.4.14 — zero references across the
       bundle; the official app never reads it. Composer gated by an app
-      setting instead (user decision: kill switch, default off).
-- [ ] One live send before enabling the write path (user runs it — it
-      reaches the school administration).
+      setting instead (kill switch for the first days, default ON since the
+      validated live send).
+- [x] One live send before enabling the write path (2026-09-19 — message
+      delivered to the school administration).
 
 ## PR 1 — Conversation screen (read-only) — branch `messages-conversation`
 
@@ -162,23 +163,72 @@ composer + sending + attachments + voice. The write path is verified
 - [x] `assembleDebug` green
 - [ ] (!) review on a real device at first install
 
-## PR 2 — Composer, sending, attachments, voice (todo) — branch `messages-composer`
+## PR 2 — Composer, sending, attachments, voice — branch `messages-composer`
 
-- [ ] `BotiClient.post`: repeated file parts (list of files per field name)
-- [ ] `MessagesRepository.envoyer(...)` POST nouveau-message + response
-      `.message` normalization; optimistic pending → failed-with-retry states
-- [ ] Composer row (attachment · input · mic · send) in `ConversationScreen`,
-      gated by a settings toggle (default off; `hidesend` documented,
-      informational)
-- [ ] Category selection driven by server `themes[]` (ids 8/9/10/11/13) in
+- [x] `BotiClient.post`: repeated file parts (`PartieFichier` — `files[]`
+      literal name, one part per file, filename preserved; audio as `{file, name}`)
+- [x] `MessagesRepository.envoyerRéponse / envoyerNouveau` — POST
+      nouveau-message + response `.message` normalization; optimistic pending →
+      failed-with-retry states (`MessageEnvoi`); `index` = thread length before
+      the push; reply re-sends the thread's own `theme` (bundle: `theme:
+      this.result.theme` — threads carry it, parsed tolerantly)
+- [x] Composer row (attachment · input · mic · send) in `ConversationScreen`
+      and `NouveauMessageScreen`, gated by the session kill switch (default
+      off; `hidesend` documented, informational); toggle lives in the Messages
+      title bar with an activation confirmation
+- [x] Category selection driven by server `themes[]` (ids 8/9/10/11/13) in
       new-message mode; sujet field; reworked « Joindre l'administration »
-      card
-- [ ] Attachments: SAF picker, staging in cacheDir, preview + remove,
-      1 MB toast (official limit, new-message path only)
-- [ ] Voice: `RECORD_AUDIO` in manifest + runtime prompt, MediaRecorder →
-      m4a (audio sent as `{file, name}`), integrated recording state,
-      playback for sent and received
-- [ ] Docs: `ENDPOINT-MAP.md` nouveau-message section (bundle-verified
-      fields + live-test result), unverified-table updates, README,
+      card (Écrire action when the composer is on; card hidden when the
+      server returns nothing and the composer is off — fixes the blank card)
+- [x] Attachments: SAF picker, staging in cacheDir (`Fichiers.copierDepuisSaf`),
+      preview + remove, 1 MB toast (official limit, new-message path only)
+- [x] Voice: `RECORD_AUDIO` in manifest + runtime prompt, MediaRecorder →
+      m4a (`util/EnregistreurAudio.kt`), recording state integrated in the
+      composer (pastille + chrono + annulation), playback for sent and received
+      (`LecteurAudio`)
+- [x] Tests: 6 new (themes parsing, thread theme, POST-response normalization,
+      envoi status copy, mimes) — 44 total, 0 failures
+- [x] (!) one live send before flipping the default — DONE 2026-09-19: user
+      sent a real message (text) to the administration successfully;
+      composer default flipped to ON, the Messages title-bar icon is the
+      on/off switch
+- [x] Docs: `ENDPOINT-MAP.md` nouveau-message section (bundle-verified
+      fields + live-test result pending), unverified-table updates, README,
       AGENTS.md
 - [x] `DESIGN.md` §4 surgical corrections (devoirs date semantics, documents sources)
+
+# Roadmap — composer v2 (post-issue #10)
+
+Wishlist from the first live test (2026-09-19), in no particular order.
+Nothing here is wired — design + decisions first.
+
+## Send queue with cancellation window
+
+A sent message is irreversible once the POST lands — the parent cannot
+recall it. A short send delay gives the writer a window to reread, edit or
+cancel, which matches how careful these messages must be.
+
+- [ ] Queued-send model: message sits in a local queue (`envoi planifié`)
+      with a countdown instead of posting immediately
+- [ ] Default delay 5 minutes, user-configurable (30 s / 1 / 2 / 5 / none)
+- [ ] Queue UI in the conversation: pending row with countdown, edit,
+      cancel, delete — clearly distinct from the optimistic « Envoi… » state
+- [ ] « Envoyer maintenant » (force send now) button bypassing the delay
+      — must remain a deliberate, separate gesture from the default
+- [ ] Queue survives process death (persisted, not just in-memory)
+- [ ] Interaction with the kill switch: queue only active when the composer
+      is on; delayed sends re-check the session before posting
+
+## AI writing assist (smart writing)
+
+Assist the parent in drafting — never send on its own, never invent facts
+about the school.
+
+- [ ] Decide the provider + privacy posture first (which API, what data
+      leaves the device, on by default or opt-in) — needs a user decision
+- [ ] Draft suggestion from a short intent (« demander une attestation »)
+- [ ] Rewrite/polish of the typed message (tone, grammar, formality)
+- [ ] Inline accept / regenerate / dismiss — composer stays the single
+      source of truth for the text
+- [ ] Never auto-send: AI output always lands in the composer for review
+- [ ] French-first prompts; school-context glossary kept client-side

@@ -51,8 +51,33 @@ data class Conversation(
     val id: String,
     val sujet: String,
     val messages: List<Message>,
+    /** Thème du fil (id serveur) — repris tel quel dans la réponse (bundle :
+     *  `theme: this.result.theme`). Rarement présent, tolérant. */
+    val theme: String? = null,
 ) {
     val dernierDate: LocalDateTime? get() = messages.maxOfOrNull { it.date ?: LocalDateTime.MIN }
+}
+
+/** Catégorie de message (serveur `themes[]` — Scolarité, Vie Scolaire…). */
+data class ThemeMessage(
+    val id: String,
+    val label: String,
+    val description: String? = null,
+)
+
+/**
+ * Message en cours d'envoi, poussé de façon optimiste au bas du fil puis
+ * remplacé par la version serveur (bundle : `conversation[index] = _.message`).
+ * Un échec reste affiché, marqué, avec une relance manuelle — jamais
+ * silencieux : un parent doit toujours savoir si l'école n'a rien reçu.
+ */
+data class MessageEnvoi(
+    val texte: String,
+    val pièces: List<java.io.File> = emptyList(),
+    val audio: java.io.File? = null,
+    val statut: Statut = Statut.EnCours,
+) {
+    enum class Statut { EnCours, Échec }
 }
 
 /** Un message dans un fil — de l'administration ou du parent. */

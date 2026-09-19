@@ -19,6 +19,7 @@ import school.greenwood.plus.model.Message
 import school.greenwood.plus.model.ParentInfo
 import school.greenwood.plus.model.Post
 import school.greenwood.plus.model.Ressource
+import school.greenwood.plus.model.ThemeMessage
 import school.greenwood.plus.util.extractDate
 import school.greenwood.plus.util.extractDateTime
 import java.time.LocalDate
@@ -114,8 +115,21 @@ object Normalizers {
             id = id,
             sujet = str(raw, "sujet") ?: str(raw, "to") ?: "",
             messages = messages,
+            theme = str(raw, "theme"),
         )
     }
+
+    /** Catégories du composeur (serveur `themes[]`, ids 8/9/10/11/13). */
+    fun themes(rep: JsonObject): List<ThemeMessage> =
+        arr(rep, "themes").mapNotNull { t ->
+            (t as? JsonObject)?.let {
+                ThemeMessage(
+                    id = str(it, "id") ?: return@mapNotNull null,
+                    label = str(it, "label") ?: "",
+                    description = str(it, "description"),
+                )
+            }
+        }
 
     fun message(raw: JsonObject): Message? {
         val texte = str(raw, "message") ?: return null

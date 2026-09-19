@@ -57,6 +57,39 @@ object Fichiers {
         return if (base.contains('.') && ext.isEmpty()) base else base + ext
     }
 
+    /** Espace d'attente des pièces à envoyer (composeur, issue #10). */
+    fun dossierEnvoi(context: Context): File =
+        File(context.cacheDir, "envoi").apply { mkdirs() }
+
+    /** Copie un document choisi via le sélecteur système (SAF) dans l'espace
+     *  d'attente. Retourne null si la lecture échoue. */
+    suspend fun copierDepuisSaf(context: Context, uri: Uri): File? =
+        withContext(Dispatchers.IO) {
+            runCatching {
+                val résolu = context.contentResolver.query(uri, null, null, null, null)?.use { c ->
+                    val colNom = c.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+                    if (c.moveToFirst() && colNom >= 0) c.getString(colNom) else null
+                }
+                val nom = nomFichierSain(résolu ?: "piece-jointe", uri.toString())
+                val cible = File(dossierEnvoi(context), nom.uniqueNom())
+                context.contentResolver.openInputStream(uri)?.use { entrée ->
+                    cible.outputStream().use { sortie -> entrée.copyTo(sortie) }
+                } ?: return@runCatching null
+                cible
+            }.getOrNull()
+        }
+
+    /** Limite officielle du composeur « nouveau message » : 1 Mo par pièce
+     *  (toast du bundle : « S'il vous plait choisi un fichier moins ou egale 1MB »). */
+    fun dépasseLimite1Mo(fichier: File): Boolean = fichier.length() > 1_048_576L
+
+    private fun String.uniqueNom(): String {
+        val point = lastIndexOf('.')
+        val base = if (point > 0) substring(0, point) else this
+        val ext = if (point > 0) substring(point) else ""
+        return "$base${System.currentTimeMillis()}$ext"
+    }
+
     /** Ouvre dans le lecteur du système. Retourne null si rien ne sait le lire. */
     fun intentionOuvrir(context: Context, fichier: File): Intent? {
         val uri: Uri = FileProvider.getUriForFile(

@@ -56,6 +56,7 @@ class RegistreRepository(
     private val devoirs = DevoirsRepository(client)
     private val nouveautes = NouveautesRepository(client, session)
     private val absences = AbsencesRepository(client)
+    private val messagesRepo = MessagesRepository(client, session)
 
     suspend fun charger(aujourdhui: LocalDate = LocalDate.now()): RegistreDuJour {
         val tousLesDevoirs = runCatching { devoirs.liste() }.getOrDefault(emptyList())
@@ -63,7 +64,7 @@ class RegistreRepository(
 
         val posts = runCatching { nouveautes.liste() }.getOrDefault(emptyList())
         val bilans = runCatching { absences.liste() }.getOrDefault(BilanAbsences())
-        val messages = runCatching { MessagesRepository(client).conversations() }.getOrDefault(emptyList())
+        val messages = runCatching { messagesRepo.conversations().conversations }.getOrDefault(emptyList())
 
         val entrees = buildList {
             posts.filter { it.date?.toLocalDate() == aujourdhui }

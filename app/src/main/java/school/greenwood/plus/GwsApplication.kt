@@ -25,7 +25,7 @@ class AppContainer(context: Context) {
     val registre = RegistreRepository(client, session)
     val devoirs = DevoirsRepository(client)
     val nouveautes = NouveautesRepository(client, session)
-    val messages = MessagesRepository(client)
+    val messages = MessagesRepository(client, session)
     val demandes = DemandesRepository(client)
     val documents = DocumentsRepository(client)
 }
