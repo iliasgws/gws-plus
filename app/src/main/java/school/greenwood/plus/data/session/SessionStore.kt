@@ -62,9 +62,9 @@ class SessionStore(private val context: Context) {
         val retenir = booleanPreferencesKey("retenir")
         val onboardingVu = booleanPreferencesKey("onboarding_vu")
 
-        /** Kill switch du composeur (issue #10, décision utilisateur) : l'envoi
-         *  réel n'est pas encore validé — composeur masqué par défaut, activable
-         *  pour le test en conditions réelles. Survit à une purge de session. */
+        /** Composeur activé (issue #10) — désormais par défaut. L'envoi réel a
+         *  été validé en conditions réelles (test du 19/09/2026) ; le réglage
+         *  sert d'interrupteur, pas de verrou. Survit à une purge de session. */
         val composeurActivé = booleanPreferencesKey("composeur_active")
     }
 
@@ -99,7 +99,7 @@ class SessionStore(private val context: Context) {
 
     val onboardingVu: Flow<Boolean> = context.dataStore.data.map { it[Clefs.onboardingVu] ?: false }
 
-    val composeurActivé: Flow<Boolean> = context.dataStore.data.map { it[Clefs.composeurActivé] ?: false }
+    val composeurActivé: Flow<Boolean> = context.dataStore.data.map { it[Clefs.composeurActivé] ?: true }
 
     suspend fun définirComposeur(actif: Boolean) {
         context.dataStore.edit { it[Clefs.composeurActivé] = actif }

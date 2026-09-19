@@ -68,10 +68,10 @@ import java.util.Locale
  * et accusés de lecture (`vu_le`) sur les messages du parent. Pièces jointes
  * et messages vocaux joués en ligne.
  *
- * Composeur (seconde partie) — gated par le kill switch de session (désactivé
- * par défaut tant que l'envoi réel n'a pas été validé une fois). Envoi
- * optimiste : l'élément en attente s'affiche au bas du fil, remplacé par la
- * version serveur à la confirmation, marqué Échec (relançable) sinon.
+ * Composeur (seconde partie) — actif par défaut (envoi réel validé le
+ * 19/09/2026), interrupteur dans l'onglet Messages. Envoi optimiste :
+ * l'élément en attente s'affiche au bas du fil, remplacé par la version
+ * serveur à la confirmation, marqué Échec (relançable) sinon.
  */
 
 @Composable

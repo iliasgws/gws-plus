@@ -20,7 +20,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Send
 import androidx.compose.material.icons.rounded.Call
 import androidx.compose.material.icons.rounded.Tune
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -29,12 +28,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -59,15 +54,15 @@ import school.greenwood.plus.util.htmlToPlainSingleLine
 
 /*
  * Messages avec l'administration (DESIGN.md §4) — la liste des fils s'ouvre
- * sur l'écran de conversation dédié (issue #10, première partie) et, avec le
- * composeur (seconde partie), une carte « Écrire » ouvre un fil vierge.
+ * sur l'écran de conversation dédié (issue #10, première partie) et une carte
+ * « Écrire » ouvre un fil vierge (composeur, seconde partie).
  *
- * Le composeur reste derrière le kill switch de session (décision utilisateur,
- * issue #10) : l'envoi réel n'a pas encore été validé — un message raté ferait
- * croire à un parent que l'école a été prévenue. Réglage discret dans la barre
- * de titre, désactivé par défaut. La carte contact rend l'administration
- * joignable tout de suite (téléphone, Facebook, site) ; elle ne s'affiche que
- * si le serveur renseigne quelque chose ou si le composeur est actif.
+ * Le composeur est actif par défaut : l'envoi réel a été validé le 19/09/2026
+ * (test vers l'administration). L'icône de réglage de la barre de titre sert
+ * d'interrupteur pour le désactiver/réactiver. La carte contact rend
+ * l'administration joignable tout de suite (téléphone, Facebook, site) ; elle
+ * ne s'affiche que si le serveur renseigne quelque chose ou si le composeur
+ * est actif.
  */
 
 @Composable
@@ -80,8 +75,6 @@ fun MessagesScreen(
     val vm: MessagesViewModel = viewModel { MessagesViewModel(container) }
     val état by vm.état.collectAsStateWithLifecycle()
     val context = LocalContext.current
-
-    var demanderActivation by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -101,45 +94,13 @@ fun MessagesScreen(
                 color = RegistreTheme.colors.ink,
                 modifier = Modifier.weight(1f),
             )
-            IconButton(onClick = {
-                if (état.composeurActivé) vm.définirComposeur(false) else demanderActivation = true
-            }) {
+            IconButton(onClick = { vm.définirComposeur(!état.composeurActivé) }) {
                 Icon(
                     imageVector = Icons.Rounded.Tune,
-                    contentDescription = if (état.composeurActivé) "Désactiver le composeur" else "Activer le composeur (test)",
+                    contentDescription = if (état.composeurActivé) "Désactiver le composeur" else "Activer le composeur",
                     tint = if (état.composeurActivé) RegistreTheme.colors.ink else RegistreTheme.colors.chalk,
                 )
             }
-        }
-
-        // Confirmation d'activation : l'envoi n'est pas encore validé, le
-        // message d'essai atteindra réellement l'administration.
-        if (demanderActivation) {
-            AlertDialog(
-                onDismissRequest = { demanderActivation = false },
-                title = { Text("Activer le composeur ?") },
-                text = {
-                    Text(
-                        "L'envoi n'a pas encore été validé en conditions réelles. " +
-                            "Un message envoyé partira vraiment à l'administration.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = RegistreTheme.colors.chalk,
-                    )
-                },
-                confirmButton = {
-                    TextButton(onClick = {
-                        demanderActivation = false
-                        vm.définirComposeur(true)
-                    }) {
-                        Text("Activer", color = RegistreTheme.colors.ink)
-                    }
-                },
-                dismissButton = {
-                    TextButton(onClick = { demanderActivation = false }) {
-                        Text("Annuler", color = RegistreTheme.colors.chalk)
-                    }
-                },
-            )
         }
 
         when {

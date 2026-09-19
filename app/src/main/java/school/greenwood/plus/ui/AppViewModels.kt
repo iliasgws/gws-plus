@@ -243,8 +243,7 @@ data class MessagesÉtat(
     val contact: ContactEcole? = null,
     /** Catégories du composeur (serveur themes[]). */
     val themes: List<school.greenwood.plus.model.ThemeMessage> = emptyList(),
-    /** Kill switch issue #10 — composeur masqué tant que l'envoi réel n'a pas
-     *  été validé une fois. */
+    /** Composeur actif par défaut (issue #10, envoi validé le 19/09/2026). */
     val composeurActivé: Boolean = false,
 )
 
@@ -283,7 +282,7 @@ class MessagesViewModel(private val container: AppContainer) : ViewModel() {
         }
     }
 
-    /** Kill switch du composeur — persistant, décision utilisateur (issue #10). */
+    /** Interrupteur du composeur — persistant (issue #10). */
     fun définirComposeur(actif: Boolean) {
         viewModelScope.launch { container.session.définirComposeur(actif) }
     }
@@ -295,7 +294,7 @@ data class ConversationÉtat(
     val chargement: Boolean = true,
     val erreur: String? = null,
     val conversation: Conversation? = null,
-    /** Composeur (gated par le kill switch, collecté depuis la session). */
+    /** Composeur (collecté depuis la session — actif par défaut). */
     val composeurActif: Boolean = false,
     val texte: String = "",
     val pièces: List<java.io.File> = emptyList(),

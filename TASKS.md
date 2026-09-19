@@ -118,8 +118,8 @@ raw probe responses stay out of the repository (personal data).
 
 Living checklist for the message-composing milestone. Split in two PRs per
 user decision (2026-09-19): PR 1 = conversation screen (read-only), PR 2 =
-composer + sending + attachments + voice. The write path is verified
-**statically** (bundle), not yet **live**.
+composer + sending + attachments + voice. The write path was verified
+**statically** (bundle), then **live** (first real send, 2026-09-19).
 
 ## Verification of the write path (2026-09-19)
 
@@ -137,9 +137,10 @@ composer + sending + attachments + voice. The write path is verified
       `key` only — **no** `paltform`/`versionCode` envelope.
 - [x] `hidesend` is dead code in v2.4.14 — zero references across the
       bundle; the official app never reads it. Composer gated by an app
-      setting instead (user decision: kill switch, default off).
-- [ ] One live send before enabling the write path (user runs it — it
-      reaches the school administration).
+      setting instead (kill switch for the first days, default ON since the
+      validated live send).
+- [x] One live send before enabling the write path (2026-09-19 — message
+      delivered to the school administration).
 
 ## PR 1 — Conversation screen (read-only) — branch `messages-conversation`
 
@@ -187,8 +188,10 @@ composer + sending + attachments + voice. The write path is verified
       (`LecteurAudio`)
 - [x] Tests: 6 new (themes parsing, thread theme, POST-response normalization,
       envoi status copy, mimes) — 44 total, 0 failures
-- [ ] (!) one live send before flipping the default (user runs it — it reaches
-      the school administration)
+- [x] (!) one live send before flipping the default — DONE 2026-09-19: user
+      sent a real message (text) to the administration successfully;
+      composer default flipped to ON, the Messages title-bar icon is the
+      on/off switch
 - [x] Docs: `ENDPOINT-MAP.md` nouveau-message section (bundle-verified
       fields + live-test result pending), unverified-table updates, README,
       AGENTS.md
