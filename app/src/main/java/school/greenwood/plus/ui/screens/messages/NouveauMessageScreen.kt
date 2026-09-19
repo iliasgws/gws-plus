@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -60,6 +61,8 @@ fun NouveauMessageScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(RegistreTheme.colors.paper)
+            // Le clavier repousse le contenu (composeur visible au-dessus).
+            .imePadding()
             .padding(padding),
     ) {
         Row(
@@ -91,16 +94,23 @@ fun NouveauMessageScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(
-                    value = état.sujet,
-                    onValueChange = vm::modifierSujet,
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    placeholder = {
-                        Text("Sujet", style = MaterialTheme.typography.bodyMedium, color = RegistreTheme.colors.chalk)
-                    },
-                    shape = ControlShape,
-                )
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(
+                        text = "Sujet",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = RegistreTheme.colors.chalk,
+                    )
+                    OutlinedTextField(
+                        value = état.sujet,
+                        onValueChange = vm::modifierSujet,
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        placeholder = {
+                            Text("Objet de ta demande…", style = MaterialTheme.typography.bodyMedium, color = RegistreTheme.colors.chalk)
+                        },
+                        shape = ControlShape,
+                    )
+                }
 
                 if (état.themes.isNotEmpty()) {
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {

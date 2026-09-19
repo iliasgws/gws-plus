@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -17,6 +18,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Attachment
+import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material3.Button
@@ -87,6 +89,8 @@ fun ConversationScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(RegistreTheme.colors.paper)
+            // Le clavier repousse le contenu (composeur visible au-dessus).
+            .imePadding()
             .padding(padding),
     ) {
         Row(
@@ -283,11 +287,22 @@ private fun BulleEnvoi(
                     )
                 }
                 envoi.audio?.let {
-                    Text(
-                        text = "Message vocal",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = RegistreTheme.colors.chalk,
-                    )
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Mic,
+                            contentDescription = null,
+                            tint = RegistreTheme.colors.chalk,
+                            modifier = Modifier.size(14.dp),
+                        )
+                        Text(
+                            text = "Message vocal",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = RegistreTheme.colors.chalk,
+                        )
+                    }
                 }
             }
         }

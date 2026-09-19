@@ -98,9 +98,10 @@ fun Composeur(
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                audio?.let { fichier ->
+                audio?.let {
                     PucePièce(
-                        nom = "Message vocal prêt",
+                        nom = "Message vocal",
+                        icone = Icons.Rounded.Mic,
                         onRetirer = onRetirerAudio,
                     )
                 }
@@ -243,9 +244,13 @@ fun Composeur(
     }
 }
 
-/** Nom + croix d'une pièce en attente d'envoi. */
+/** Nom + croix d'une pièce (ou d'un vocal) en attente d'envoi. */
 @Composable
-private fun PucePièce(nom: String, onRetirer: () -> Unit) {
+private fun PucePièce(
+    nom: String,
+    icone: androidx.compose.ui.graphics.vector.ImageVector? = null,
+    onRetirer: () -> Unit,
+) {
     Surface(
         shape = ControlShape,
         color = RegistreTheme.colors.sage,
@@ -253,7 +258,16 @@ private fun PucePièce(nom: String, onRetirer: () -> Unit) {
         Row(
             modifier = Modifier.padding(start = 10.dp, end = 2.dp, top = 2.dp, bottom = 2.dp),
             verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
+            icone?.let {
+                Icon(
+                    imageVector = it,
+                    contentDescription = null,
+                    tint = RegistreTheme.colors.ink,
+                    modifier = Modifier.size(13.dp),
+                )
+            }
             Text(
                 text = nom,
                 style = MaterialTheme.typography.labelSmall,
