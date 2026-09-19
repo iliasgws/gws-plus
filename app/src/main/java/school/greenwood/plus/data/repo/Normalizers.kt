@@ -18,6 +18,10 @@ import school.greenwood.plus.model.Eleve
 import school.greenwood.plus.model.Message
 import school.greenwood.plus.model.ParentInfo
 import school.greenwood.plus.model.Post
+import school.greenwood.plus.model.QuizDetail
+import school.greenwood.plus.model.QuizQuestion
+import school.greenwood.plus.model.QuizReponse
+import school.greenwood.plus.model.QuizRésultat
 import school.greenwood.plus.model.Ressource
 import school.greenwood.plus.model.ThemeMessage
 import school.greenwood.plus.util.extractDate
@@ -249,6 +253,61 @@ object Normalizers {
             type = str(raw, "type"),
             couleur = str(raw, "color"),
             icone = str(raw, "icon")?.takeIf { it.startsWith("http") },
+        )
+    }
+
+    // — Quiz ------------------------------------------------------------------
+
+    /**
+     * Détail d'un quiz (GET `quiz?quiz_id=…`) — forme vérifiée en sonde
+     * lecture-seule le 19/09/2026 (docs/api/ENDPOINT-MAP.md). Tolérant :
+     * champs manquants, `can_play` absent, questions sans réponses.
+     */
+    fun quiz(rep: JsonObject): QuizDetail? {
+        val data = (rep["data"] as? JsonObject) ?: rep
+        val id = str(data, "quiz_id") ?: str(data, "id") ?: return null
+        val questions = arr(data, "questions").mapNotNull { q ->
+            (q as? JsonObject)?.let { question(it) }
+        }
+        return QuizDetail(
+            id = id,
+            label = str(data, "label") ?: "",
+            matiere = str(data, "matiere"),
+            niveau = str(data, "niveau"),
+            couleur = str(data, "color"),
+            image = MediaUrls.lienRéel(str(data, "image"))?.takeIf { it.startsWith("http") },
+            minutes = str(data, "minutes"),
+            peutJouer = bool(data, "can_play") ?: true,
+            peutRejouer = bool(data, "can_replay") ?: false,
+            questions = questions,
+        )
+    }
+
+    fun question(raw: JsonObject): QuizQuestion? {
+        val texte = str(raw, "question") ?: return null
+        return QuizQuestion(
+            texte = texte,
+            image = MediaUrls.lienRéel(str(raw, "image"))?.takeIf { it.startsWith("http") },
+            tempsReponse = int(raw, "temps_reponse"),
+            reponses = arr(raw, "reponses").mapNotNull { r ->
+                (r as? JsonObject)?.let {
+                    QuizReponse(
+                        texte = str(it, "reponse") ?: return@mapNotNull null,
+                        correcte = bool(it, "correct") == true,
+                    )
+                }
+            },
+        )
+    }
+
+    /** Score d'une tentative : plat ou sous `data` (le bundle lit
+     *  `resultatScore.score` sans enveloppe). */
+    fun quizRésultat(rep: JsonObject): QuizRésultat {
+        val data = (rep["data"] as? JsonObject) ?: rep
+        return QuizRésultat(
+            score = str(data, "score") ?: str(rep, "score"),
+            temps = str(data, "time") ?: str(rep, "time"),
+            peutRejouer = bool(data, "can_replay") ?: bool(rep, "can_replay"),
         )
     }
 

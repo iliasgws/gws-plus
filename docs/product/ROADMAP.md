@@ -279,3 +279,44 @@ button that grabs them all is the obvious missing convenience.
       if the set is large)
 - [ ] Open-with chooser after batch download; files land in the same
       private documents space (no storage permission needed)
+
+# TASKS — Issue #17 « Documents: filter by type + access the quizzes »
+
+Living checklist for the document-space milestone (issue #17): a filter by
+document type, and actually opening the quizzes. Branch `documents-quiz`.
+
+## Verification (2026-09-19)
+
+- [x] GET `quiz` live-probed read-only on the reference account
+      (`~/dev/shape-probe/quiz_list.json`, `quiz_play.json`): a paginated
+      list (`start`/`limit`, `matieres[]` catalog) and the play form
+      (`data{quiz_id, label, matiere, niveau, color, image, questions[],
+      minutes, can_play, can_replay}` — questions carry `reponses[].correct`
+      flags, per-question `temps_reponse`, pre-filled `answer.correct`,
+      top-level `no_play`). Shapes distilled into `docs/api/ENDPOINT-MAP.md`.
+- [x] POST `quiz` read from the official bundle (chunk 1140.js, page
+      `/parent/quiz`): `quiz_id`, `questions` = the GET array serialized
+      with `answer.answer`/`answer.answered` updated, `eleve_id`, `user_id`,
+      `parent_id`, `key`; response carries `score`/`time`/`can_replay`.
+      User decision: ship it wired — a failed POST is non-fatal, the local
+      score stays displayed (the official app itself ignores POST errors).
+
+## Branch `documents-quiz`
+
+- [x] Documents tab: filter by nature — Tout / Quiz / Documents (type
+      `quiz` vs everything else; absent type stays a document) — chips
+      under the search field, same gabarit as the Devoirs day selector
+- [x] Quiz rows open a quiz screen (GET `quiz?quiz_id=`): start card
+      (visual, matières, « N questions · durée », « Démarrer le quiz »),
+      then question-by-question play with the official rules — per-question
+      countdown mm:ss, immediate right/wrong feedback (the server carries
+      the flags), 2 s then advance, timeout = unanswered with full time
+- [x] End of play: POST `quiz` records the attempt; the score screen shows
+      the server score, falls back to the local count with a discreet
+      inline note when the POST fails; « Rejouer » when `can_replay`
+- [x] Non-quiz rows stay inert (`ressource_details` shapes UNVERIFIED)
+- [x] Tests: 12 new (quiz normalizers, POST payload builder, nature
+      filter, duration/clock helpers) — 59 total, 0 failures
+- [x] `assembleDebug` green
+- [ ] (!) one live quiz play on a real device to validate the POST (score
+      recorded server-side) — play and local score work regardless

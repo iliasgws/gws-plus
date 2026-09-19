@@ -2,6 +2,7 @@ package school.greenwood.plus.ui.screens.documents
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -36,6 +37,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import school.greenwood.plus.AppContainer
 import school.greenwood.plus.model.Ressource
 import school.greenwood.plus.ui.DocumentsViewModel
+import school.greenwood.plus.ui.FiltreDocuments
+import school.greenwood.plus.ui.estQuiz
+import school.greenwood.plus.ui.filtrerRessources
 import school.greenwood.plus.ui.components.EmptyState
 import school.greenwood.plus.ui.components.ErrorInline
 import school.greenwood.plus.ui.components.GwsCard
@@ -49,13 +53,16 @@ import school.greenwood.plus.util.htmlToPlainSingleLine
 /*
  * L'espace documents (docs/product/DESIGN.md §4). Le serveur ne propose aujourd'hui que
  * des ressources par matière (souvent des quiz) : liste groupée, recherche
- * locale. Pas d'invention de téléchargement — les URLs n'existent pas ici.
+ * locale, filtre par nature — quiz ou documents (issue #17). Les quiz
+ * s'ouvrent sur l'écran de quiz (GET `quiz` vérifié le 19/09/2026) ; les
+ * autres ressources restent inertes (ressource_details non vérifié).
  */
 
 @Composable
 fun DocumentsScreen(
     container: AppContainer,
     padding: PaddingValues,
+    onOuvrirQuiz: (String) -> Unit,
 ) {
     val vm: DocumentsViewModel = viewModel { DocumentsViewModel(container) }
     val état by vm.état.collectAsStateWithLifecycle()
@@ -76,6 +83,11 @@ fun DocumentsScreen(
             ChampRecherche(
                 valeur = état.recherche,
                 onChange = vm::modifierRecherche,
+            )
+            Spacer(Modifier.height(10.dp))
+            FiltreNature(
+                choisi = état.filtre,
+                onChange = vm::choisirFiltre,
             )
         }
 
@@ -102,15 +114,7 @@ fun DocumentsScreen(
                 }
             }
             else -> {
-                val requête = état.recherche.trim()
-                val filtrées = if (requête.isEmpty()) {
-                    état.ressources
-                } else {
-                    état.ressources.filter {
-                        it.label.contains(requête, ignoreCase = true) ||
-                            it.matiere.contains(requête, ignoreCase = true)
-                    }
-                }
+                val filtrées = filtrerRessources(état.ressources, état.recherche, état.filtre)
                 if (état.ressources.isEmpty()) {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         EmptyState(
@@ -122,7 +126,11 @@ fun DocumentsScreen(
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         EmptyState(
                             titre = "Rien trouvé",
-                            message = "Essaie un autre mot.",
+                            message = if (état.recherche.isBlank()) {
+                                "Aucune ressource de ce type pour le moment."
+                            } else {
+                                "Essaie un autre mot."
+                            },
                         )
                     }
                 } else {
@@ -141,13 +149,58 @@ fun DocumentsScreen(
                                 items.size,
                                 key = { i -> "${items[i].id}-$i" },
                             ) { i ->
-                                LigneRessource(items[i])
+                                LigneRessource(
+                                    items[i],
+                                    ouvrirQuiz = onOuvrirQuiz,
+                                )
                             }
                         }
                     }
                 }
             }
         }
+    }
+}
+
+/** Filtre par nature : Tout / Quiz / Documents (issue #17), même gabarit que
+ *  le sélecteur de jour des Devoirs. */
+@Composable
+private fun FiltreNature(
+    choisi: FiltreDocuments,
+    onChange: (FiltreDocuments) -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        FiltreDocuments.entries.forEach { filtre ->
+            PuceFiltre(
+                label = filtre.label,
+                sélectionné = filtre == choisi,
+                onClick = { onChange(filtre) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun PuceFiltre(
+    label: String,
+    sélectionné: Boolean,
+    onClick: () -> Unit,
+) {
+    Surface(
+        shape = ControlShape,
+        color = if (sélectionné) RegistreTheme.colors.sage else RegistreTheme.colors.page,
+        border = if (sélectionné) null else BorderStroke(1.dp, RegistreTheme.colors.sage),
+        modifier = Modifier.clickable(onClick = onClick),
+    ) {
+        Text(
+            text = label,
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+            style = MaterialTheme.typography.labelMedium,
+            color = if (sélectionné) RegistreTheme.colors.ink else RegistreTheme.colors.chalk,
+        )
     }
 }
 
@@ -199,8 +252,22 @@ private fun ChampRecherche(
 }
 
 @Composable
-private fun LigneRessource(ressource: Ressource) {
-    GwsCard(modifier = Modifier.fillMaxWidth()) {
+private fun LigneRessource(
+    ressource: Ressource,
+    ouvrirQuiz: (String) -> Unit,
+) {
+    val quiz = estQuiz(ressource)
+    GwsCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(
+                if (quiz) {
+                    Modifier.clickable { ouvrirQuiz(ressource.id) }
+                } else {
+                    Modifier
+                },
+            ),
+    ) {
         Row(
             modifier = Modifier.padding(12.dp),
             verticalAlignment = Alignment.CenterVertically,

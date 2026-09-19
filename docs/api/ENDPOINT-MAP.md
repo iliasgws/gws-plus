@@ -400,12 +400,12 @@ Transport) — and `translation` (composer strings).
 - `audio` was null throughout; attachment shape of non-empty `files[]`
   UNVERIFIED — do not rely.
 
-## nouveau-message — sending (bundle-verified, live test pending)
+## nouveau-message — sending (bundle-verified; live send validated 2026-09-19)
 
 **POST** `nouveau-message` — multipart. Fields read from the official bundle
-2.4.14 (reply composer and new-message page) — statically verified, not yet
-exercised against the live server (one real send owed, app kill switch
-default off).
+2.4.14 (reply composer and new-message page). Validated live on 2026-09-19
+with a real text message delivered to the administration; the non-empty
+`files[]` / `audio` parts and the new-thread response remain unproven live.
 
 **Reply to a thread** (conversation composer):
 
@@ -575,6 +575,107 @@ Top-level: `empty`, `logo` (empty string), `empty_icon`, `empty_text`,
 - Other `type` values (PDF, videos, …) expected but not observed for this
   account — shapes UNVERIFIED — do not rely.
 
+## quiz — quiz list and play flow (document space)
+
+**GET** `quiz` — probed 2026-09-19 (`quiz_list.json`, `quiz_play.json`).
+**POST** `quiz` — same endpoint records a finished play; fields read from
+the official bundle (chunk 1140.js, parent page `/parent/quiz`) — live
+submit still owed once on a real device.
+
+**List form** — GET with `start=0`, `limit=10` (the official parent
+« Quizs » tab, chunk 93.js; an `filter=JSON.stringify(...)` param exists in
+the bundle but its filter select is dead code there — ignore):
+
+`data[]` items:
+
+```json
+{
+  "id": "<id>",
+  "matieres": [{ "id": "4", "label": "Anglais" }],
+  "label": "<intitulé>",
+  "presentation": null,
+  "type": "quiz",
+  "color": "#ff882d",
+  "icon": "<URL image>",
+  "images": ["<URL image>"],
+  "matiere_id": 1
+}
+```
+
+- Top-level: `empty`, `logo`, `empty_icon`, `empty_text`, `no_play`,
+  `translation` {`title`, `quiz`, `_quiz`, `matiere_placeholder`} and
+  `matieres[]` — the school's subject catalog (filter options).
+- Pagination `start` / `limit`; the official app appends pages client-side.
+- One row per quiz (not per matière, unlike `ressources_v2`).
+
+**Play form** — GET with `quiz_id=<id>`:
+
+```json
+{
+  "data": {
+    "quiz_id": "<id>",
+    "label": "<intitulé>",
+    "matiere": "Mathématiques",
+    "color": "#33a6e1",
+    "niveau": "<niveau>",
+    "image": "<URL image>",
+    "questions": ["…"],
+    "minutes": "05:00",
+    "can_play": true,
+    "can_replay": true
+  },
+  "empty": false,
+  "no_play": "Télécharger la pièce jointe",
+  "translation": { "title": "Ressources", "quiz": "Quiz", "_quiz": "Quiz",
+                   "matiere_placeholder": "filtrer par matiere" }
+}
+```
+
+`questions[]` items:
+
+```json
+{
+  "question": "<texte>",
+  "alias": "",
+  "answer": { "answer": "", "correct": "<texte de la bonne réponse>",
+              "answered": null },
+  "image": "<URL image>",
+  "temps_reponse": 60,
+  "reponses": [
+    { "reponse": "<texte>", "correct": false },
+    { "reponse": "<texte>", "correct": true }
+  ]
+}
+```
+
+- `answer.correct` arrives **pre-filled with the correct answer text** —
+  the play is scored client-side; the per-choice feedback flags are
+  `reponses[].correct` (booleans).
+- `temps_reponse` = seconds allowed per question; the countdown resets on
+  every question (bundle `initTimer`). `minutes` = total, display format
+  « mm:ss », display only.
+- At answer time the bundle sets `answer.answer` = chosen response text and
+  `answer.answered` = seconds consumed (`temps_reponse − remaining`). A
+  timeout answers with no choice and the full time.
+- `lastPlay` (top level — « last attempt » card in the bundle) was absent
+  in the probe (never played) — shape UNVERIFIED.
+- `can_play: false` → the official app only displays `no_play`
+  (« Télécharger la pièce jointe ») with no link — a dead end; read it as
+  « quiz indisponible ».
+
+**POST** — end of a completed play (bundle 1140.js):
+
+| Field | Value |
+| --- | --- |
+| `quiz_id` | `data.quiz_id` of the GET |
+| `questions` | the GET's `questions[]` serialized as a JSON **string**, each `answer` updated as above — everything else left byte-for-byte |
+| `eleve_id` / `user_id` / `parent_id` / `key` | session values |
+
+Response carries `score`, `time`, `can_replay` (read flat as
+`resultatScore.score` in the bundle — tolerate a `data{}` envelope too).
+The official app ignores POST errors (console.log only) and falls back to
+its client-side correct count.
+
 ## bibliotheque — school library (document space)
 
 **GET** `bibliotheque` — probe params: standard envelope only
@@ -689,12 +790,12 @@ Top-level keys: `all_objects`, `types`, `empty`, `empty_icon`, `empty_text`,
 | `post_view` | GET | per-post detail / mark-as-read |
 | `ressource_details` | GET | resource detail (quiz content, …) |
 | `cartable_numeriques`, `cartable_split` | GET | digital cartable |
-| `nouveau-message` | POST | send a message — fields bundle-verified (see section below); live send pending |
+| `nouveau-message` | POST | send a message — fields bundle-verified (see section below); live text send validated 2026-09-19, attachment/voice parts still unproven |
 | `absences-justification` | POST | justify an absence — field names unverified |
 | `pick_enfants` | GET/POST | child switcher — POST fields unverified |
 | `device_token` | POST | FCM registration — fields per `BOTI-API.md`, server acceptance unverified |
 | `logout` | POST | kills the session server-side |
-| `quiz` | GET/POST | quiz play flow (behind `ressources_v2` quiz items) |
+| `quiz` | GET/POST | list + play flow — GET verified live 2026-09-19 (see section); POST fields bundle-verified, live submit owed |
 
 ## Summary of unverified items in this map
 
@@ -705,6 +806,7 @@ Top-level keys: `all_objects`, `types`, `empty`, `empty_icon`, `empty_text`,
 - `devoirs_date_v2`: real submission multipart fields
 - `cours_v2`: inner `seances[]` slots
 - `acces_check`: behaviour on an invalid/expired session
-- `nouveau-message`: POST fields bundle-verified statically (see its section); one live send still owed — non-empty `files[]` shapes and the new-thread response remain unproven
+- `nouveau-message`: live text send validated 2026-09-19 — non-empty `files[]`/`audio` parts and the new-thread response remain unproven
+- `quiz`: POST submit live validation; response `score`/`time` exact shape (bundle reads them flat); `lastPlay` shape
 - `pick_enfants`, `device_token`: POST fields
 - non-empty `files[]` shapes (nouveautes, messages, devoirs `devoir_fait`)

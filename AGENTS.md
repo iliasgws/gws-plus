@@ -12,7 +12,7 @@ Greenwood School + is an application that lets parents of pupils follow their ch
 - 📝 Suivi des demandes administratives (administrative request tracking)
 - ✉️ Contacter l'administration de l'école en ligne (online contact with school administration)
 
-**Current status:** the first application milestone exists — a Kotlin/Jetpack Compose app (single `:app` module) implementing the `docs/product/DESIGN.md` foundation: « Le registre » theme, session + network layer for the Boti API, 4-tab navigation with per-tab back stacks, login/onboarding, and the Registre/Devoirs/Documents/Messages/Demandes screens, plus a dedicated Conversation screen (issue #10, PR 1) and the message composer (PR 2): reply in a thread, new thread (sujet + category from server `themes[]`), attachments (SAF, 1 MB limit on the new-thread path) and voice messages (RECORD_AUDIO at runtime, MediaRecorder m4a), optimistic send with failed-retry. The composer is **ON by default** since the live send was validated (2026-09-19 — a real message reached the administration); the Messages title-bar icon is the on/off switch. The POST `nouveau-message` fields are statically verified from the official bundle and now exercised live (see `docs/product/ROADMAP.md` issue-#10 section). Creating demandes remains unwired (write-path fields unverified).
+**Current status:** the first application milestone exists — a Kotlin/Jetpack Compose app (single `:app` module) implementing the `docs/product/DESIGN.md` foundation: « Le registre » theme, session + network layer for the Boti API, 4-tab navigation with per-tab back stacks, login/onboarding, and the Registre/Devoirs/Documents/Messages/Demandes screens, plus a dedicated Conversation screen (issue #10, PR 1) and the message composer (PR 2): reply in a thread, new thread (sujet + category from server `themes[]`), attachments (SAF, 1 MB limit on the new-thread path) and voice messages (RECORD_AUDIO at runtime, MediaRecorder m4a), optimistic send with failed-retry. The composer is **ON by default** since the live send was validated (2026-09-19 — a real message reached the administration); the Messages title-bar icon is the on/off switch. The POST `nouveau-message` fields are statically verified from the official bundle and now exercised live (see `docs/product/ROADMAP.md` issue-#10 section). Creating demandes remains unwired (write-path fields unverified). The Documents tab filters by nature (Tout / Quiz / Documents) and quizzes open a play screen (issue #17): GET `quiz` live-probed read-only 2026-09-19, POST score submit bundle-verified — live validation owed (see `docs/product/ROADMAP.md` issue-#17 section).
 
 **Current priority (from README):** fix Android back-gesture navigation — opening the homework section and then using the Android system back gesture must behave correctly in every section of the app. Do not regress this behaviour.
 
@@ -45,13 +45,13 @@ Current contents (update this section whenever files are added or removed):
 | `…/ui/AppViewModels.kt` | One ViewModel per screen |
 | `…/ui/theme/` | « Le registre » tokens: colors, Fraunces/Bricolage/Public Sans type, 20/12/6 shapes |
 | `…/ui/components/Components.kt` | Shared composables (GwsCard, Puce, EmptyState, ErrorInline, GwsAvatar…) |
-| `…/ui/screens/` | Login, Onboarding, registre (+ Post detail), devoirs, documents, messages (+ Conversation + composer), demandes |
+| `…/ui/screens/` | Login, Onboarding, registre (+ Post detail), devoirs, documents (+ Quiz play), messages (+ Conversation + composer), demandes |
 | `…/data/api/` | BotiApi/BotiClient (generic GET/POST multipart + envelope), BotiEnvelope, MediaUrls (single-decode) |
 | `…/data/session/SessionStore.kt` | DataStore session (keyToken, user, eleves; never passwords) + composer switch |
 | `…/data/repo/` | Repositories + Normalizers (raw JSON → domain models) |
 | `…/logic/CeSoir.kt` | The focal card's due-date window (Friday → Monday) |
 | `…/util/` | Dates (tolerant parsing), Html, Fichiers (download + FileProvider + SAF staging), Audio (playback), EnregistreurAudio (MediaRecorder) |
-| `app/src/test/` | Unit tests (dates, CeSoir, media URLs, envelope, message normalizers, composer data) |
+| `app/src/test/` | Unit tests (dates, CeSoir, media URLs, envelope, message normalizers, composer data, quiz normalizers, document filters) |
 | `app/fonts-licenses/` | OFL texts for the bundled fonts |
 
 ## Ground rules for agents

@@ -27,7 +27,7 @@ class AppContainer(context: Context) {
     val nouveautes = NouveautesRepository(client, session)
     val messages = MessagesRepository(client, session)
     val demandes = DemandesRepository(client)
-    val documents = DocumentsRepository(client)
+    val documents = DocumentsRepository(client, session)
 }
 
 class GwsApplication : Application() {
