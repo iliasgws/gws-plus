@@ -35,7 +35,17 @@ data class MessagesPage(
 
 class MessagesRepository(private val client: BotiClient, private val session: SessionStore) {
 
-    suspend fun conversations(): MessagesPage {
+    /**
+     * Cache TTL court sur la grosse réponse `GET messages` (issue #14) :
+     * Registre, l'onglet Messages et Nouveau message en ont besoin chacun de
+     * leur côté — à moins de 45 s d'écart, la même page suffit au lieu de
+     * recharger. `fraîche = true` (bouton Réessayer, ouverture d'un fil)
+     * ignore le cache : les URLs signées rajeunissent alors.
+     */
+    suspend fun conversations(fraîche: Boolean = false): MessagesPage {
+        val cache = cacheVerrouillée
+        val maintenant = System.currentTimeMillis()
+        if (!fraîche && cache != null && maintenant - cacheÉpoque < TtlCacheMs) return cache
         val rep = client.get("messages", mapOf("page" to "1"))
         return MessagesPage(
             conversations = Normalizers.arr(rep, "data")
@@ -43,17 +53,36 @@ class MessagesRepository(private val client: BotiClient, private val session: Se
                 .filter { it.messages.isNotEmpty() }
                 .sortedByDescending { it.dernierDate ?: LocalDateTime.MIN },
             themes = Normalizers.themes(rep),
-        )
+        ).also { page ->
+            cacheVerrouillée = page
+            cacheÉpoque = maintenant
+        }
+    }
+
+    /** Liste plus récente que 45 s s'il y en a une — pour servir du contenu
+     *  malgré un échec serveur au lieu d'un mur d'erreur. */
+    suspend fun conversationsEnCache(): MessagesPage? = cacheVerrouillée
+
+    private var cacheVerrouillée: MessagesPage? = null
+    private var cacheÉpoque: Long = 0
+
+    internal companion object {
+        internal const val TtlCacheMs = 45_000L
     }
 
     /**
      * Un fil par son id. Le serveur n'a pas de détail par conversation :
-     * tout est embarqué dans le GET `messages` (page 1). On refetch — les
-     * URLs média signées expirent après 15–20 minutes, une lecture fraîche
-     * les rafraîchit (docs/api/BOTI-API.md).
+     * tout est embarqué dans le GET `messages` (page 1). On refetch en frais
+     * (URLs signées rajeunies, docs/api/BOTI-API.md) — sauf si une page de
+     * moins de 45 s traîne, alors elle suffit.
      */
-    suspend fun conversation(id: String): Conversation? =
-        conversations().conversations.firstOrNull { it.id == id }
+    suspend fun conversation(id: String): Conversation? {
+        val cache = cacheVerrouillée
+        if (cache != null && System.currentTimeMillis() - cacheÉpoque < TtlCacheMs) {
+            return cache.conversations.firstOrNull { it.id == id }
+        }
+        return conversations(fraîche = true).conversations.firstOrNull { it.id == id }
+    }
 
     /** Réponse dans un fil existant. Retourne le message tel que le serveur
      *  l'a enregistré (normalisé), ou null si la réponse n'en porte pas. */

@@ -4,6 +4,20 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [0.2.1] — 2026-09-19
+
+### Corrigé
+
+- Onglet Messages : quand le serveur répond autre chose que du JSON (page
+  HTML d'interception, corps vide), l'erreur affiche désormais un court
+  extrait de la réponse — la capture d'écran dit ce qui s'est passé (issue #14)
+- Relance automatique unique sur les réponses illisibles : les pages HTML
+  transitoires se résorbent sans action
+- Pression réseau réduite sur `GET messages` (grosse réponse) : cache TTL de
+  45 s partagé entre Registre, Messages et Nouveau message ; « Réessayer »
+  force un rafraîchissement ; en cas d'échec, une liste en cache reste
+  affichée au lieu d'un mur d'erreur
+
 ## [0.2.0] — 2026-09-19
 
 ### Ajouté

@@ -115,7 +115,7 @@ fun MessagesScreen(
             ) {
                 ErrorInline(message = état.erreur ?: "")
                 Button(
-                    onClick = { vm.charger() },
+                    onClick = { vm.charger(force = true) },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = RegistreTheme.colors.ink,
                         contentColor = RegistreTheme.colors.page,
