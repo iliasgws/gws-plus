@@ -260,11 +260,14 @@ class MessagesViewModel(private val container: AppContainer) : ViewModel() {
         }
     }
 
-    fun charger() {
+    /** Recharge la liste. `force` ignore le cache TTL (bouton Réessayer,
+     *  issue #14). En cas d'échec serveur, une liste en cache reste affichée
+     *  plutôt qu'un mur d'erreur. */
+    fun charger(force: Boolean = false) {
         viewModelScope.launch {
             _état.update { it.copy(chargement = it.conversations.isEmpty()) }
             try {
-                val page = container.messages.conversations()
+                val page = container.messages.conversations(fraîche = force)
                 val contact = runCatching { container.messages.contact() }.getOrNull()
                 _état.update {
                     it.copy(
@@ -272,13 +275,28 @@ class MessagesViewModel(private val container: AppContainer) : ViewModel() {
                         conversations = page.conversations,
                         themes = page.themes,
                         contact = contact,
+                        erreur = null,
                     )
                 }
             } catch (err: BotiErreur) {
-                _état.update { it.copy(chargement = false, erreur = err.messageUtilisateur) }
+                _échec(err.messageUtilisateur)
             } catch (err: Exception) {
-                _état.update { it.copy(chargement = false, erreur = "Messages indisponibles pour le moment") }
+                _échec("Messages indisponibles pour le moment")
             }
+        }
+    }
+
+    private suspend fun _échec(message: String) {
+        val enCache = runCatching { container.messages.conversationsEnCache() }.getOrNull()
+        _état.update {
+            val àAfficher = if (it.conversations.isEmpty()) enCache?.conversations ?: emptyList() else it.conversations
+            it.copy(
+                chargement = false,
+                conversations = àAfficher,
+                themes = it.themes.ifEmpty { enCache?.themes ?: emptyList() },
+                // Pas de mur d'erreur s'il reste du contenu à montrer.
+                erreur = message.takeIf { _ -> àAfficher.isEmpty() },
+            )
         }
     }
 

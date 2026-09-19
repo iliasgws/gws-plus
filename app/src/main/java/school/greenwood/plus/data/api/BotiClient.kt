@@ -21,7 +21,14 @@ import java.io.File
  * Aucun log de paramètres ni de jetons (docs/security/SECURITY-NOTES.md, F3).
  */
 
-class BotiErreur(val messageUtilisateur: String) : Exception(messageUtilisateur)
+open class BotiErreur(val messageUtilisateur: String) : Exception(messageUtilisateur)
+
+/**
+ * Le serveur n'a pas renvoyé du JSON (page HTML d'interception, corps vide…).
+ * Typiquement transitoire : les GET relancent une fois automatiquement
+ * (issue #14).
+ */
+class RéponseIllisible(messageUtilisateur: String) : BotiErreur(messageUtilisateur)
 
 /** Session tuée côté serveur : la navigation racine renvoie vers la connexion. */
 class SessionExpirée : Exception()
@@ -47,9 +54,19 @@ class BotiClient(
         }
     }
 
+    /**
+     * GET avec params. Une réponse non JSON (page HTML transitoire) est
+     * relancée une fois automatiquement — au-delà, l'erreur remonte à
+     * l'écran (issue #14).
+     */
     suspend fun get(endpoint: String, extra: Map<String, String> = emptyMap()): JsonObject {
         val params = baseParams() + extra
-        return unwrap(api.get(endpoint, params), endpoint)
+        return try {
+            unwrap(api.get(endpoint, params), endpoint)
+        } catch (err: RéponseIllisible) {
+            kotlinx.coroutines.delay(700)
+            unwrap(api.get(endpoint, params), endpoint)
+        }
     }
 
     /**
@@ -118,7 +135,9 @@ class BotiClient(
                 session.signalerExpiration()
                 throw SessionExpirée()
             }
-            is BotiEnvelope.Résultat.Erreur -> throw BotiErreur(résultat.message)
+            is BotiEnvelope.Résultat.Erreur ->
+                if (résultat.illisible) throw RéponseIllisible(résultat.message)
+                else throw BotiErreur(résultat.message)
             is BotiEnvelope.Résultat.Données -> résultat.objet
         }
     }
