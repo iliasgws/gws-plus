@@ -318,5 +318,11 @@ document type, and actually opening the quizzes. Branch `documents-quiz`.
 - [x] Tests: 12 new (quiz normalizers, POST payload builder, nature
       filter, duration/clock helpers) — 59 total, 0 failures
 - [x] `assembleDebug` green
-- [ ] (!) one live quiz play on a real device to validate the POST (score
-      recorded server-side) — play and local score work regardless
+- [x] (!) one live quiz play to validate the POST — DONE 2026-09-19: a
+      simulated play (3 correct of 5, one wrong, one timeout) was accepted;
+      the server scored and recorded it itself (`lastPlay`: id, date,
+      « 60 % ») and the POST response carries `score` (« 3/5 »), `time`
+      (« 02:01 »), `can_replay` flat (see `docs/api/ENDPOINT-MAP.md`).
+      The installed app had also played a quiz earlier the same evening —
+      the app's own POST worked live too. Shapes distilled into
+      `docs/api/ENDPOINT-MAP.md` (`quiz_post.json`, `quiz_play_apres.json`).

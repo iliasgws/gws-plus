@@ -142,8 +142,9 @@ signées `media.boti.education`, téléchargement dans le système de
 fichiers. Les quiz s'ouvrent et se jouent : GET `quiz` vérifié en sonde
 lecture-seule (19/09/2026), décompte par question, bonne réponse affichée
 aussitôt (le serveur porte les drapeaux), score enregistré à la fin par le
-POST du flux officiel — lu dans le bundle, à valider une fois en réel ;
-en échec, le score local reste affiché. `ressource_details` reste hors v1
+POST du flux officiel — lu dans le bundle et validé en réel le 19/09/2026
+(le serveur score et enregistre la partie lui-même) ; en échec, le score
+local reste affiché. `ressource_details` reste hors v1
 (forme non vérifiée).
 
 ### Messages et contact admin

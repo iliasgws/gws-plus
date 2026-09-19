@@ -579,8 +579,9 @@ Top-level: `empty`, `logo` (empty string), `empty_icon`, `empty_text`,
 
 **GET** `quiz` — probed 2026-09-19 (`quiz_list.json`, `quiz_play.json`).
 **POST** `quiz` — same endpoint records a finished play; fields read from
-the official bundle (chunk 1140.js, parent page `/parent/quiz`) — live
-submit still owed once on a real device.
+the official bundle (chunk 1140.js, parent page `/parent/quiz`) and
+**validated live 2026-09-19**: a simulated 3/5 play was accepted, scored
+server-side and recorded (`quiz_post.json`, `quiz_play_apres.json`).
 
 **List form** — GET with `start=0`, `limit=10` (the official parent
 « Quizs » tab, chunk 93.js; an `filter=JSON.stringify(...)` param exists in
@@ -657,8 +658,15 @@ the bundle but its filter select is dead code there — ignore):
 - At answer time the bundle sets `answer.answer` = chosen response text and
   `answer.answered` = seconds consumed (`temps_reponse − remaining`). A
   timeout answers with no choice and the full time.
-- `lastPlay` (top level — « last attempt » card in the bundle) was absent
-  in the probe (never played) — shape UNVERIFIED.
+- `lastPlay` (top level, from the first play onward — « last attempt »
+  card in the bundle), observed 2026-09-19 after a validated play:
+
+  ```json
+  { "id": "2230", "date": "2026-09-19 22:49:27", "percent": "60 %" }
+  ```
+
+  `percent` is the server-computed score (3 correct of 5 → « 60 % ») —
+  the server scores the play itself, no client score needed.
 - `can_play: false` → the official app only displays `no_play`
   (« Télécharger la pièce jointe ») with no link — a dead end; read it as
   « quiz indisponible ».
@@ -671,10 +679,15 @@ the bundle but its filter select is dead code there — ignore):
 | `questions` | the GET's `questions[]` serialized as a JSON **string**, each `answer` updated as above — everything else left byte-for-byte |
 | `eleve_id` / `user_id` / `parent_id` / `key` | session values |
 
-Response carries `score`, `time`, `can_replay` (read flat as
-`resultatScore.score` in the bundle — tolerate a `data{}` envelope too).
-The official app ignores POST errors (console.log only) and falls back to
-its client-side correct count.
+Response (observed 2026-09-19): flat top-level `score` (« 3/5 »),
+`time` (« 02:01 », mm:ss of the play) and `can_replay` (bool) — read flat
+exactly as the bundle's `resultatScore.score` does. Quirk: the envelope's
+`data` is an **array** (`[]`) in this response, not an object — parsers
+must fall back to the top level (ours does). The server computes both
+score and time itself; the same play shows up in the next GET's
+`lastPlay` (`percent` « 60 % » for a 3/5 score). The official app ignores
+POST errors (console.log only) and falls back to its client-side correct
+count.
 
 ## bibliotheque — school library (document space)
 
@@ -795,7 +808,7 @@ Top-level keys: `all_objects`, `types`, `empty`, `empty_icon`, `empty_text`,
 | `pick_enfants` | GET/POST | child switcher — POST fields unverified |
 | `device_token` | POST | FCM registration — fields per `BOTI-API.md`, server acceptance unverified |
 | `logout` | POST | kills the session server-side |
-| `quiz` | GET/POST | list + play flow — GET verified live 2026-09-19 (see section); POST fields bundle-verified, live submit owed |
+| `quiz` | GET/POST | list + play flow — GET and POST both verified live 2026-09-19 (see section) |
 
 ## Summary of unverified items in this map
 
@@ -807,6 +820,5 @@ Top-level keys: `all_objects`, `types`, `empty`, `empty_icon`, `empty_text`,
 - `cours_v2`: inner `seances[]` slots
 - `acces_check`: behaviour on an invalid/expired session
 - `nouveau-message`: live text send validated 2026-09-19 — non-empty `files[]`/`audio` parts and the new-thread response remain unproven
-- `quiz`: POST submit live validation; response `score`/`time` exact shape (bundle reads them flat); `lastPlay` shape
 - `pick_enfants`, `device_token`: POST fields
 - non-empty `files[]` shapes (nouveautes, messages, devoirs `devoir_fait`)
