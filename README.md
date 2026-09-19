@@ -11,7 +11,7 @@ l'administration — dans une interface « Le registre » rapide et sobre.
 
 ## Fonctionnalités
 
-- 📔 **Registre** — le fil du jour : actualités, devoirs donnés, absences, messages
+- 📓 **Registre** — le fil du jour : actualités, devoirs donnés, absences, messages
 - 📚 **Devoirs** — par échéance, pièces jointes ouvrables nativement
 - 📰 **Actualités** — corps complets, images, PDF
 - 📁 **Documents** — ressources par matière, recherche, filtre par nature ;
@@ -19,6 +19,9 @@ l'administration — dans une interface « Le registre » rapide et sobre.
 - 📝 **Demandes** — suivi des demandes administratives et de leurs réponses
 - ✉️ **Messagerie** — fils de conversation avec l'administration, réponse,
   nouveau message (sujet + catégorie), pièces jointes, messages vocaux
+- ⚡ **Fluidité & résilience** — squelettes pulsés dès le premier chargement,
+  cache mémoire de session affichant immédiatement les dernières données
+  connues sans scintillement, gestion d'erreurs réseau non bloquante
 
 ## Captures d'écran
 
@@ -27,9 +30,10 @@ l'administration — dans une interface « Le registre » rapide et sobre.
 
 ## État
 
-🚧 **Développement actif** — utilisable au quotidien, mais pas encore abouti
-pour une diffusion large. Les envois de messages ont été validés en
-conditions réelles ; les demandes administratives restent en lecture seule.
+🚧 **Développement actif (v0.4.0)** — utilisable au quotidien, mais pas encore
+abouti pour une diffusion large. Les envois de messages et la validation des quiz
+ont été validés en conditions réelles ; les demandes administratives restent en
+lecture seule.
 
 Voir la [feuille de route](docs/product/ROADMAP.md).
 
@@ -55,6 +59,7 @@ L'APK sort dans `app/build/outputs/apk/debug/`. Guide complet
 | 🧭 [Index de la documentation](docs/README.md) | point d'entrée de toute la doc |
 | 🎨 [Product & design](docs/product/OVERVIEW.md) | ce que l'app fait, direction visuelle, feuille de route |
 | 🏗️ [Architecture](docs/development/ARCHITECTURE.md) | couches, session, navigation |
+| 🧭 [Navigation](docs/development/NAVIGATION.md) | contrat de navigation, piles par onglet, retour prédictif |
 | 🔌 [Recherche API Boti](docs/api/BOTI-API.md) | protocole, carte des endpoints, inventaire |
 | 🔐 [Sécurité](docs/security/SECURITY-NOTES.md) | observations de sécurité |
 
