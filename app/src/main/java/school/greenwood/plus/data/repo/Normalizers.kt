@@ -105,9 +105,11 @@ object Normalizers {
 
     fun conversation(raw: JsonObject): Conversation? {
         val id = str(raw, "id") ?: return null
-        val messages = arr(raw, "conversation").mapNotNull { m ->
-            (m as? JsonObject)?.let { message(it) }
-        }
+        val messages = sansDoublonsConsécutifs(
+            arr(raw, "conversation").mapNotNull { m ->
+                (m as? JsonObject)?.let { message(it) }
+            },
+        )
         return Conversation(
             id = id,
             sujet = str(raw, "sujet") ?: str(raw, "to") ?: "",
@@ -129,8 +131,49 @@ object Normalizers {
             deLAdmin = bool(raw, "is_self") != true,
             texte = texte,
             date = extractDateTime(str(raw, "datetime")),
+            vuLe = extractDateTime(str(raw, "vu_le")),
             attachments = pieces,
+            audio = audio(raw),
         )
+    }
+
+    /**
+     * Le serveur renvoie parfois le même message deux fois (double envoi
+     * observé à une seconde d'écart, `message_id` distincts — ENDPOINT-MAP
+     * quirk 7). On retire le doublon consécutif : même texte, même direction,
+     * datés à moins de deux secondes d'écart. Jamais de dédoublonnage par
+     * `message_id` — un vrai rappel du parent à quelques minutes d'écart est
+     * légitime et doit rester visible.
+     */
+    fun sansDoublonsConsécutifs(messages: List<Message>): List<Message> =
+        buildList {
+            messages.forEach { m ->
+                val précédent = lastOrNull()
+                val doublon = précédent != null &&
+                    précédent.texte == m.texte &&
+                    précédent.deLAdmin == m.deLAdmin &&
+                    précédent.date != null && m.date != null &&
+                    kotlin.math.abs(java.time.Duration.between(précédent.date, m.date).seconds) < 2
+                if (!doublon) add(m)
+            }
+        }
+
+    /** Message vocal : lien direct (chaîne) ou objet `{link, …}` — forme non
+     *  observée en production (toujours null dans le sondage), tolérant. */
+    private fun audio(raw: JsonObject): Attachment? {
+        val brut = raw["audio"] ?: return null
+        return when (brut) {
+            is JsonObject ->
+                MediaUrls.piècesJointes(str(brut, "link"), str(brut, "filename") ?: str(brut, "text") ?: "Message vocal")
+                    .firstOrNull()
+                    ?.let { Attachment(it.first, it.second) }
+            else ->
+                MediaUrls.lienRéel((brut as? kotlinx.serialization.json.JsonPrimitive)?.contentOrNull)
+                    ?.let { url ->
+                        val nom = url.substringBefore('?').substringAfterLast('/').ifBlank { "Message vocal" }
+                        Attachment(name = nom, url = url)
+                    }
+        }
     }
 
     // — Demandes -----------------------------------------------------------

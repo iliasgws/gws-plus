@@ -25,6 +25,11 @@ Cette application permet aux parents d'élèves de suivre en temps réel toute l
   confrontée au substitut Bricolage Grotesque (les deux sont embarquées ; le
   basculement se fait d'une ligne dans
   `app/src/main/java/school/greenwood/plus/ui/theme/Type.kt`).
+- ✉️ **Conversations avec l'administration** — chaque fil s'ouvre désormais
+  dans un écran de conversation dédié : bulles, séparateurs de date, accusés
+  de lecture, pièces jointes et messages vocaux en lecture. Le composeur
+  (envoi, catégories, pièces jointes, enregistrement) arrive dans une
+  deuxième étape, après un premier envoi de test validé en conditions réelles.
 
 ## Construire
 
