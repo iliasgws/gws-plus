@@ -5,6 +5,7 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import school.greenwood.plus.data.api.BotiClient
+import school.greenwood.plus.data.cache.CachesSession
 import school.greenwood.plus.data.session.SessionStore
 import school.greenwood.plus.model.ContactEcole
 import school.greenwood.plus.model.Demande
@@ -35,17 +36,24 @@ data class MessagesPage(
     val themes: List<ThemeMessage>,
 )
 
-class MessagesRepository(private val client: BotiClient, private val session: SessionStore) {
+class MessagesRepository(
+    private val client: BotiClient,
+    private val session: SessionStore,
+    private val caches: CachesSession,
+) {
 
     /**
      * Cache TTL court sur la grosse réponse `GET messages` (issue #14) :
      * Registre, l'onglet Messages et Nouveau message en ont besoin chacun de
      * leur côté — à moins de 45 s d'écart, la même page suffit au lieu de
      * recharger. `fraîche = true` (bouton Réessayer, ouverture d'un fil)
-     * ignore le cache : les URLs signées rajeunissent alors.
+     * ignore le cache : les URLs signées rajeunissent alors. La page est
+     * estampillée session (issue #21) : changer de compte ou d'enfant la
+     * rend mécaniquement introuvable.
      */
     suspend fun conversations(fraîche: Boolean = false): MessagesPage {
-        val cache = cacheVerrouillée
+        val clé = caches.clé()
+        val cache = clé?.let { caches.messages.lire(it) }
         val maintenant = System.currentTimeMillis()
         if (!fraîche && cache != null && maintenant - cacheÉpoque < TtlCacheMs) return cache
         val rep = client.get("messages", mapOf("page" to "1"))
@@ -56,16 +64,23 @@ class MessagesRepository(private val client: BotiClient, private val session: Se
                 .sortedByDescending { it.dernierDate ?: LocalDateTime.MIN },
             themes = Normalizers.themes(rep),
         ).also { page ->
-            cacheVerrouillée = page
+            clé?.let { caches.messages.écrire(it, page) }
             cacheÉpoque = maintenant
         }
     }
 
-    /** Liste plus récente que 45 s s'il y en a une — pour servir du contenu
-     *  malgré un échec serveur au lieu d'un mur d'erreur. */
-    suspend fun conversationsEnCache(): MessagesPage? = cacheVerrouillée
+    /** Dernière page connue, estampillée session, SANS condition de TTL —
+     *  pour servir du contenu malgré un échec serveur au lieu d'un mur
+     *  d'erreur (lecture « stale-while-revalidate »). */
+    suspend fun conversationsEnCache(): MessagesPage? {
+        val clé = caches.clé() ?: return null
+        return caches.messages.lire(clé)
+    }
 
-    private var cacheVerrouillée: MessagesPage? = null
+    /** Un fil de la dernière page connue (sans refetch) — null sinon. */
+    suspend fun conversationEnCache(id: String): Conversation? =
+        conversationsEnCache()?.conversations?.firstOrNull { it.id == id }
+
     private var cacheÉpoque: Long = 0
 
     internal companion object {
@@ -79,7 +94,8 @@ class MessagesRepository(private val client: BotiClient, private val session: Se
      * moins de 45 s traîne, alors elle suffit.
      */
     suspend fun conversation(id: String): Conversation? {
-        val cache = cacheVerrouillée
+        val clé = caches.clé()
+        val cache = clé?.let { caches.messages.lire(it) }
         if (cache != null && System.currentTimeMillis() - cacheÉpoque < TtlCacheMs) {
             return cache.conversations.firstOrNull { it.id == id }
         }
@@ -215,22 +231,38 @@ internal fun mimeDe(ext: String): String = when (ext.lowercase()) {
     else -> "application/octet-stream"
 }
 
-class DemandesRepository(private val client: BotiClient) {
+class DemandesRepository(
+    private val client: BotiClient,
+    private val caches: CachesSession,
+) {
 
     suspend fun liste(): List<Demande> {
         val rep = client.get("demandes", mapOf("page" to "1"))
-        return Normalizers.arr(rep, "data")
+        val résultat = Normalizers.arr(rep, "data")
             .mapNotNull { (it as? JsonObject)?.let(Normalizers::demande) }
             .sortedByDescending { it.dateCreation ?: LocalDateTime.MIN }
+        // Dernière liste connue (issue #21) — une liste vide est un état valide.
+        caches.clé()?.let { clé -> caches.demandes.écrire(clé, résultat) }
+        return résultat
+    }
+
+    /** Dernière liste connue, estampillée session — null si rien en cache ou
+     *  si la session a changé depuis l'écriture. */
+    suspend fun listeEnCache(): List<Demande>? {
+        val clé = caches.clé() ?: return null
+        return caches.demandes.lire(clé)
     }
 }
 
 class DocumentsRepository(
     private val client: BotiClient,
     private val session: SessionStore,
+    private val caches: CachesSession,
 ) {
 
-    /** Ressources pédagogiques, groupées par matière côté UI. */
+    /** Ressources pédagogiques, groupées par matière côté UI. L'appel sans
+     *  recherche est aussi l'écriture du cache de dernière liste connue
+     *  (issue #21) ; une recherche ne l'alimente pas. */
     suspend fun ressources(recherche: String? = null): List<school.greenwood.plus.model.Ressource> {
         val rep = client.get(
             "ressources_v2",
@@ -238,8 +270,19 @@ class DocumentsRepository(
                 put("search", recherche ?: "")
             },
         )
-        return Normalizers.arr(rep, "data")
+        val résultat = Normalizers.arr(rep, "data")
             .mapNotNull { (it as? JsonObject)?.let(Normalizers::ressource) }
+        if (recherche == null) {
+            caches.clé()?.let { clé -> caches.documents.écrire(clé, résultat) }
+        }
+        return résultat
+    }
+
+    /** Dernière liste complète connue, estampillée session — null si rien en
+     *  cache ou si la session a changé depuis l'écriture. */
+    suspend fun ressourcesEnCache(): List<school.greenwood.plus.model.Ressource>? {
+        val clé = caches.clé() ?: return null
+        return caches.documents.lire(clé)
     }
 
     /** Bibliothèque — vide sur le compte sondé ; tolérant si le serveur

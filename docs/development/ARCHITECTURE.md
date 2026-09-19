@@ -42,6 +42,19 @@ manquants, structures variables, dates hétérogènes) en modèles propres
 (`model/Models.kt`). Toute tolérance au désordre du serveur est concentrée
 ici — l'UI ne voit jamais du JSON.
 
+### Caches de dernière donnée connue (`data/cache/`)
+
+`MemoireSession<T>` garde la dernière donnée réussie d'un dépôt, estampillée
+par la clé de session — le couple `userId`/`eleveId` : changer de compte ou
+d'enfant la rend mécaniquement introuvable, et `CachesSession.vider()` la
+purge à la connexion comme à la déconnexion (issue #21). Un échec réseau
+n'écrit jamais le cache ; une liste vide est un état valide. Les ViewModels
+préremplissent leur état depuis ces caches avant chaque appel : le contenu
+connu s'affiche immédiatement pendant que le réseau rafraîchit en
+arrière-plan (`rafraîchissement`), et un échec laisse le contenu en place
+sous une bannière non bloquante. Cache mémoire seulement : un démarrage à
+froid part des squelettes, rien ne touche au disque.
+
 ### BotiClient (`data/api/`)
 
 Une seule interface `BotiApi` (un GET à paramètres, un POST multipart) et

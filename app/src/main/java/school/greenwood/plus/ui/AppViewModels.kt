@@ -104,6 +104,8 @@ data class RegistreÉtat(
     val eleves: List<Eleve> = emptyList(),
     val posts: List<Post> = emptyList(),
     val bilans: BilanAbsences? = null,
+    /** Un rafraîchissement réseau tourne pendant que le contenu connu reste affiché. */
+    val rafraîchissement: Boolean = false,
 )
 
 class RegistreViewModel(private val container: AppContainer) : ViewModel() {
@@ -121,17 +123,48 @@ class RegistreViewModel(private val container: AppContainer) : ViewModel() {
         }
     }
 
-    fun charger() {
+    fun charger(force: Boolean = false) {
         viewModelScope.launch {
-            _état.update { it.copy(chargement = it.registre == null, erreur = null) }
+            // issue #21 : préremplissage depuis le cache (lecture silencieuse,
+            // jamais d'erreur projetée dans l'UI) — le squelette cède la place
+            // aux dernières données connues, puis le réseau rafraîchit en fond.
+            if (!force) {
+                val enCache = runCatching { container.registre.registreEnCache() }.getOrNull()
+                if (enCache != null) {
+                    _état.update { st -> if (st.registre == null) st.copy(registre = enCache) else st }
+                }
+            }
+            // chargement = rien à montrer (squelette) ; sinon rafraîchissement
+            // en fond, le contenu affiché reste en place.
+            _état.update {
+                it.copy(
+                    chargement = it.registre == null,
+                    rafraîchissement = it.registre != null,
+                )
+            }
             try {
                 val registre = container.registre.charger()
-                _état.update { it.copy(chargement = false, registre = registre) }
+                _état.update {
+                    it.copy(
+                        chargement = false,
+                        rafraîchissement = false,
+                        registre = registre,
+                        erreur = null,
+                    )
+                }
             } catch (err: BotiErreur) {
-                _état.update { it.copy(chargement = false, erreur = err.messageUtilisateur) }
+                // Échec : le contenu connu reste affiché, l'erreur est toujours
+                // signalée (bannière non bloquante, issue #21).
+                _état.update {
+                    it.copy(chargement = false, rafraîchissement = false, erreur = err.messageUtilisateur)
+                }
             } catch (err: Exception) {
                 _état.update {
-                    it.copy(chargement = false, erreur = "Le registre n'a pas pu être chargé")
+                    it.copy(
+                        chargement = false,
+                        rafraîchissement = false,
+                        erreur = "Le registre n'a pas pu être chargé",
+                    )
                 }
             }
         }
@@ -161,6 +194,8 @@ data class DevoirsÉtat(
     val erreur: String? = null,
     val tous: List<Devoir> = emptyList(),
     val jourChoisi: LocalDate = LocalDate.now(),
+    /** Un rafraîchissement réseau tourne pendant que le contenu connu reste affiché. */
+    val rafraîchissement: Boolean = false,
 )
 
 class DevoirsViewModel(private val container: AppContainer) : ViewModel() {
@@ -171,16 +206,49 @@ class DevoirsViewModel(private val container: AppContainer) : ViewModel() {
         charger()
     }
 
-    fun charger() {
+    fun charger(force: Boolean = false) {
         viewModelScope.launch {
-            _état.update { it.copy(chargement = it.tous.isEmpty()) }
+            // issue #21 : préremplissage depuis le cache (lecture silencieuse),
+            // puis rafraîchissement réseau en fond — le contenu connu reste
+            // affiché et les listes ne sont jamais vidées entre deux états.
+            if (!force) {
+                val enCache = runCatching { container.devoirs.listeEnCache() }.getOrNull()
+                if (enCache != null) {
+                    _état.update { st -> if (st.tous.isEmpty()) st.copy(tous = enCache) else st }
+                }
+            }
+            // chargement = rien à montrer (squelette) ; sinon rafraîchissement
+            // en fond, le contenu affiché reste en place.
+            _état.update {
+                it.copy(
+                    chargement = it.tous.isEmpty(),
+                    rafraîchissement = it.tous.isNotEmpty(),
+                )
+            }
             try {
                 val tous = container.devoirs.liste()
-                _état.update { it.copy(chargement = false, tous = tous) }
+                _état.update {
+                    it.copy(
+                        chargement = false,
+                        rafraîchissement = false,
+                        tous = tous,
+                        erreur = null,
+                    )
+                }
             } catch (err: BotiErreur) {
-                _état.update { it.copy(chargement = false, erreur = err.messageUtilisateur) }
+                // Échec : le contenu connu reste affiché, l'erreur est toujours
+                // signalée (bannière non bloquante, issue #21).
+                _état.update {
+                    it.copy(chargement = false, rafraîchissement = false, erreur = err.messageUtilisateur)
+                }
             } catch (err: Exception) {
-                _état.update { it.copy(chargement = false, erreur = "Devoirs indisponibles pour le moment") }
+                _état.update {
+                    it.copy(
+                        chargement = false,
+                        rafraîchissement = false,
+                        erreur = "Devoirs indisponibles pour le moment",
+                    )
+                }
             }
         }
     }
@@ -224,6 +292,8 @@ data class DocumentsÉtat(
     val ressources: List<Ressource> = emptyList(),
     val recherche: String = "",
     val filtre: FiltreDocuments = FiltreDocuments.Tout,
+    /** Un rafraîchissement réseau tourne pendant que le contenu connu reste affiché. */
+    val rafraîchissement: Boolean = false,
 )
 
 class DocumentsViewModel(private val container: AppContainer) : ViewModel() {
@@ -234,16 +304,49 @@ class DocumentsViewModel(private val container: AppContainer) : ViewModel() {
         charger()
     }
 
-    fun charger() {
+    fun charger(force: Boolean = false) {
         viewModelScope.launch {
-            _état.update { it.copy(chargement = it.ressources.isEmpty()) }
+            // issue #21 : préremplissage depuis le cache (lecture silencieuse),
+            // puis rafraîchissement réseau en fond — le contenu connu reste
+            // affiché et les listes ne sont jamais vidées entre deux états.
+            if (!force) {
+                val enCache = runCatching { container.documents.ressourcesEnCache() }.getOrNull()
+                if (enCache != null) {
+                    _état.update { st -> if (st.ressources.isEmpty()) st.copy(ressources = enCache) else st }
+                }
+            }
+            // chargement = rien à montrer (squelette) ; sinon rafraîchissement
+            // en fond, le contenu affiché reste en place.
+            _état.update {
+                it.copy(
+                    chargement = it.ressources.isEmpty(),
+                    rafraîchissement = it.ressources.isNotEmpty(),
+                )
+            }
             try {
                 val ressources = container.documents.ressources()
-                _état.update { it.copy(chargement = false, ressources = ressources) }
+                _état.update {
+                    it.copy(
+                        chargement = false,
+                        rafraîchissement = false,
+                        ressources = ressources,
+                        erreur = null,
+                    )
+                }
             } catch (err: BotiErreur) {
-                _état.update { it.copy(chargement = false, erreur = err.messageUtilisateur) }
+                // Échec : le contenu connu reste affiché, l'erreur est toujours
+                // signalée (bannière non bloquante, issue #21).
+                _état.update {
+                    it.copy(chargement = false, rafraîchissement = false, erreur = err.messageUtilisateur)
+                }
             } catch (err: Exception) {
-                _état.update { it.copy(chargement = false, erreur = "Documents indisponibles pour le moment") }
+                _état.update {
+                    it.copy(
+                        chargement = false,
+                        rafraîchissement = false,
+                        erreur = "Documents indisponibles pour le moment",
+                    )
+                }
             }
         }
     }
@@ -449,6 +552,8 @@ data class MessagesÉtat(
     val contact: ContactEcole? = null,
     /** Catégories du composeur (serveur themes[]). */
     val themes: List<school.greenwood.plus.model.ThemeMessage> = emptyList(),
+    /** Un rafraîchissement réseau tourne pendant que le contenu connu reste affiché. */
+    val rafraîchissement: Boolean = false,
     /** Composeur actif par défaut (issue #10, envoi validé le 19/09/2026). */
     val composeurActivé: Boolean = false,
 )
@@ -467,17 +572,39 @@ class MessagesViewModel(private val container: AppContainer) : ViewModel() {
     }
 
     /** Recharge la liste. `force` ignore le cache TTL (bouton Réessayer,
-     *  issue #14). En cas d'échec serveur, une liste en cache reste affichée
-     *  plutôt qu'un mur d'erreur. */
+     *  issue #14) et saute le préremplissage depuis le cache (issue #21).
+     *  En cas d'échec, la liste connue reste affichée et l'erreur est
+     *  signalée par une bannière non bloquante — jamais masquée. */
     fun charger(force: Boolean = false) {
         viewModelScope.launch {
-            _état.update { it.copy(chargement = it.conversations.isEmpty()) }
+            // issue #21 : préremplissage depuis le cache tamponné (lecture
+            // silencieuse), puis rafraîchissement réseau en fond.
+            if (!force) {
+                val enCache = runCatching { container.messages.conversationsEnCache() }.getOrNull()
+                if (enCache != null) {
+                    _état.update { st ->
+                        st.copy(
+                            conversations = if (st.conversations.isEmpty()) enCache.conversations else st.conversations,
+                            themes = st.themes.ifEmpty { enCache.themes },
+                        )
+                    }
+                }
+            }
+            // chargement = rien à montrer (squelette) ; sinon rafraîchissement
+            // en fond, le contenu affiché reste en place.
+            _état.update {
+                it.copy(
+                    chargement = it.conversations.isEmpty(),
+                    rafraîchissement = it.conversations.isNotEmpty(),
+                )
+            }
             try {
                 val page = container.messages.conversations(fraîche = force)
                 val contact = runCatching { container.messages.contact() }.getOrNull()
                 _état.update {
                     it.copy(
                         chargement = false,
+                        rafraîchissement = false,
                         conversations = page.conversations,
                         themes = page.themes,
                         contact = contact,
@@ -498,10 +625,12 @@ class MessagesViewModel(private val container: AppContainer) : ViewModel() {
             val àAfficher = if (it.conversations.isEmpty()) enCache?.conversations ?: emptyList() else it.conversations
             it.copy(
                 chargement = false,
+                rafraîchissement = false,
                 conversations = àAfficher,
                 themes = it.themes.ifEmpty { enCache?.themes ?: emptyList() },
-                // Pas de mur d'erreur s'il reste du contenu à montrer.
-                erreur = message.takeIf { _ -> àAfficher.isEmpty() },
+                // L'erreur est toujours signalée, même avec du contenu à
+                // l'écran (bannière non bloquante, issue #21).
+                erreur = message,
             )
         }
     }
@@ -518,6 +647,8 @@ data class ConversationÉtat(
     val chargement: Boolean = true,
     val erreur: String? = null,
     val conversation: Conversation? = null,
+    /** Un rafraîchissement réseau tourne pendant que le contenu connu reste affiché. */
+    val rafraîchissement: Boolean = false,
     /** Composeur (collecté depuis la session — actif par défaut). */
     val composeurActif: Boolean = false,
     val texte: String = "",
@@ -547,16 +678,49 @@ class ConversationViewModel(
         }
     }
 
-    fun charger() {
+    fun charger(force: Boolean = false) {
         viewModelScope.launch {
-            _état.update { it.copy(chargement = it.conversation == null, erreur = null) }
+            // issue #21 : préremplissage depuis le cache du fil (lecture
+            // silencieuse), puis rafraîchissement réseau en fond — le fil
+            // connu reste affiché pendant l'appel.
+            if (!force) {
+                val enCache = runCatching { container.messages.conversationEnCache(conversationId) }.getOrNull()
+                if (enCache != null) {
+                    _état.update { st -> if (st.conversation == null) st.copy(conversation = enCache) else st }
+                }
+            }
+            // chargement = rien à montrer (squelette) ; sinon rafraîchissement
+            // en fond, le contenu affiché reste en place.
+            _état.update {
+                it.copy(
+                    chargement = it.conversation == null,
+                    rafraîchissement = it.conversation != null,
+                )
+            }
             try {
                 val conversation = container.messages.conversation(conversationId)
-                _état.update { it.copy(chargement = false, conversation = conversation) }
+                _état.update {
+                    it.copy(
+                        chargement = false,
+                        rafraîchissement = false,
+                        conversation = conversation,
+                        erreur = null,
+                    )
+                }
             } catch (err: BotiErreur) {
-                _état.update { it.copy(chargement = false, erreur = err.messageUtilisateur) }
+                // Échec : le fil connu reste affiché, l'erreur est toujours
+                // signalée (bannière non bloquante, issue #21).
+                _état.update {
+                    it.copy(chargement = false, rafraîchissement = false, erreur = err.messageUtilisateur)
+                }
             } catch (err: Exception) {
-                _état.update { it.copy(chargement = false, erreur = "Messages indisponibles pour le moment") }
+                _état.update {
+                    it.copy(
+                        chargement = false,
+                        rafraîchissement = false,
+                        erreur = "Messages indisponibles pour le moment",
+                    )
+                }
             }
         }
     }
@@ -797,6 +961,8 @@ data class DemandesÉtat(
     val chargement: Boolean = true,
     val erreur: String? = null,
     val demandes: List<Demande> = emptyList(),
+    /** Un rafraîchissement réseau tourne pendant que le contenu connu reste affiché. */
+    val rafraîchissement: Boolean = false,
 )
 
 class DemandesViewModel(private val container: AppContainer) : ViewModel() {
@@ -807,16 +973,49 @@ class DemandesViewModel(private val container: AppContainer) : ViewModel() {
         charger()
     }
 
-    fun charger() {
+    fun charger(force: Boolean = false) {
         viewModelScope.launch {
-            _état.update { it.copy(chargement = it.demandes.isEmpty()) }
+            // issue #21 : préremplissage depuis le cache (lecture silencieuse),
+            // puis rafraîchissement réseau en fond — le contenu connu reste
+            // affiché et les listes ne sont jamais vidées entre deux états.
+            if (!force) {
+                val enCache = runCatching { container.demandes.listeEnCache() }.getOrNull()
+                if (enCache != null) {
+                    _état.update { st -> if (st.demandes.isEmpty()) st.copy(demandes = enCache) else st }
+                }
+            }
+            // chargement = rien à montrer (squelette) ; sinon rafraîchissement
+            // en fond, le contenu affiché reste en place.
+            _état.update {
+                it.copy(
+                    chargement = it.demandes.isEmpty(),
+                    rafraîchissement = it.demandes.isNotEmpty(),
+                )
+            }
             try {
                 val demandes = container.demandes.liste()
-                _état.update { it.copy(chargement = false, demandes = demandes) }
+                _état.update {
+                    it.copy(
+                        chargement = false,
+                        rafraîchissement = false,
+                        demandes = demandes,
+                        erreur = null,
+                    )
+                }
             } catch (err: BotiErreur) {
-                _état.update { it.copy(chargement = false, erreur = err.messageUtilisateur) }
+                // Échec : le contenu connu reste affiché, l'erreur est toujours
+                // signalée (bannière non bloquante, issue #21).
+                _état.update {
+                    it.copy(chargement = false, rafraîchissement = false, erreur = err.messageUtilisateur)
+                }
             } catch (err: Exception) {
-                _état.update { it.copy(chargement = false, erreur = "Demandes indisponibles pour le moment") }
+                _état.update {
+                    it.copy(
+                        chargement = false,
+                        rafraîchissement = false,
+                        erreur = "Demandes indisponibles pour le moment",
+                    )
+                }
             }
         }
     }

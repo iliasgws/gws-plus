@@ -19,7 +19,6 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.InsertDriveFile
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -35,10 +34,12 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import school.greenwood.plus.AppContainer
 import school.greenwood.plus.model.Demande
 import school.greenwood.plus.ui.DemandesViewModel
+import school.greenwood.plus.ui.components.BandeauErreur
 import school.greenwood.plus.ui.components.EmptyState
 import school.greenwood.plus.ui.components.ErrorInline
 import school.greenwood.plus.ui.components.GwsCard
 import school.greenwood.plus.ui.components.Puce
+import school.greenwood.plus.ui.components.SqueletteDemandes
 import school.greenwood.plus.ui.theme.ControlShape
 import school.greenwood.plus.ui.theme.RegistreTheme
 
@@ -84,10 +85,8 @@ fun DemandesScreen(
         }
 
         when {
-            état.chargement -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = RegistreTheme.colors.ink)
-            }
-            état.erreur != null -> Column(
+            état.chargement -> SqueletteDemandes()
+            état.erreur != null && état.demandes.isEmpty() -> Column(
                 Modifier
                     .fillMaxWidth()
                     .padding(16.dp),
@@ -95,7 +94,7 @@ fun DemandesScreen(
             ) {
                 ErrorInline(message = état.erreur ?: "")
                 Button(
-                    onClick = { vm.charger() },
+                    onClick = { vm.charger(force = true) },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = RegistreTheme.colors.ink,
                         contentColor = RegistreTheme.colors.page,
@@ -112,22 +111,35 @@ fun DemandesScreen(
                 )
             }
             else -> {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    items(état.demandes, key = { it.id }) { demande ->
-                        CarteDemande(demande)
-                    }
-                    item(key = "note") {
-                        Text(
-                            text = "Une nouvelle demande se fait auprès de " +
-                                "l'administration — par message ou sur place.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = RegistreTheme.colors.chalk,
-                            modifier = Modifier.padding(vertical = 8.dp),
+                // Bandeau discret au-dessus de la liste quand un échec réseau
+                // laisse les demandes connues affichées (issue #21).
+                Column(Modifier.fillMaxSize()) {
+                    état.erreur?.let { message ->
+                        BandeauErreur(
+                            message = message,
+                            réessayer = { vm.charger(force = true) },
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                         )
+                    }
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        items(état.demandes, key = { it.id }) { demande ->
+                            CarteDemande(demande)
+                        }
+                        item(key = "note") {
+                            Text(
+                                text = "Une nouvelle demande se fait auprès de " +
+                                    "l'administration — par message ou sur place.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = RegistreTheme.colors.chalk,
+                                modifier = Modifier.padding(vertical = 8.dp),
+                            )
+                        }
                     }
                 }
             }

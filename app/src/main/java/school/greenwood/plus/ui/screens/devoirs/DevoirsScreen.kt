@@ -46,10 +46,12 @@ import school.greenwood.plus.AppContainer
 import school.greenwood.plus.model.Attachment
 import school.greenwood.plus.model.Devoir
 import school.greenwood.plus.ui.DevoirsViewModel
+import school.greenwood.plus.ui.components.BandeauErreur
 import school.greenwood.plus.ui.components.EmptyState
 import school.greenwood.plus.ui.components.ErrorInline
 import school.greenwood.plus.ui.components.GwsCard
 import school.greenwood.plus.ui.components.Puce
+import school.greenwood.plus.ui.components.SqueletteDevoirs
 import school.greenwood.plus.ui.theme.ControlShape
 import school.greenwood.plus.ui.theme.RegistreTheme
 import school.greenwood.plus.util.Fichiers
@@ -111,10 +113,8 @@ fun DevoirsScreen(
         }
 
         when {
-            état.chargement -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = RegistreTheme.colors.ink)
-            }
-            état.erreur != null -> Column(
+            état.chargement -> SqueletteDevoirs()
+            état.erreur != null && état.tous.isEmpty() -> Column(
                 Modifier
                     .fillMaxWidth()
                     .padding(16.dp),
@@ -122,7 +122,7 @@ fun DevoirsScreen(
             ) {
                 ErrorInline(message = état.erreur ?: "")
                 Button(
-                    onClick = { vm.charger() },
+                    onClick = { vm.charger(force = true) },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = RegistreTheme.colors.ink,
                         contentColor = RegistreTheme.colors.page,
@@ -133,28 +133,46 @@ fun DevoirsScreen(
                 }
             }
             else -> {
+                // Bandeau discret au-dessus de la liste quand un échec réseau
+                // laisse le contenu connu affiché (issue #21).
                 val duJour = état.tous.filter { it.dateRemise == état.jourChoisi }
-                if (duJour.isEmpty()) {
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        EmptyState(
-                            titre = "Rien ce jour-là",
-                            message = "Aucun devoir pour cette date.",
+                Column(Modifier.fillMaxSize()) {
+                    état.erreur?.let { message ->
+                        BandeauErreur(
+                            message = message,
+                            réessayer = { vm.charger(force = true) },
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                         )
                     }
-                } else {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                    ) {
-                        items(duJour, key = { it.id }) { devoir ->
-                            CarteDevoir(
-                                devoir = devoir,
-                                aujourdhui = aujourdhui,
-                                onTélécharger = { url, nom, onFait ->
-                                    vm.téléchargerPièceJointe(devoir, url, nom, context, onFait)
-                                },
+                    if (duJour.isEmpty()) {
+                        Box(
+                            Modifier
+                                .fillMaxWidth()
+                                .weight(1f),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            EmptyState(
+                                titre = "Rien ce jour-là",
+                                message = "Aucun devoir pour cette date.",
                             )
+                        }
+                    } else {
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f),
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            items(duJour, key = { it.id }) { devoir ->
+                                CarteDevoir(
+                                    devoir = devoir,
+                                    aujourdhui = aujourdhui,
+                                    onTélécharger = { url, nom, onFait ->
+                                        vm.téléchargerPièceJointe(devoir, url, nom, context, onFait)
+                                    },
+                                )
+                            }
                         }
                     }
                 }

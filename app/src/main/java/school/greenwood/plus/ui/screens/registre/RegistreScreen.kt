@@ -31,7 +31,6 @@ import androidx.compose.material.icons.rounded.Description
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -69,12 +68,14 @@ import school.greenwood.plus.model.Devoir
 import school.greenwood.plus.model.Eleve
 import school.greenwood.plus.model.Post
 import school.greenwood.plus.ui.RegistreViewModel
+import school.greenwood.plus.ui.components.BandeauErreur
 import school.greenwood.plus.ui.components.EmptyState
 import school.greenwood.plus.ui.components.ErrorInline
 import school.greenwood.plus.ui.components.GwsAvatar
 import school.greenwood.plus.ui.components.GwsCard
 import school.greenwood.plus.ui.components.Puce
 import school.greenwood.plus.ui.components.SectionLabel
+import school.greenwood.plus.ui.components.SqueletteRegistre
 import school.greenwood.plus.ui.theme.ControlShape
 import school.greenwood.plus.ui.theme.PageShape
 import school.greenwood.plus.ui.theme.RegistreTheme
@@ -122,7 +123,7 @@ fun RegistreScreen(
                     ErrorInline(message = état.erreur ?: "")
                     Spacer(Modifier.height(12.dp))
                     Button(
-                        onClick = vm::charger,
+                        onClick = { vm.charger(force = true) },
                         shape = ControlShape,
                         colors = ButtonDefaults.buttonColors(
                             containerColor = RegistreTheme.colors.ink,
@@ -136,14 +137,14 @@ fun RegistreScreen(
         }
 
         état.registre == null -> {
+            // Premier chargement : le registre se dessine déjà, en blocs pulsés.
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(RegistreTheme.colors.paper)
                     .padding(padding),
-                contentAlignment = Alignment.Center,
             ) {
-                CircularProgressIndicator(color = RegistreTheme.colors.ink)
+                SqueletteRegistre()
             }
         }
 
@@ -178,8 +179,15 @@ fun RegistreScreen(
                     )
                 }
 
+                // Erreur non bloquante (issue #21) : le contenu connu reste
+                // affiché, l'échec se pose en annotation au-dessus de lui.
                 état.erreur?.let { message ->
-                    item(key = "erreur") { ErrorInline(message = message) }
+                    item(key = "erreur") {
+                        BandeauErreur(
+                            message = message,
+                            réessayer = { vm.charger(force = true) },
+                        )
+                    }
                 }
 
                 item(key = "ce-soir") { CarteCeSoir(registre) }
@@ -235,12 +243,15 @@ private fun EnTête(
             .padding(top = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        // La date doit rester lisible en entier (« jeudi 18 septembre ») :
+        // elle passe sur deux lignes plutôt que de se couper (issue #21) —
+        // la coupure n'arrive qu'en toute dernière extrémité.
         Text(
             text = date.frenchLongDay(),
             style = MaterialTheme.typography.displayLarge,
             color = RegistreTheme.colors.ink,
             modifier = Modifier.weight(1f),
-            maxLines = 1,
+            maxLines = 2,
             overflow = TextOverflow.Ellipsis,
         )
         IconButton(onClick = surActualiser) {

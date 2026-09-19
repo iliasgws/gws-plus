@@ -5,6 +5,7 @@ import android.util.JsonToken
 import kotlinx.coroutines.flow.first
 import kotlinx.serialization.json.JsonObject
 import school.greenwood.plus.data.api.BotiClient
+import school.greenwood.plus.data.cache.CachesSession
 import school.greenwood.plus.data.session.SessionStore
 import school.greenwood.plus.model.Post
 import java.util.concurrent.ConcurrentHashMap
@@ -19,10 +20,15 @@ import java.util.concurrent.ConcurrentHashMap
 class NouveautesRepository(
     private val client: BotiClient,
     private val session: SessionStore,
+    private val caches: CachesSession,
 ) {
 
     private val corps = ConcurrentHashMap<String, String>()
     private var chargés = false
+
+    /** Clé de session à laquelle `corps` a été rempli (issue #21) — changer
+     *  de compte ou d'enfant invalide le contenu du flux admin. */
+    private var cléCorps: String? = null
 
     suspend fun liste(): List<Post> {
         val rep = client.get("nouveautes", mapOf("start" to "0", "limit" to "30"))
@@ -36,6 +42,14 @@ class NouveautesRepository(
 
     /** Corps HTML d'un post, à la demande (cache mémoire de session). */
     suspend fun corps(postId: String): String? {
+        val clé = caches.clé()
+        if (clé != cléCorps) {
+            // La session (ou l'enfant choisi) a changé depuis le remplissage :
+            // les corps appartiennent à l'ancien compte, on repart de zéro.
+            corps.clear()
+            chargés = false
+            cléCorps = clé
+        }
         if (!chargés) {
             runCatching { chargerCorps() }.onSuccess {
                 corps.putAll(it)

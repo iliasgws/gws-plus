@@ -4,6 +4,40 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [Non publié]
+
+### Ajouté
+
+- **Skeleton screens** (issue #21) : à la première ouverture de chaque
+  section, la page se dessine déjà en blocs pulsés à la forme du contenu
+  à venir — registre (carte « Ce soir » et entrées du jour), devoirs,
+  documents, messages, demandes, conversation (bulles et composeur) et
+  quiz — au lieu d'un anneau de chargement au centre d'un écran vide
+- **Cache de dernière donnée connue** (issue #21) : registre, devoirs,
+  documents, demandes et messages s'affichent immédiatement à la
+  réouverture de l'app ou d'une section, pendant que le réseau rafraîchit
+  en arrière-plan — sans clignotement, les listes sont remplacées d'un seul
+  mouvement. Le cache est isolé par session (compte **et** enfant choisi :
+  changer l'un ou l'autre invalide tout) et purgé à la connexion comme à la
+  déconnexion ; aucun nouvel espace disque, un démarrage à froid part des
+  squelettes
+
+### Modifié
+
+- Les erreurs réseau ne sont plus jamais masquées (issue #21) : le contenu
+  connu reste affiché sous une bannière discrète avec « Réessayer » ; le
+  mur d'erreur plein écran n'apparaît qu'à la première charge, quand
+  aucune donnée n'est disponible
+- Détail d'une actualité : la zone du corps pulse pendant la récupération
+  du texte (le message d'indisponibilité est conservé en repli)
+
+### Corrigé
+
+- Registre : la date d'en-tête (« jeudi 18 septembre ») passe sur deux
+  lignes au lieu d'être tronquée sur les petits écrans (issue #21) ; les
+  autres emplacements de dates ont été audités — aucun autre risque de
+  coupure
+
 ## [0.3.0] — 2026-09-19
 
 ### Ajouté

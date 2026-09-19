@@ -1,6 +1,7 @@
 package school.greenwood.plus.data.repo
 
 import school.greenwood.plus.data.api.BotiClient
+import school.greenwood.plus.data.cache.CachesSession
 import school.greenwood.plus.data.session.SessionStore
 import school.greenwood.plus.logic.CeSoir
 import school.greenwood.plus.model.Absence
@@ -52,11 +53,12 @@ data class RegistreDuJour(
 class RegistreRepository(
     private val client: BotiClient,
     private val session: SessionStore,
+    private val caches: CachesSession,
 ) {
-    private val devoirs = DevoirsRepository(client)
-    private val nouveautes = NouveautesRepository(client, session)
+    private val devoirs = DevoirsRepository(client, caches)
+    private val nouveautes = NouveautesRepository(client, session, caches)
     private val absences = AbsencesRepository(client)
-    private val messagesRepo = MessagesRepository(client, session)
+    private val messagesRepo = MessagesRepository(client, session, caches)
 
     suspend fun charger(aujourdhui: LocalDate = LocalDate.now()): RegistreDuJour {
         val tousLesDevoirs = runCatching { devoirs.liste() }.getOrDefault(emptyList())
@@ -83,7 +85,17 @@ class RegistreRepository(
             ceSoir = ceSoir,
             horizonCeSoir = CeSoir.prochaineRentree(aujourdhui),
             entrees = entrees,
-        )
+        ).also { jour ->
+            // Dernier registre connu (issue #21), estampillé session.
+            caches.clé()?.let { clé -> caches.registre.écrire(clé, jour) }
+        }
+    }
+
+    /** Dernier registre construit, estampillé session — null si rien en cache
+     *  ou si la session a changé depuis l'écriture. */
+    suspend fun registreEnCache(): RegistreDuJour? {
+        val clé = caches.clé() ?: return null
+        return caches.registre.lire(clé)
     }
 }
 

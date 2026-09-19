@@ -22,7 +22,6 @@ import androidx.compose.material.icons.rounded.Call
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -41,11 +40,13 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import school.greenwood.plus.AppContainer
 import school.greenwood.plus.model.Conversation
 import school.greenwood.plus.ui.MessagesViewModel
+import school.greenwood.plus.ui.components.BandeauErreur
 import school.greenwood.plus.ui.components.EmptyState
 import school.greenwood.plus.ui.components.ErrorInline
 import school.greenwood.plus.ui.components.GwsCard
 import school.greenwood.plus.ui.components.Puce
 import school.greenwood.plus.ui.components.SectionLabel
+import school.greenwood.plus.ui.components.SqueletteMessages
 import school.greenwood.plus.ui.theme.ControlShape
 import school.greenwood.plus.ui.theme.RegistreTheme
 import school.greenwood.plus.util.frenchFull
@@ -104,10 +105,8 @@ fun MessagesScreen(
         }
 
         when {
-            état.chargement -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = RegistreTheme.colors.ink)
-            }
-            état.erreur != null -> Column(
+            état.chargement -> SqueletteMessages()
+            état.erreur != null && état.conversations.isEmpty() -> Column(
                 Modifier
                     .fillMaxWidth()
                     .padding(16.dp),
@@ -131,6 +130,16 @@ fun MessagesScreen(
                     contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
+                    // Bandeau discret en tête de liste quand un échec réseau
+                    // laisse les fils connus affichés (issue #21).
+                    état.erreur?.let { message ->
+                        item(key = "erreur") {
+                            BandeauErreur(
+                                message = message,
+                                réessayer = { vm.charger(force = true) },
+                            )
+                        }
+                    }
                     if (état.conversations.isEmpty()) {
                         item {
                             EmptyState(

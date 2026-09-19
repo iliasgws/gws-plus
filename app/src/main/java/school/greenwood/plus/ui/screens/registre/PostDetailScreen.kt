@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -39,6 +40,7 @@ import coil3.compose.AsyncImage
 import school.greenwood.plus.AppContainer
 import school.greenwood.plus.data.repo.EntreeRegistre
 import school.greenwood.plus.ui.RegistreViewModel
+import school.greenwood.plus.ui.components.BlocSquelette
 import school.greenwood.plus.ui.components.GwsCard
 import school.greenwood.plus.ui.components.Puce
 import school.greenwood.plus.ui.theme.PageShape
@@ -143,11 +145,15 @@ fun PostDetailScreen(
                         style = MaterialTheme.typography.bodyMedium,
                         color = RegistreTheme.colors.ink,
                     )
-                    !corpsChargé -> Text(
-                        text = "Corps en cours de récupération…",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = RegistreTheme.colors.chalk,
-                    )
+                    !corpsChargé -> {
+                        // Le corps arrive en streaming : quelques lignes pulsées
+                        // prennent sa forme en attendant (issue #21).
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            BlocSquelette(modifier = Modifier.fillMaxWidth().height(14.dp))
+                            BlocSquelette(modifier = Modifier.fillMaxWidth().height(14.dp))
+                            BlocSquelette(modifier = Modifier.fillMaxWidth(0.6f).height(14.dp))
+                        }
+                    }
                     else -> Text(
                         text = "Le corps de cette annonce n'est pas disponible.",
                         style = MaterialTheme.typography.bodySmall,

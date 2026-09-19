@@ -326,3 +326,67 @@ document type, and actually opening the quizzes. Branch `documents-quiz`.
       The installed app had also played a quiz earlier the same evening —
       the app's own POST worked live too. Shapes distilled into
       `docs/api/ENDPOINT-MAP.md` (`quiz_post.json`, `quiz_play_apres.json`).
+
+# TASKS — Issue #21 « Skeleton screens, data cache, truncated dates »
+
+Living checklist for the responsiveness milestone (issue #21): skeletons on
+first load, a session-scoped last-known-data cache refreshed in the
+background, non-blocking error banners, and the registre date fix. Branch
+`issue-21-cache-squelettes`.
+
+## Design decisions
+
+- [x] Cache = memory only, stamped on write with the session pair
+      `userId/eleveId` (`MemoireSession<T>`): switching account OR child
+      mechanically invalidates everything, and `CachesSession.vider()` also
+      runs on login and logout (belt and braces). Nothing new on disk — a
+      cold start shows skeletons, a warm start shows the last known data.
+- [x] Two-state loading contract, one field each in the six data states:
+      `chargement` true only when there is nothing to show (skeleton
+      territory); `rafraîchissement` = network refresh running while known
+      content stays displayed. Data is never cleared between states (no
+      flicker): prefill from cache, then one `copy` swaps the list.
+- [x] Errors are never silent: on failure the known content stays and the
+      error surfaces as a non-blocking banner (« Réessayer » = force);
+      the full-screen error remains only when there is no content at all.
+      `erreur` is cleared on success only, not at retry start, so the
+      banner does not blink off during a refresh that fails again.
+
+## Branch `issue-21-cache-squelettes`
+
+- [x] `data/cache/`: `MemoireSession<T>` (pure Kotlin, synchronized,
+      unit-tested) + `CachesSession` (registre / devoirs / documents /
+      demandes / messages) wired through every repository. Messages keeps
+      its 45 s TTL on top; `conversationsEnCache()` now serves the stamped
+      page regardless of TTL (stale-while-revalidate) and a new
+      `conversationEnCache(id)` prefills an open thread
+- [x] The streamed post-body cache in Nouveautes is stamp-checked too (the
+      one cache living outside the holder); a failed read never writes the
+      cache, an empty list is a valid last-known state
+- [x] Auth: caches purged on login (before the new session is written) and
+      on logout
+- [x] ViewModels (Registre, Devoirs, Documents, Messages, Conversation,
+      Demandes): cache prefill, background refresh, `charger(force)`
+      skipping the prefill for « Réessayer »; composer, quiz, login
+      untouched
+- [x] Components: `BlocSquelette` (pulsing sage block, alpha 0.35→1) plus
+      one skeleton per screen shaped like the real layout — Registre,
+      Devoirs, Documents, Messages, Demandes, Conversation (bubbles +
+      composer bar), Quiz; `BandeauErreur` = inline error + « Réessayer »
+      in one quiet row, reused at every call site
+- [x] Post detail: the body area pulses while `admin_nouveautes` streams
+      (fallback text kept for an unavailable body)
+- [x] Dates: the registre header wraps to two lines instead of ellipsizing
+      (« jeudi 18 septembre » stays readable on small screens); every other
+      date spot audited — they all wrap already (no `maxLines`, weight(1f)
+      columns)
+- [x] Tests: 7 new (cache stamping contract: same key serves, foreign or
+      blank key never serves, vider clears, empty list is a state) —
+      66 total, 0 failures
+- [x] `assembleDebug` green
+- [x] Navigation untouched (`ui/AppNav.kt` not in the diff) — the Android
+      back-gesture contract, priority n°1 of the project, cannot regress
+      from this change
+- [ ] (!) real-device pass: skeleton → content swap on each tab, warm
+      reopen without flicker, banner + « Réessayer » under airplane mode,
+      back gesture from Devoirs unchanged
