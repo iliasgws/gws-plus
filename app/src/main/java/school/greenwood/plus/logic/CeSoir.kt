@@ -5,14 +5,14 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 
 /*
- * La carte focale du registre (DESIGN.md §2).
+ * La carte focale du registre (docs/product/DESIGN.md §2).
  *
  * « Ce soir » n'est pas « aujourd'hui » : c'est ce que l'enfant doit préparer
  * pour la *prochaine rentrée* — les devoirs dont l'échéance est demain matin,
  * ou le lundi quand le week-end s'intercale. Un devoir rendu dans une semaine
  * reste une entrée discrète du flux, jamais dans la carte.
  *
- * ⚠︎ Question ouverte (DESIGN.md §4) : la sémantique exacte des dates de
+ * ⚠︎ Question ouverte (docs/product/DESIGN.md §4) : la sémantique exacte des dates de
  * `devoirs` / `devoirs_date_v2` (date de don vs date de rendu). Le filtrage
  * vit uniquement ici — quand le doute sera levé sur un appel réel, un seul
  * endroit change.

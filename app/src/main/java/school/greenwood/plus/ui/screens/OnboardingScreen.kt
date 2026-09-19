@@ -32,7 +32,7 @@ import school.greenwood.plus.ui.theme.ControlShape
 import school.greenwood.plus.ui.theme.RegistreTheme
 
 /*
- * Premier lancement (DESIGN.md §4) : trois pages sobres, pas de carrousel
+ * Premier lancement (docs/product/DESIGN.md §4) : trois pages sobres, pas de carrousel
  * infini. Pas d'illustration — l'app se décrit en trois phrases.
  */
 @Composable

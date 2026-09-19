@@ -3,7 +3,7 @@ package school.greenwood.plus.ui.theme
 import androidx.compose.ui.graphics.Color
 
 /*
- * Palette « Le registre » (DESIGN.md §2). L'encre verte écrit ce qui compte,
+ * Palette « Le registre » (docs/product/DESIGN.md §2). L'encre verte écrit ce qui compte,
  * le rouge stylo signale uniquement ce qui réclame une action parent — il ne
  * décore jamais. Les deux thèmes partagent les rôles, seuls les valeurs bougent.
  */

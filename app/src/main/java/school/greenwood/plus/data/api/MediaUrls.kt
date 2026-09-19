@@ -4,7 +4,7 @@ import java.net.URLDecoder
 
 /*
  * Les liens média arrivent enrobés dans un Google Docs viewer et DOUBLE
- * encodés (docs/BOTI-API.md). Décodage : exactement UNE fois, en gardant
+ * encodés (docs/api/BOTI-API.md). Décodage : exactement UNE fois, en gardant
  * %2B / %2F / %3D littéraux — la signature du média porte sur la forme
  * encodée du chemin. Certains liens sont déjà directs : on les rend tels quels.
  */

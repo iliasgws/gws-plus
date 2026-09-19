@@ -45,7 +45,7 @@ import school.greenwood.plus.ui.theme.ControlShape
 import school.greenwood.plus.ui.theme.RegistreTheme
 
 /*
- * Connexion (DESIGN.md §4) : téléphone + mot de passe, un champ « retenir »,
+ * Connexion (docs/product/DESIGN.md §4) : téléphone + mot de passe, un champ « retenir »,
  * pas de case « privacy » exposée (elle part à true), pas de création de
  * compte — l'inscription passe par l'école. Erreurs en ligne, stylo rouge.
  */

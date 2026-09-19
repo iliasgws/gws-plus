@@ -18,7 +18,7 @@ import java.io.File
  *   branche sur le JSON ; « disconnect »: true → événement d'expiration global,
  *   « error »: true → BotiErreur avec le message du serveur.
  *
- * Aucun log de paramètres ni de jetons (docs/SECURITY-NOTES.md, F3).
+ * Aucun log de paramètres ni de jetons (docs/security/SECURITY-NOTES.md, F3).
  */
 
 class BotiErreur(val messageUtilisateur: String) : Exception(messageUtilisateur)

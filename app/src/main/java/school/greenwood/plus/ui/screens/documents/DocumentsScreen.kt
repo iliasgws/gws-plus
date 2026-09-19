@@ -47,7 +47,7 @@ import school.greenwood.plus.ui.theme.RegistreTheme
 import school.greenwood.plus.util.htmlToPlainSingleLine
 
 /*
- * L'espace documents (DESIGN.md §4). Le serveur ne propose aujourd'hui que
+ * L'espace documents (docs/product/DESIGN.md §4). Le serveur ne propose aujourd'hui que
  * des ressources par matière (souvent des quiz) : liste groupée, recherche
  * locale. Pas d'invention de téléchargement — les URLs n'existent pas ici.
  */

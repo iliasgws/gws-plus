@@ -79,7 +79,7 @@ fun SectionLabel(
     )
 }
 
-/** État vide : une invitation, pas un manque (DESIGN.md §2). */
+/** État vide : une invitation, pas un manque (docs/product/DESIGN.md §2). */
 @Composable
 fun EmptyState(
     titre: String,

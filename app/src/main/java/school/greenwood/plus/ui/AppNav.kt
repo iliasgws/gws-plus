@@ -54,7 +54,7 @@ import school.greenwood.plus.ui.theme.RegistreTheme
  * racine) : onboarding → connexion → registre. Quand le serveur tue la session
  * (« disconnect »), l'état retombe sur la connexion, où que l'on soit.
  *
- * Onglets (DESIGN.md §3) : chaque onglet garde sa pile via
+ * Onglets (docs/product/DESIGN.md §3) : chaque onglet garde sa pile via
  * saveState/restoreState, retour depuis un onglet racine → Registre,
  * retour depuis le Registre → quitter l'app.
  */
@@ -224,7 +224,7 @@ fun Shell(container: AppContainer) {
 }
 
 /**
- * Le geste d'onglet du DESIGN.md §3 : on ne dépille rien, chaque onglet
+ * Le geste d'onglet du docs/product/DESIGN.md §3 : on ne dépille rien, chaque onglet
  * garde sa pile (saveState/restoreState), jamais de racine poussée sur une
  * pile de détail.
  */

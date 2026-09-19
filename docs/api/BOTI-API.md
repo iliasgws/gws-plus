@@ -111,7 +111,7 @@ POST {base}/device_token     fields: token=<fcm token>, user_id, key, uid=<devic
 
 ## Endpoint cheat-sheet for gws-plus features
 
-Full 100-endpoint inventory lives in [`endpoints.md`](endpoints.md). The
+Full 100-endpoint inventory lives in [`ENDPOINTS.md`](ENDPOINTS.md). The
 subset this project needs:
 
 | gws-plus feature | endpoints |

@@ -5,7 +5,7 @@ import androidx.compose.material3.Shapes
 import androidx.compose.ui.unit.dp
 
 /*
- * Forme (DESIGN.md §2) : le rayon encode le rang, pas la décoration.
+ * Forme (docs/product/DESIGN.md §2) : le rayon encode le rang, pas la décoration.
  * Pages (cartes de contenu) : 20 dp. Champs et boutons : 12 dp.
  * Annotations (puces, statuts, compteurs) : 6 dp.
  */

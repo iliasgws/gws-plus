@@ -9,7 +9,7 @@ import java.time.LocalTime
  * sont normalisées dans les dépôts (data/repo) : ici, tout est propre.
  */
 
-/** Pièce jointe avec son URL média *réelle* (déjà décodée une fois, voir docs/BOTI-API.md). */
+/** Pièce jointe avec son URL média *réelle* (déjà décodée une fois, voir docs/api/BOTI-API.md). */
 data class Attachment(
     val name: String,
     val url: String,
@@ -40,7 +40,7 @@ data class Post(
     val categorie: String? = null,
     val date: LocalDateTime? = null,
     val intro: String? = null,
-    /** Corps HTML complet — uniquement via admin_nouveautes (docs/BOTI-API.md). */
+    /** Corps HTML complet — uniquement via admin_nouveautes (docs/api/BOTI-API.md). */
     val description: String? = null,
     val image: String? = null,
     val attachments: List<Attachment> = emptyList(),

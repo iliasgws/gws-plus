@@ -9,7 +9,7 @@
 > placeholder values only.
 >
 > Companion docs: [`BOTI-API.md`](BOTI-API.md) (protocol, auth, quirks) and
-> [`endpoints.md`](endpoints.md) (full 100-endpoint inventory from the APK).
+> [`ENDPOINTS.md`](ENDPOINTS.md) (full 100-endpoint inventory from the APK).
 
 Base URL for every endpoint below:
 

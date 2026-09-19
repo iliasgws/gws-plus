@@ -8,7 +8,7 @@ import school.greenwood.plus.model.Devoir
 import java.time.LocalDate
 
 /*
- * La carte « Ce soir » (DESIGN.md §2) : échéance = prochaine rentrée.
+ * La carte « Ce soir » (docs/product/DESIGN.md §2) : échéance = prochaine rentrée.
  * Vendredi → lundi ; samedi/dimanche → lundi ; sinon → demain.
  * « Ce soir » n'est pas « aujourd'hui » : une échéance du jour même n'entre pas.
  */

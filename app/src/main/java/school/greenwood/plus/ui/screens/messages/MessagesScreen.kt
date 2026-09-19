@@ -53,7 +53,7 @@ import school.greenwood.plus.util.frenchTime
 import school.greenwood.plus.util.htmlToPlainSingleLine
 
 /*
- * Messages avec l'administration (DESIGN.md §4) — la liste des fils s'ouvre
+ * Messages avec l'administration (docs/product/DESIGN.md §4) — la liste des fils s'ouvre
  * sur l'écran de conversation dédié (issue #10, première partie) et une carte
  * « Écrire » ouvre un fil vierge (composeur, seconde partie).
  *

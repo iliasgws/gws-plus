@@ -16,7 +16,7 @@ import java.time.LocalDateTime
 /*
  * Messages avec l'administration. Lecture (fils embarqués dans GET `messages`)
  * et — issue #10, seconde partie — écriture par POST `nouveau-message`, dont
- * les champs ont été lus dans le bundle officiel 2.4.14 (TASKS.md, statique) :
+ * les champs ont été lus dans le bundle officiel 2.4.14 (docs/product/ROADMAP.md, statique) :
  * - réponse à un fil : ref, sujet, message, theme (= theme du fil), files[],
  *   eleve_id, parent_id, key, audio, index (longueur du fil avant le push
  *   optimiste ; la réponse `.message` remplace l'élément en attente) ;
@@ -50,7 +50,7 @@ class MessagesRepository(private val client: BotiClient, private val session: Se
      * Un fil par son id. Le serveur n'a pas de détail par conversation :
      * tout est embarqué dans le GET `messages` (page 1). On refetch — les
      * URLs média signées expirent après 15–20 minutes, une lecture fraîche
-     * les rafraîchit (docs/BOTI-API.md).
+     * les rafraîchit (docs/api/BOTI-API.md).
      */
     suspend fun conversation(id: String): Conversation? =
         conversations().conversations.firstOrNull { it.id == id }

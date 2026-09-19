@@ -43,7 +43,7 @@ import school.greenwood.plus.ui.theme.ControlShape
 import school.greenwood.plus.ui.theme.RegistreTheme
 
 /*
- * Les demandes administratives (DESIGN.md §4), atteintes depuis le Registre.
+ * Les demandes administratives (docs/product/DESIGN.md §4), atteintes depuis le Registre.
  * Lecture seule en v1 : la soumission (POST nouvelle-demande) a des champs non
  * vérifiés — pas d'invention. Le statut « Traitée » reste sage ; tout statut
  * en attente porte le stylo rouge : quelque chose attend une réponse ou une
