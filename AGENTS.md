@@ -12,7 +12,7 @@ Greenwood School + is an application that lets parents of pupils follow their ch
 - 📝 Suivi des demandes administratives (administrative request tracking)
 - ✉️ Contacter l'administration de l'école en ligne (online contact with school administration)
 
-**Current status:** the first application milestone exists — a Kotlin/Jetpack Compose app (single `:app` module) implementing the DESIGN.md foundation: « Le registre » theme, session + network layer for the Boti API, 4-tab navigation with per-tab back stacks, login/onboarding, and the Registre/Devoirs/Documents/Messages/Demandes screens. Sending messages and creating demandes are deliberately NOT wired yet (write-path field names unverified — see `docs/ENDPOINT-MAP.md` UNVERIFIED entries).
+**Current status:** the first application milestone exists — a Kotlin/Jetpack Compose app (single `:app` module) implementing the DESIGN.md foundation: « Le registre » theme, session + network layer for the Boti API, 4-tab navigation with per-tab back stacks, login/onboarding, and the Registre/Devoirs/Documents/Messages/Demandes screens, plus a dedicated read-only Conversation screen (issue #10, PR 1). Sending messages is still deliberately NOT wired: the POST `nouveau-message` field names have since been read from the official app bundle (statically verified, see `TASKS.md` issue-#10 section) but a real send must be validated once before the composer ships (user decision: kill switch, default off). Creating demandes remains unwired (write-path fields unverified).
 
 **Current priority (from README):** fix Android back-gesture navigation — opening the homework section and then using the Android system back gesture must behave correctly in every section of the app. Do not regress this behaviour.
 
@@ -42,13 +42,13 @@ Current contents (update this section whenever files are added or removed):
 | `…/ui/AppViewModels.kt` | One ViewModel per screen |
 | `…/ui/theme/` | « Le registre » tokens: colors, Fraunces/Bricolage/Public Sans type, 20/12/6 shapes |
 | `…/ui/components/Components.kt` | Shared composables (GwsCard, Puce, EmptyState, ErrorInline, GwsAvatar…) |
-| `…/ui/screens/` | Login, Onboarding, registre (+ Post detail), devoirs, documents, messages, demandes |
+| `…/ui/screens/` | Login, Onboarding, registre (+ Post detail), devoirs, documents, messages (+ Conversation detail), demandes |
 | `…/data/api/` | BotiApi/BotiClient (generic GET/POST + envelope), BotiEnvelope, MediaUrls (single-decode) |
 | `…/data/session/SessionStore.kt` | DataStore session (keyToken, user, eleves; never passwords) |
 | `…/data/repo/` | Repositories + Normalizers (raw JSON → domain models) |
 | `…/logic/CeSoir.kt` | The focal card's due-date window (Friday → Monday) |
-| `…/util/` | Dates (tolerant parsing), Html, Fichiers (download + FileProvider) |
-| `app/src/test/` | Unit tests (dates, CeSoir, media URLs, envelope) |
+| `…/util/` | Dates (tolerant parsing), Html, Fichiers (download + FileProvider), Audio (message playback) |
+| `app/src/test/` | Unit tests (dates, CeSoir, media URLs, envelope, message normalizers) |
 | `app/fonts-licenses/` | OFL texts for the bundled fonts |
 | `docs/` | `BOTI-API.md` (protocol), `ENDPOINT-MAP.md` (observed shapes), `endpoints.md` (100-endpoint inventory), `SECURITY-NOTES.md` |
 

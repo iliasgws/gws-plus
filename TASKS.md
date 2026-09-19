@@ -113,4 +113,72 @@ raw probe responses stay out of the repository (personal data).
       acces_check = session bootstrap (returns fresh keyToken)
 - [x] `docs/ENDPOINT-MAP.md`: complete parent-relevant endpoint map with
       observed shapes (from `~/dev/shape-probe`), no personal data
+
+# TASKS — Issue #10 « Messages tab misses sending option »
+
+Living checklist for the message-composing milestone. Split in two PRs per
+user decision (2026-09-19): PR 1 = conversation screen (read-only), PR 2 =
+composer + sending + attachments + voice. The write path is verified
+**statically** (bundle), not yet **live**.
+
+## Verification of the write path (2026-09-19)
+
+- [x] POST `nouveau-message` field names read from the official bundle
+      (XAPK 2.4.14 still at `~/Downloads/Greenwood+School_2.4.14_APKPure.xapk`,
+      chunks 1201/2345/9771.js). Reply: `ref, sujet, message, theme,
+      files[], eleve_id, parent_id, key, audio, index` (index = conversation
+      length before the optimistic push; response `.message` replaces the
+      pending item). New message: `sujet, message, theme, eleve, file,
+      eleve_id, parent_id, user_id, key` (+ `ref` when reply; the `file`
+      JSON field is vestigial — use `files[]` parts for attachments).
+- [x] ApiService FormData conventions: `"files[]"` = repeated literal part
+      name, one part per file, filename preserved; `audio` sent as raw blob
+      `{file: Blob, name: "audio_<epoch>.<ext>"}`; POSTs carry the fields +
+      `key` only — **no** `paltform`/`versionCode` envelope.
+- [x] `hidesend` is dead code in v2.4.14 — zero references across the
+      bundle; the official app never reads it. Composer gated by an app
+      setting instead (user decision: kill switch, default off).
+- [ ] One live send before enabling the write path (user runs it — it
+      reaches the school administration).
+
+## PR 1 — Conversation screen (read-only) — branch `messages-conversation`
+
+- [x] Normalizers: `vu_le` receipt, `audio` (tolerant: URL string or object,
+      shape never observed non-null), consecutive duplicate messages dropped
+      (same text/direction < 2 s apart, distinct `message_id` — never dedupe
+      by `message_id`)
+- [x] `Message` model gains `vuLe` + `audio`
+- [x] `MessagesRepository.conversation(id)` — refetches the list (the server
+      embeds conversations in GET `messages`; fresh fetch refreshes signed
+      URLs that expire after 15–20 min)
+- [x] `ConversationScreen` (new): bubbles (sage = administration, page +
+      sage border = parent), `frenchLongDay` date separators, per-bubble
+      timestamps, `vu_le` receipts on parent messages, inline attachments
+      (download + open via existing `Fichiers`), audio playback (new
+      `util/Audio.kt`, MediaPlayer streaming, silent on failure)
+- [x] Route `conversation/{conversationId}`; message cards navigate instead
+      of in-card expansion; contact card untouched
+- [x] Tests: 10 new (dedupe rule, `vu_le`, audio forms) — 38 total, 0 failures
+- [x] `assembleDebug` green
+- [ ] (!) review on a real device at first install
+
+## PR 2 — Composer, sending, attachments, voice (todo) — branch `messages-composer`
+
+- [ ] `BotiClient.post`: repeated file parts (list of files per field name)
+- [ ] `MessagesRepository.envoyer(...)` POST nouveau-message + response
+      `.message` normalization; optimistic pending → failed-with-retry states
+- [ ] Composer row (attachment · input · mic · send) in `ConversationScreen`,
+      gated by a settings toggle (default off; `hidesend` documented,
+      informational)
+- [ ] Category selection driven by server `themes[]` (ids 8/9/10/11/13) in
+      new-message mode; sujet field; reworked « Joindre l'administration »
+      card
+- [ ] Attachments: SAF picker, staging in cacheDir, preview + remove,
+      1 MB toast (official limit, new-message path only)
+- [ ] Voice: `RECORD_AUDIO` in manifest + runtime prompt, MediaRecorder →
+      m4a (audio sent as `{file, name}`), integrated recording state,
+      playback for sent and received
+- [ ] Docs: `ENDPOINT-MAP.md` nouveau-message section (bundle-verified
+      fields + live-test result), unverified-table updates, README,
+      AGENTS.md
 - [x] `DESIGN.md` §4 surgical corrections (devoirs date semantics, documents sources)
