@@ -232,3 +232,49 @@ about the school.
       source of truth for the text
 - [ ] Never auto-send: AI output always lands in the composer for review
 - [ ] French-first prompts; school-context glossary kept client-side
+
+# Roadmap — beyond the composer (first-week wishlist, 2026-09-19)
+
+Ideas collected after the composer went live. Nothing wired; each needs a
+design pass and, where data comes from outside the official API, a serious
+source-of-truth decision before any code.
+
+## Homework alternate source
+
+Some teachers never write homework in the official app — those subjects
+simply go dark in the Devoirs tab, and the parent finds out too late.
+
+- [ ] Decide the alternate source: manual entry by the parent? Shared
+      between parents (community)? Imported from another channel?
+- [ ] If community-shared: needs a server/sync story + who can write —
+      big trust question, keep out of scope until decided
+- [ ] If manual/local: parent-entered homework for a subject, clearly
+      badged « ajouté à la main » so it never masquerades as official
+- [ ] Merge display: official `devoirs` list + alternate entries, same
+      « Ce soir » treatment, source always visible
+
+## Timetable community feedback
+
+The administration itself says the timetable is provisional — parents spot
+the changes first, in the corridors.
+
+- [ ] Read-only first: is the timetable even in the API? (`cours_v2`
+      inner `seances[]` — still on the unverified list)
+- [ ] Parent-side report: flag a slot as wrong/changed, in-app note —
+      local first, no shared write path without a decision
+- [ ] Community layer only if/when several parents use the app: shared
+      corrections with authorship, opt-in, moderation story
+
+## « Download all » for assignments and documents
+
+Homework attachments and document-space files arrive one by one; a single
+button that grabs them all is the obvious missing convenience.
+
+- [ ] Devoirs screen: « Tout télécharger » per day — images + documents
+      via the existing `Fichiers.télécharger`, progress per file, retry
+      on failure
+- [ ] Post detail: « Tout télécharger » for one post's attachments
+- [ ] Documents screen: « Tout télécharger » per matière (bounded — warn
+      if the set is large)
+- [ ] Open-with chooser after batch download; files land in the same
+      private documents space (no storage permission needed)
