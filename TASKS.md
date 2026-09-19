@@ -162,23 +162,34 @@ composer + sending + attachments + voice. The write path is verified
 - [x] `assembleDebug` green
 - [ ] (!) review on a real device at first install
 
-## PR 2 — Composer, sending, attachments, voice (todo) — branch `messages-composer`
+## PR 2 — Composer, sending, attachments, voice — branch `messages-composer`
 
-- [ ] `BotiClient.post`: repeated file parts (list of files per field name)
-- [ ] `MessagesRepository.envoyer(...)` POST nouveau-message + response
-      `.message` normalization; optimistic pending → failed-with-retry states
-- [ ] Composer row (attachment · input · mic · send) in `ConversationScreen`,
-      gated by a settings toggle (default off; `hidesend` documented,
-      informational)
-- [ ] Category selection driven by server `themes[]` (ids 8/9/10/11/13) in
+- [x] `BotiClient.post`: repeated file parts (`PartieFichier` — `files[]`
+      literal name, one part per file, filename preserved; audio as `{file, name}`)
+- [x] `MessagesRepository.envoyerRéponse / envoyerNouveau` — POST
+      nouveau-message + response `.message` normalization; optimistic pending →
+      failed-with-retry states (`MessageEnvoi`); `index` = thread length before
+      the push; reply re-sends the thread's own `theme` (bundle: `theme:
+      this.result.theme` — threads carry it, parsed tolerantly)
+- [x] Composer row (attachment · input · mic · send) in `ConversationScreen`
+      and `NouveauMessageScreen`, gated by the session kill switch (default
+      off; `hidesend` documented, informational); toggle lives in the Messages
+      title bar with an activation confirmation
+- [x] Category selection driven by server `themes[]` (ids 8/9/10/11/13) in
       new-message mode; sujet field; reworked « Joindre l'administration »
-      card
-- [ ] Attachments: SAF picker, staging in cacheDir, preview + remove,
-      1 MB toast (official limit, new-message path only)
-- [ ] Voice: `RECORD_AUDIO` in manifest + runtime prompt, MediaRecorder →
-      m4a (audio sent as `{file, name}`), integrated recording state,
-      playback for sent and received
-- [ ] Docs: `ENDPOINT-MAP.md` nouveau-message section (bundle-verified
-      fields + live-test result), unverified-table updates, README,
+      card (Écrire action when the composer is on; card hidden when the
+      server returns nothing and the composer is off — fixes the blank card)
+- [x] Attachments: SAF picker, staging in cacheDir (`Fichiers.copierDepuisSaf`),
+      preview + remove, 1 MB toast (official limit, new-message path only)
+- [x] Voice: `RECORD_AUDIO` in manifest + runtime prompt, MediaRecorder →
+      m4a (`util/EnregistreurAudio.kt`), recording state integrated in the
+      composer (pastille + chrono + annulation), playback for sent and received
+      (`LecteurAudio`)
+- [x] Tests: 6 new (themes parsing, thread theme, POST-response normalization,
+      envoi status copy, mimes) — 44 total, 0 failures
+- [ ] (!) one live send before flipping the default (user runs it — it reaches
+      the school administration)
+- [x] Docs: `ENDPOINT-MAP.md` nouveau-message section (bundle-verified
+      fields + live-test result pending), unverified-table updates, README,
       AGENTS.md
 - [x] `DESIGN.md` §4 surgical corrections (devoirs date semantics, documents sources)

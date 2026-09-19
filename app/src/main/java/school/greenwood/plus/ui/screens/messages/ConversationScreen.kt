@@ -46,6 +46,7 @@ import kotlinx.coroutines.delay
 import school.greenwood.plus.AppContainer
 import school.greenwood.plus.model.Attachment
 import school.greenwood.plus.model.Message
+import school.greenwood.plus.model.MessageEnvoi
 import school.greenwood.plus.ui.ConversationViewModel
 import school.greenwood.plus.ui.components.EmptyState
 import school.greenwood.plus.ui.components.ErrorInline
@@ -60,13 +61,15 @@ import java.time.LocalDate
 import java.util.Locale
 
 /*
- * Fil de conversation avec l'administration (issue #10, première partie : la
- * lecture). Bulles — fond sage = administration, page bordée sage = parent ;
- * séparateurs de date, horodatages et accusés de lecture (`vu_le`) sur les
- * messages du parent. Pièces jointes et messages vocaux joués en ligne.
- * Le composeur arrive en seconde partie : le POST nouveau-message a été lu
- * depuis le bundle officiel mais un envoi réel doit d'abord valider le
- * chemin d'écriture.
+ * Fil de conversation avec l'administration (issue #10). Bulles — fond sage =
+ * administration, page bordée sage = parent ; séparateurs de date, horodatages
+ * et accusés de lecture (`vu_le`) sur les messages du parent. Pièces jointes
+ * et messages vocaux joués en ligne.
+ *
+ * Composeur (seconde partie) — gated par le kill switch de session (désactivé
+ * par défaut tant que l'envoi réel n'a pas été validé une fois). Envoi
+ * optimiste : l'élément en attente s'affiche au bas du fil, remplacé par la
+ * version serveur à la confirmation, marqué Échec (relançable) sinon.
  */
 
 @Composable
@@ -153,9 +156,10 @@ fun ConversationScreen(
                 val messages = conversation?.messages ?: emptyList()
                 val liste = rememberLazyListState()
 
-                // Nombre d'éléments rendus (séparateurs + bulles), pour l'ouverture
-                // en bas de fil comme une vraie messagerie.
-                val compteÉléments = remember(conversation) {
+                // Nombre d'éléments rendus (séparateurs + bulles + envois en
+                // attente), pour l'ouverture en bas de fil comme une vraie
+                // messagerie.
+                val compteÉléments = remember(conversation, état.envois) {
                     var n = 0
                     var précédent: java.time.LocalDate? = null
                     messages.forEach { m ->
@@ -164,7 +168,7 @@ fun ConversationScreen(
                         n++
                         précédent = m.date?.toLocalDate()
                     }
-                    n
+                    n + état.envois.size
                 }
                 LaunchedEffect(conversation?.id, compteÉléments) {
                     if (compteÉléments > 0) liste.scrollToItem(compteÉléments - 1)
@@ -173,7 +177,8 @@ fun ConversationScreen(
                 LazyColumn(
                     state = liste,
                     modifier = Modifier
-                        .fillMaxSize()
+                        .fillMaxWidth()
+                        .weight(1f)
                         .padding(horizontal = 16.dp),
                     contentPadding = PaddingValues(vertical = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -193,6 +198,36 @@ fun ConversationScreen(
                             )
                         }
                     }
+                    état.envois.forEachIndexed { i, envoi ->
+                        item(key = "envoi-$i-${envoi.texte.hashCode()}") {
+                            BulleEnvoi(
+                                envoi = envoi,
+                                onRelancer = { vm.relancer(envoi) },
+                            )
+                        }
+                    }
+                }
+
+                if (état.composeurActif) {
+                    Composeur(
+                        texte = état.texte,
+                        onTexte = vm::modifierTexte,
+                        pièces = état.pièces,
+                        onAjouterPièces = vm::ajouterPièces,
+                        onRetirerPièce = vm::retirerPièce,
+                        audio = état.audio,
+                        onRetirerAudio = vm::retirerAudio,
+                        enregistre = état.enregistre,
+                        onDémarrerEnregistrement = vm::démarrerEnregistrement,
+                        // Arrêter = repasser en composeur avec le vocal prêt
+                        // (puce « Message vocal prêt ») ; l'envoi reste un
+                        // geste séparé, comme pour une pièce jointe.
+                        onArrêterEnregistrement = vm::arrêterEnregistrement,
+                        onAnnulerEnregistrement = vm::annulerEnregistrement,
+                        envoiPossible = état.erreur == null,
+                        onEnvoyer = vm::envoyer,
+                        enCours = état.envois.any { it.statut == MessageEnvoi.Statut.EnCours },
+                    )
                 }
             }
         }
@@ -207,6 +242,88 @@ private fun SéparateurDate(jour: java.time.LocalDate) {
             style = MaterialTheme.typography.labelMedium,
             color = RegistreTheme.colors.chalk,
         )
+    }
+}
+
+/** Message en attente d'envoi — même bulle que le parent, spinner ou état
+ *  d'échec relançable à la place de l'horodatage. */
+@Composable
+private fun BulleEnvoi(
+    envoi: MessageEnvoi,
+    onRelancer: () -> Unit,
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.End,
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        Surface(
+            shape = ControlShape,
+            color = RegistreTheme.colors.page,
+            border = BorderStroke(1.dp, RegistreTheme.colors.sage),
+        ) {
+            Column(
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                if (envoi.texte.isNotBlank()) {
+                    Text(
+                        text = envoi.texte,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = RegistreTheme.colors.ink,
+                    )
+                }
+                envoi.pièces.forEach { fichier ->
+                    Text(
+                        text = fichier.name,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = RegistreTheme.colors.chalk,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                envoi.audio?.let {
+                    Text(
+                        text = "Message vocal",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = RegistreTheme.colors.chalk,
+                    )
+                }
+            }
+        }
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            when (envoi.statut) {
+                MessageEnvoi.Statut.EnCours -> {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(12.dp),
+                        strokeWidth = 2.dp,
+                        color = RegistreTheme.colors.chalk,
+                    )
+                    Text(
+                        text = "Envoi…",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = RegistreTheme.colors.chalk,
+                    )
+                }
+                MessageEnvoi.Statut.Échec -> {
+                    Text(
+                        text = "Échec de l'envoi",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = RegistreTheme.colors.redPen,
+                    )
+                    androidx.compose.material3.TextButton(onClick = onRelancer) {
+                        Text(
+                            text = "Réessayer",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = RegistreTheme.colors.ink,
+                        )
+                    }
+                }
+            }
+        }
     }
 }
 

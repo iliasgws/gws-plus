@@ -28,8 +28,11 @@ Cette application permet aux parents d'élèves de suivre en temps réel toute l
 - ✉️ **Conversations avec l'administration** — chaque fil s'ouvre désormais
   dans un écran de conversation dédié : bulles, séparateurs de date, accusés
   de lecture, pièces jointes et messages vocaux en lecture. Le composeur
-  (envoi, catégories, pièces jointes, enregistrement) arrive dans une
-  deuxième étape, après un premier envoi de test validé en conditions réelles.
+  (réponse, nouveau fil avec sujet et catégorie, pièces jointes, message
+  vocal, envoi optimiste avec relance en cas d'échec) est prêt mais gardé
+  derrière un réglage désactivé par défaut — l'icône de réglage en haut de
+  l'onglet Messages l'active — tant qu'un premier envoi de test n'a pas été
+  validé en conditions réelles.
 
 ## Construire
 

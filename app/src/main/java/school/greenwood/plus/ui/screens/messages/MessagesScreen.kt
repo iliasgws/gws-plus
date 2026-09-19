@@ -17,16 +17,24 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.Send
 import androidx.compose.material.icons.rounded.Call
+import androidx.compose.material.icons.rounded.Tune
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -51,11 +59,15 @@ import school.greenwood.plus.util.htmlToPlainSingleLine
 
 /*
  * Messages avec l'administration (DESIGN.md §4) — la liste des fils s'ouvre
- * sur l'écran de conversation dédié (issue #10, première partie). L'envoi
- * n'est pas encore ouvert : les champs du POST nouveau-message sont désormais
- * connus (lus depuis le bundle officiel) mais un envoi réel doit d'abord être
- * validé avant d'ouvrir le composeur. La carte contact rend l'administration
- * joignable tout de suite (téléphone, Facebook, site).
+ * sur l'écran de conversation dédié (issue #10, première partie) et, avec le
+ * composeur (seconde partie), une carte « Écrire » ouvre un fil vierge.
+ *
+ * Le composeur reste derrière le kill switch de session (décision utilisateur,
+ * issue #10) : l'envoi réel n'a pas encore été validé — un message raté ferait
+ * croire à un parent que l'école a été prévenue. Réglage discret dans la barre
+ * de titre, désactivé par défaut. La carte contact rend l'administration
+ * joignable tout de suite (téléphone, Facebook, site) ; elle ne s'affiche que
+ * si le serveur renseigne quelque chose ou si le composeur est actif.
  */
 
 @Composable
@@ -63,10 +75,13 @@ fun MessagesScreen(
     container: AppContainer,
     padding: PaddingValues,
     onOuvrirConversation: (String) -> Unit,
+    onNouveauMessage: () -> Unit,
 ) {
     val vm: MessagesViewModel = viewModel { MessagesViewModel(container) }
     val état by vm.état.collectAsStateWithLifecycle()
     val context = LocalContext.current
+
+    var demanderActivation by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -74,11 +89,56 @@ fun MessagesScreen(
             .background(RegistreTheme.colors.paper)
             .padding(padding),
     ) {
-        Column(Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             Text(
                 text = "Messages",
                 style = MaterialTheme.typography.displayLarge,
                 color = RegistreTheme.colors.ink,
+                modifier = Modifier.weight(1f),
+            )
+            IconButton(onClick = {
+                if (état.composeurActivé) vm.définirComposeur(false) else demanderActivation = true
+            }) {
+                Icon(
+                    imageVector = Icons.Rounded.Tune,
+                    contentDescription = if (état.composeurActivé) "Désactiver le composeur" else "Activer le composeur (test)",
+                    tint = if (état.composeurActivé) RegistreTheme.colors.ink else RegistreTheme.colors.chalk,
+                )
+            }
+        }
+
+        // Confirmation d'activation : l'envoi n'est pas encore validé, le
+        // message d'essai atteindra réellement l'administration.
+        if (demanderActivation) {
+            AlertDialog(
+                onDismissRequest = { demanderActivation = false },
+                title = { Text("Activer le composeur ?") },
+                text = {
+                    Text(
+                        "L'envoi n'a pas encore été validé en conditions réelles. " +
+                            "Un message envoyé partira vraiment à l'administration.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = RegistreTheme.colors.chalk,
+                    )
+                },
+                confirmButton = {
+                    TextButton(onClick = {
+                        demanderActivation = false
+                        vm.définirComposeur(true)
+                    }) {
+                        Text("Activer", color = RegistreTheme.colors.ink)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { demanderActivation = false }) {
+                        Text("Annuler", color = RegistreTheme.colors.chalk)
+                    }
+                },
             )
         }
 
@@ -125,26 +185,33 @@ fun MessagesScreen(
                         )
                     }
                     état.contact?.let { contact ->
-                        item(key = "contact") {
-                            SectionLabel("Joindre l'administration")
-                            CarteContact(
-                                texte = contact.texte,
-                                tel = contact.tel,
-                                facebook = contact.facebook,
-                                siteWeb = contact.siteWeb,
-                                onOuvrir = { url ->
-                                    runCatching {
-                                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
-                                    }
-                                },
-                                onAppeler = {
-                                    contact.tel?.let {
+                        val contactRenseigné = listOfNotNull(
+                            contact.texte, contact.tel, contact.facebook, contact.siteWeb,
+                        ).any { it.isNotBlank() }
+                        if (contactRenseigné || état.composeurActivé) {
+                            item(key = "contact") {
+                                SectionLabel("Joindre l'administration")
+                                CarteContact(
+                                    texte = contact.texte,
+                                    tel = contact.tel,
+                                    facebook = contact.facebook,
+                                    siteWeb = contact.siteWeb,
+                                    composeurActif = état.composeurActivé,
+                                    onÉcrire = onNouveauMessage,
+                                    onOuvrir = { url ->
                                         runCatching {
-                                            context.startActivity(Intent(Intent.ACTION_DIAL, Uri.parse("tel:$it")))
+                                            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
                                         }
-                                    }
-                                },
-                            )
+                                    },
+                                    onAppeler = {
+                                        contact.tel?.let {
+                                            runCatching {
+                                                context.startActivity(Intent(Intent.ACTION_DIAL, Uri.parse("tel:$it")))
+                                            }
+                                        }
+                                    },
+                                )
+                            }
                         }
                     }
                 }
@@ -222,6 +289,8 @@ private fun CarteContact(
     tel: String?,
     facebook: String?,
     siteWeb: String?,
+    composeurActif: Boolean,
+    onÉcrire: () -> Unit,
     onOuvrir: (String) -> Unit,
     onAppeler: () -> Unit,
 ) {
@@ -235,6 +304,13 @@ private fun CarteContact(
                 )
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (composeurActif) {
+                    PuceAction(
+                        label = "Écrire",
+                        icone = Icons.AutoMirrored.Rounded.Send,
+                        onClick = onÉcrire,
+                    )
+                }
                 if (tel != null) {
                     PuceAction(label = "Appeler", icone = Icons.Rounded.Call, onClick = onAppeler)
                 }

@@ -44,6 +44,7 @@ import school.greenwood.plus.ui.screens.demandes.DemandesScreen
 import school.greenwood.plus.ui.screens.documents.DocumentsScreen
 import school.greenwood.plus.ui.screens.messages.ConversationScreen
 import school.greenwood.plus.ui.screens.messages.MessagesScreen
+import school.greenwood.plus.ui.screens.messages.NouveauMessageScreen
 import school.greenwood.plus.ui.screens.registre.PostDetailScreen
 import school.greenwood.plus.ui.screens.registre.RegistreScreen
 import school.greenwood.plus.ui.theme.RegistreTheme
@@ -184,6 +185,7 @@ fun Shell(container: AppContainer) {
                     container = container,
                     padding = padding,
                     onOuvrirConversation = { id -> navController.allerDétail("conversation/$id") },
+                    onNouveauMessage = { navController.allerDétail("nouveau-message") },
                 )
             }
             composable("conversation/{conversationId}") { entrée ->
@@ -192,6 +194,14 @@ fun Shell(container: AppContainer) {
                     padding = padding,
                     conversationId = entrée.arguments?.getString("conversationId") ?: "",
                     retour = { navController.popBackStack() },
+                )
+            }
+            composable("nouveau-message") {
+                NouveauMessageScreen(
+                    container = container,
+                    padding = padding,
+                    retour = { navController.popBackStack() },
+                    onEnvoyé = { navController.popBackStack() },
                 )
             }
             composable("demandes") {

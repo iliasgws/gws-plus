@@ -400,6 +400,44 @@ Transport) — and `translation` (composer strings).
 - `audio` was null throughout; attachment shape of non-empty `files[]`
   UNVERIFIED — do not rely.
 
+## nouveau-message — sending (bundle-verified, live test pending)
+
+**POST** `nouveau-message` — multipart. Fields read from the official bundle
+2.4.14 (reply composer and new-message page) — statically verified, not yet
+exercised against the live server (one real send owed, app kill switch
+default off).
+
+**Reply to a thread** (conversation composer):
+
+| Field | Value |
+| --- | --- |
+| `ref` | thread id |
+| `sujet` | thread subject |
+| `message` | text (`\r\n` line breaks) |
+| `theme` | the thread's own theme id (`theme: this.result.theme`) |
+| `files[]` | repeated literal part, one part per file, filename preserved |
+| `eleve_id` / `parent_id` / `key` | session values |
+| `audio` | raw blob `{file, name: "audio_<epoch_s>.<ext>"}` |
+| `index` | thread length **before** the optimistic push |
+
+Response `.message` replaces the optimistic entry at `index` — same shape as
+a `conversation[]` item (the app normalizes it with the same parser).
+
+**New thread** (new-message page):
+
+| Field | Value |
+| --- | --- |
+| `sujet` / `message` / `theme` | free text / free text / chosen from `themes[]` |
+| `eleve_id` / `parent_id` / `user_id` / `key` | session values |
+| `eleve` | nested `eleve[...]` parts (vestigial — `eleve_id` does the work) |
+| `file` | `null` (vestigial — the original uploader is dead code, its 1 MB toast is the only live trace) |
+| `files[]` / `audio` | same conventions as the reply path |
+
+Official limit: **1 MB per attachment, new-message path only** (toast
+« S'il vous plait choisi un fichier moins ou egale 1MB » in the bundle).
+After a successful new-thread send the official app navigates back to the
+list; the thread appears on the next `messages` fetch.
+
 ## demandes — administrative requests
 
 **GET** `demandes` — probe params: `page=1` (`demandes.json`).
@@ -651,7 +689,7 @@ Top-level keys: `all_objects`, `types`, `empty`, `empty_icon`, `empty_text`,
 | `post_view` | GET | per-post detail / mark-as-read |
 | `ressource_details` | GET | resource detail (quiz content, …) |
 | `cartable_numeriques`, `cartable_split` | GET | digital cartable |
-| `nouveau-message` | POST | send a message — field names unverified |
+| `nouveau-message` | POST | send a message — fields bundle-verified (see section below); live send pending |
 | `absences-justification` | POST | justify an absence — field names unverified |
 | `pick_enfants` | GET/POST | child switcher — POST fields unverified |
 | `device_token` | POST | FCM registration — fields per `BOTI-API.md`, server acceptance unverified |
@@ -667,5 +705,6 @@ Top-level keys: `all_objects`, `types`, `empty`, `empty_icon`, `empty_text`,
 - `devoirs_date_v2`: real submission multipart fields
 - `cours_v2`: inner `seances[]` slots
 - `acces_check`: behaviour on an invalid/expired session
-- `nouveau-message`, `pick_enfants`, `device_token`: POST fields
+- `nouveau-message`: POST fields bundle-verified statically (see its section); one live send still owed — non-empty `files[]` shapes and the new-thread response remain unproven
+- `pick_enfants`, `device_token`: POST fields
 - non-empty `files[]` shapes (nouveautes, messages, devoirs `devoir_fait`)
