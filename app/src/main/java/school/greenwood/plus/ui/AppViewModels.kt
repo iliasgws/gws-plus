@@ -18,7 +18,10 @@ import school.greenwood.plus.model.Demande
 import school.greenwood.plus.model.Devoir
 import school.greenwood.plus.model.Eleve
 import school.greenwood.plus.model.Post
+import school.greenwood.plus.model.QuizDetail
+import school.greenwood.plus.model.QuizRésultat
 import school.greenwood.plus.model.Ressource
+import school.greenwood.plus.model.RéponseJouée
 import java.time.LocalDate
 
 /*
@@ -200,11 +203,27 @@ class DevoirsViewModel(private val container: AppContainer) : ViewModel() {
 }
 
 /** — Documents ----------------------------------------------------------- */
+
+/** Filtre par nature de ressource (issue #17) : quiz d'un côté, documents
+ *  (tout type non quiz) de l'autre. */
+enum class FiltreDocuments(val label: String) {
+    Tout("Tout"),
+    Quiz("Quiz"),
+    Documents("Documents"),
+}
+
+/** Une ressource est un quiz si le serveur le dit (`type: "quiz"`) — les
+ *  autres types (PDF, vidéos… attendus mais non observés) restent des
+ *  documents, type absent compris. */
+fun estQuiz(ressource: Ressource): Boolean =
+    ressource.type.equals("quiz", ignoreCase = true)
+
 data class DocumentsÉtat(
     val chargement: Boolean = true,
     val erreur: String? = null,
     val ressources: List<Ressource> = emptyList(),
     val recherche: String = "",
+    val filtre: FiltreDocuments = FiltreDocuments.Tout,
 )
 
 class DocumentsViewModel(private val container: AppContainer) : ViewModel() {
@@ -231,6 +250,193 @@ class DocumentsViewModel(private val container: AppContainer) : ViewModel() {
 
     fun modifierRecherche(valeur: String) {
         _état.update { it.copy(recherche = valeur) }
+    }
+
+    fun choisirFiltre(filtre: FiltreDocuments) {
+        _état.update { it.copy(filtre = filtre) }
+    }
+
+}
+
+/** Recherche + filtre par nature, appliqués à la liste chargée (testé). */
+fun filtrerRessources(
+    ressources: List<Ressource>,
+    recherche: String,
+    filtre: FiltreDocuments,
+): List<Ressource> {
+    val requête = recherche.trim()
+    return ressources
+        .filter { r ->
+            requête.isEmpty() ||
+                r.label.contains(requête, ignoreCase = true) ||
+                r.matiere.contains(requête, ignoreCase = true)
+        }
+        .filter { r ->
+            when (filtre) {
+                FiltreDocuments.Tout -> true
+                FiltreDocuments.Quiz -> estQuiz(r)
+                FiltreDocuments.Documents -> !estQuiz(r)
+            }
+        }
+}
+
+/** — Quiz (détail d'un quiz de l'espace documents) ------------------------- */
+
+/** Phase de jeu : départ → question par question → résultat. */
+enum class PhaseQuiz { Départ, Jeu, Résultat }
+
+data class QuizÉtat(
+    val chargement: Boolean = true,
+    val erreur: String? = null,
+    val quiz: QuizDetail? = null,
+    val phase: PhaseQuiz = PhaseQuiz.Départ,
+    /** Index de la question en cours (phase Jeu). */
+    val indexQuestion: Int = 0,
+    /** Décompte restant de la question en cours, en secondes. */
+    val secondesRestantes: Int? = null,
+    /** Index de la réponse cliquée — fige l'écran le temps du retour visuel. */
+    val réponseChoisie: Int? = null,
+    /** Bonnes réponses du passage en cours. */
+    val scoreLocal: Int = 0,
+    /** Tentatives jouées : question → réponse (texte, secondes). */
+    val jouées: Map<Int, RéponseJouée> = emptyMap(),
+    val résultat: QuizRésultat? = null,
+    /** POST d'enregistrement en cours ou raté (score local affiché quand même). */
+    val envoiScore: Boolean = false,
+    val échecEnvoi: Boolean = false,
+)
+
+class QuizViewModel(
+    private val container: AppContainer,
+    private val quizId: String,
+) : ViewModel() {
+    private val _état = MutableStateFlow(QuizÉtat())
+    val état: StateFlow<QuizÉtat> = _état.asStateFlow()
+
+    /** Questions telles que reçues du GET — l'objet POST `questions` est le
+     *  tableau d'origine sérialisé, `answer` mis à jour à chaque réponse
+     *  (bundle : `questions: JSON.stringify(this._result.data.questions)`). */
+    private var questionsBrutes: kotlinx.serialization.json.JsonArray? = null
+
+    init {
+        charger()
+    }
+
+    fun charger() {
+        viewModelScope.launch {
+            _état.update { it.copy(chargement = true, erreur = null) }
+            try {
+                val chargé = container.documents.quiz(quizId)
+                questionsBrutes = chargé.questionsBrutes
+                _état.update { it.copy(chargement = false, quiz = chargé.détail) }
+            } catch (err: BotiErreur) {
+                _état.update { it.copy(chargement = false, erreur = err.messageUtilisateur) }
+            } catch (err: Exception) {
+                _état.update {
+                    it.copy(chargement = false, erreur = "Quiz indisponible pour le moment")
+                }
+            }
+        }
+    }
+
+    /** Démarre (ou rejoue) : remet compteur et réponses à zéro. */
+    fun démarrer() {
+        val quiz = _état.value.quiz ?: return
+        if (quiz.questions.isEmpty()) return
+        _état.update {
+            it.copy(
+                phase = PhaseQuiz.Jeu,
+                indexQuestion = 0,
+                secondesRestantes = quiz.questions.first().tempsReponse,
+                réponseChoisie = null,
+                scoreLocal = 0,
+                jouées = emptyMap(),
+                résultat = null,
+                envoiScore = false,
+                échecEnvoi = false,
+            )
+        }
+    }
+
+    /** Répondre : feedback immédiat (le serveur porte le drapeau correct),
+     *  2 s d'avance automatique — fidèle au bundle (`setTimeout(…, 2e3)`). */
+    fun répondre(index: Int) {
+        val e = _état.value
+        val question = e.quiz?.questions?.getOrNull(e.indexQuestion) ?: return
+        if (e.réponseChoisie != null || e.phase != PhaseQuiz.Jeu) return
+        val réponse = question.reponses.getOrNull(index) ?: return
+        val secondes = question.tempsReponse?.let { total ->
+            total - (e.secondesRestantes ?: total)
+        } ?: 0
+        _état.update {
+            it.copy(
+                réponseChoisie = index,
+                scoreLocal = it.scoreLocal + if (réponse.correcte) 1 else 0,
+                jouées = it.jouées + (it.indexQuestion to RéponseJouée(réponse.texte, secondes)),
+            )
+        }
+    }
+
+    /** Temps écoulé sans réponse : la question part sans choix (bundle :
+     *  `answerQuestion(null, null)` — `answered` vaut alors le temps total). */
+    fun tempsÉcoulé() {
+        val e = _état.value
+        val question = e.quiz?.questions?.getOrNull(e.indexQuestion) ?: return
+        if (e.réponseChoisie != null || e.phase != PhaseQuiz.Jeu) return
+        _état.update {
+            it.copy(
+                réponseChoisie = -1,
+                jouées = it.jouées + (
+                    it.indexQuestion to RéponseJouée(
+                        "",
+                        question.tempsReponse ?: 0,
+                    )
+                    ),
+            )
+        }
+    }
+
+    /** Une seconde de décompte (horloge de l'écran, une par seconde). */
+    fun tickHorloge() = _état.update {
+        it.copy(secondesRestantes = (it.secondesRestantes ?: 0) - 1)
+    }
+
+    /** Avance après le retour visuel ; au bout du quiz, enregistre. */
+    fun avancer() {
+        val e = _état.value
+        if (e.phase != PhaseQuiz.Jeu) return
+        val quiz = e.quiz ?: return
+        val suivant = e.indexQuestion + 1
+        if (suivant < quiz.questions.size) {
+            _état.update {
+                it.copy(
+                    indexQuestion = suivant,
+                    secondesRestantes = quiz.questions[suivant].tempsReponse,
+                    réponseChoisie = null,
+                )
+            }
+        } else {
+            _état.update { it.copy(phase = PhaseQuiz.Résultat, secondesRestantes = null) }
+            enregistrer()
+        }
+    }
+
+    /** POST `quiz` — les champs du bundle ; un échec n'empêche pas l'affichage
+     *  du score (le bundle officiel ignore lui-même l'erreur), signalé discret. */
+    private fun enregistrer() {
+        val e = _état.value
+        val quiz = e.quiz ?: return
+        val brutes = questionsBrutes ?: return
+        val jouées = e.jouées
+        _état.update { it.copy(envoiScore = true, échecEnvoi = false) }
+        viewModelScope.launch {
+            try {
+                val résultat = container.documents.envoyerRésultatQuiz(quiz, brutes, jouées)
+                _état.update { it.copy(envoiScore = false, résultat = résultat) }
+            } catch (err: Exception) {
+                _état.update { it.copy(envoiScore = false, échecEnvoi = true) }
+            }
+        }
     }
 
 }

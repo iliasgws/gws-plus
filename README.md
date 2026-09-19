@@ -14,7 +14,8 @@ l'administration — dans une interface « Le registre » rapide et sobre.
 - 📔 **Registre** — le fil du jour : actualités, devoirs donnés, absences, messages
 - 📚 **Devoirs** — par échéance, pièces jointes ouvrables nativement
 - 📰 **Actualités** — corps complets, images, PDF
-- 📁 **Documents** — ressources par matière, recherche
+- 📁 **Documents** — ressources par matière, recherche, filtre par nature ;
+  quiz jouables (décompte, bonne réponse affichée, score)
 - 📝 **Demandes** — suivi des demandes administratives et de leurs réponses
 - ✉️ **Messagerie** — fils de conversation avec l'administration, réponse,
   nouveau message (sujet + catégorie), pièces jointes, messages vocaux

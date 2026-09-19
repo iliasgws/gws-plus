@@ -1,7 +1,9 @@
 package school.greenwood.plus.data.repo
 
 import kotlinx.coroutines.flow.first
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import school.greenwood.plus.data.api.BotiClient
 import school.greenwood.plus.data.session.SessionStore
 import school.greenwood.plus.model.ContactEcole
@@ -223,7 +225,10 @@ class DemandesRepository(private val client: BotiClient) {
     }
 }
 
-class DocumentsRepository(private val client: BotiClient) {
+class DocumentsRepository(
+    private val client: BotiClient,
+    private val session: SessionStore,
+) {
 
     /** Ressources pédagogiques, groupées par matière côté UI. */
     suspend fun ressources(recherche: String? = null): List<school.greenwood.plus.model.Ressource> {
@@ -249,4 +254,75 @@ class DocumentsRepository(private val client: BotiClient) {
             else -> emptyList()
         }
     }
+
+    /**
+     * Détail d'un quiz (GET `quiz?quiz_id=…`) — forme vérifiée en sonde
+     * lecture-seule le 19/09/2026 (issue #17). Le serveur renvoie aussi la
+     * liste paginée (`start`/`limit`) et le score de la dernière tentative
+     * (`lastPlay`) ; l'espace documents suffit à l'un comme à l'autre.
+     */
+    suspend fun quiz(quizId: String): QuizChargé {
+        val rep = client.get("quiz", mapOf("quiz_id" to quizId))
+        val détail = Normalizers.quiz(rep) ?: error("Quiz illisible")
+        val data = (rep["data"] as? JsonObject) ?: rep
+        return QuizChargé(détail, Normalizers.arr(data, "questions"))
+    }
+
+    /**
+     * Enregistrement d'une tentative (POST `quiz`) — champs lus dans le
+     * bundle officiel 2.4.14 (page parent `/parent/quiz`, chunk 1140.js) :
+     * `quiz_id`, `questions` (le tableau GET sérialisé, `answer.answer` =
+     * texte choisi et `answer.answered` = secondes consommées), eleve_id,
+     * user_id, parent_id, key. Envoi réel à valider une fois sur un vrai
+     * compte (issue #17) — en échec, l'écran garde le score local.
+     */
+    suspend fun envoyerRésultatQuiz(
+        quiz: school.greenwood.plus.model.QuizDetail,
+        brutes: JsonArray,
+        jouées: Map<Int, school.greenwood.plus.model.RéponseJouée>,
+    ): school.greenwood.plus.model.QuizRésultat {
+        val s = session.state.first() ?: error("Session absente")
+        val rep = client.post(
+            endpoint = "quiz",
+            fields = mapOf(
+                "quiz_id" to quiz.id,
+                "questions" to questionsPourEnvoi(brutes, jouées).toString(),
+                "eleve_id" to s.eleveId,
+                "user_id" to s.userId,
+                "parent_id" to s.parentId,
+            ),
+        )
+        return Normalizers.quizRésultat(rep)
+    }
 }
+
+/**
+ * Le tableau `questions` du POST : chaque question telle que le GET l'a
+ * envoyée, seul `answer` est mis à jour (`answer.answer` = texte choisi,
+ * `answer.answered` = secondes utilisées) — exactement ce que fait le
+ * bundle avant son `JSON.stringify(questions)`. Une question sans objet
+ * `answer` en reçoit un neuf ; une question non jouée part telle quelle.
+ */
+internal fun questionsPourEnvoi(
+    brutes: JsonArray,
+    jouées: Map<Int, school.greenwood.plus.model.RéponseJouée>,
+): JsonArray = JsonArray(brutes.mapIndexed { index, question ->
+    val jouée = jouées[index] ?: return@mapIndexed question
+    val objet = question as? JsonObject ?: return@mapIndexed question
+    val answer = objet["answer"] as? JsonObject ?: JsonObject(emptyMap())
+    val answerMisÀJour = JsonObject(
+        buildMap {
+            putAll(answer)
+            put("answer", JsonPrimitive(jouée.texte))
+            put("answered", JsonPrimitive(jouée.secondes))
+        },
+    )
+    JsonObject(objet.toMap() + ("answer" to answerMisÀJour))
+})
+
+/** Détail normalisé + questions telles que reçues du GET — le POST `quiz`
+ *  renvoie ce tableau sérialisé avec `answer` mis à jour. */
+data class QuizChargé(
+    val détail: school.greenwood.plus.model.QuizDetail,
+    val questionsBrutes: JsonArray,
+)

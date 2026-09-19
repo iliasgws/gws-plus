@@ -135,10 +135,16 @@ date), pièce jointe téléchargeable (média signé, PDF ouvert nativement —
 pas de pdf.js webview).
 
 ### Documents
-Arborescence plate et recherche (GET `ressources_v2`, `ressource_details`,
-`bibliotheque` — `objects` est le flux des objets trouvés, pas l'espace
-documents), vignettes via URLs signées `media.boti.education`,
-téléchargement dans le système de fichiers.
+Arborescence plate et recherche (GET `ressources_v2`, `bibliotheque` —
+`objects` est le flux des objets trouvés, pas l'espace documents), filtre
+par nature — Tout / Quiz / Documents (issue #17) —, vignettes via URLs
+signées `media.boti.education`, téléchargement dans le système de
+fichiers. Les quiz s'ouvrent et se jouent : GET `quiz` vérifié en sonde
+lecture-seule (19/09/2026), décompte par question, bonne réponse affichée
+aussitôt (le serveur porte les drapeaux), score enregistré à la fin par le
+POST du flux officiel — lu dans le bundle, à valider une fois en réel ;
+en échec, le score local reste affiché. `ressource_details` reste hors v1
+(forme non vérifiée).
 
 ### Messages et contact admin
 Fil avec l'administration (GET `messages`, POST `nouveau-message`,

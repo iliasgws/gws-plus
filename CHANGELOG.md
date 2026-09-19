@@ -4,6 +4,24 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [Non publié]
+
+### Ajouté
+
+- **Accès aux quiz** (issue #17) : les quiz de l'espace documents
+  s'ouvrent désormais — carte de départ, questions une à une avec décompte,
+  bonne ou mauvaise réponse affichée aussitôt, score enregistré à la fin
+  par le POST `quiz` du flux officiel (en cas d'échec, le score local
+  reste affiché et signalé), « Rejouer » quand le serveur l'autorise
+- **Filtre par nature** dans l'onglet Documents : Tout / Quiz / Documents,
+  cumulable avec la recherche
+
+### Modifié
+
+- Les lignes de ressources de type quiz sont désormais cliquables (elles
+  étaient inertes) ; les autres types le restent en attendant la
+  vérification de `ressource_details`
+
 ## [0.2.2] — 2026-09-19
 
 ### Modifié

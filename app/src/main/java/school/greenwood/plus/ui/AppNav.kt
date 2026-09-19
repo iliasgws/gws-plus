@@ -42,6 +42,7 @@ import school.greenwood.plus.ui.screens.OnboardingScreen
 import school.greenwood.plus.ui.screens.devoirs.DevoirsScreen
 import school.greenwood.plus.ui.screens.demandes.DemandesScreen
 import school.greenwood.plus.ui.screens.documents.DocumentsScreen
+import school.greenwood.plus.ui.screens.documents.QuizScreen
 import school.greenwood.plus.ui.screens.messages.ConversationScreen
 import school.greenwood.plus.ui.screens.messages.MessagesScreen
 import school.greenwood.plus.ui.screens.messages.NouveauMessageScreen
@@ -178,7 +179,19 @@ fun Shell(container: AppContainer) {
                 DevoirsScreen(container = container, padding = padding)
             }
             composable("documents") {
-                DocumentsScreen(container = container, padding = padding)
+                DocumentsScreen(
+                    container = container,
+                    padding = padding,
+                    onOuvrirQuiz = { id -> navController.allerDétail("quiz/$id") },
+                )
+            }
+            composable("quiz/{quizId}") { entrée ->
+                QuizScreen(
+                    container = container,
+                    padding = padding,
+                    quizId = entrée.arguments?.getString("quizId") ?: "",
+                    retour = { navController.popBackStack() },
+                )
             }
             composable("messages") {
                 MessagesScreen(

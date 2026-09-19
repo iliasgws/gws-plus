@@ -122,6 +122,55 @@ data class Ressource(
     val icone: String? = null,
 )
 
+/** Une réponse possible d'une question de quiz (GET `quiz` — vérifié en sonde
+ *  lecture-seule le 19/09/2026). */
+data class QuizReponse(
+    val texte: String,
+    val correcte: Boolean,
+)
+
+/** Une réponse jouée pendant une tentative : texte choisi (« » si le temps
+ *  est écoulé sans choix) et secondes consommées (`answer.answer` /
+ *  `answer.answered` du POST `quiz`). */
+data class RéponseJouée(
+    val texte: String,
+    val secondes: Int,
+)
+
+/** Une question de quiz (GET `quiz`, `questions[]`). */
+data class QuizQuestion(
+    val texte: String,
+    val image: String? = null,
+    /** Temps alloué à la question, en secondes (`temps_reponse`). */
+    val tempsReponse: Int? = null,
+    val reponses: List<QuizReponse> = emptyList(),
+)
+
+/** Un quiz de l'espace documents, tel que le renvoie GET `quiz?quiz_id=…`. */
+data class QuizDetail(
+    val id: String,
+    val label: String,
+    val matiere: String? = null,
+    val niveau: String? = null,
+    val couleur: String? = null,
+    val image: String? = null,
+    /** Durée totale telle qu'affichée par le serveur (« 05:00 »). */
+    val minutes: String? = null,
+    val peutJouer: Boolean = true,
+    val peutRejouer: Boolean = false,
+    val questions: List<QuizQuestion> = emptyList(),
+) {
+    val nbQuestions: Int get() = questions.size
+}
+
+/** Score d'une tentative, renvoyé par le POST `quiz` (tolérant : enveloppe
+ *  plate ou `data{}` — le bundle lit `resultatScore.score` directement). */
+data class QuizRésultat(
+    val score: String? = null,
+    val temps: String? = null,
+    val peutRejouer: Boolean? = null,
+)
+
 /** Une absence notée. */
 data class Absence(
     val id: String,
