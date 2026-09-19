@@ -4,7 +4,7 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
-## [Non publié]
+## [0.4.0] — 2026-09-19
 
 ### Ajouté
 
