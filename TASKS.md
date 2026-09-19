@@ -193,3 +193,39 @@ composer + sending + attachments + voice. The write path is verified
       fields + live-test result pending), unverified-table updates, README,
       AGENTS.md
 - [x] `DESIGN.md` §4 surgical corrections (devoirs date semantics, documents sources)
+
+# Roadmap — composer v2 (post-issue #10)
+
+Wishlist from the first live test (2026-09-19), in no particular order.
+Nothing here is wired — design + decisions first.
+
+## Send queue with cancellation window
+
+A sent message is irreversible once the POST lands — the parent cannot
+recall it. A short send delay gives the writer a window to reread, edit or
+cancel, which matches how careful these messages must be.
+
+- [ ] Queued-send model: message sits in a local queue (`envoi planifié`)
+      with a countdown instead of posting immediately
+- [ ] Default delay 5 minutes, user-configurable (30 s / 1 / 2 / 5 / none)
+- [ ] Queue UI in the conversation: pending row with countdown, edit,
+      cancel, delete — clearly distinct from the optimistic « Envoi… » state
+- [ ] « Envoyer maintenant » (force send now) button bypassing the delay
+      — must remain a deliberate, separate gesture from the default
+- [ ] Queue survives process death (persisted, not just in-memory)
+- [ ] Interaction with the kill switch: queue only active when the composer
+      is on; delayed sends re-check the session before posting
+
+## AI writing assist (smart writing)
+
+Assist the parent in drafting — never send on its own, never invent facts
+about the school.
+
+- [ ] Decide the provider + privacy posture first (which API, what data
+      leaves the device, on by default or opt-in) — needs a user decision
+- [ ] Draft suggestion from a short intent (« demander une attestation »)
+- [ ] Rewrite/polish of the typed message (tone, grammar, formality)
+- [ ] Inline accept / regenerate / dismiss — composer stays the single
+      source of truth for the text
+- [ ] Never auto-send: AI output always lands in the composer for review
+- [ ] French-first prompts; school-context glossary kept client-side
