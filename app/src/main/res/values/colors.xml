@@ -2,5 +2,4 @@
 <resources>
     <!-- Fond de démarrage : le papier du thème clair (voir values-night). -->
     <color name="paper">#FAFAF7</color>
-    <color name="ic_launcher_background">#E9EFE7</color>
 </resources>

@@ -34,7 +34,8 @@ raw probe responses stay out of the repository (personal data).
 - [x] `app/build.gradle.kts` (compileSdk 37, minSdk 26, R8 for release)
 - [x] Gradle wrapper (9.6.0) committed
 - [x] `AndroidManifest.xml`: INTERNET only, `enableOnBackInvokedCallback`, FileProvider
-- [x] Launcher icon (adaptive: ink monogram + red-pen dot, sage ground)
+- [x] Launcher icon (adaptive: tree + cross artwork on a blue gradient sized
+      to survive every launcher mask; themed icon keeps the ink monogram)
 
 ## 3. Theme « Le registre »
 
