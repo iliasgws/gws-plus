@@ -268,6 +268,54 @@ class MessagesViewModel(private val container: AppContainer) : ViewModel() {
 
 }
 
+/** — Conversation (détail d'un fil) --------------------------------------- */
+data class ConversationÉtat(
+    val chargement: Boolean = true,
+    val erreur: String? = null,
+    val conversation: Conversation? = null,
+)
+
+class ConversationViewModel(
+    private val container: AppContainer,
+    private val conversationId: String,
+) : ViewModel() {
+    private val _état = MutableStateFlow(ConversationÉtat())
+    val état: StateFlow<ConversationÉtat> = _état.asStateFlow()
+
+    init {
+        charger()
+    }
+
+    fun charger() {
+        viewModelScope.launch {
+            _état.update { it.copy(chargement = it.conversation == null, erreur = null) }
+            try {
+                val conversation = container.messages.conversation(conversationId)
+                _état.update { it.copy(chargement = false, conversation = conversation) }
+            } catch (err: BotiErreur) {
+                _état.update { it.copy(chargement = false, erreur = err.messageUtilisateur) }
+            } catch (err: Exception) {
+                _état.update { it.copy(chargement = false, erreur = "Messages indisponibles pour le moment") }
+            }
+        }
+    }
+
+    fun téléchargerPièce(
+        pièce: school.greenwood.plus.model.Attachment,
+        context: android.content.Context,
+        onFait: (java.io.File?) -> Unit,
+    ) {
+        viewModelScope.launch {
+            val fichier = try {
+                school.greenwood.plus.util.Fichiers.télécharger(context, pièce.url, pièce.name)
+            } catch (err: Exception) {
+                null
+            }
+            onFait(fichier)
+        }
+    }
+}
+
 /** — Demandes ------------------------------------------------------------ */
 data class DemandesÉtat(
     val chargement: Boolean = true,
