@@ -61,7 +61,11 @@ data class Message(
     val deLAdmin: Boolean,
     val texte: String,
     val date: LocalDateTime? = null,
+    /** Accusé de lecture du destinataire (`vu_le` du serveur). */
+    val vuLe: LocalDateTime? = null,
     val attachments: List<Attachment> = emptyList(),
+    /** Message vocal (`audio` du serveur — nul dans toutes les observations à ce jour). */
+    val audio: Attachment? = null,
 )
 
 /** Une demande administrative et son statut. */

@@ -24,6 +24,15 @@ class MessagesRepository(private val client: BotiClient) {
             .sortedByDescending { it.dernierDate ?: java.time.LocalDateTime.MIN }
     }
 
+    /**
+     * Un fil par son id. Le serveur n'a pas de détail par conversation :
+     * tout est embarqué dans le GET `messages` (page 1). On refetch — les
+     * URLs média signées expirent après 15–20 minutes, une lecture fraîche
+     * les rafraîchit (docs/BOTI-API.md).
+     */
+    suspend fun conversation(id: String): Conversation? =
+        conversations().firstOrNull { it.id == id }
+
     suspend fun contact(): ContactEcole {
         val rep = client.get("contact")
         return ContactEcole(
