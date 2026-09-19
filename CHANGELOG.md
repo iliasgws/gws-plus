@@ -4,6 +4,16 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [0.2.2] — 2026-09-19
+
+### Modifié
+
+- **Nouvelle icône d'application** : le visuel « arbre et + » sur bouclier
+  bleu remplace le monogramme du registre. Icône adaptative (visuel centré
+  sur un dégradé bleu dérivé des bords du dessin, calibré pour ne jamais
+  rogner la croix, quel que soit le masque du lanceur) ; l'icône thématique
+  Android 13+ conserve le monogramme à l'encre
+
 ## [0.2.1] — 2026-09-19
 
 ### Corrigé
