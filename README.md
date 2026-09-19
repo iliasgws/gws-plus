@@ -65,3 +65,15 @@ dans le dépôt.
 
 - [DESIGN.md](DESIGN.md) — direction visuelle « Le registre », navigation, périmètre
 - [TASKS.md](TASKS.md) — état de la construction (milestone en cours)
+
+## Feuille de route
+
+Les prochaines pistes vivent dans [TASKS.md](TASKS.md), section « Roadmap » —
+rien n'est câblé, chaque idée attend sa passe de conception :
+
+- **File d'envoi** avec fenêtre d'annulation (délai 5 min par défaut) et « Envoyer maintenant »
+- **Aide à la rédaction par IA** — jamais d'envoi automatique, posture de vie privée à décider d'abord
+- **Source alternative de devoirs** pour les matières que certains enseignants n'écrivent jamais dans l'app
+- **Retours des parents sur l'emploi du temps** (provisoire, disent-ils)
+- **« Tout télécharger »** pour les pièces jointes des devoirs et des documents
+
