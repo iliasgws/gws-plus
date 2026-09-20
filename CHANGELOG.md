@@ -4,6 +4,16 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [0.5.0-bêta 7] — 2026-09-20
+
+### Modifié
+
+- **La recherche reçoit le verre exact des boutons** : la pile liquide du
+  `LiquidButton` (vibrance, flou, réfraction `lens` 12/24) remplace la
+  recette « search field » du catalogue — le champ réfracte désormais le
+  contenu qui passe derrière lui, comme les boutons. Pas de déformation
+  d'appui : le doigt reste stable pour le curseur de saisie
+
 ## [0.5.0-bêta 6] — 2026-09-20
 
 ### Corrigé

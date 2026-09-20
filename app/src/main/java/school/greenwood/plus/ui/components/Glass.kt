@@ -85,7 +85,6 @@ import com.kashif_e.backdrop.backdrops.rememberCombinedBackdrop
 import com.kashif_e.backdrop.backdrops.rememberLayerBackdrop
 import com.kashif_e.backdrop.drawBackdrop
 import com.kashif_e.backdrop.effects.blur
-import com.kashif_e.backdrop.effects.colorControls
 import com.kashif_e.backdrop.effects.lens
 import com.kashif_e.backdrop.effects.vibrancy
 import com.kashif_e.backdrop.highlight.Highlight
@@ -809,10 +808,11 @@ fun givre(): Color =
         Color.White.copy(alpha = 0.25f)
     }
 
-/** Champ de recherche liquide — la recette GlassSearchField du catalogue :
- *  capsule de verre floutée + colorControls, loupe craie, texte encre, givre
- *  léger (25 %) pour que la réfraction reste visible derrière. Repli (sans
- *  capture ou sous l'API 31) : capsule quasi opaque. */
+/** Champ de recherche liquide : la pile de verre du LiquidButton (vibrance,
+ *  flou, réfraction) sur une capsule champ — loupe craie, texte encre, givre
+ *  léger (25 %) pour que la réfraction reste visible derrière. Pas de
+ *  déformation d'appui : le doigt doit rester stable pour le curseur de
+ *  saisie. Repli (sans capture ou sous l'API 31) : capsule quasi opaque. */
 @Composable
 fun ChampRecherche(
     valeur: String,
@@ -830,11 +830,15 @@ fun ChampRecherche(
                     Modifier.drawBackdrop(
                         backdrop = backdrop,
                         shape = { ControlShape },
+                        // La pile liquide du LiquidButton, appliquée au champ :
+                        // vibrance, flou, réfraction — le même verre que les
+                        // boutons. Pas de déformation tanh ici : le doigt
+                        // doit rester stable pour le curseur de saisie.
                         effects = {
+                            vibrancy()
                             blur(6.dp.toPx())
-                            colorControls(saturation = 1.2f)
+                            lens(12.dp.toPx(), 24.dp.toPx())
                         },
-                        highlight = { Highlight.Default },
                         onDrawSurface = { drawRect(teinteGivre) },
                     )
                 } else {
