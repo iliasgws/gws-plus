@@ -67,6 +67,10 @@ Current contents (update this section whenever files are added or removed):
 6. **No secrets.** Never commit credentials, API keys, tokens, or other sensitive data.
 7. **Stay surgical.** Make precise, complete changes that fully address the task; avoid unrelated changes and do not fix unrelated pre-existing issues.
 8. **Keep documentation in sync.** When you add or change features, update `docs/product/ROADMAP.md` (living checklist), `CHANGELOG.md`, and this file's structure section in the same PR.
+9. **Ship beta builds during the liquid-glass preview.** For each completed
+   fix on `design/liquid-glass`, increment `versionCode`, advance the
+   `0.5.0-beta.N` version, and publish a signed GitHub prerelease APK so it can
+   be tested immediately. Do not overwrite an existing beta tag or asset.
 
 ## How to verify work
 
