@@ -57,12 +57,17 @@ un fond qui bouge fatigue, et l'app ne joue jamais d'animation pour rien.
   quelque chose : la **barre basse flottante** (le contenu défile derrière),
   la **barre d'en-tête du registre** (le flux passe dessous), le **composeur**
   (le fil passe derrière), la carte « Ce soir » et la carte de connexion
-  (l'aurore se réfracte à leurs bords). Tous échantillonnent la scène capturée
-  une fois à la racine via la bibliothèque
+  (l'aurore se réfracte à leurs bords). Échantillonnage via la bibliothèque
   [`backdrop`](https://github.com/Kashif-E/KMPLiquidGlass) (port KMP de
-  AndroidLiquidGlass). La réfraction est offerte dès l'API 33 (AGSL), le
-  floutage seul dès l'API 31. Les feuilles réelles se posent **par-dessus**
-  le contenu — le verre est une couche, pas une borne.
+  AndroidLiquidGlass), avec une règle absolue : **une feuille de verre ne
+  peut jamais échantillonner une capture qui la contient** — la couche se
+  ré-enregistre avec une référence à elle-même et le premier rendu du
+  contenu crashe (vu en bêta 2 : squelette affiché, puis crash). Deux
+  captures donc : la scène complète, lue par la seule barre basse qui se
+  tient hors d'elle ; l'aurore seule, lue par tout le verre qui vit dans les
+  écrans. La réfraction est offerte dès l'API 33 (AGSL), le floutage seul
+  dès l'API 31. Les feuilles réelles se posent **par-dessus** le contenu —
+  le verre est une couche, pas une borne.
 - **Verre fort** (feuilles modales, repli API < 31 de tout le verre réel) :
   fill quasi opaque à 95 %. Une feuille modale vit dans sa propre fenêtre :
   elle ne peut pas échantillonner — le verre fort est conçu pour ça, pas

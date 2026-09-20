@@ -111,19 +111,26 @@ fun AppNav(container: AppContainer) {
     val destinationCourante by navController.currentBackStackEntryAsState()
     val routeCourante = destinationCourante?.destination?.route
 
-    val backdrop = rememberLayerBackdrop()
+    // Deux captures, une règle : une feuille de verre ne peut jamais
+    // échantillonner une capture qui la contient (référence circulaire de
+    // couche → crash au premier rendu du contenu). La scène complète
+    // (aurore + écrans) n'est lue que par la barre basse, qui se tient hors
+    // de la capture ; tout le verre qui vit DANS les écrans lit l'aurore
+    // seule, capturée sur son propre nœud.
+    val fondScene = rememberLayerBackdrop()
+    val fondAurore = rememberLayerBackdrop()
     val portée = rememberCoroutineScope()
 
-    CompositionLocalProvider(LocalGlassBackdrop provides backdrop) {
+    CompositionLocalProvider(LocalGlassBackdrop provides fondAurore) {
         Box(Modifier.fillMaxSize()) {
             // La scène que le verre échantillonne : aurore + écrans, une seule
             // couche capturée (docs — ne recrée jamais le backdrop par recomposition).
             Box(
                 Modifier
                     .fillMaxSize()
-                    .layerBackdrop(backdrop),
+                    .layerBackdrop(fondScene),
             ) {
-                AuroraBackdrop()
+                AuroraBackdrop(Modifier.layerBackdrop(fondAurore))
                 Crossfade(targetState = écran, animationSpec = tween(250), label = "racine") { é ->
                     when (é) {
                         ÉcranRacine.Chargement -> {}
@@ -156,7 +163,7 @@ fun AppNav(container: AppContainer) {
                             onClick = { navController.allerÀLOnglet(onglet.route) },
                         )
                     },
-                    backdrop = backdrop,
+                    backdrop = fondScene,
                     modifier = Modifier
                         .navigationBarsPadding()
                         .padding(horizontal = 16.dp, vertical = 12.dp),

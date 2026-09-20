@@ -428,6 +428,17 @@ same tab gesture, same transitions, `enableOnBackInvokedCallback` untouched.
       a floating glass bar the feed scrolls UNDER (real component overlay);
       calm feed cards stay fill-only on purpose (nothing with edges behind
       them — refraction would be invisible and cost per-frame shaders)
+- [x] Crash fix (beta-2 on-device report: « skeleton shows, then crashes »):
+      a glass sheet must never sample a capture that CONTAINS it — the root
+      `layerBackdrop` re-records its subtree (`recordLayer { drawContent() }`),
+      so in-scene glass (hero card, floating header, composer, login) drawing
+      `drawLayer(sceneLayer)` while that scene layer was being recorded made
+      a self-referential GraphicsLayer → crash on the first content frame
+      (skeleton had no glass, hence the timing). Fix: two captures at the
+      AppNav root — `fondScene` (aurora + screens, read ONLY by the bottom
+      bar standing outside it) and `fondAurore` (the aurora node alone, read
+      by all in-screen glass via `LocalGlassBackdrop`); the rule is
+      documented on `LocalGlassBackdrop` and in DESIGN.md §2
 - [x] Screens: all 13 converted — transparent roots; day chips, nature
       filters, message categories, search field and action button extracted
       into shared `PuceChoix` / `ChampRecherche` / `GwsBouton`; quiz answers

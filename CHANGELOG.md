@@ -4,6 +4,18 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [0.5.0-bêta 3] — 2026-09-20
+
+### Corrigé
+
+- **Crash au premier affichage du contenu** (bêta 2) : une feuille de verre
+  échantillonnait la capture qui la contient — la couche se ré-enregistrait
+  avec une référence à elle-même, et le premier rendu du registre (carte
+  « Ce soir », barre d'en-tête) faisait planter l'app juste après le
+  squelette. Deux captures désormais : la scène complète, lue par la seule
+  barre basse qui se tient hors d'elle ; l'aurore seule, lue par tout le
+  verre qui vit dans les écrans
+
 ## [0.5.0-bêta 2] — 2026-09-20
 
 Préversion, deuxième itération sur les retours de la bêta 1 : la partie

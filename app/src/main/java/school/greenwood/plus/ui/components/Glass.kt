@@ -60,7 +60,14 @@ import school.greenwood.plus.ui.theme.RegistreTheme
 
 /** Où lire la scène capturée ? Fournie une seule fois à la racine (AppNav) ;
  *  les primitives profondes (FeuilleVerre dans les écrans) la lisent ici
- *  plutôt que de la faire remonter paramètre par paramètre. */
+ *  plutôt que de la faire remonter paramètre par paramètre.
+ *
+ *  Règle de survie : c'est la capture de l'AURORE SEULE. Une feuille de verre
+ *  ne peut jamais échantillonner une capture qui la contient — la couche se
+ *  ré-enregistrerait avec une référence à elle-même et le premier rendu du
+ *  contenu crashe (vu en bêta 2 : squelette affiché, puis crash). Le verre
+ *  dans les écrans réfracte donc l'aurore ; seule la barre basse, hors de la
+ *  capture de scène, voit le contenu qui défile derrière elle. */
 val LocalGlassBackdrop = compositionLocalOf<Backdrop?> { null }
 
 /** Un fond d'aurore : trois halos doux et immobiles sur la base du papier.
