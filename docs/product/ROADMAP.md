@@ -507,3 +507,26 @@ Branch `nouveautes-onglet`.
 - [x] Docs: DESIGN.md §2 rewritten, CHANGELOG, AGENTS
 - [ ] On-device pass: screenshots of every tab, light AND dark
       (`adb shell cmd uimode night no/yes`), back-gesture contract re-check
+
+# TASKS — Issue #34 « Navigation active non mise en surbrillance lors de l'ouverture d'une sous-page »
+
+Small fix, no milestone: the bottom bar highlighted a tab only on exact route
+match, so any sub-page (post, quiz, conversation, nouveau-message, demandes)
+left the bar with no active tab. The expected behavior is contextual: the
+detail screen belongs to the tab it was opened from.
+
+## Branch `issue-34-onglet-actif`
+
+- [x] AppNav: read the full back stack (`NavController.currentBackStack`,
+      public StateFlow in navigation 2.10.1) and derive the active tab with
+      `ongletActifDe` — last tab-root entry in the stack owns the sub-page
+      pushed above it; `RouteDépart` const shared with the NavHost
+- [x] BarreOnglets untouched — it still compares routes, it now receives a
+      route that is always a tab root (Registre fallback before first emission)
+- [x] `accentDe` unchanged: screen-tint stays static (a post keeps the
+      Actualités tint even when opened from Registre)
+- [x] Docs: NAVIGATION.md « L'onglet actif et les sous-pages », CHANGELOG
+      « Non publié »
+- [ ] On-device check: open a post from Registre and from Actualités, open a
+      quiz / conversation / demande, verify the parent tab stays active and
+      back restores it
