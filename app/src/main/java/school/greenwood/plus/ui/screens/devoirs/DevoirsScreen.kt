@@ -1,6 +1,7 @@
 package school.greenwood.plus.ui.screens.devoirs
 
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -36,7 +37,10 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -52,7 +56,10 @@ import school.greenwood.plus.ui.components.ErrorInline
 import school.greenwood.plus.ui.components.GwsCard
 import school.greenwood.plus.ui.components.Puce
 import school.greenwood.plus.ui.components.SqueletteDevoirs
+import school.greenwood.plus.ui.theme.AnnotationShape
 import school.greenwood.plus.ui.theme.ControlShape
+import school.greenwood.plus.ui.theme.RessortVif
+import school.greenwood.plus.ui.theme.tabulaire
 import school.greenwood.plus.ui.theme.RegistreTheme
 import school.greenwood.plus.util.Fichiers
 import school.greenwood.plus.util.frenchShort
@@ -84,6 +91,14 @@ fun DevoirsScreen(
                 text = "Devoirs",
                 style = MaterialTheme.typography.displayLarge,
                 color = RegistreTheme.colors.ink,
+            )
+            // Le surligneur : le trait de l'onglet, sous le titre.
+            Box(
+                modifier = Modifier
+                    .padding(top = 6.dp)
+                    .size(width = 56.dp, height = 5.dp)
+                    .clip(AnnotationShape)
+                    .background(RegistreTheme.accent.conteneur),
             )
             Spacer(Modifier.height(4.dp))
             Text(
@@ -187,17 +202,28 @@ private fun JourChip(
     sélectionné: Boolean,
     onClick: () -> Unit,
 ) {
+    val accent = RegistreTheme.accent
+    val échelle by animateFloatAsState(
+        targetValue = if (sélectionné) 1.04f else 1f,
+        animationSpec = RessortVif,
+        label = "jourÉchelle",
+    )
     Surface(
         shape = ControlShape,
-        color = if (sélectionné) RegistreTheme.colors.sage else RegistreTheme.colors.page,
+        color = if (sélectionné) accent.conteneur else RegistreTheme.colors.page,
         border = if (sélectionné) null else BorderStroke(1.dp, RegistreTheme.colors.sage),
-        modifier = Modifier.clickable(onClick = onClick),
+        modifier = Modifier
+            .graphicsLayer {
+                scaleX = échelle
+                scaleY = échelle
+            }
+            .clickable(onClick = onClick),
     ) {
         Text(
             text = if (jour == LocalDate.now()) "Aujourd'hui" else jour.frenchShort(),
             modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
-            style = MaterialTheme.typography.labelMedium,
-            color = if (sélectionné) RegistreTheme.colors.ink else RegistreTheme.colors.chalk,
+            style = MaterialTheme.typography.labelMedium.tabulaire(),
+            color = if (sélectionné) accent.surConteneur else RegistreTheme.colors.chalk,
         )
     }
 }

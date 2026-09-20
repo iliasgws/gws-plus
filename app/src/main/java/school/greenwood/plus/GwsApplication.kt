@@ -6,6 +6,7 @@ import school.greenwood.plus.data.api.BotiClient
 import school.greenwood.plus.data.api.BotiHttp
 import school.greenwood.plus.data.cache.CachesSession
 import school.greenwood.plus.data.repo.AuthRepository
+import school.greenwood.plus.data.repo.CoursRepository
 import school.greenwood.plus.data.repo.DevoirsRepository
 import school.greenwood.plus.data.repo.DemandesRepository
 import school.greenwood.plus.data.repo.DocumentsRepository
@@ -27,6 +28,7 @@ class AppContainer(context: Context) {
 
     val auth = AuthRepository(client, session, caches)
     val registre = RegistreRepository(client, session, caches)
+    val cours = CoursRepository(client, caches)
     val devoirs = DevoirsRepository(client, caches)
     val nouveautes = NouveautesRepository(client, session, caches)
     val messages = MessagesRepository(client, session, caches)

@@ -259,8 +259,13 @@ simply go dark in the Devoirs tab, and the parent finds out too late.
 The administration itself says the timetable is provisional — parents spot
 the changes first, in the corridors.
 
-- [ ] Read-only first: is the timetable even in the API? (`cours_v2`
-      inner `seances[]` — still on the unverified list)
+- [x] Read-only first: the timetable IS in the API (`cours_v2` — top-level week
+      shape verified 2026-09-20); inner `seances[]` slots were empty in the
+      probe, parsed defensively (plausible field names, never trusted)
+- [ ] Parent-side report: flag a slot as wrong/changed, in-app note —
+      local first, no shared write path without a decision
+- [ ] Community layer only if/when several parents use the app: shared
+      corrections with authorship, opt-in, moderation story
 - [ ] Parent-side report: flag a slot as wrong/changed, in-app note —
       local first, no shared write path without a decision
 - [ ] Community layer only if/when several parents use the app: shared
@@ -390,3 +395,115 @@ background, non-blocking error banners, and the registre date fix. Branch
 - [ ] (!) real-device pass: skeleton → content swap on each tab, warm
       reopen without flicker, banner + « Réessayer » under airplane mode,
       back gesture from Devoirs unchanged
+
+# TASKS — Plan Nouveautés « Onglet dédié Actualités & détail des posts »
+
+Living checklist for the Nouveautés milestone (plan `docs/product/PLAN-NOUVEAUTES.md`).
+Branch `nouveautes-onglet`.
+
+## Verification (2026-09-20)
+
+- [x] GET `nouveautes` live-probed: 1-based pagination verified (`start = accumulated length + 1`, `limit = 10`),
+      pull-to-refresh (`start = 0, limit = max(taille, 10)`), merge rule (`start == 0` replaces, `start > 0` appends)
+- [x] GET `post_view` live-probed read-only: per-post detail (`data`, `post`, `images`, `comments`, `quiz`, `translation`),
+      serves as server-side mark-as-read
+- [x] Write paths gated OFF behind DataStore kill switch (`ecritureNouveautesActivée = false`)
+
+## Branch `nouveautes-onglet`
+
+- [x] Step 1: Probes & docs (`docs/api/ENDPOINT-MAP.md` updated with pagination rules, write paths, post_view)
+- [x] Step 2: Models (`Post` extended with bookmark/auteur/permits, `Commentaire`, `QuestionPost`, `PostDetail`)
+- [x] Step 3: Normalizers (`post` with multi-file fix, `commentaire`, `questionPost`, `postDetail`, `fusionner`, `dernière`)
+- [x] Step 4: Repository & Session Cache (`CachesSession.posts`, `SessionStore.ecritureNouveautes`, `NouveautesRepository`)
+- [x] Step 5: ViewModels (`ActualitesViewModel`, `PostDetailViewModel`, `RegistreViewModel.derniereActualite`)
+- [x] Step 6: UI (`AppNav` 5 tabs, `CarteActualité`, `ActualitesScreen`, `PostDetailScreen`, `RegistreScreen`)
+- [x] Step 7: Tests (`NormalizersPostTest.kt` — 80 unit tests total, 0 failures)
+- [x] Step 8: Docs & delivery (`README.md`, `ROADMAP.md`, `CHANGELOG.md`, `AGENTS.md`)
+- [x] Step 9 (on-device beta follow-up, 2026-09-20): first real-device trial of the
+      beta crashed on every post open — `SquelettePostDetail` carried its own
+      `verticalScroll` and sat inside `PostDetailScreen`'s scrolling Column
+      (infinite-height constraints → `IllegalStateException`). Skeleton now
+      scrolls with its screen; fix verified live on device (both the Actualités
+      tab and the Registre « Dernière actualité » card open the detail cleanly).
+
+# TASKS — « Emploi du temps » (tab, week view) — branch `cours-onglet`
+
+## Verification (2026-09-20)
+
+- [x] `cours_v2` top-level shape live-probed read-only and documented
+      (ENDPOINT-MAP §cours_v2: `translation`, `next_week`/`last_week` ISO
+      Mondays, `selected_day` 1-based, `label`, `seances[]` day entries)
+- [ ] Inner `seances[]` slots: shape UNVERIFIED (empty in the probe) — parsed
+      defensively (plausible field names: matiere/title/label, heure_debut/
+      start/hdebut, heure_fin/end, salle/room, prof/enseignant/nom; any
+      unrecognizable object degrades to its first string field; a bare string
+      becomes the slot label). Needs a live check on an account with real slots.
+- [ ] Week navigation param: UNVERIFIED — client sends `date=<ISO Monday>`
+      with `cours_v2`; if the server ignores it the returned week is displayed
+      as-is. Needs a live check; the ←/→ arrows use the response's own
+      `last_week`/`next_week` so nothing breaks either way.
+
+## Design decisions
+
+- 6th bottom tab (user decision, same path as the Actualités 5th tab) —
+  `Onglet("cours", "Cours", CalendarMonth)`; DESIGN.md §3 amended.
+- The tab shows BOTH the week overview and the day detail: a chip per day
+  (letter + short date + slot count) above the selected day's slot cards.
+- Read-only first: no parent-side writes; the `restricted` server block is
+  surfaced as a notice card when the school restricts access.
+- Day dates are derived from the week's Monday (extracted from the ISO label,
+  fallback `last_week + 7d`) — the server day labels (« Le 14 Sep 2026 ») are
+  display-only (English month abbreviations, not parseable).
+
+## Branch `cours-onglet` (stacked on `nouveautes-onglet`, PR #28)
+
+- [x] Step 1: Models (`Créneau`, `JournéeCours`, `SemaineCours`)
+- [x] Step 2: Normalizers (`semaineCours`, `journéeCours`, `créneau`, `extractHeure`)
+- [x] Step 3: Repository & cache (`CoursRepository`, `CachesSession.cours`)
+- [x] Step 4: ViewModel (`CoursViewModel` — warm open from cache, ←/→ navigation,
+      day selection kept across weeks)
+- [x] Step 5: UI (`AppNav` 6 tabs, `CoursScreen` + `SqueletteCours`,
+      `RegistreScreen` « Emploi du temps » link card)
+- [x] Step 6: Tests (`NormalizersCoursTest.kt` — 89 unit tests total, 0 failures)
+- [x] Step 7: Docs & delivery (`DESIGN.md` §3, `README.md`, `ROADMAP.md`,
+      `CHANGELOG.md`, `AGENTS.md`, `ENDPOINT-MAP.md`)
+
+# TASKS — « École vivante » (full-app visual restyle) — branch `restyle-ecole-vivante`
+
+## Design decisions (2026-09-20)
+
+- Direction chosen with the user (dad's verdict on beta 2: « not stunning »):
+  bold & colorful, full-app scope, BOTH light and dark crafted.
+- Concept: schoolyard energy — warm cream paper (light) / deep green-charcoal
+  (dark), one accent family per tab (green, amber, blue, violet, ochre, coral),
+  like subject-notebook covers. Reading surfaces stay neutral; `redPen` keeps
+  its required-action-only discipline and never meets the coral (different hue,
+  never in the same component).
+- Display font: bundled-unused Bricolage Grotesque replaces Fraunces (removed
+  from the APK); Public Sans stays for text; every changing/aligned number goes
+  through the new `tabulaire()` (tnum).
+- Radii up (24/16/10 + bar pill); tonal depth via distinct `surfaceContainer*`
+  steps; custom `BarreOnglets` replaces stock NavigationBar — single-line labels
+  (the 2-line wrap of « Actualités » etc. is fixed), per-tab accent pill, spring
+  selection. Navigation contract (allerÀLOnglet, saveState/restoreState) untouched.
+
+## Branch `restyle-ecole-vivante` (stacked on `fix-post-detail-scroll-crash`)
+
+- [x] Tokens: Color.kt (neutrals + 6 accent triads + signetVif, light/dark),
+      Tokens.kt (GwsAccent, accents map, LocalGwsAccent), Theme.kt (tonal
+      ladders, error container, system-bar icon contrast SideEffect), Type.kt
+      (Bricolage display, tabulaire()), Shape.kt, Mouvement.kt
+- [x] Components: Puce/SectionLabel accent params, EmptyState playful mark,
+      BandeauErreur M3 tint, EntréeCascade, BarreOnglets.kt, CarteActualité
+      accent + signetVif token (hardcoded #FC942D gone)
+- [x] AppNav: route→accent table + animated ambient accent + custom bar
+- [x] Screens: Registre (focal card in green accent, highlighter, blue Cours
+      link, coral Demandes line), Actualités + PostDetail (amber), Cours (blue
+      chips/times), Devoirs (violet chips), Documents + Quiz (ochre; correct
+      answer = universal green), Messages/Conversation/Composeur/Demandes
+      (coral; recording dot is state, not required-action), Login + Onboarding
+      (default green, pill pager)
+- [x] System: launch windowBackground cream/charcoal
+- [x] Docs: DESIGN.md §2 rewritten, CHANGELOG, AGENTS
+- [ ] On-device pass: screenshots of every tab, light AND dark
+      (`adb shell cmd uimode night no/yes`), back-gesture contract re-check

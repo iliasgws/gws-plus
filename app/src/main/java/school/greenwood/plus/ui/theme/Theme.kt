@@ -1,5 +1,6 @@
 package school.greenwood.plus.ui.theme
 
+import android.app.Activity
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
@@ -7,11 +8,17 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
 
 /*
- * Thème « Le registre » (docs/product/DESIGN.md §2) : encre et papier réinventés.
- * Material 3 porte la mécanique (composants, ripple, accessibilité) ; les
- * six jetons du registre circulent en plus via CompositionLocal.
+ * Thème « École vivante » (docs/product/DESIGN.md §2) : crème et accents de
+ * cahiers. Material 3 porte la mécanique (composants, ripple, accessibilité) ;
+ * les jetons d'encre, papier et accents circulent en plus via CompositionLocal.
+ * Les marches surfaceContainer* sont désormais distinctes : les éléments
+ * surélevés se lisent comme surélevés (profondeur tonale).
  */
 
 private fun lightColorScheme(): ColorScheme = lightColorScheme(
@@ -31,15 +38,17 @@ private fun lightColorScheme(): ColorScheme = lightColorScheme(
     onSurface = InkLight,
     surfaceVariant = SageLight,
     onSurfaceVariant = ChalkLight,
-    surfaceContainer = PageLight,
-    surfaceContainerHigh = PageLight,
-    surfaceContainerHighest = PageLight,
-    outline = ChalkLight,
-    outlineVariant = SageLight,
+    surfaceContainerLowest = PageLight,
+    surfaceContainerLow = Color(0xFFFBF7EE),
+    surfaceContainer = Color(0xFFF5EEDF),
+    surfaceContainerHigh = Color(0xFFEFE7D6),
+    surfaceContainerHighest = Color(0xFFE9E0CD),
+    outline = OutlineLight,
+    outlineVariant = OutlineVariantLight,
     error = RedPenLight,
     onError = PageLight,
-    errorContainer = SageLight,
-    onErrorContainer = RedPenLight,
+    errorContainer = ErreurConteneurLight,
+    onErrorContainer = SurErreurConteneurLight,
 )
 
 private fun darkColorScheme(): ColorScheme = darkColorScheme(
@@ -59,15 +68,17 @@ private fun darkColorScheme(): ColorScheme = darkColorScheme(
     onSurface = InkDark,
     surfaceVariant = SageDark,
     onSurfaceVariant = ChalkDark,
-    surfaceContainer = PageDark,
-    surfaceContainerHigh = PageDark,
-    surfaceContainerHighest = PageDark,
-    outline = ChalkDark,
-    outlineVariant = SageDark,
+    surfaceContainerLowest = Color(0xFF171E18),
+    surfaceContainerLow = Color(0xFF1A231B),
+    surfaceContainer = Color(0xFF212B21),
+    surfaceContainerHigh = Color(0xFF252F25),
+    surfaceContainerHighest = Color(0xFF2A3429),
+    outline = OutlineDark,
+    outlineVariant = OutlineVariantDark,
     error = RedPenDark,
     onError = PaperDark,
-    errorContainer = SageDark,
-    onErrorContainer = RedPenDark,
+    errorContainer = ErreurConteneurDark,
+    onErrorContainer = SurErreurConteneurDark,
 )
 
 @Composable
@@ -78,7 +89,24 @@ fun GwsPlusTheme(
     val scheme = if (darkTheme) darkColorScheme() else lightColorScheme()
     val gwsColors = if (darkTheme) darkGwsColors() else lightGwsColors()
 
-    CompositionLocalProvider(LocalGwsColors provides gwsColors) {
+    // Le fond système suit le thème : les icônes des barres restent lisibles.
+    val view = LocalView.current
+    if (!view.isInEditMode) {
+        SideEffect {
+            runCatching {
+                (view.context as? Activity)?.window?.let { fenêtre ->
+                    val contrôleur = WindowCompat.getInsetsController(fenêtre, view)
+                    contrôleur.isAppearanceLightStatusBars = !darkTheme
+                    contrôleur.isAppearanceLightNavigationBars = !darkTheme
+                }
+            }
+        }
+    }
+
+    CompositionLocalProvider(
+        LocalGwsColors provides gwsColors,
+        LocalGwsAccent provides gwsColors.accents.getValue("registre"),
+    ) {
         MaterialTheme(
             colorScheme = scheme,
             typography = GwsTypography,

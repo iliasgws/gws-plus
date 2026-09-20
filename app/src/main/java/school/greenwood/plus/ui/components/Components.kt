@@ -1,10 +1,15 @@
 package school.greenwood.plus.ui.components
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -29,7 +34,11 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -38,17 +47,20 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
 import school.greenwood.plus.ui.theme.AnnotationShape
 import school.greenwood.plus.ui.theme.ControlShape
+import school.greenwood.plus.ui.theme.GwsAccent
 import school.greenwood.plus.ui.theme.PageShape
 import school.greenwood.plus.ui.theme.RegistreTheme
 
 /*
- * Briques communes du registre. Discrètes : le rouge stylo n'apparaît que sur
- * l'action requise, le sage porte les annotations, les pages portent le contenu.
+ * Briques communes de l'école vivante. Discrètes : le rouge stylo n'apparaît
+ * que sur l'action requise, l'accent d'onglet habille ce qui appartient à sa
+ * matière, le sage parchemin porte les annotations, les pages portent le contenu.
  */
 
-/** Surface « page » — la carte de contenu standard, rayon 20 dp. */
+/** Surface « page » — la carte de contenu standard, rayon 24 dp. */
 @Composable
 fun GwsCard(
     modifier: Modifier = Modifier,
@@ -62,48 +74,79 @@ fun GwsCard(
     )
 }
 
-/** Puce d'annotation (matière, statut, compteur) — rayon 6 dp, fond sage. */
+/**
+ * Puce d'annotation (matière, statut, compteur) — rayon 10 dp, fond sable
+ * parchemin. Avec [accent], la puce se met à la couleur de l'onglet.
+ */
 @Composable
 fun Puce(
     label: String,
     modifier: Modifier = Modifier,
     tintRed: Boolean = false,
+    accent: GwsAccent? = null,
 ) {
+    val fond = when {
+        tintRed -> RegistreTheme.colors.redPen
+        accent != null -> accent.conteneur
+        else -> RegistreTheme.colors.sage
+    }
+    val texte = when {
+        tintRed -> RegistreTheme.colors.page
+        accent != null -> accent.surConteneur
+        else -> RegistreTheme.colors.ink
+    }
     Box(
         modifier = modifier
             .clip(AnnotationShape)
-            .background(if (tintRed) RegistreTheme.colors.redPen else RegistreTheme.colors.sage)
+            .background(fond)
             .padding(horizontal = 8.dp, vertical = 3.dp),
     ) {
         Text(
             text = label,
             style = MaterialTheme.typography.labelMedium,
-            color = if (tintRed) RegistreTheme.colors.page else RegistreTheme.colors.ink,
+            color = texte,
         )
     }
 }
 
-/** Libellé de section — 13 sp, encre craie, discret. */
+/** Libellé de section — 13 sp, encre craie, discret ; [pointAccent] ajoute le
+ *  point de couleur de l'onglet. */
 @Composable
 fun SectionLabel(
     text: String,
     modifier: Modifier = Modifier,
+    pointAccent: Boolean = false,
 ) {
-    Text(
-        text = text,
+    Row(
         modifier = modifier.padding(top = 8.dp, bottom = 8.dp),
-        style = MaterialTheme.typography.labelMedium,
-        fontWeight = FontWeight(600),
-        color = RegistreTheme.colors.chalk,
-    )
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        if (pointAccent) {
+            Box(
+                modifier = Modifier
+                    .size(6.dp)
+                    .clip(CircleShape)
+                    .background(RegistreTheme.accent.teinte),
+            )
+        }
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight(600),
+            color = RegistreTheme.colors.chalk,
+        )
+    }
 }
 
-/** État vide : une invitation, pas un manque (docs/product/DESIGN.md §2). */
+/** État vide : une invitation, pas un manque (docs/product/DESIGN.md §2).
+ *  Avec [icone], la marque ludique de l'onglet — un carré d'accent qui sourit. */
 @Composable
 fun EmptyState(
     titre: String,
     message: String,
     modifier: Modifier = Modifier,
+    icone: ImageVector? = null,
 ) {
     Column(
         modifier = modifier
@@ -112,9 +155,26 @@ fun EmptyState(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
+        if (icone != null) {
+            Box(
+                modifier = Modifier
+                    .size(56.dp)
+                    .clip(PageShape)
+                    .background(RegistreTheme.accent.conteneur),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = icone,
+                    contentDescription = null,
+                    tint = RegistreTheme.accent.teinte,
+                    modifier = Modifier.size(28.dp),
+                )
+            }
+            Spacer(Modifier.height(4.dp))
+        }
         Text(
             text = titre,
-            style = MaterialTheme.typography.titleMedium,
+            style = MaterialTheme.typography.displaySmall,
             color = RegistreTheme.colors.ink,
         )
         Text(
@@ -122,6 +182,36 @@ fun EmptyState(
             style = MaterialTheme.typography.bodySmall,
             color = RegistreTheme.colors.chalk,
         )
+    }
+}
+
+/**
+ * Entrée en cascade d'une liste : fade + glissée, décalée de [index] × 40 ms
+ * (plafonné à 400 ms). La recette du Registre, généralisée aux écrans frères.
+ * [déclenché] se pose dans un rememberSaveable de l'écran pour ne rejouer
+ * qu'à la première ouverture.
+ */
+@Composable
+fun EntréeCascade(
+    déclenché: Boolean,
+    index: Int,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    var visible by remember { mutableStateOf(false) }
+    LaunchedEffect(déclenché) {
+        if (déclenché && !visible) {
+            delay((index * 40).coerceAtMost(400).toLong())
+            visible = true
+        }
+    }
+    AnimatedVisibility(
+        visible = visible,
+        modifier = modifier,
+        enter = fadeIn(tween(240)) + slideInVertically(tween(280)) { it / 6 },
+        exit = fadeOut(tween(140)) + slideOutVertically(tween(200)) { it / 6 },
+    ) {
+        content()
     }
 }
 
@@ -154,8 +244,8 @@ fun ErrorInline(
 }
 
 /** Bandeau d'erreur non bloquant (issue #21) : quand un contenu connu reste
- *  affiché malgré un échec réseau, l'erreur se pose en annotation discrète
- *  au-dessus de lui — le stylo rouge n'écrit que le message, jamais un mur
+ *  affiché malgré un échec réseau, l'erreur se pose en bande teintée M3 au-
+ *  dessus de lui — le stylo rouge n'écrit que le message, jamais un mur
  *  d'alarme — et un geste « Réessayer » relance le chargement forcé. */
 @Composable
 fun BandeauErreur(
@@ -165,8 +255,8 @@ fun BandeauErreur(
 ) {
     Surface(
         modifier = modifier.fillMaxWidth(),
-        shape = AnnotationShape,
-        color = RegistreTheme.colors.sage,
+        shape = ControlShape,
+        color = MaterialTheme.colorScheme.errorContainer,
     ) {
         Row(
             modifier = Modifier.padding(start = 12.dp),
@@ -644,6 +734,141 @@ fun SqueletteQuiz() {
                         .padding(horizontal = 16.dp, vertical = 14.dp)
                         .height(16.dp),
                 )
+            }
+        }
+    }
+}
+
+/** Squelette du flux d'actualités : cartes d'actualités avec vignette. */
+@Composable
+fun SqueletteActualites() {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        repeat(4) { index ->
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = PageShape,
+                color = RegistreTheme.colors.page,
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(14.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        BlocSquelette(modifier = Modifier.width(70.dp).height(20.dp))
+                        BlocSquelette(
+                            modifier = Modifier
+                                .fillMaxWidth(if (index % 2 == 0) 0.85f else 0.7f)
+                                .height(18.dp),
+                            forme = ControlShape,
+                        )
+                        BlocSquelette(modifier = Modifier.width(120.dp).height(12.dp))
+                    }
+                    BlocSquelette(
+                        modifier = Modifier.size(64.dp),
+                        forme = ControlShape,
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Squelette du détail d'un post. Il vit dans la colonne défilante de
+ * [PostDetailScreen] — un défilement imbriqué serait mesuré avec une hauteur
+ * infinie et ferait planter l'app au moindre ouvert de post.
+ */
+@Composable
+fun SquelettePostDetail() {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        BlocSquelette(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(200.dp),
+            forme = PageShape,
+        )
+        BlocSquelette(modifier = Modifier.width(80.dp).height(20.dp))
+        BlocSquelette(modifier = Modifier.fillMaxWidth(0.9f).height(24.dp), forme = ControlShape)
+        BlocSquelette(modifier = Modifier.width(140.dp).height(14.dp))
+        Spacer(Modifier.height(8.dp))
+        repeat(3) {
+            BlocSquelette(modifier = Modifier.fillMaxWidth().height(16.dp))
+        }
+    }
+}
+
+/** Squelette de l'emploi du temps : navigation de semaine, puces de jours, créneaux. */
+@Composable
+fun SqueletteCours() {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        BlocSquelette(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(24.dp),
+            forme = ControlShape,
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            repeat(6) {
+                BlocSquelette(
+                    modifier = Modifier
+                        .width(56.dp)
+                        .height(44.dp),
+                    forme = ControlShape,
+                )
+            }
+        }
+        repeat(4) { index ->
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = PageShape,
+                color = RegistreTheme.colors.page,
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(14.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    BlocSquelette(
+                        modifier = Modifier
+                            .width(56.dp)
+                            .height(36.dp),
+                        forme = ControlShape,
+                    )
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        BlocSquelette(
+                            modifier = Modifier
+                                .fillMaxWidth(if (index % 2 == 0) 0.6f else 0.45f)
+                                .height(16.dp),
+                            forme = ControlShape,
+                        )
+                        BlocSquelette(modifier = Modifier.width(90.dp).height(12.dp))
+                    }
+                }
             }
         }
     }

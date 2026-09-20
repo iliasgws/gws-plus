@@ -40,10 +40,104 @@ data class Post(
     val categorie: String? = null,
     val date: LocalDateTime? = null,
     val intro: String? = null,
-    /** Corps HTML complet — uniquement via admin_nouveautes (docs/api/BOTI-API.md). */
+    /** Corps HTML complet — uniquement via admin_nouveautes (docs/api/BOTI-API.md) ou post_view. */
     val description: String? = null,
     val image: String? = null,
     val attachments: List<Attachment> = emptyList(),
+    val bookmark: Boolean = false,
+    val auteur: String? = null,
+    val permitComments: Boolean = false,
+    val permitNewComments: Boolean = false,
+    val permitQuiz: Boolean = false,
+)
+
+/** Un commentaire sous un post d'actualité. */
+data class Commentaire(
+    val auteur: String,
+    val texte: String,
+    val date: LocalDateTime? = null,
+    val image: String? = null,
+    val sousCommentaires: List<Commentaire> = emptyList(),
+)
+
+/** Une question de quiz rattachée à un post d'actualité (GET post_view). */
+data class QuestionPost(
+    val alias: String? = null,
+    val label: String,
+    val réponses: List<String> = emptyList(),
+    val réponseChoisie: String? = null,
+)
+
+/**
+ * Détail complet d'un post (GET `post_view` — forme vérifiée 2026-09-20).
+ * Remplace la lecture du flux admin_nouveautes (~19 Mo), gardé en repli.
+ */
+data class PostDetail(
+    val id: String,
+    val title: String,
+    val categorie: String? = null,
+    val date: LocalDateTime? = null,
+    val intro: String? = null,
+    val descriptionHtml: String? = null,
+    val image: String? = null,
+    val bookmark: Boolean = false,
+    val auteur: String? = null,
+    val files: List<Attachment> = emptyList(),
+    val images: List<String> = emptyList(),
+    val commentaires: List<Commentaire> = emptyList(),
+    val peutCommenter: Boolean = false,
+    val peutNouveauCommentaire: Boolean = false,
+    val peutRépondre: Boolean = false,
+    val peutQuiz: Boolean = false,
+    val questions: List<QuestionPost> = emptyList(),
+) {
+    val attachments: List<Attachment> get() = files
+}
+
+/**
+ * Un créneau de cours (GET `cours_v2`, `seances[].seances[]`). La forme
+ * intérieure n'a JAMAIS été observée (sondage 2026-09-20 : `seances[]` vide,
+ * ENDPOINT-MAP « do not rely ») — parsing défensif sur des noms de champs
+ * plausibles, tout est facultatif.
+ */
+data class Créneau(
+    val matière: String? = null,
+    val début: String? = null,
+    val fin: String? = null,
+    val salle: String? = null,
+    val enseignant: String? = null,
+)
+
+/** Un jour de la semaine d'emploi du temps (`seances[]` externe, lundi = 1). */
+data class JournéeCours(
+    val jour: Int,
+    val label: String? = null,
+    /** Date réelle du jour, dérivée du lundi de semaine (le libellé serveur
+     *  « Le 14 Sep 2026 » n'est pas analysable — mois abrégé anglais). */
+    val date: LocalDate? = null,
+    val créneaux: List<Créneau> = emptyList(),
+)
+
+/**
+ * Une semaine d'emploi du temps (GET `cours_v2` — forme de tête vérifiée
+ * 2026-09-20, ENDPOINT-MAP). Les journées non reconnues sont tolérées.
+ */
+data class SemaineCours(
+    /** Libellé serveur « Du  2026/09/14 Au  2026/09/20 ». */
+    val label: String? = null,
+    /** Lundi de la semaine affichée (extrait du libellé ou dérivé de last_week). */
+    val lundi: LocalDate? = null,
+    /** Jour présélectionné par le serveur (`selected_day`, 1-based). */
+    val jourSélectionné: Int? = null,
+    val journées: List<JournéeCours> = emptyList(),
+    /** `next_week` / `last_week` (ISO) pour la navigation entre semaines. */
+    val semaineSuivante: LocalDate? = null,
+    val semainePrécédente: LocalDate? = null,
+    /** Textes serveur (translation) avec repli côté app. */
+    val aucunCours: String? = null,
+    val restreint: Boolean = false,
+    /** `restricted.label` (HTML brut, conservé tel quel — aplati à l'écran). */
+    val messageRestriction: String? = null,
 )
 
 /** Un fil de messages avec l'administration. */

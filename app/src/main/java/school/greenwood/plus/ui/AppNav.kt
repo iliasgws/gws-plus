@@ -2,6 +2,7 @@ package school.greenwood.plus.ui
 
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
@@ -11,23 +12,21 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.MenuBook
+import androidx.compose.material.icons.rounded.CalendarMonth
 import androidx.compose.material.icons.rounded.Folder
+import androidx.compose.material.icons.rounded.Newspaper
+import school.greenwood.plus.ui.screens.actualites.ActualitesScreen
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.QuestionAnswer
-import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -37,6 +36,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import school.greenwood.plus.AppContainer
+import school.greenwood.plus.ui.components.BarreOnglets
 import school.greenwood.plus.ui.screens.LoginScreen
 import school.greenwood.plus.ui.screens.OnboardingScreen
 import school.greenwood.plus.ui.screens.devoirs.DevoirsScreen
@@ -46,8 +46,12 @@ import school.greenwood.plus.ui.screens.documents.QuizScreen
 import school.greenwood.plus.ui.screens.messages.ConversationScreen
 import school.greenwood.plus.ui.screens.messages.MessagesScreen
 import school.greenwood.plus.ui.screens.messages.NouveauMessageScreen
+import school.greenwood.plus.ui.screens.cours.CoursScreen
 import school.greenwood.plus.ui.screens.registre.PostDetailScreen
 import school.greenwood.plus.ui.screens.registre.RegistreScreen
+import school.greenwood.plus.ui.theme.FonduCouleur
+import school.greenwood.plus.ui.theme.GwsAccent
+import school.greenwood.plus.ui.theme.LocalGwsAccent
 import school.greenwood.plus.ui.theme.RegistreTheme
 
 /*
@@ -72,6 +76,8 @@ data class Onglet(
 
 val Onglets = listOf(
     Onglet("registre", "Registre", Icons.Rounded.Home),
+    Onglet("actualites", "Actualités", Icons.Rounded.Newspaper),
+    Onglet("cours", "Cours", Icons.Rounded.CalendarMonth),
     Onglet("devoirs", "Devoirs", Icons.AutoMirrored.Rounded.MenuBook),
     Onglet("documents", "Documents", Icons.Rounded.Folder),
     Onglet("messages", "Messages", Icons.Rounded.QuestionAnswer),
@@ -107,12 +113,46 @@ fun AppNav(container: AppContainer) {
     }
 }
 
-/** La coquille : barre basse 4 onglets + piles d'onglets. */
+/**
+ * L'accent de l'endroit où l'on se trouve : une seule table fait correspondre
+ * route et famille de couleur. Les onglets ont leur famille ; les écrans de
+ * détail héritent de celle de leur onglet (post → actualités, quiz →
+ * documents, conversation / nouveau-message / demandes → messages).
+ */
+private fun accentDe(route: String?, couleurs: school.greenwood.plus.ui.theme.GwsColors): GwsAccent =
+    when (route) {
+        "registre" -> couleurs.accents.getValue("registre")
+        "actualites", "post" -> couleurs.accents.getValue("actualites")
+        "cours" -> couleurs.accents.getValue("cours")
+        "devoirs" -> couleurs.accents.getValue("devoirs")
+        "documents" -> couleurs.accents.getValue("documents")
+        "messages", "demandes" -> couleurs.accents.getValue("messages")
+        else -> when {
+            route?.startsWith("post/") == true -> couleurs.accents.getValue("actualites")
+            route?.startsWith("quiz/") == true -> couleurs.accents.getValue("documents")
+            route?.startsWith("conversation/") == true -> couleurs.accents.getValue("messages")
+            route == "nouveau-message" -> couleurs.accents.getValue("messages")
+            route == "demandes" -> couleurs.accents.getValue("messages")
+            else -> couleurs.accents.getValue("registre")
+        }
+    }
+
+/** La coquille : barre basse 6 onglets à accents + piles d'onglets. */
 @Composable
 fun Shell(container: AppContainer) {
     val navController = rememberNavController()
     val destinationCourante by navController.currentBackStackEntryAsState()
     val routeCourante = destinationCourante?.destination?.route
+
+    // L'accent suit l'écran, en fondu : puces, surligneurs et états vides se
+    // teintent de la matière de l'endroit où l'on se trouve.
+    val couleurs = RegistreTheme.colors
+    val cible = accentDe(routeCourante, couleurs)
+    val accentAnimé = GwsAccent(
+        teinte = animateColorAsState(cible.teinte, animationSpec = FonduCouleur, label = "accentTeinte").value,
+        conteneur = animateColorAsState(cible.conteneur, animationSpec = FonduCouleur, label = "accentConteneur").value,
+        surConteneur = animateColorAsState(cible.surConteneur, animationSpec = FonduCouleur, label = "accentSurConteneur").value,
+    )
 
     // Session expirée en plein usage : l'état racine renvoie à la connexion ;
     // ici on dépille pour ne rien laisser sous un onglet fantôme.
@@ -125,37 +165,18 @@ fun Shell(container: AppContainer) {
         }
     }
 
-    Scaffold(
-        containerColor = RegistreTheme.colors.paper,
-        bottomBar = {
-            NavigationBar(
-                containerColor = RegistreTheme.colors.page,
-                tonalElevation = 0.dp,
-            ) {
-                Onglets.forEach { onglet ->
-                    val sélectionné = routeCourante == onglet.route
-                    NavigationBarItem(
-                        selected = sélectionné,
-                        onClick = { navController.allerÀLOnglet(onglet.route) },
-                        icon = {
-                            Icon(
-                                imageVector = onglet.icone,
-                                contentDescription = onglet.label,
-                            )
-                        },
-                        label = { Text(onglet.label) },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = RegistreTheme.colors.ink,
-                            selectedTextColor = RegistreTheme.colors.ink,
-                            unselectedIconColor = RegistreTheme.colors.chalk,
-                            unselectedTextColor = RegistreTheme.colors.chalk,
-                            indicatorColor = RegistreTheme.colors.sage,
-                        ),
-                    )
-                }
-            }
-        },
-    ) { padding ->
+    CompositionLocalProvider(LocalGwsAccent provides accentAnimé) {
+        Scaffold(
+            containerColor = RegistreTheme.colors.paper,
+            bottomBar = {
+                BarreOnglets(
+                    onglets = Onglets,
+                    routeSélectionnée = routeCourante,
+                    accents = couleurs.accents,
+                    onOnglet = { route -> navController.allerÀLOnglet(route) },
+                )
+            },
+        ) { padding ->
         NavHost(
             navController = navController,
             startDestination = "registre",
@@ -173,7 +194,18 @@ fun Shell(container: AppContainer) {
                     padding = padding,
                     ouvrirDemandes = { navController.allerDétail("demandes") },
                     ouvrirPost = { id -> navController.allerDétail("post/$id") },
+                    ouvrirEmploi = { navController.allerÀLOnglet("cours") },
                 )
+            }
+            composable("actualites") {
+                ActualitesScreen(
+                    container = container,
+                    padding = padding,
+                    ouvrirPost = { id -> navController.allerDétail("post/$id") },
+                )
+            }
+            composable("cours") {
+                CoursScreen(container = container, padding = padding)
             }
             composable("devoirs") {
                 DevoirsScreen(container = container, padding = padding)
@@ -232,6 +264,7 @@ fun Shell(container: AppContainer) {
                     retour = { navController.popBackStack() },
                 )
             }
+        }
         }
     }
 }

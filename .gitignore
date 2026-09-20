@@ -20,3 +20,7 @@ local.properties
 
 # OS junk
 .DS_Store
+
+# Built APKs
+*.apk
+*.idsig

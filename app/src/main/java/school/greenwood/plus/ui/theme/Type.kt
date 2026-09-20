@@ -10,27 +10,22 @@ import androidx.compose.ui.unit.sp
 import school.greenwood.plus.R
 
 /*
- * Typographie (docs/product/DESIGN.md §2) : Fraunces pour l'affichage, Public Sans pour le
- * texte et l'interface — chiffres tabulaires pour les dates, tranches et
- * comptes. Hiérarchie par écarts francs : 28 / 17 / 15 / 13, jamais deux
- * niveaux adjacents à 1 sp d'écart.
- *
- * Fraunces est un *candidat*, pas un choix verrouillé : le verdict se prend
- * sur un vrai écran. Bricolage Grotesque est embarqué à côté ; le premier
- * essai sur l'appareil se fait en basculant DisplayFontFamily d'une ligne.
+ * Typographie « École vivante » (docs/product/DESIGN.md §2) : Bricolage
+ * Grotesque pour l'affichage — un grotesque de caractère, énergie cour
+ * d'école — et Public Sans pour le texte et l'interface. Hiérarchie par
+ * écarts francs : 30 / 17 / 15 / 13, jamais deux niveaux adjacents à 1 sp
+ * d'écart. Tout chiffre qui s'aligne ou change passe par tabulaire().
  */
 
 private fun variableFont(resId: Int, weight: FontWeight, opsz: Boolean) = Font(
     resId = resId,
     weight = weight,
     variationSettings = if (opsz) {
-        FontVariation.Settings(FontVariation.weight(weight.weight), FontVariation.opticalSizing(40.sp))
+        FontVariation.Settings(FontVariation.weight(weight.weight), FontVariation.opticalSizing(64.sp))
     } else {
         FontVariation.Settings(FontVariation.weight(weight.weight))
     },
 )
-
-private fun frauncesFont(weight: FontWeight) = variableFont(R.font.fraunces, weight, opsz = true)
 
 private fun bricolageFont(weight: FontWeight) =
     variableFont(R.font.bricolage_grotesque, weight, opsz = true)
@@ -47,23 +42,21 @@ private val UsedWeights = listOf(
     FontWeight(700),
 )
 
-/** Le serif à l'encre du registre — candidat d'affichage (verdict sur l'écran). */
-val FrauncesFamily = FontFamily(UsedWeights.map { frauncesFont(it) })
-
-/** Le substitut prévu pour l'essai on-device : basculer cette ligne. */
+/** L'affichage « École vivante » : le grotesque de caractère. */
 val BricolageGrotesqueFamily = FontFamily(UsedWeights.map { bricolageFont(it) })
 
 /** Famille verrouillée d'office pour le texte et l'interface. */
 val PublicSansFamily = FontFamily(UsedWeights.map { publicSansFont(it) })
 
-/** L'affichage du registre. Fraunces par défaut ; essai croisé avec Bricolage. */
-val DisplayFontFamily = FrauncesFamily
+/** L'affichage de l'app. */
+val DisplayFontFamily = BricolageGrotesqueFamily
 
-private fun display(weight: FontWeight, size: Int) = TextStyle(
+private fun display(weight: FontWeight, size: Int, tracking: Float = 0f) = TextStyle(
     fontFamily = DisplayFontFamily,
     fontWeight = weight,
     fontSize = size.sp,
-    lineHeight = (size * 1.2).sp,
+    lineHeight = (size + 4).sp,
+    letterSpacing = tracking.sp,
 )
 
 private fun interfaceStyle(weight: FontWeight, size: Int, lineHeight: Int) = TextStyle(
@@ -74,11 +67,13 @@ private fun interfaceStyle(weight: FontWeight, size: Int, lineHeight: Int) = Tex
 )
 
 val GwsTypography = Typography(
-    // Titre d'écran — Fraunces 28/600
-    displayLarge = display(FontWeight(600), 28),
-    // Date du registre, gros compteurs — Fraunces
-    headlineMedium = display(FontWeight(600), 24),
-    headlineSmall = display(FontWeight(600), 20),
+    // Titre d'écran — Bricolage 30/700, resserré
+    displayLarge = display(FontWeight(700), 30, tracking = -0.5f),
+    // Date du registre, gros compteurs — Bricolage
+    headlineMedium = display(FontWeight(700), 24, tracking = -0.3f),
+    headlineSmall = display(FontWeight(700), 21),
+    // Titres d'états vides, gros chiffres de score
+    displaySmall = display(FontWeight(700), 18),
     // Titre de carte — Public Sans 17/600
     titleLarge = interfaceStyle(FontWeight(600), 18, 24),
     titleMedium = interfaceStyle(FontWeight(600), 17, 24),
@@ -94,8 +89,9 @@ val GwsTypography = Typography(
     labelSmall = interfaceStyle(FontWeight(500), 11, 16),
 )
 
-/** Variante à chiffres tabulaires — dates, tranches horaires, comptes de devoirs. */
-val tabularDigits = TextStyle(
-    fontFamily = PublicSansFamily,
-    fontFeatureSettings = "tnum",
-)
+/**
+ * Variante à chiffres tabulaires — dates, tranches horaires, comptes :
+ * les chiffres s'alignent en colonne et ne sautent pas quand ils changent.
+ * À appliquer sur tout Text qui affiche un nombre.
+ */
+fun TextStyle.tabulaire(): TextStyle = copy(fontFeatureSettings = "tnum")

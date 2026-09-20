@@ -66,6 +66,7 @@ class SessionStore(private val context: Context) {
          *  été validé en conditions réelles (test du 19/09/2026) ; le réglage
          *  sert d'interrupteur, pas de verrou. Survit à une purge de session. */
         val composeurActivé = booleanPreferencesKey("composeur_active")
+        val ecritureNouveautes = booleanPreferencesKey("ecriture_nouveautes_activee")
     }
 
     val events = MutableSharedFlow<SessionEvent>(extraBufferCapacity = 4)
@@ -103,6 +104,12 @@ class SessionStore(private val context: Context) {
 
     suspend fun définirComposeur(actif: Boolean) {
         context.dataStore.edit { it[Clefs.composeurActivé] = actif }
+    }
+
+    val ecritureNouveautesActivée: Flow<Boolean> = context.dataStore.data.map { it[Clefs.ecritureNouveautes] ?: false }
+
+    suspend fun définirEcritureNouveautes(actif: Boolean) {
+        context.dataStore.edit { it[Clefs.ecritureNouveautes] = actif }
     }
 
     suspend fun enregistrer(

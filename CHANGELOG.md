@@ -4,6 +4,85 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [0.6.0-bêta 3] — 2026-09-20
+
+Préversion : le restylage « École vivante » se publie en bêta depuis la
+branche `restyle-ecole-vivante` (empilée sur le fix du plantage et la bêta 2)
+pour être essayé sur un appareil réel avant la fusion. S'installe au-dessus
+de la bêta 2 sans désinstallation.
+
+### Ajouté
+
+- **Onglet Emploi du temps** (branche `cours-onglet`, PR #29) : 6 onglets en
+  barre inférieure dans l'ordre Registre, Actualités, Cours, Devoirs, Documents,
+  Messages
+- **Vue semaine (GET `cours_v2`)** : navigation ←/→ entre semaines, résumé de la
+  semaine en puces de jours (lettre, date courte, nombre de cours) et créneaux du
+  jour choisi (horaire, matière, salle, enseignant)
+- **Carte « Emploi du temps » sur le Registre** : lien discret vers l'onglet
+- **Parsage défensif des créneaux** : la forme intérieure des `seances[]` n'ayant
+  jamais été observée (sondage du 2026-09-20), les champs plausibles sont tentés
+  (matiere/heure_debut/salle/prof…) et toute forme méconnaissable se replie sur
+  son premier champ texte — l'onglet reste utilisable même si le serveur change
+  de forme ; l'avertissement `restricted` du serveur s'affiche en carte dédiée
+
+### Changé
+
+- **Restylage « École vivante »** (branche `restyle-ecole-vivante`) : une
+  famille d'accent par onglet (vert, ambre, bleu, violet, ocre, corail) qui
+  teinte barre basse, puces, surligneurs de titres, carte focale et états
+  vides, en clair comme en sombre ; fond crème chaud le jour, vert-charbon la
+  nuit ; affichage en Bricolage Grotesque (le serif Fraunces quitte l'app) ;
+  rayons plus généreux (24/16/10) ; chiffres tabulaires sur dates, horaires
+  et comptes ; ressorts sous les sélections ; profondeur tonale des surfaces
+  (marches `surfaceContainer*` distinctes) ; fond système et icônes de barres
+  accordés au thème
+- **Barre basse à accents** : libellés sur une ligne (les libellés «
+  Actualités », « Documents », « Messages » se coupaient en deux lignes),
+  capsule de sélection colorée par onglet, sélection animée en ressort — le
+  contrat de navigation (piles par onglet, geste retour) est inchangé
+
+### Corrigé
+
+- **Plantage à l'ouverture d'une actualité** (constaté sur appareil réel,
+  2026-09-20) : le squelette du détail de post imbriquait son propre
+  défilement vertical dans celui de l'écran — contraintes de hauteur infinie,
+  arrêt immédiat de l'app dès l'arrivée sur l'onglet Actualités ou la carte
+  « Dernière actualité » ; le squelette défile désormais avec son écran
+
+## [0.6.0-bêta 1] — 2026-09-20
+
+Préversion : l'onglet Actualités et le détail des posts se publient en bêta
+depuis la branche `nouveautes-onglet` (PR #28, non fusionnée) pour être essayés
+sur un appareil réel avant la fusion.
+
+### Ajouté
+
+- **Onglet dédié Actualités** : 5 onglets en barre inférieure dans l'ordre Registre,
+  Actualités, Devoirs, Documents, Messages
+- **Pagination 1-based & défilement infini** : chargement paginé (`start = taille + 1`, `limit = 10`),
+  pull-to-refresh (`start = 0, limit = max(taille, 10)`) et défilement infini automatique
+  à l'approche des 3 derniers éléments
+- **Détail d'une actualité (`post_view`)** :
+  - Consultation via GET `post_view?post=<id>` agissant comme accusé de lecture côté serveur
+  - Repli transparent vers le cache et le flux streaming `admin_nouveautes`
+  - Affichage riche : en-tête avec catégorie, signet (`#fc942d`), titre, date, auteur
+  - Galerie d'images et téléchargement/ouverture native des pièces jointes
+  - Section commentaires (avec sous-commentaires imbriqués et formulaire de réponse)
+  - Questionnaire interactif (quiz rattaché au post avec alerte de fin)
+- **Kill switch de sécurité pour l'écriture** : les requêtes POST d'écriture sur les
+  actualités (commentaires et réponses de quiz) sont désactivées par défaut via une
+  préférence DataStore `ecritureNouveautesActivée`
+- **Carte « Dernière actualité » sur le Registre** : mise en valeur de la nouvelle la plus
+  récente sous l'en-tête du registre (masquée si elle figure déjà dans le fil du jour)
+- **Squelettes et cache de session** : squelettes de chargement dédiés (`SqueletteActualites`,
+  `SquelettePostDetail`) et cache mémoire isolé par session
+
+### Corrigé
+
+- Pièces jointes multiples : correction d'une troncature qui ne conservait que le premier fichier
+  lorsque plusieurs liens étaient séparés par des virgules
+
 ## [0.4.1] — 2026-09-20
 
 ### Corrigé
