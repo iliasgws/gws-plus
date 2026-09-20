@@ -81,3 +81,39 @@ Additional checks before opening a PR:
 - **No secrets / no personal data** in the tree; never log tokens or request params (see `docs/security/SECURITY-NOTES.md`, F3).
 - **Protocol facts** must come from `docs/api/BOTI-API.md` / `docs/api/ENDPOINT-MAP.md`; anything marked UNVERIFIED there needs a live check before being wired into a user-facing path.
 - Reviewing the diff for accidental scope creep.
+
+## Releasing a version
+
+Releases are **signed with the debug keystore** — every version ever published uses that same certificate (SHA-256 `775498f7…`), so an update installs over any previous one without uninstalling. Never switch keystores.
+
+```bash
+# 1. Version bump on a feature branch + PR titled « Préparer la version X.Y.Z »
+#    (versionCode increment, versionName, CHANGELOG's « Non publié » section
+#    becomes the dated entry) — never commit the bump directly to main.
+
+# 2. Build, align, sign (build-tools binaries are NOT on PATH — use full paths)
+./gradlew :app:assembleRelease
+~/Android/Sdk/build-tools/37.0.0/zipalign -f 4 app/build/outputs/apk/release/app-release.apk /tmp/aligned.apk
+~/Android/Sdk/build-tools/37.0.0/apksigner sign \
+    --ks ~/.android/debug.keystore --ks-key-alias androiddebugkey \
+    --ks-pass pass:android --key-pass pass:android \
+    --out GWS-vX.Y.Z.apk /tmp/aligned.apk
+
+# 3. Verify before publishing
+~/Android/Sdk/build-tools/37.0.0/aapt dump badging GWS-vX.Y.Z.apk | head -2   # versionCode / versionName
+~/Android/Sdk/build-tools/37.0.0/apksigner verify --print-certs GWS-vX.Y.Z.apk
+sha256sum GWS-vX.Y.Z.apk
+```
+
+4. Publish with `gh`:
+
+```bash
+gh release create vX.Y.Z --target <branch-built-from> \
+    --title "GWS+ X.Y.Z — <sous-titre français avec accents>" \
+    --notes-file /tmp/notes.md GWS-vX.Y.Z.apk
+```
+
+- Notes follow the v0.2.2 format: built-from commit + PRs, feature bullets, « s'installe au-dessus de la X.Y.Z sans désinstallation », SHA-256.
+- Write notes to a **temp file** and pass `--notes-file` (a long heredoc on the command line can fail silently).
+- **After creating, always check the body is not empty** (`gh release view vX.Y.Z --json body --jq '.body | length'`); if it is, repair with `gh release edit vX.Y.Z --notes-file /tmp/notes.md`.
+- Betas of unmerged branches are released with `--target <branch>` and a « Préversion (bêta) » header; see v0.6.0-beta.1…3 for examples.
