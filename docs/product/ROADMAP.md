@@ -419,6 +419,12 @@ Branch `nouveautes-onglet`.
 - [x] Step 6: UI (`AppNav` 5 tabs, `CarteActualité`, `ActualitesScreen`, `PostDetailScreen`, `RegistreScreen`)
 - [x] Step 7: Tests (`NormalizersPostTest.kt` — 80 unit tests total, 0 failures)
 - [x] Step 8: Docs & delivery (`README.md`, `ROADMAP.md`, `CHANGELOG.md`, `AGENTS.md`)
+- [x] Step 9 (on-device beta follow-up, 2026-09-20): first real-device trial of the
+      beta crashed on every post open — `SquelettePostDetail` carried its own
+      `verticalScroll` and sat inside `PostDetailScreen`'s scrolling Column
+      (infinite-height constraints → `IllegalStateException`). Skeleton now
+      scrolls with its screen; fix verified live on device (both the Actualités
+      tab and the Registre « Dernière actualité » card open the detail cleanly).
 
 # TASKS — « Emploi du temps » (tab, week view) — branch `cours-onglet`
 

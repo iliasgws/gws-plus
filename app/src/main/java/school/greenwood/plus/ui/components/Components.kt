@@ -694,14 +694,15 @@ fun SqueletteActualites() {
     }
 }
 
-/** Squelette du détail d'un post. */
+/**
+ * Squelette du détail d'un post. Il vit dans la colonne défilante de
+ * [PostDetailScreen] — un défilement imbriqué serait mesuré avec une hauteur
+ * infinie et ferait planter l'app au moindre ouvert de post.
+ */
 @Composable
 fun SquelettePostDetail() {
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp),
+        modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         BlocSquelette(
