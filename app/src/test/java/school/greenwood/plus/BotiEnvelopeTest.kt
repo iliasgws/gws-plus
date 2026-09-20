@@ -84,4 +84,48 @@ class BotiEnvelopeTest {
         val r = BotiEnvelope.analyser("""[1,2,3]""", "x")
         assertTrue(r is BotiEnvelope.Résultat.Erreur)
     }
+
+    /** Vu en production le 20/09/2026 : le serveur `messages` a renvoyé un
+     *  `print_r` PHP (« Models\Inscription Object (…) ») à la place du JSON. */
+    private val dumpPhp = "Models\\Inscription Object (\n" +
+        "    [months] =>\n" +
+        "    [attrs:protected] => Array\n" +
+        "        (\n" +
+        "            [ID] => 481\n" +
+        "        )\n" +
+        "\n" +
+        ")"
+
+    @Test
+    fun `dump php devant le json - données récupérées`() {
+        val r = BotiEnvelope.analyser("$dumpPhp\n{\"data\":[],\"themes\":[]}", "messages")
+        assertTrue(r is BotiEnvelope.Résultat.Données)
+        assertTrue((r as BotiEnvelope.Résultat.Données).objet.containsKey("data"))
+    }
+
+    @Test
+    fun `dump php après le json - données récupérées`() {
+        val r = BotiEnvelope.analyser("""{"data":[]} $dumpPhp""", "messages")
+        assertTrue(r is BotiEnvelope.Résultat.Données)
+    }
+
+    @Test
+    fun `dump php avec error enveloppé - l'erreur du serveur passe quand même`() {
+        val r = BotiEnvelope.analyser("$dumpPhp\n{\"error\":true,\"msg\":\"Erreur interne\"}", "messages")
+        assertEquals("Erreur interne", (r as BotiEnvelope.Résultat.Erreur).message)
+        assertFalse(r.illisible)
+    }
+
+    @Test
+    fun `dump php seul sans json - reste illisible avec extrait`() {
+        val r = BotiEnvelope.analyser(dumpPhp, "messages") as BotiEnvelope.Résultat.Erreur
+        assertTrue(r.illisible)
+        assertTrue(r.message.contains("Models\\Inscription"))
+    }
+
+    @Test
+    fun `json cassé au milieu - pas de fausse récupération`() {
+        val r = BotiEnvelope.analyser("""{"data":[,garbage}""", "messages") as BotiEnvelope.Résultat.Erreur
+        assertTrue(r.illisible)
+    }
 }

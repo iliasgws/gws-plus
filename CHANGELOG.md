@@ -4,6 +4,18 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [0.4.1] — 2026-09-20
+
+### Corrigé
+
+- Le serveur renvoie parfois, à la place du JSON attendu, un débogage PHP en
+  clair autour de la charge utile (un `print_r` d'objet — vu sur `messages`
+  le 20/09/2026 : « Models\Inscription Object (…) ») : le JSON embarqué est
+  désormais récupéré et servi comme un corps net, au lieu d'un mur d'erreur
+- Les GET frappés par une réponse non JSON sont relancés jusqu'à trois fois
+  à délais croissants (700 ms puis 1,5 s) au lieu d'une seule — le POST
+  n'est jamais relancé, un envoi doublé serait pire qu'un échec affiché
+
 ## [0.4.0] — 2026-09-19
 
 ### Ajouté
