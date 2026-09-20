@@ -4,12 +4,16 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
-## [Non publié]
+## [0.6.0-bêta 3] — 2026-09-20
+
+Préversion : le restylage « École vivante » se publie en bêta depuis la
+branche `restyle-ecole-vivante` (empilée sur le fix du plantage et la bêta 2)
+pour être essayé sur un appareil réel avant la fusion. S'installe au-dessus
+de la bêta 2 sans désinstallation.
 
 ### Ajouté
 
-- **Onglet Emploi du temps** (0.6.0-bêta 2, branche `cours-onglet`, PR #29 —
-  à essayer sur appareil réel avant la fusion, comme la bêta 1) : 6 onglets en
+- **Onglet Emploi du temps** (branche `cours-onglet`, PR #29) : 6 onglets en
   barre inférieure dans l'ordre Registre, Actualités, Cours, Devoirs, Documents,
   Messages
 - **Vue semaine (GET `cours_v2`)** : navigation ←/→ entre semaines, résumé de la
