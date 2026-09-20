@@ -4,6 +4,18 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [0.5.0-bêta 11] — 2026-09-20
+
+### Corrigé
+
+- **Le verre revient sans la floraison** : chaque contrôle conserve son
+  `Button` ou `IconButton` Material natif, posé sur une feuille de verre qui
+  ne lit que l'aurore stable. Flou et réfraction sont modérés ; vibrance,
+  reflet, ombre et déformation personnalisée restent absents
+- **Barre basse liquide et stable** : elle échantillonne elle aussi uniquement
+  l'aurore immobile. Elle retrouve sa matière liquide sans remettre les listes
+  paresseuses dans une capture backdrop
+
 ## [0.5.0-bêta 10] — 2026-09-20
 
 ### Corrigé

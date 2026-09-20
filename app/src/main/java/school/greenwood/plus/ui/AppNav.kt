@@ -64,7 +64,7 @@ import school.greenwood.plus.ui.screens.registre.RegistreScreen
  *
  * Le verre (docs/product/DESIGN.md §2) ne capture que l'aurore immobile.
  * Les écrans et leurs listes paresseuses restent hors de tout GraphicsLayer
- * backdrop ; la barre basse emploie sa capsule calme sans capture dynamique.
+ * backdrop ; la barre basse lit seulement cette aurore stable.
  *
  * Onglets (docs/product/DESIGN.md §3) : chaque onglet garde sa pile via
  * saveState/restoreState, retour depuis un onglet racine → Registre,
@@ -152,9 +152,9 @@ fun AppNav(container: AppContainer) {
                             onClick = { navController.allerÀLOnglet(onglet.route) },
                         )
                     },
-                    // Barre calme sans capture dynamique : aucun GraphicsLayer
-                    // ne dépend du contenu paresseux qui défile.
-                    backdrop = null,
+                    // Verre réel sur la seule capture stable : l'aurore.
+                    // Aucun GraphicsLayer ne dépend d'une liste qui défile.
+                    backdrop = fondAurore,
                     modifier = Modifier
                         .navigationBarsPadding()
                         .padding(horizontal = 16.dp, vertical = 12.dp),

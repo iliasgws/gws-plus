@@ -62,8 +62,9 @@ un fond qui bouge fatigue, et l'app ne joue jamais d'animation pour rien.
   peut jamais échantillonner une capture qui la contient** — la couche se
   ré-enregistre avec une référence à elle-même et le premier rendu du
   contenu crashe (vu en bêta 2 : squelette affiché, puis crash). Une seule
-  capture demeure : l'aurore immobile. Les écrans, les listes paresseuses et
-  la barre basse restent hors de toute capture dynamique. La réfraction est
+  capture demeure : l'aurore immobile. Les écrans et les listes paresseuses
+  restent hors de toute capture dynamique ; la barre basse et les feuilles
+  de verre ne lisent que cette aurore stable. La réfraction est
   offerte dès l'API 33 (AGSL), le floutage seul
   dès l'API 31. Les feuilles réelles se posent **par-dessus** le contenu —
   le verre est une couche, pas une borne.
@@ -76,22 +77,23 @@ un fond qui bouge fatigue, et l'app ne joue jamais d'animation pour rien.
 
 ### Les composants interactifs
 
-L'interrupteur reste un port du catalogue
+L'interrupteur et la barre restent des ports du catalogue
 [`backdrop`](https://github.com/Kashif-E/KMPLiquidGlass). Les boutons
-d'action et d'icône utilisent en revanche les composants Material natifs :
-aucun shader de verre ne s'exécute dans un bouton.
+d'action et d'icône gardent les composants Material natifs pour l'interaction
+et le ripple, posés sur une feuille de verre calme qui lit l'aurore stable.
 
-- **Barre basse** : capsule calme sans capture dynamique, pour que le
-  recyclage d'une liste ne puisse jamais invalider un GraphicsLayer ;
-- **Button / IconButton** → `GwsBouton` et les actions d'icône : rendu et
-  interaction Material natifs, sans floraison ni déformation personnalisée ;
+- **LiquidBottomTabs** → barre basse : capsule liquide qui lit uniquement
+  l'aurore stable, jamais la scène ou une liste paresseuse ;
+- **Button / IconButton** → `GwsBouton` et les actions d'icône : interaction
+  Material native sur `FeuilleVerre` (flou/réfraction 6 dp), sans vibrance,
+  reflet, ombre ni déformation personnalisée ;
 - **LiquidToggle** → « Retenir ma session » : rail d'encre, pouce de verre
   qui grossit à l'appui et échantillonne le rail compressé (effet loupe) ;
 - **GlassSearchField** → `ChampRecherche` : capsule de verre floutée.
 
 `LiquidSlider` n'a pas d'usage dans l'app (aucun réglage continu). Les
 composants de verre des écrans échantillonnent uniquement l'aurore stable ;
-la barre basse ne lit aucune capture. Chaque composant garde un
+la barre basse lit cette même capture stable. Chaque composant garde un
 repli identique sans verre (API < 31) : même silhouette, matériaux du
 thème.
 

@@ -485,6 +485,12 @@ same tab gesture, same transitions, `enableOnBackInvokedCallback` untouched.
       capture was also removed: the bottom bar uses its calm static fallback,
       and only the stable aurora remains captured for in-screen glass. Lazy
       list recycling is therefore completely outside backdrop GraphicsLayers
+- [x] Eighth pass (beta-10 device feedback: native controls looked flat):
+      retained native Material `Button` / `IconButton` interaction and ripple,
+      but placed each control on `FeuilleVerre` sampling only the stable aurora
+      (blur/lens 6 dp, no vibrancy, highlight, shadow or custom deformation).
+      The bottom bar likewise receives the aurora backdrop, never the screen
+      scene, so it looks liquid without capturing any lazy list
 - [x] Screens: all 13 converted — transparent roots; day chips, nature
       filters, message categories, search field and action button extracted
       into shared `PuceChoix` / `ChampRecherche` / `GwsBouton`; quiz answers

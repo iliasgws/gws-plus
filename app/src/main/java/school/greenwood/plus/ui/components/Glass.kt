@@ -270,9 +270,9 @@ object GlassDefaults {
 private val floutageDisponible: Boolean
     get() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
 
-/** Bouton natif Material. Le nom reste compatible avec les appels existants,
- *  mais aucun shader backdrop ni déformation personnalisée n'est appliqué :
- *  les boutons gardent une apparence calme et le comportement natif. */
+/** Contrôle Material natif posé sur une feuille de verre réelle. Le bouton
+ *  conserve son interaction et son ripple natifs ; la couche dessous lit
+ *  uniquement l'aurore stable, sans vibrance, reflet ni déformation. */
 @Composable
 fun LiquidButton(
     onClick: () -> Unit,
@@ -292,23 +292,41 @@ fun LiquidButton(
         tint.isSpecified -> tint.copy(alpha = 0.82f)
         else -> colors.ink
     }
-    Button(
-        onClick = onClick,
+    FeuilleVerre(
         modifier = modifier.height(hauteur),
-        enabled = isInteractive,
-        shape = ControlShape,
-        colors = ButtonDefaults.buttonColors(
-            containerColor = fond,
-            contentColor = colors.page,
-            disabledContainerColor = fond.copy(alpha = 0.45f),
-            disabledContentColor = colors.chalk,
-        ),
-        contentPadding = PaddingValues(horizontal = paddingHorizontal),
-        content = content,
-    )
+        forme = ControlShape,
+        teinte = fond,
+        liseré = BorderStroke(1.dp, colors.ink.copy(alpha = 0.14f)),
+        flou = 6.dp,
+        réfraction = 6.dp,
+        vibrant = false,
+        lumineux = false,
+    ) {
+        Button(
+            onClick = onClick,
+            modifier = Modifier.fillMaxSize(),
+            enabled = isInteractive,
+            shape = ControlShape,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color.Transparent,
+                contentColor = colors.page,
+                disabledContainerColor = Color.Transparent,
+                disabledContentColor = colors.chalk,
+            ),
+            elevation = ButtonDefaults.buttonElevation(
+                defaultElevation = 0.dp,
+                pressedElevation = 0.dp,
+                focusedElevation = 0.dp,
+                hoveredElevation = 0.dp,
+                disabledElevation = 0.dp,
+            ),
+            contentPadding = PaddingValues(horizontal = paddingHorizontal),
+            content = content,
+        )
+    }
 }
 
-/** Bouton d'icône natif Material, transparent et sans shader personnalisé. */
+/** Bouton d'icône Material natif posé sur la même feuille de verre calme. */
 @Composable
 fun LiquidIconButton(
     onClick: () -> Unit,
@@ -318,12 +336,25 @@ fun LiquidIconButton(
     surfaceColor: Color = Color.Unspecified,
     content: @Composable () -> Unit,
 ) {
-    IconButton(
-        onClick = onClick,
+    val colors = RegistreTheme.colors
+    val fond = if (surfaceColor.isSpecified) surfaceColor else givre()
+    FeuilleVerre(
         modifier = modifier.size(taille),
-        enabled = enabled,
-        content = content,
-    )
+        forme = ControlShape,
+        teinte = fond,
+        liseré = BorderStroke(1.dp, colors.ink.copy(alpha = 0.14f)),
+        flou = 6.dp,
+        réfraction = 6.dp,
+        vibrant = false,
+        lumineux = false,
+    ) {
+        IconButton(
+            onClick = onClick,
+            modifier = Modifier.fillMaxSize(),
+            enabled = enabled,
+            content = content,
+        )
+    }
 }
 
 /** Interrupteur liquide — le LiquidToggle du catalogue : rail qui se remplit
