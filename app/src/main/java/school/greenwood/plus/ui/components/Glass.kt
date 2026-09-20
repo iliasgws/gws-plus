@@ -1,14 +1,21 @@
 package school.greenwood.plus.ui.components
 
 import android.os.Build
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.EaseOut
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -16,35 +23,86 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.drawscope.scale
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.isSpecified
+import androidx.compose.ui.graphics.lerp as lerpCouleur
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.util.fastCoerceAtMost
+import androidx.compose.ui.util.fastCoerceIn
+import androidx.compose.ui.util.fastRoundToInt
+import androidx.compose.ui.util.lerp
 import com.kashif_e.backdrop.Backdrop
+import com.kashif_e.backdrop.backdrops.layerBackdrop
+import com.kashif_e.backdrop.backdrops.rememberBackdrop
+import com.kashif_e.backdrop.backdrops.rememberCombinedBackdrop
+import com.kashif_e.backdrop.backdrops.rememberLayerBackdrop
 import com.kashif_e.backdrop.drawBackdrop
 import com.kashif_e.backdrop.effects.blur
+import com.kashif_e.backdrop.effects.colorControls
 import com.kashif_e.backdrop.effects.lens
 import com.kashif_e.backdrop.effects.vibrancy
 import com.kashif_e.backdrop.highlight.Highlight
+import com.kashif_e.backdrop.shadow.InnerShadow
 import com.kashif_e.backdrop.shadow.Shadow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.launch
 import school.greenwood.plus.ui.theme.ControlShape
 import school.greenwood.plus.ui.theme.PageShape
 import school.greenwood.plus.ui.theme.RegistreTheme
+import kotlin.math.abs
+import kotlin.math.atan2
+import kotlin.math.cos
+import kotlin.math.sign
+import kotlin.math.sin
+import kotlin.math.tanh
 
 /*
  * Primitives « liquid glass » (docs/product/DESIGN.md §2). Toute la bibliothèque
@@ -212,11 +270,599 @@ object GlassDefaults {
 private val floutageDisponible: Boolean
     get() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
 
-/** Barre basse flottante : une capsule de verre liquide qui échantillonne le
- *  contenu qui défile derrière elle — la pile liquide complète (vibrance,
- *  flou, réfraction) sur un petit nœud toujours visible, comme la barre
- *  d'iOS 26. La réfraction est no-op sous l'API 33, le floutage sous l'API
- *  31 — la capsule retombe alors sur un fill quasi opaque. */
+/** Bouton liquide — le LiquidButton du catalogue (Apache-2.0) : une capsule
+ *  qui se déforme vers le doigt (tanh : translation saturée, étirement
+ *  directionnel) pendant l'appui. `surfaceColor` en fait un CTA plein qui
+ *  garde la physique du verre ; `tint` fait un verre teinté par la teinte. */
+@Composable
+fun LiquidButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    isInteractive: Boolean = true,
+    tint: Color = Color.Unspecified,
+    surfaceColor: Color = Color.Unspecified,
+    content: @Composable RowScope.() -> Unit,
+) {
+    val backdrop = LocalGlassBackdrop.current
+    if (backdrop == null || !floutageDisponible) {
+        // Repli : bouton plein du thème, même silhouette.
+        Button(
+            onClick = onClick,
+            modifier = modifier,
+            enabled = isInteractive,
+            shape = ControlShape,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = if (surfaceColor.isSpecified) surfaceColor else RegistreTheme.colors.ink,
+                contentColor = RegistreTheme.colors.page,
+            ),
+        ) {
+            content()
+        }
+        return
+    }
+
+    val animationScope = rememberCoroutineScope()
+    val interactiveHighlight = remember(animationScope) {
+        InteractiveHighlight(animationScope = animationScope)
+    }
+
+    Row(
+        modifier
+            .drawBackdrop(
+                backdrop = backdrop,
+                shape = { ControlShape },
+                effects = {
+                    vibrancy()
+                    blur(2.dp.toPx())
+                    lens(12.dp.toPx(), 24.dp.toPx())
+                },
+                layerBlock = if (isInteractive) {
+                    {
+                        val width = size.width
+                        val height = size.height
+
+                        val progress = interactiveHighlight.pressProgress
+                        val scale = lerp(1f, 1f + 4f.dp.toPx() / size.height, progress)
+
+                        val maxOffset = size.minDimension
+                        val initialDerivative = 0.05f
+                        val offset = interactiveHighlight.offset
+                        translationX = maxOffset * tanh(initialDerivative * offset.x / maxOffset)
+                        translationY = maxOffset * tanh(initialDerivative * offset.y / maxOffset)
+
+                        val maxDragScale = 4f.dp.toPx() / size.height
+                        val offsetAngle = atan2(offset.y, offset.x)
+                        scaleX =
+                            scale +
+                                maxDragScale * abs(cos(offsetAngle) * offset.x / size.maxDimension) *
+                                (width / height).fastCoerceAtMost(1f)
+                        scaleY =
+                            scale +
+                                maxDragScale * abs(sin(offsetAngle) * offset.y / size.maxDimension) *
+                                (height / width).fastCoerceAtMost(1f)
+                    }
+                } else {
+                    null
+                },
+                onDrawSurface = {
+                    if (tint.isSpecified) {
+                        drawRect(tint, blendMode = BlendMode.Hue)
+                        drawRect(tint.copy(alpha = 0.75f))
+                    }
+                    if (surfaceColor.isSpecified) {
+                        drawRect(surfaceColor)
+                    }
+                }
+            )
+            .clickable(
+                interactionSource = null,
+                indication = if (isInteractive) null else LocalIndication.current,
+                role = Role.Button,
+                onClick = onClick
+            )
+            .then(
+                if (isInteractive) {
+                    Modifier
+                        .then(interactiveHighlight.modifier)
+                        .then(interactiveHighlight.gestureModifier)
+                } else {
+                    Modifier
+                }
+            )
+            .height(48.dp)
+            .padding(horizontal = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+        verticalAlignment = Alignment.CenterVertically,
+        content = content
+    )
+}
+
+/** Interrupteur liquide — le LiquidToggle du catalogue : rail qui se remplit
+ *  d'encre, pouce de verre qui grossit à l'appui et échantillonne le rail
+ *  compressé (l'effet loupe). Accent = l'encre de Greenwood. */
+@Composable
+fun LiquidToggle(
+    selected: () -> Boolean,
+    onSelect: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val colors = RegistreTheme.colors
+    val backdrop = LocalGlassBackdrop.current
+    if (backdrop == null || !floutageDisponible) {
+        // Repli : interrupteur du thème, même sémantique.
+        Switch(
+            checked = selected(),
+            onCheckedChange = onSelect,
+            modifier = modifier,
+            colors = SwitchDefaults.colors(
+                checkedTrackColor = colors.ink,
+                checkedThumbColor = colors.page,
+                checkedBorderColor = colors.ink,
+                uncheckedThumbColor = colors.page,
+                uncheckedTrackColor = colors.sage,
+                uncheckedBorderColor = colors.sage,
+            ),
+        )
+        return
+    }
+
+    val accentColor = colors.ink
+    val trackColor = colors.sage.copy(alpha = 0.55f)
+
+    val density = LocalDensity.current
+    val isLtr = LocalLayoutDirection.current == LayoutDirection.Ltr
+    val dragWidth = with(density) { 20.dp.toPx() }
+    val animationScope = rememberCoroutineScope()
+    var didDrag by remember { mutableStateOf(false) }
+    var fraction by remember { mutableStateOf(if (selected()) 1f else 0f) }
+    val dampedDragAnimation = remember(animationScope) {
+        DampedDragAnimation(
+            animationScope = animationScope,
+            initialValue = fraction,
+            valueRange = 0f..1f,
+            visibilityThreshold = 0.001f,
+            initialScale = 1f,
+            pressedScale = 1.5f,
+            onDragStarted = {},
+            onDragStopped = {
+                if (didDrag) {
+                    fraction = if (targetValue >= 0.5f) 1f else 0f
+                    onSelect(fraction == 1f)
+                    didDrag = false
+                } else {
+                    fraction = if (selected()) 0f else 1f
+                    onSelect(fraction == 1f)
+                }
+            },
+            onDrag = { _, dragAmount ->
+                if (!didDrag) {
+                    didDrag = dragAmount.x != 0f
+                }
+                val delta = dragAmount.x / dragWidth
+                fraction =
+                    if (isLtr) (fraction + delta).fastCoerceIn(0f, 1f)
+                    else (fraction - delta).fastCoerceIn(0f, 1f)
+            }
+        )
+    }
+    LaunchedEffect(dampedDragAnimation) {
+        snapshotFlow { fraction }
+            .collectLatest { fraction ->
+                dampedDragAnimation.updateValue(fraction)
+            }
+    }
+    LaunchedEffect(selected) {
+        snapshotFlow { selected() }
+            .collectLatest { isSelected ->
+                val target = if (isSelected) 1f else 0f
+                if (target != fraction) {
+                    fraction = target
+                    dampedDragAnimation.animateToValue(target)
+                }
+            }
+    }
+
+    val trackBackdrop = rememberLayerBackdrop()
+
+    Box(
+        modifier,
+        contentAlignment = Alignment.CenterStart
+    ) {
+        Box(
+            Modifier
+                .layerBackdrop(trackBackdrop)
+                .clip(ControlShape)
+                .drawBehind {
+                    val f = dampedDragAnimation.value
+                    drawRect(lerpCouleur(trackColor, accentColor, f))
+                }
+                .size(64.dp, 28.dp)
+        )
+
+        Box(
+            Modifier
+                .graphicsLayer {
+                    val f = dampedDragAnimation.value
+                    val padding = 2.dp.toPx()
+                    translationX =
+                        if (isLtr) lerp(padding, padding + dragWidth, f)
+                        else lerp(-padding, -(padding + dragWidth), f)
+                }
+                .semantics {
+                    role = Role.Switch
+                }
+                .then(dampedDragAnimation.modifier)
+                .drawBackdrop(
+                    backdrop = rememberCombinedBackdrop(
+                        backdrop,
+                        rememberBackdrop(trackBackdrop) { drawBackdrop ->
+                            val progress = dampedDragAnimation.pressProgress
+                            val scaleX = lerp(2f / 3f, 0.75f, progress)
+                            val scaleY = lerp(0f, 0.75f, progress)
+                            scale(scaleX, scaleY) {
+                                drawBackdrop()
+                            }
+                        }
+                    ),
+                    shape = { ControlShape },
+                    effects = {
+                        val progress = dampedDragAnimation.pressProgress
+                        blur(8.dp.toPx() * (1f - progress))
+                        lens(
+                            5.dp.toPx() * progress,
+                            10.dp.toPx() * progress,
+                            chromaticAberration = true
+                        )
+                    },
+                    highlight = {
+                        val progress = dampedDragAnimation.pressProgress
+                        Highlight.Ambient.copy(
+                            width = Highlight.Ambient.width / 1.5f,
+                            blurRadius = Highlight.Ambient.blurRadius / 1.5f,
+                            alpha = progress
+                        )
+                    },
+                    shadow = {
+                        Shadow(
+                            radius = 4.dp,
+                            color = Color.Black.copy(alpha = 0.05f)
+                        )
+                    },
+                    innerShadow = {
+                        val progress = dampedDragAnimation.pressProgress
+                        InnerShadow(
+                            radius = 4.dp * progress,
+                            alpha = progress
+                        )
+                    },
+                    layerBlock = {
+                        scaleX = dampedDragAnimation.scaleX
+                        scaleY = dampedDragAnimation.scaleY
+                        val velocity = dampedDragAnimation.velocity / 50f
+                        scaleX /= 1f - (velocity * 0.75f).fastCoerceIn(-0.2f, 0.2f)
+                        scaleY *= 1f - (velocity * 0.25f).fastCoerceIn(-0.2f, 0.2f)
+                    },
+                    onDrawSurface = {
+                        val progress = dampedDragAnimation.pressProgress
+                        drawRect(Color.White.copy(alpha = 1f - progress))
+                    }
+                )
+                .size(40.dp, 24.dp)
+        )
+    }
+}
+
+/** Barre basse liquide — le LiquidBottomTabs du catalogue : la capsule de
+ *  verre (vibrance + flou + réfraction), une copie fantôme invisible teintée
+ *  d'encre (échantillonnée par le spot), et la pastille spot qui glisse avec
+ *  des ressorts amortis — draggable d'un onglet à l'autre. Le décalage
+ *  « remember(selectedTabIndex) » du catalogue est adapté ici : les clés
+ *  portent sur des valeurs (taille, unité) pour survivre aux recompositions
+ *  de la navigation.
+ *
+ *  Rappel de survie : cette barre est HORS de la capture de scène (AppNav) —
+ *  c'est ce qui lui permet de lire le contenu qui défile derrière elle. */
+@Composable
+fun LiquidBottomTabs(
+    selectedTabIndex: () -> Int,
+    onTabSelected: (index: Int) -> Unit,
+    backdrop: Backdrop,
+    tabsCount: Int,
+    modifier: Modifier = Modifier,
+    content: @Composable RowScope.() -> Unit
+) {
+    val glass = RegistreTheme.colors.glass
+    val colors = RegistreTheme.colors
+    val isLightTheme = !isSystemInDarkTheme()
+    val accentColor = colors.ink
+    val containerColor = glass.bar
+
+    val tabsBackdrop = rememberLayerBackdrop()
+
+    BoxWithConstraints(
+        modifier,
+        contentAlignment = Alignment.CenterStart
+    ) {
+        val density = LocalDensity.current
+        val tabWidth = with(density) {
+            (constraints.maxWidth.toFloat() - 8f.dp.toPx()) / tabsCount
+        }
+
+        val offsetAnimation = remember { Animatable(0f) }
+        val panelOffset by remember(density) {
+            derivedStateOf {
+                val fraction = (offsetAnimation.value / constraints.maxWidth).fastCoerceIn(-1f, 1f)
+                with(density) {
+                    4f.dp.toPx() * fraction.sign * EaseOut.transform(abs(fraction))
+                }
+            }
+        }
+
+        val isLtr = LocalLayoutDirection.current == LayoutDirection.Ltr
+        val animationScope = rememberCoroutineScope()
+        var currentIndex by remember { mutableIntStateOf(selectedTabIndex()) }
+        val dampedDragAnimation = remember(tabsCount) {
+            DampedDragAnimation(
+                animationScope = animationScope,
+                initialValue = selectedTabIndex().toFloat(),
+                valueRange = 0f..(tabsCount - 1).toFloat(),
+                visibilityThreshold = 0.001f,
+                initialScale = 1f,
+                pressedScale = 78f / 56f,
+                onDragStarted = {},
+                onDragStopped = {
+                    val targetIndex = targetValue.fastRoundToInt().fastCoerceIn(0, tabsCount - 1)
+                    currentIndex = targetIndex
+                    animateToValue(targetIndex.toFloat())
+                    animationScope.launch {
+                        offsetAnimation.animateTo(
+                            0f,
+                            spring(1f, 300f, 0.5f)
+                        )
+                    }
+                },
+                onDrag = { _, dragAmount ->
+                    updateValue(
+                        (targetValue + dragAmount.x / tabWidth * if (isLtr) 1f else -1f)
+                            .fastCoerceIn(0f, (tabsCount - 1).toFloat())
+                    )
+                    animationScope.launch {
+                        offsetAnimation.snapTo(offsetAnimation.value + dragAmount.x)
+                    }
+                }
+            )
+        }
+        LaunchedEffect(Unit) {
+            snapshotFlow { selectedTabIndex() }
+                .collectLatest { index ->
+                    currentIndex = index
+                }
+        }
+        LaunchedEffect(dampedDragAnimation) {
+            snapshotFlow { currentIndex }
+                .drop(1)
+                .collectLatest { index ->
+                    dampedDragAnimation.animateToValue(index.toFloat())
+                    onTabSelected(index)
+                }
+        }
+
+        val interactiveHighlight = remember(animationScope) {
+            InteractiveHighlight(
+                animationScope = animationScope,
+                position = { size, offset ->
+                    Offset(
+                        if (isLtr) (dampedDragAnimation.value + 0.5f) * tabWidth + panelOffset
+                        else size.width - (dampedDragAnimation.value + 0.5f) * tabWidth + panelOffset,
+                        size.height / 2f
+                    )
+                }
+            )
+        }
+
+        Row(
+            Modifier
+                .graphicsLayer {
+                    translationX = panelOffset
+                }
+                .drawBackdrop(
+                    backdrop = backdrop,
+                    shape = { ControlShape },
+                    effects = {
+                        vibrancy()
+                        blur(8.dp.toPx())
+                        lens(24.dp.toPx(), 24.dp.toPx())
+                    },
+                    layerBlock = {
+                        val progress = dampedDragAnimation.pressProgress
+                        val scale = lerp(1f, 1f + 16f.dp.toPx() / size.width, progress)
+                        scaleX = scale
+                        scaleY = scale
+                    },
+                    onDrawSurface = { drawRect(containerColor) }
+                )
+                .then(interactiveHighlight.modifier)
+                .height(64.dp)
+                .fillMaxWidth()
+                .padding(4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            content = content
+        )
+
+        CompositionLocalProvider(
+            LocalLiquidBottomTabScale provides {
+                lerp(1f, 1.2f, dampedDragAnimation.pressProgress)
+            }
+        ) {
+            Row(
+                Modifier
+                    .clearAndSetSemantics {}
+                    .alpha(0f)
+                    .layerBackdrop(tabsBackdrop)
+                    .graphicsLayer {
+                        translationX = panelOffset
+                    }
+                    .drawBackdrop(
+                        backdrop = backdrop,
+                        shape = { ControlShape },
+                        effects = {
+                            val progress = dampedDragAnimation.pressProgress
+                            vibrancy()
+                            blur(8.dp.toPx())
+                            lens(
+                                24.dp.toPx() * progress,
+                                24.dp.toPx() * progress
+                            )
+                        },
+                        highlight = {
+                            val progress = dampedDragAnimation.pressProgress
+                            Highlight.Default.copy(alpha = progress)
+                        },
+                        onDrawSurface = { drawRect(containerColor) }
+                    )
+                    .then(interactiveHighlight.modifier)
+                    .height(56.dp)
+                    .fillMaxWidth()
+                    .padding(horizontal = 4.dp)
+                    .graphicsLayer { colorFilter = ColorFilter.tint(accentColor) },
+                verticalAlignment = Alignment.CenterVertically,
+                content = content
+            )
+        }
+
+        Box(
+            Modifier
+                .padding(horizontal = 4.dp)
+                .graphicsLayer {
+                    translationX =
+                        if (isLtr) dampedDragAnimation.value * tabWidth + panelOffset
+                        else size.width - (dampedDragAnimation.value + 1f) * tabWidth + panelOffset
+                }
+                .then(interactiveHighlight.gestureModifier)
+                .then(dampedDragAnimation.modifier)
+                .drawBackdrop(
+                    backdrop = rememberCombinedBackdrop(backdrop, tabsBackdrop),
+                    shape = { ControlShape },
+                    effects = {
+                        val progress = dampedDragAnimation.pressProgress
+                        lens(
+                            10.dp.toPx() * progress,
+                            14.dp.toPx() * progress,
+                            chromaticAberration = true
+                        )
+                    },
+                    highlight = {
+                        val progress = dampedDragAnimation.pressProgress
+                        Highlight.Default.copy(alpha = progress)
+                    },
+                    shadow = {
+                        val progress = dampedDragAnimation.pressProgress
+                        Shadow(alpha = progress)
+                    },
+                    innerShadow = {
+                        val progress = dampedDragAnimation.pressProgress
+                        InnerShadow(
+                            radius = 8.dp * progress,
+                            alpha = progress
+                        )
+                    },
+                    layerBlock = {
+                        scaleX = dampedDragAnimation.scaleX
+                        scaleY = dampedDragAnimation.scaleY
+                        val velocity = dampedDragAnimation.velocity / 10f
+                        scaleX /= 1f - (velocity * 0.75f).fastCoerceIn(-0.2f, 0.2f)
+                        scaleY *= 1f - (velocity * 0.25f).fastCoerceIn(-0.2f, 0.2f)
+                    },
+                    onDrawSurface = {
+                        val progress = dampedDragAnimation.pressProgress
+                        drawRect(
+                            if (isLightTheme) Color.Black.copy(0.1f)
+                            else Color.White.copy(0.1f),
+                            alpha = 1f - progress
+                        )
+                        drawRect(Color.Black.copy(alpha = 0.03f * progress))
+                    }
+                )
+                .height(56.dp)
+                .fillMaxWidth(1f / tabsCount)
+        )
+    }
+}
+
+/** Champ de recherche liquide — la recette GlassSearchField du catalogue :
+ *  capsule de verre floutée + colorControls, loupe craie, texte encre.
+ *  Repli (sans capture ou sous l'API 31) : capsule quasi opaque. */
+@Composable
+fun ChampRecherche(
+    valeur: String,
+    onChange: (String) -> Unit,
+    placeholder: String,
+    modifier: Modifier = Modifier,
+) {
+    val colors = RegistreTheme.colors
+    val backdrop = LocalGlassBackdrop.current
+    Row(
+        modifier
+            .then(
+                if (backdrop != null && floutageDisponible) {
+                    Modifier.drawBackdrop(
+                        backdrop = backdrop,
+                        shape = { ControlShape },
+                        effects = {
+                            blur(6.dp.toPx())
+                            colorControls(saturation = 1.2f)
+                        },
+                        highlight = { Highlight.Default },
+                        onDrawSurface = { drawRect(colors.glass.bar) },
+                    )
+                } else {
+                    Modifier
+                        .clip(ControlShape)
+                        .background(colors.glass.barStrong)
+                        .border(1.dp, colors.glass.stroke, ControlShape)
+                },
+            )
+            .height(44.dp)
+            .padding(horizontal = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Icon(
+            imageVector = Icons.Rounded.Search,
+            contentDescription = null,
+            tint = colors.chalk,
+            modifier = Modifier.size(18.dp),
+        )
+        BasicTextField(
+            value = valeur,
+            onValueChange = onChange,
+            modifier = Modifier.weight(1f),
+            singleLine = true,
+            textStyle = TextStyle(
+                color = colors.ink,
+                fontFamily = MaterialTheme.typography.bodyMedium.fontFamily,
+                fontSize = MaterialTheme.typography.bodyMedium.fontSize,
+            ),
+            cursorBrush = SolidColor(colors.ink),
+            decorationBox = { champInterne ->
+                Box {
+                    if (valeur.isEmpty()) {
+                        Text(
+                            text = placeholder,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = colors.chalk,
+                        )
+                    }
+                    champInterne()
+                }
+            },
+        )
+    }
+}
+
+/** Barre basse flottante de l'app : la LiquidBottomTabs du catalogue habillée
+ *  des onglets Greenwood (icône + libellé). Repli API < 31 : capsule quasi
+ *  opaque, même silhouette, aucun échantillonnage. */
 @Composable
 fun GlassBottomBar(
     onglets: List<VerreOnglet>,
@@ -240,23 +886,30 @@ fun GlassBottomBar(
         return
     }
 
-    Row(
-        modifier = modifier
-            .drawBackdrop(
-                backdrop = backdrop,
-                shape = { capsule },
-                effects = {
-                    vibrancy()
-                    blur(18.dp.toPx())
-                    lens(12.dp.toPx(), 24.dp.toPx())
-                },
-                highlight = { Highlight.Plain },
-                shadow = { Shadow(radius = 24.dp, color = Color.Black.copy(alpha = 0.14f)) },
-                onDrawSurface = { drawRect(glass.bar) },
-            )
-            .padding(4.dp),
+    LiquidBottomTabs(
+        selectedTabIndex = {
+            onglets.indexOfFirst { it.sélectionné }.coerceAtLeast(0)
+        },
+        onTabSelected = { index -> onglets[index].onClick() },
+        backdrop = backdrop,
+        tabsCount = onglets.size,
+        modifier = modifier,
     ) {
-        onglets.forEach { onglet -> ÉlémentOnglet(onglet, Modifier.weight(1f)) }
+        onglets.forEach { onglet ->
+            LiquidBottomTab(onClick = onglet.onClick) {
+                Icon(
+                    imageVector = onglet.icône,
+                    contentDescription = onglet.libellé,
+                    tint = if (onglet.sélectionné) RegistreTheme.colors.ink else RegistreTheme.colors.chalk,
+                    modifier = Modifier.size(24.dp),
+                )
+                Text(
+                    text = onglet.libellé,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = if (onglet.sélectionné) RegistreTheme.colors.ink else RegistreTheme.colors.chalk,
+                )
+            }
+        }
     }
 }
 

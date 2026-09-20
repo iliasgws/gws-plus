@@ -17,11 +17,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Error
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CheckboxDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -40,6 +35,8 @@ import school.greenwood.plus.AppContainer
 import school.greenwood.plus.ui.ConnexionViewModel
 import school.greenwood.plus.ui.components.ErrorInline
 import school.greenwood.plus.ui.components.FeuilleVerre
+import school.greenwood.plus.ui.components.GwsBouton
+import school.greenwood.plus.ui.components.LiquidToggle
 import school.greenwood.plus.ui.theme.ControlShape
 import school.greenwood.plus.ui.theme.RegistreTheme
 
@@ -117,14 +114,9 @@ fun LoginScreen(
                     )
 
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Checkbox(
-                            checked = état.retenir,
-                            onCheckedChange = vm::modifierRetenir,
-                            colors = CheckboxDefaults.colors(
-                                checkedColor = RegistreTheme.colors.ink,
-                                checkmarkColor = RegistreTheme.colors.page,
-                                uncheckedColor = RegistreTheme.colors.chalk,
-                            ),
+                        LiquidToggle(
+                            selected = { état.retenir },
+                            onSelect = vm::modifierRetenir,
                         )
                         Text(
                             text = "Retenir ma session",
@@ -133,31 +125,13 @@ fun LoginScreen(
                         )
                     }
 
-                    Button(
+                    GwsBouton(
+                        texte = "Se connecter",
                         onClick = vm::seConnecter,
                         enabled = !état.chargement,
-                        shape = ControlShape,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = RegistreTheme.colors.ink,
-                            contentColor = RegistreTheme.colors.page,
-                        ),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(48.dp),
-                    ) {
-                        if (état.chargement) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(18.dp),
-                                strokeWidth = 2.dp,
-                                color = RegistreTheme.colors.page,
-                            )
-                        } else {
-                            Text(
-                                text = "Se connecter",
-                                style = MaterialTheme.typography.labelLarge,
-                            )
-                        }
-                    }
+                        chargement = état.chargement,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
 
 
                     état.erreur?.let { message ->

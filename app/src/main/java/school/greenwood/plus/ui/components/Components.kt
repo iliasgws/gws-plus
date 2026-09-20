@@ -22,13 +22,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ErrorOutline
-import androidx.compose.material.icons.rounded.Search
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -40,9 +37,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -267,83 +262,37 @@ fun PuceChoix(
     }
 }
 
-/** Champ de recherche : capsule de verre, loupe craie, texte encre. */
-@Composable
-fun ChampRecherche(
-    valeur: String,
-    onChange: (String) -> Unit,
-    placeholder: String,
-    modifier: Modifier = Modifier,
-) {
-    val colors = RegistreTheme.colors
-    GlassSurface(
-        modifier = modifier,
-        shape = ControlShape,
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Icon(
-                imageVector = Icons.Rounded.Search,
-                contentDescription = null,
-                tint = colors.chalk,
-                modifier = Modifier.size(18.dp),
-            )
-            BasicTextField(
-                value = valeur,
-                onValueChange = onChange,
-                modifier = Modifier.weight(1f),
-                singleLine = true,
-                textStyle = TextStyle(
-                    color = colors.ink,
-                    fontFamily = MaterialTheme.typography.bodyMedium.fontFamily,
-                    fontSize = MaterialTheme.typography.bodyMedium.fontSize,
-                ),
-                cursorBrush = SolidColor(colors.ink),
-                decorationBox = { champInterne ->
-                    Box {
-                        if (valeur.isEmpty()) {
-                            Text(
-                                text = placeholder,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = colors.chalk,
-                            )
-                        }
-                        champInterne()
-                    }
-                },
-            )
-        }
-    }
-}
-
-/** Bouton d'action : capsule encre pleine, texte page — le geste principal
- *  reste la seule masse d'encre de l'écran. */
+/** Bouton d'action : le LiquidButton du catalogue habillé d'encre — CTA plein
+ *  qui garde la physique du verre (déformation vers le doigt à l'appui).
+ *  Repli (sans capture ou sous l'API 31) : le bouton plein du thème. */
 @Composable
 fun GwsBouton(
     texte: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    chargement: Boolean = false,
 ) {
-    val colors = RegistreTheme.colors
-    Button(
+    LiquidButton(
         onClick = onClick,
         modifier = modifier,
-        enabled = enabled,
-        shape = ControlShape,
-        colors = ButtonDefaults.buttonColors(
-            containerColor = colors.ink,
-            contentColor = colors.page,
-        ),
+        isInteractive = enabled && !chargement,
+        surfaceColor = RegistreTheme.colors.ink,
     ) {
-        Text(
-            text = texte,
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight(600),
-        )
+        if (chargement) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(18.dp),
+                strokeWidth = 2.dp,
+                color = RegistreTheme.colors.page,
+            )
+        } else {
+            Text(
+                text = texte,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight(600),
+                color = RegistreTheme.colors.page,
+            )
+        }
     }
 }
 

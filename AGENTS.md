@@ -44,7 +44,8 @@ Current contents (update this section whenever files are added or removed):
 | `…/ui/AppNav.kt` | Root state (onboarding → connexion → registre) + 4-tab shell with the floating glass bar, back-stack contract |
 | `…/ui/AppViewModels.kt` | One ViewModel per screen |
 | `…/ui/theme/` | Liquid-glass tokens: colors + glass palette, Fraunces/Bricolage/Public Sans type, 24/18/28/capsule shapes |
-| `…/ui/components/Glass.kt` | Glass primitives (AuroraBackdrop, GlassSurface, GlassBottomBar) — the only file touching the `backdrop` library |
+| `…/ui/components/Glass.kt` | Glass primitives + ported catalog components (AuroraBackdrop, GlassSurface, FeuilleVerre, LiquidButton/Toggle/BottomTabs, GlassBottomBar) — the only file touching the `backdrop` library |
+| `…/ui/components/PhysiqueVerre.kt` | Catalog press-physics helpers (DampedDragAnimation, InteractiveHighlight, inspectDragGestures) — pure Compose, ported verbatim |
 | `…/ui/components/Components.kt` | Shared composables (GwsCard, Puce, PuceChoix, ChampRecherche, GwsBouton, EmptyState, ErrorInline, GwsAvatar, skeletons…) |
 | `…/ui/screens/` | Login, Onboarding, registre (+ Post detail), devoirs, documents (+ Quiz play), messages (+ Conversation + composer), demandes |
 | `…/data/api/` | BotiApi/BotiClient (generic GET/POST multipart + envelope), BotiEnvelope, MediaUrls (single-decode) |

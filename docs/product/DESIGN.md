@@ -75,6 +75,28 @@ un fond qui bouge fatigue, et l'app ne joue jamais d'animation pour rien.
   sur son fill opaque (`teinte` en pleine opacité, sinon barStrong). La
   dégradation est conçue, pas accidentelle.
 
+### Les composants liquides du catalogue
+
+Les contrôles interactifs sont des ports des composants du catalogue
+[`backdrop`](https://github.com/Kashif-E/KMPLiquidGlass) — mêmes recettes,
+même physique (les ressorts amortis du catalogue sont portés dans
+`ui/components/PhysiqueVerre.kt`, briques Compose pures) :
+
+- **LiquidBottomTabs** → la barre basse : capsule de verre, copie fantôme
+  teintée invisible, pastille spot qui glisse avec écrasement au doigt —
+  draggable d'un onglet à l'autre ;
+- **LiquidButton** → `GwsBouton` : CTA encre pleine qui garde la physique
+  du verre (déformation tanh vers le doigt pendant l'appui) ;
+- **LiquidToggle** → « Retenir ma session » : rail d'encre, pouce de verre
+  qui grossit à l'appui et échantillonne le rail compressé (effet loupe) ;
+- **GlassSearchField** → `ChampRecherche` : capsule de verre floutée.
+
+`LiquidSlider` n'a pas d'usage dans l'app (aucun réglage continu). Les
+composants des écrans échantillonnent l'aurore (règle de capture ci-
+dessus) ; la barre, hors capture, lit la scène. Chaque composant garde un
+repli identique sans verre (API < 31) : même silhouette, matériaux du
+thème.
+
 ### Palette (clarité / obscurité)
 
 | Jeton | Clair | Sombre | Rôle |

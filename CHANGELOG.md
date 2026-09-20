@@ -4,6 +4,19 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [0.5.0-bêta 4] — 2026-09-20
+
+### Ajouté
+
+- **Les composants liquides du catalogue** remplacent les équivalents
+  faits maison : `LiquidBottomTabs` pour la barre basse (copie fantôme
+  teintée + pastille spot amortie, draggable d'un onglet à l'autre),
+  `LiquidButton` pour `GwsBouton` (déformation vers le doigt à l'appui),
+  `LiquidToggle` pour « Retenir ma session » (effet loupe sur le rail) et
+  `GlassSearchField` pour la recherche — avec la physique du catalogue
+  (ressorts amortis, suivi de vitesse) portée telle quelle. `LiquidSlider`
+  n'a pas d'usage ici. Chaque composant garde un repli identique sans verre
+
 ## [0.5.0-bêta 3] — 2026-09-20
 
 ### Corrigé

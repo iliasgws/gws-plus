@@ -439,6 +439,17 @@ same tab gesture, same transitions, `enableOnBackInvokedCallback` untouched.
       bar standing outside it) and `fondAurore` (the aurora node alone, read
       by all in-screen glass via `LocalGlassBackdrop`); the rule is
       documented on `LocalGlassBackdrop` and in DESIGN.md §2
+- [x] Third pass (user direction: use the library's own components, not
+      custom flat equivalents): catalog recipes ported — `LiquidBottomTabs`
+      (glass bar + invisible ink-tinted ghost row + spotlight pill with
+      damped-drag tab switching), `LiquidButton` (tanh press deformation;
+      `GwsBouton` = ink CTA with full glass physics + loading variant),
+      `LiquidToggle` (login « Retenir ma session », ink rail, loupe thumb),
+      `GlassSearchField` (`ChampRecherche`); catalog physics helpers ported
+      verbatim into `ui/components/PhysiqueVerre.kt` (inspectDragGestures,
+      InteractiveHighlight, DampedDragAnimation — pure Compose, no library
+      imports); `LiquidSlider` unused in this app; every component keeps an
+      identical-silhouette non-glass fallback (API < 31)
 - [x] Screens: all 13 converted — transparent roots; day chips, nature
       filters, message categories, search field and action button extracted
       into shared `PuceChoix` / `ChampRecherche` / `GwsBouton`; quiz answers
