@@ -54,18 +54,17 @@ un fond qui bouge fatigue, et l'app ne joue jamais d'animation pour rien.
   réfraction y serait invisible et ne coûterait que des passes de shader.
 - **Verre réel** — vibrance + flou + **réfraction** (`lens`, la partie
   « liquide » du matériau) — réservé aux feuilles qui recouvrent réellement
-  quelque chose : la **barre basse flottante** (le contenu défile derrière),
-  la **barre d'en-tête du registre** (le flux passe dessous), le **composeur**
+  quelque chose : la **barre d'en-tête du registre**, le **composeur**
   (le fil passe derrière), la carte « Ce soir » et la carte de connexion
   (l'aurore se réfracte à leurs bords). Échantillonnage via la bibliothèque
   [`backdrop`](https://github.com/Kashif-E/KMPLiquidGlass) (port KMP de
   AndroidLiquidGlass), avec une règle absolue : **une feuille de verre ne
   peut jamais échantillonner une capture qui la contient** — la couche se
   ré-enregistre avec une référence à elle-même et le premier rendu du
-  contenu crashe (vu en bêta 2 : squelette affiché, puis crash). Deux
-  captures donc : la scène complète, lue par la seule barre basse qui se
-  tient hors d'elle ; l'aurore seule, lue par tout le verre qui vit dans les
-  écrans. La réfraction est offerte dès l'API 33 (AGSL), le floutage seul
+  contenu crashe (vu en bêta 2 : squelette affiché, puis crash). Une seule
+  capture demeure : l'aurore immobile. Les écrans, les listes paresseuses et
+  la barre basse restent hors de toute capture dynamique. La réfraction est
+  offerte dès l'API 33 (AGSL), le floutage seul
   dès l'API 31. Les feuilles réelles se posent **par-dessus** le contenu —
   le verre est une couche, pas une borne.
 - **Verre fort** (feuilles modales, repli API < 31 de tout le verre réel) :
@@ -75,34 +74,31 @@ un fond qui bouge fatigue, et l'app ne joue jamais d'animation pour rien.
   sur son fill opaque (`teinte` en pleine opacité, sinon barStrong). La
   dégradation est conçue, pas accidentelle.
 
-### Les composants liquides du catalogue
+### Les composants interactifs
 
-Les contrôles interactifs sont des ports des composants du catalogue
-[`backdrop`](https://github.com/Kashif-E/KMPLiquidGlass) — mêmes recettes,
-même physique (les ressorts amortis du catalogue sont portés dans
-`ui/components/PhysiqueVerre.kt`, briques Compose pures) :
+L'interrupteur reste un port du catalogue
+[`backdrop`](https://github.com/Kashif-E/KMPLiquidGlass). Les boutons
+d'action et d'icône utilisent en revanche les composants Material natifs :
+aucun shader de verre ne s'exécute dans un bouton.
 
-- **LiquidBottomTabs** → la barre basse : capsule de verre, copie fantôme
-  teintée invisible, pastille spot qui glisse avec écrasement au doigt —
-  draggable d'un onglet à l'autre ;
-- **LiquidButton** → `GwsBouton` : CTA encre pleine qui garde la physique
-  du verre (déformation tanh vers le doigt pendant l'appui) ;
+- **Barre basse** : capsule calme sans capture dynamique, pour que le
+  recyclage d'une liste ne puisse jamais invalider un GraphicsLayer ;
+- **Button / IconButton** → `GwsBouton` et les actions d'icône : rendu et
+  interaction Material natifs, sans floraison ni déformation personnalisée ;
 - **LiquidToggle** → « Retenir ma session » : rail d'encre, pouce de verre
   qui grossit à l'appui et échantillonne le rail compressé (effet loupe) ;
 - **GlassSearchField** → `ChampRecherche` : capsule de verre floutée.
 
 `LiquidSlider` n'a pas d'usage dans l'app (aucun réglage continu). Les
-composants des écrans échantillonnent l'aurore (règle de capture ci-
-dessus) ; la barre, hors capture, lit la scène. Chaque composant garde un
+composants de verre des écrans échantillonnent uniquement l'aurore stable ;
+la barre basse ne lit aucune capture. Chaque composant garde un
 repli identique sans verre (API < 31) : même silhouette, matériaux du
 thème.
 
-**Superposition par écran** : un écran qui a quelque chose de flottant
-capture sa propre liste (`layerBackdrop` sur la LazyColumn) et fournit
-cette capture localement via `LocalGlassBackdrop` — la recherche et les
-puces de nature de Documents sont des pilules flottantes individuelles qui
-lisent ainsi les cartes qui défilent derrière elles. Pas de panneau
-englobant : une masse de verre lourde (ou un givre trop opaque) écraserait
+**Superposition par écran** : aucun écran ne capture sa liste. La recherche
+et les puces de nature de Documents restent des pilules flottantes, mais
+lisent uniquement l'aurore stable fournie par `LocalGlassBackdrop`. Pas de
+panneau englobant : une masse de verre lourde (ou un givre trop opaque) écraserait
 la réfraction — le givre reste léger (25 % en clair, 40 % en sombre).
 La règle d'or tient toujours : les pilules sont les sœurs du nœud capturé,
 jamais dedans. Autre règle de survie (bêta 4) : `selectedTabIndex` de la

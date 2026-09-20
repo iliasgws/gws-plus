@@ -37,7 +37,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.kashif_e.backdrop.Backdrop
 import com.kashif_e.backdrop.backdrops.layerBackdrop
 import com.kashif_e.backdrop.backdrops.rememberLayerBackdrop
 import school.greenwood.plus.AppContainer
@@ -63,10 +62,9 @@ import school.greenwood.plus.ui.screens.registre.RegistreScreen
  * racine) : onboarding → connexion → registre. Quand le serveur tue la session
  * (« disconnect »), l'état retombe sur la connexion, où que l'on soit.
  *
- * Le verre (docs/product/DESIGN.md §2) : l'aurore et les écrans vivent dans une
- * couche capturée (layerBackdrop) ; la barre flottante — sœur de cette couche,
- * hors capture pour ne pas s'échantillonner elle-même — floute ce qui défile
- * derrière elle. L'aurore est le fond de tous les écrans, connexion incluse.
+ * Le verre (docs/product/DESIGN.md §2) ne capture que l'aurore immobile.
+ * Les écrans et leurs listes paresseuses restent hors de tout GraphicsLayer
+ * backdrop ; la barre basse emploie sa capsule calme sans capture dynamique.
  *
  * Onglets (docs/product/DESIGN.md §3) : chaque onglet garde sa pile via
  * saveState/restoreState, retour depuis un onglet racine → Registre,
@@ -112,25 +110,15 @@ fun AppNav(container: AppContainer) {
     val routeCourante = destinationCourante?.destination?.route
     val ongletCourant = ongletPourRoute(routeCourante)
 
-    // Deux captures, une règle : une feuille de verre ne peut jamais
-    // échantillonner une capture qui la contient (référence circulaire de
-    // couche → crash au premier rendu du contenu). La scène complète
-    // (aurore + écrans) n'est lue que par la barre basse, qui se tient hors
-    // de la capture ; tout le verre qui vit DANS les écrans lit l'aurore
-    // seule, capturée sur son propre nœud.
-    val fondScene = rememberLayerBackdrop()
+    // Une seule capture stable : l'aurore immobile. Capturer la scène
+    // complète retenait aussi les LazyColumn ; leur recyclage pendant un
+    // défilement pouvait laisser des coordonnées détachées dans backdrop.
     val fondAurore = rememberLayerBackdrop()
     val portée = rememberCoroutineScope()
 
     CompositionLocalProvider(LocalGlassBackdrop provides fondAurore) {
         Box(Modifier.fillMaxSize()) {
-            // La scène que le verre échantillonne : aurore + écrans, une seule
-            // couche capturée (docs — ne recrée jamais le backdrop par recomposition).
-            Box(
-                Modifier
-                    .fillMaxSize()
-                    .layerBackdrop(fondScene),
-            ) {
+            Box(Modifier.fillMaxSize()) {
                 AuroraBackdrop(Modifier.layerBackdrop(fondAurore))
                 Crossfade(targetState = écran, animationSpec = tween(250), label = "racine") { é ->
                     when (é) {
@@ -164,7 +152,9 @@ fun AppNav(container: AppContainer) {
                             onClick = { navController.allerÀLOnglet(onglet.route) },
                         )
                     },
-                    backdrop = fondScene,
+                    // Barre calme sans capture dynamique : aucun GraphicsLayer
+                    // ne dépend du contenu paresseux qui défile.
+                    backdrop = null,
                     modifier = Modifier
                         .navigationBarsPadding()
                         .padding(horizontal = 16.dp, vertical = 12.dp),

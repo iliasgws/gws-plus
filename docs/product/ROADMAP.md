@@ -479,6 +479,12 @@ same tab gesture, same transitions, `enableOnBackInvokedCallback` untouched.
       passes that caused bloom. All Material screen actions were migrated to
       the shared liquid button primitives, including the standalone floating
       quiz back button
+- [x] Seventh pass (post-beta-9 device feedback): native Material `Button`
+      and `IconButton` now render every shared action without backdrop
+      shaders, custom lens/vibrance, or press deformation. The root scene
+      capture was also removed: the bottom bar uses its calm static fallback,
+      and only the stable aurora remains captured for in-screen glass. Lazy
+      list recycling is therefore completely outside backdrop GraphicsLayers
 - [x] Screens: all 13 converted — transparent roots; day chips, nature
       filters, message categories, search field and action button extracted
       into shared `PuceChoix` / `ChampRecherche` / `GwsBouton`; quiz answers

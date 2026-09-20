@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -26,6 +27,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material.icons.Icons
@@ -52,7 +54,6 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
@@ -109,8 +110,8 @@ import kotlin.math.tanh
  * fichier : si son API bouge, seul Glass.kt suit. Trois niveaux de verre :
  * les surfaces calmes (cartes du flux, puces, squelettes) posent une feuille
  * translucide sur l'aurore — GlassSurface, sans floutage, gratuit ; les feuilles
- * réelles (FeuilleVerre, barre flottante) échantillonnent la scène derrière
- * elles — vibrance, flou, réfraction : la partie « liquide » du matériau, sur
+ * réelles (FeuilleVerre) échantillonnent l'aurore derrière elles — vibrance,
+ * flou, réfraction : la partie « liquide » du matériau, sur
  * les petits nœuds où elle se voit. Sous l'API 31 le floutage n'existe pas :
  * tout bascule sur des fills opaques équivalents, conçus pour rester lisibles.
  */
@@ -123,8 +124,8 @@ import kotlin.math.tanh
  *  ne peut jamais échantillonner une capture qui la contient — la couche se
  *  ré-enregistrerait avec une référence à elle-même et le premier rendu du
  *  contenu crashe (vu en bêta 2 : squelette affiché, puis crash). Le verre
- *  dans les écrans réfracte donc l'aurore ; seule la barre basse, hors de la
- *  capture de scène, voit le contenu qui défile derrière elle. */
+ *  dans les écrans réfracte donc uniquement l'aurore ; la barre basse ne
+ *  lit plus le contenu qui défile. */
 val LocalGlassBackdrop = compositionLocalOf<Backdrop?> { null }
 
 /** Un fond d'aurore : trois halos doux et immobiles sur la base du papier.
@@ -269,10 +270,9 @@ object GlassDefaults {
 private val floutageDisponible: Boolean
     get() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
 
-/** Bouton liquide — le LiquidButton du catalogue (Apache-2.0) : une capsule
- *  qui se déforme vers le doigt (tanh : translation saturée, étirement
- *  directionnel) pendant l'appui. `surfaceColor` en fait un CTA plein qui
- *  garde la physique du verre ; `tint` fait un verre teinté par la teinte. */
+/** Bouton natif Material. Le nom reste compatible avec les appels existants,
+ *  mais aucun shader backdrop ni déformation personnalisée n'est appliqué :
+ *  les boutons gardent une apparence calme et le comportement natif. */
 @Composable
 fun LiquidButton(
     onClick: () -> Unit,
@@ -284,104 +284,31 @@ fun LiquidButton(
     paddingHorizontal: Dp = 16.dp,
     content: @Composable RowScope.() -> Unit,
 ) {
-    val backdrop = LocalGlassBackdrop.current
-    if (backdrop == null || !floutageDisponible) {
-        // Repli : bouton plein du thème, même silhouette.
-        Button(
-            onClick = onClick,
-            modifier = modifier,
-            enabled = isInteractive,
-            shape = ControlShape,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = if (surfaceColor.isSpecified) surfaceColor else RegistreTheme.colors.ink,
-                contentColor = RegistreTheme.colors.page,
-            ),
-        ) {
-            content()
-        }
-        return
+    val colors = RegistreTheme.colors
+    val givreDemandé = givre()
+    val fond = when {
+        surfaceColor == givreDemandé -> colors.sage
+        surfaceColor.isSpecified -> surfaceColor
+        tint.isSpecified -> tint.copy(alpha = 0.82f)
+        else -> colors.ink
     }
-
-    val animationScope = rememberCoroutineScope()
-    val interactiveHighlight = remember(animationScope) {
-        InteractiveHighlight(animationScope = animationScope)
-    }
-
-    Row(
-        modifier
-            .drawBackdrop(
-                backdrop = backdrop,
-                shape = { ControlShape },
-                effects = {
-                    vibrancy()
-                    blur(2.dp.toPx())
-                    lens(12.dp.toPx(), 24.dp.toPx())
-                },
-                highlight = { null },
-                layerBlock = if (isInteractive) {
-                    {
-                        val width = size.width
-                        val height = size.height
-
-                        val progress = interactiveHighlight.pressProgress
-                        val scale = lerp(1f, 1f + 4f.dp.toPx() / size.height, progress)
-
-                        val maxOffset = size.minDimension
-                        val initialDerivative = 0.05f
-                        val offset = interactiveHighlight.offset
-                        translationX = maxOffset * tanh(initialDerivative * offset.x / maxOffset)
-                        translationY = maxOffset * tanh(initialDerivative * offset.y / maxOffset)
-
-                        val maxDragScale = 4f.dp.toPx() / size.height
-                        val offsetAngle = atan2(offset.y, offset.x)
-                        scaleX =
-                            scale +
-                                maxDragScale * abs(cos(offsetAngle) * offset.x / size.maxDimension) *
-                                (width / height).fastCoerceAtMost(1f)
-                        scaleY =
-                            scale +
-                                maxDragScale * abs(sin(offsetAngle) * offset.y / size.maxDimension) *
-                                (height / width).fastCoerceAtMost(1f)
-                    }
-                } else {
-                    null
-                },
-                onDrawSurface = {
-                    if (tint.isSpecified) {
-                        drawRect(tint, blendMode = BlendMode.Hue)
-                        drawRect(tint.copy(alpha = 0.75f))
-                    }
-                    if (surfaceColor.isSpecified) {
-                        drawRect(surfaceColor)
-                    }
-                }
-            )
-            .clickable(
-                enabled = isInteractive,
-                interactionSource = null,
-                indication = null,
-                role = Role.Button,
-                onClick = onClick
-            )
-            .then(
-                if (isInteractive) {
-                    Modifier
-                        .then(interactiveHighlight.modifier)
-                        .then(interactiveHighlight.gestureModifier)
-                } else {
-                    Modifier
-                }
-            )
-            .height(hauteur)
-            .padding(horizontal = paddingHorizontal),
-        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
-        verticalAlignment = Alignment.CenterVertically,
-        content = content
+    Button(
+        onClick = onClick,
+        modifier = modifier.height(hauteur),
+        enabled = isInteractive,
+        shape = ControlShape,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = fond,
+            contentColor = colors.page,
+            disabledContainerColor = fond.copy(alpha = 0.45f),
+            disabledContentColor = colors.chalk,
+        ),
+        contentPadding = PaddingValues(horizontal = paddingHorizontal),
+        content = content,
     )
 }
 
-/** Bouton d'icône liquide compact. Les actions de barre et de composeur
- *  partagent ainsi la même matière et la même physique que les CTA. */
+/** Bouton d'icône natif Material, transparent et sans shader personnalisé. */
 @Composable
 fun LiquidIconButton(
     onClick: () -> Unit,
@@ -389,16 +316,12 @@ fun LiquidIconButton(
     enabled: Boolean = true,
     taille: Dp = 44.dp,
     surfaceColor: Color = Color.Unspecified,
-    content: @Composable RowScope.() -> Unit,
+    content: @Composable () -> Unit,
 ) {
-    val fond = if (surfaceColor.isSpecified) surfaceColor else givre()
-    LiquidButton(
+    IconButton(
         onClick = onClick,
         modifier = modifier.size(taille),
-        isInteractive = enabled,
-        surfaceColor = fond,
-        hauteur = taille,
-        paddingHorizontal = 0.dp,
+        enabled = enabled,
         content = content,
     )
 }
@@ -817,12 +740,9 @@ fun givre(): Color =
         Color.White.copy(alpha = 0.25f)
     }
 
-/** Champ de recherche liquide : la pile de verre du LiquidButton (vibrance,
- *  flou, réfraction) sur une capsule champ, avec la déformation tanh du
- *  bouton à l'appui — aucun traitement de faveur : le même verre que les
- *  boutons, sans la vibrance (elle fait fleurir le verre sur une scène
- *  claire) et avec un lens réduit. Repli (sans capture ou sous l'API 31) :
- *  capsule quasi opaque. */
+/** Champ de recherche en verre sur la seule capture stable de l'aurore :
+ *  flou et réfraction modérée, sans vibrance ni reflet lumineux. Repli (sans
+ *  capture ou sous l'API 31) : capsule quasi opaque. */
 @Composable
 fun ChampRecherche(
     valeur: String,

@@ -4,6 +4,19 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [Non publié]
+
+### Corrigé
+
+- **Boutons natifs, sans floraison** : les boutons d'action et d'icône
+  délèguent maintenant directement aux composants Material `Button` et
+  `IconButton`. Aucun shader backdrop, vibrance, lentille ou déformation
+  personnalisée n'est appliqué aux boutons
+- **Défilement stable** : la barre basse ne capture plus la scène complète.
+  Les listes paresseuses de Documents et des conversations ne font donc plus
+  partie d'un `GraphicsLayer` backdrop pendant leur recyclage ; seule l'aurore
+  statique conserve une capture
+
 ## [0.5.0-bêta 9] — 2026-09-20
 
 ### Corrigé
