@@ -4,6 +4,14 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [0.5.0-bêta 2] — 2026-09-20
+
+Préversion, deuxième itération sur les retours de la bêta 1 : la partie
+**liquide** du verre arrive — réfraction (`lens`) sur les feuilles qui
+recouvrent (barre flottante, composeur, carte « Ce soir », connexion) et
+l'en-tête du registre devient une barre de verre flottante que le flux
+traverse.
+
 ## [0.5.0-bêta 1] — 2026-09-20
 
 Préversion : le verre liquide se publie en bêta depuis la branche
