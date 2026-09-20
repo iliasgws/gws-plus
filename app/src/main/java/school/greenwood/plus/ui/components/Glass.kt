@@ -281,6 +281,7 @@ fun LiquidButton(
     isInteractive: Boolean = true,
     tint: Color = Color.Unspecified,
     surfaceColor: Color = Color.Unspecified,
+    hauteur: Dp = 48.dp,
     content: @Composable RowScope.() -> Unit,
 ) {
     val backdrop = LocalGlassBackdrop.current
@@ -369,7 +370,7 @@ fun LiquidButton(
                     Modifier
                 }
             )
-            .height(48.dp)
+            .height(hauteur)
             .padding(horizontal = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
         verticalAlignment = Alignment.CenterVertically,
@@ -571,6 +572,9 @@ fun LiquidBottomTabs(
     modifier: Modifier = Modifier,
     content: @Composable RowScope.() -> Unit
 ) {
+    // Contrat : selectedTabIndex doit lire un état snapshot (mutableIntState…)
+    // — la synchronisation passe par snapshotFlow, qui ignore les lectures
+    // hors snapshot.
     val glass = RegistreTheme.colors.glass
     val colors = RegistreTheme.colors
     val isLightTheme = !isSystemInDarkTheme()
@@ -862,7 +866,12 @@ fun ChampRecherche(
 
 /** Barre basse flottante de l'app : la LiquidBottomTabs du catalogue habillée
  *  des onglets Greenwood (icône + libellé). Repli API < 31 : capsule quasi
- *  opaque, même silhouette, aucun échantillonnage. */
+ *  opaque, même silhouette, aucun échantillonnage.
+ *
+ *  L'index sélectionné passe par un état interne synchronisé : snapshotFlow
+ *  ne suit que les lectures d'état snapshot — une lambda qui lirait une liste
+ *  reconstruite à chaque recomposition ne serait jamais réévaluée, et un
+ *  simple tap ne téléporterait jamais la pastille (vu en bêta 4). */
 @Composable
 fun GlassBottomBar(
     onglets: List<VerreOnglet>,
@@ -871,6 +880,12 @@ fun GlassBottomBar(
 ) {
     val glass = RegistreTheme.colors.glass
     val capsule = ControlShape
+
+    val indexExterne = onglets.indexOfFirst { it.sélectionné }.coerceAtLeast(0)
+    var indexÉtat by remember { mutableIntStateOf(indexExterne) }
+    LaunchedEffect(indexExterne) {
+        if (indexÉtat != indexExterne) indexÉtat = indexExterne
+    }
 
     if (!floutageDisponible || backdrop == null) {
         // Repli : même silhouette, fill quasi opaque, aucun échantillonnage.
@@ -887,9 +902,7 @@ fun GlassBottomBar(
     }
 
     LiquidBottomTabs(
-        selectedTabIndex = {
-            onglets.indexOfFirst { it.sélectionné }.coerceAtLeast(0)
-        },
+        selectedTabIndex = { indexÉtat },
         onTabSelected = { index -> onglets[index].onClick() },
         backdrop = backdrop,
         tabsCount = onglets.size,

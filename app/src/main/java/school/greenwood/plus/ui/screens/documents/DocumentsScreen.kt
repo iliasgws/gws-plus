@@ -18,6 +18,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -32,12 +33,16 @@ import school.greenwood.plus.ui.DocumentsViewModel
 import school.greenwood.plus.ui.FiltreDocuments
 import school.greenwood.plus.ui.estQuiz
 import school.greenwood.plus.ui.filtrerRessources
+import com.kashif_e.backdrop.backdrops.layerBackdrop
+import com.kashif_e.backdrop.backdrops.rememberLayerBackdrop
 import school.greenwood.plus.ui.components.BandeauErreur
 import school.greenwood.plus.ui.components.ChampRecherche
 import school.greenwood.plus.ui.components.EmptyState
 import school.greenwood.plus.ui.components.ErrorInline
+import school.greenwood.plus.ui.components.FeuilleVerre
 import school.greenwood.plus.ui.components.GwsBouton
 import school.greenwood.plus.ui.components.GwsCard
+import school.greenwood.plus.ui.components.LocalGlassBackdrop
 import school.greenwood.plus.ui.components.Puce
 import school.greenwood.plus.ui.components.PuceChoix
 import school.greenwood.plus.ui.components.SectionLabel
@@ -65,45 +70,26 @@ fun DocumentsScreen(
     // La liste défile sous la barre flottante : le bas de la page est un
     // espace, pas une borne (Shell y a déjà ajouté la barre).
     val bas = padding.calculateBottomPadding()
+    val hautStatut = padding.calculateTopPadding()
 
-    Column(
-        modifier = Modifier.fillMaxSize(),
-    ) {
-        Column(
-            Modifier.padding(
-                top = padding.calculateTopPadding() + 12.dp,
-                start = 16.dp,
-                end = 16.dp,
-                bottom = 12.dp,
-            ),
-        ) {
-            Text(
-                text = "Documents",
-                style = MaterialTheme.typography.displayLarge,
-                color = RegistreTheme.colors.ink,
-            )
-            Spacer(Modifier.height(12.dp))
-            ChampRecherche(
-                valeur = état.recherche,
-                onChange = vm::modifierRecherche,
-                placeholder = "Rechercher",
-            )
-            Spacer(Modifier.height(10.dp))
-            FiltreNature(
-                choisi = état.filtre,
-                onChange = vm::choisirFiltre,
-            )
-        }
+    // Capture du contenu qui défile : la barre flottante (recherche + puces)
+    // l'échantillonne — elle est la sœur du nœud capturé, jamais dedans
+    // (règle d'or du verre : ne jamais lire une capture qui vous contient).
+    val captureListe = rememberLayerBackdrop()
 
+    Box(Modifier.fillMaxSize()) {
         when {
-            état.chargement -> Box(Modifier.fillMaxSize().padding(bottom = bas)) {
+            état.chargement -> Box(
+                Modifier
+                    .fillMaxSize()
+                    .padding(top = hautStatut + 132.dp, bottom = bas),
+            ) {
                 SqueletteDocuments()
             }
             état.erreur != null && état.ressources.isEmpty() -> Column(
                 Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-                    .padding(bottom = bas),
+                    .fillMaxSize()
+                    .padding(top = hautStatut + 132.dp, start = 16.dp, end = 16.dp, bottom = bas),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 ErrorInline(message = état.erreur ?: "")
@@ -113,74 +99,121 @@ fun DocumentsScreen(
                 )
             }
             else -> {
-                // Bandeau discret sous la recherche et les filtres quand un
-                // échec réseau laisse le contenu connu affiché (issue #21).
+                // Bandeau discret en tête de liste quand un échec réseau
+                // laisse le contenu connu affiché (issue #21) ; le titre
+                // défile sous le panneau de verre.
                 val filtrées = filtrerRessources(état.ressources, état.recherche, état.filtre)
-                Column(Modifier.fillMaxSize()) {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .layerBackdrop(captureListe),
+                    contentPadding = PaddingValues(
+                        start = 16.dp,
+                        end = 16.dp,
+                        top = hautStatut + 132.dp,
+                        bottom = 16.dp + bas,
+                    ),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
                     état.erreur?.let { message ->
-                        BandeauErreur(
-                            message = message,
-                            réessayer = { vm.charger(force = true) },
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                        item(key = "erreur") {
+                            BandeauErreur(
+                                message = message,
+                                réessayer = { vm.charger(force = true) },
+                            )
+                        }
+                    }
+                    item(key = "titre") {
+                        Text(
+                            text = "Documents",
+                            style = MaterialTheme.typography.displayLarge,
+                            color = RegistreTheme.colors.ink,
                         )
                     }
                     if (état.ressources.isEmpty()) {
-                        Box(
-                            Modifier
-                                .fillMaxWidth()
-                                .weight(1f),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            EmptyState(
-                                titre = "Aucun document",
-                                message = "Les ressources de la classe apparaîtront ici.",
-                            )
+                        item(key = "vide") {
+                            Box(
+                                Modifier
+                                    .fillParentMaxWidth()
+                                    .fillParentMaxHeight(0.75f),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                EmptyState(
+                                    titre = "Aucun document",
+                                    message = "Les ressources de la classe apparaîtront ici.",
+                                )
+                            }
                         }
                     } else if (filtrées.isEmpty()) {
-                        Box(
-                            Modifier
-                                .fillMaxWidth()
-                                .weight(1f),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            EmptyState(
-                                titre = "Rien trouvé",
-                                message = if (état.recherche.isBlank()) {
-                                    "Aucune ressource de ce type pour le moment."
-                                } else {
-                                    "Essaie un autre mot."
-                                },
-                            )
+                        item(key = "rien") {
+                            Box(
+                                Modifier
+                                    .fillParentMaxWidth()
+                                    .fillParentMaxHeight(0.75f),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                EmptyState(
+                                    titre = "Rien trouvé",
+                                    message = if (état.recherche.isBlank()) {
+                                        "Aucune ressource de ce type pour le moment."
+                                    } else {
+                                        "Essaie un autre mot."
+                                    },
+                                )
+                            }
                         }
                     } else {
                         // Groupement par matière, ordre du serveur préservé.
                         val groupes = filtrées.groupBy { it.matiere.ifBlank { "Général" } }
-                        LazyColumn(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .weight(1f),
-                            contentPadding = PaddingValues(
+                        groupes.forEach { (matiere, items) ->
+                            item(key = "section-$matiere") {
+                                SectionLabel(matiere)
+                            }
+                            items(
+                                items.size,
+                                key = { i -> "${items[i].id}-$i" },
+                            ) { i ->
+                                LigneRessource(
+                                    items[i],
+                                    ouvrirQuiz = onOuvrirQuiz,
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // Le panneau flottant de verre : recherche + puces de nature,
+                // posées PAR-DESSUS la liste. Le provider local redirige leur
+                // échantillonnage vers la capture de la liste — les cartes
+                // défilent visiblement derrière le verre.
+                CompositionLocalProvider(LocalGlassBackdrop provides captureListe) {
+                    FeuilleVerre(
+                        modifier = Modifier
+                            .align(Alignment.TopCenter)
+                            .padding(
+                                top = hautStatut + 8.dp,
                                 start = 16.dp,
                                 end = 16.dp,
-                                top = 4.dp,
-                                bottom = 16.dp + bas,
-                            ),
-                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                            )
+                            .fillMaxWidth(),
+                        teinte = RegistreTheme.colors.glass.bar,
+                        flou = 16.dp,
+                        réfraction = 12.dp,
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(12.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp),
                         ) {
-                            groupes.forEach { (matiere, items) ->
-                                item(key = "section-$matiere") {
-                                    SectionLabel(matiere)
-                                }
-                                items(
-                                    items.size,
-                                    key = { i -> "${items[i].id}-$i" },
-                                ) { i ->
-                                    LigneRessource(
-                                        items[i],
-                                        ouvrirQuiz = onOuvrirQuiz,
-                                    )
-                                }
-                            }
+                            ChampRecherche(
+                                valeur = état.recherche,
+                                onChange = vm::modifierRecherche,
+                                placeholder = "Rechercher",
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                            FiltreNature(
+                                choisi = état.filtre,
+                                onChange = vm::choisirFiltre,
+                            )
                         }
                     }
                 }

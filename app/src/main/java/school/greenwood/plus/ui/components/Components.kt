@@ -229,8 +229,10 @@ fun GwsAvatar(
  * capsules de verre, partagées partout.
  */
 
-/** Puce de choix : capsule de verre quand elle attend, encre pleine quand
- *  elle est choisie — l'état actif reste la seule surface saturée du contrôle. */
+/** Puce de choix : le LiquidButton du catalogue en format puce — verre clair
+ *  qui échantillonne ce qui passe derrière (l'encre pleine quand elle est
+ *  choisie), déformation vers le doigt à l'appui. Repli : capsule de verre
+ *  calme. */
 @Composable
 fun PuceChoix(
     label: String,
@@ -239,19 +241,11 @@ fun PuceChoix(
     modifier: Modifier = Modifier,
 ) {
     val colors = RegistreTheme.colors
-    Box(
-        modifier = modifier
-            .clip(ControlShape)
-            .background(if (sélectionné) colors.ink else colors.glass.card)
-            .then(
-                if (sélectionné) {
-                    Modifier
-                } else {
-                    Modifier.border(1.dp, colors.glass.stroke, ControlShape)
-                },
-            )
-            .clickable(onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 8.dp),
+    LiquidButton(
+        onClick = onClick,
+        modifier = modifier,
+        hauteur = 36.dp,
+        surfaceColor = if (sélectionné) colors.ink else colors.glass.card,
     ) {
         Text(
             text = label,

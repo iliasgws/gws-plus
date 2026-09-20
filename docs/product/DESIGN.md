@@ -97,6 +97,15 @@ dessus) ; la barre, hors capture, lit la scène. Chaque composant garde un
 repli identique sans verre (API < 31) : même silhouette, matériaux du
 thème.
 
+**Superposition par écran** : un écran qui a quelque chose de flottant
+capture sa propre liste (`layerBackdrop` sur la LazyColumn) et fournit
+cette capture localement via `LocalGlassBackdrop` — le panneau verre de
+Documents (recherche + puces de nature) lit ainsi les cartes qui défilent
+derrière lui. La règle d'or tient toujours : le panneau est la sœur du
+nœud capturé, jamais dedans. Autre règle de survie (bêta 4) :
+`selectedTabIndex` de la barre doit lire un état snapshot — `snapshotFlow`
+ignore tout le reste, sinon un simple tap ne téléporte plus la pastille.
+
 ### Palette (clarité / obscurité)
 
 | Jeton | Clair | Sombre | Rôle |

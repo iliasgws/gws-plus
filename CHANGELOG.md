@@ -4,6 +4,22 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [0.5.0-bêta 5] — 2026-09-20
+
+### Corrigé
+
+- **Un tap sur la barre basse téléporte la pastille** (bêta 4) : la
+  sélection passait par une liste reconstruite à chaque recomposition,
+  invisible pour `snapshotFlow` — l'index passe désormais par un état
+  synchronisé, le tap anime la pastille comme le drag
+- **Documents** : la recherche et les puces de nature deviennent un panneau
+  de verre flottant qui recouvre la liste — les cartes défilent visiblement
+  derrière le verre (capture locale de la liste, sœur du nœud capturé),
+  le titre défile sous le panneau
+- **Puces de choix** : format `LiquidButton` — verre clair avec réfraction
+  quand elles attendent, encre pleine quand elles sont choisies,
+  déformation vers le doigt à l'appui
+
 ## [0.5.0-bêta 4] — 2026-09-20
 
 ### Ajouté

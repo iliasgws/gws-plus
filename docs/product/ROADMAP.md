@@ -450,6 +450,16 @@ same tab gesture, same transitions, `enableOnBackInvokedCallback` untouched.
       InteractiveHighlight, DampedDragAnimation — pure Compose, no library
       imports); `LiquidSlider` unused in this app; every component keeps an
       identical-silhouette non-glass fallback (API < 31)
+- [x] Fourth pass (beta-4 on-device feedback): tap a tab now teleports the
+      spotlight (selection routed through a synced `mutableIntStateOf` —
+      `snapshotFlow` only tracks snapshot reads, the recomposition-scoped
+      list it read before was invisible to it); Documents search + nature
+      chips became a floating glass panel over the feed (per-screen
+      `layerBackdrop` on the LazyColumn, provided locally via
+      `LocalGlassBackdrop` — sibling of the captured node, never inside) —
+      cards scroll visibly behind the glass; `PuceChoix` upgraded to a
+      compact `LiquidButton` (clear glass with lens when waiting, ink
+      surface when chosen, `hauteur` param added for the 36 dp chip size)
 - [x] Screens: all 13 converted — transparent roots; day chips, nature
       filters, message categories, search field and action button extracted
       into shared `PuceChoix` / `ChampRecherche` / `GwsBouton`; quiz answers
