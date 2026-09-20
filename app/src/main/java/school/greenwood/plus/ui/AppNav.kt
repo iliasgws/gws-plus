@@ -19,6 +19,7 @@ import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.QuestionAnswer
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
@@ -43,6 +44,7 @@ import school.greenwood.plus.AppContainer
 import school.greenwood.plus.ui.components.AuroraBackdrop
 import school.greenwood.plus.ui.components.GlassBottomBar
 import school.greenwood.plus.ui.components.GlassDefaults
+import school.greenwood.plus.ui.components.LocalGlassBackdrop
 import school.greenwood.plus.ui.components.VerreOnglet
 import school.greenwood.plus.ui.screens.LoginScreen
 import school.greenwood.plus.ui.screens.OnboardingScreen
@@ -112,52 +114,54 @@ fun AppNav(container: AppContainer) {
     val backdrop = rememberLayerBackdrop()
     val portée = rememberCoroutineScope()
 
-    Box(Modifier.fillMaxSize()) {
-        // La scène que le verre échantillonne : aurore + écrans, une seule
-        // couche capturée (docs — ne recrée jamais le backdrop par recomposition).
-        Box(
-            Modifier
-                .fillMaxSize()
-                .layerBackdrop(backdrop),
-        ) {
-            AuroraBackdrop()
-            Crossfade(targetState = écran, animationSpec = tween(250), label = "racine") { é ->
-                when (é) {
-                    ÉcranRacine.Chargement -> {}
-                    ÉcranRacine.Onboarding -> OnboardingScreen(
-                        onFini = { portée.launch { container.session.marquerOnboardingVu() } },
-                    )
-                    ÉcranRacine.Connexion -> LoginScreen(
-                        onConnecté = { /* l'état de session bascule vers le registre */ },
-                        container = container,
-                    )
-                    ÉcranRacine.Registre -> Shell(container = container, navController = navController)
+    CompositionLocalProvider(LocalGlassBackdrop provides backdrop) {
+        Box(Modifier.fillMaxSize()) {
+            // La scène que le verre échantillonne : aurore + écrans, une seule
+            // couche capturée (docs — ne recrée jamais le backdrop par recomposition).
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .layerBackdrop(backdrop),
+            ) {
+                AuroraBackdrop()
+                Crossfade(targetState = écran, animationSpec = tween(250), label = "racine") { é ->
+                    when (é) {
+                        ÉcranRacine.Chargement -> {}
+                        ÉcranRacine.Onboarding -> OnboardingScreen(
+                            onFini = { portée.launch { container.session.marquerOnboardingVu() } },
+                        )
+                        ÉcranRacine.Connexion -> LoginScreen(
+                            onConnecté = { /* l'état de session bascule vers le registre */ },
+                            container = container,
+                        )
+                        ÉcranRacine.Registre -> Shell(container = container, navController = navController)
+                    }
                 }
             }
-        }
 
-        // Barre flottante de verre : hors de la couche capturée, visible
-        // seulement dans le registre.
-        AnimatedVisibility(
-            visible = écran == ÉcranRacine.Registre,
-            modifier = Modifier.align(Alignment.BottomCenter),
-            enter = fadeIn(tween(200)) + slideInVertically(tween(220)) { it },
-            exit = fadeOut(tween(160)) + slideOutVertically(tween(180)) { it },
-        ) {
-            GlassBottomBar(
-                onglets = Onglets.map { onglet ->
-                    VerreOnglet(
-                        icône = onglet.icone,
-                        libellé = onglet.label,
-                        sélectionné = routeCourante == onglet.route,
-                        onClick = { navController.allerÀLOnglet(onglet.route) },
-                    )
-                },
-                backdrop = backdrop,
-                modifier = Modifier
-                    .navigationBarsPadding()
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-            )
+            // Barre flottante de verre : hors de la couche capturée, visible
+            // seulement dans le registre.
+            AnimatedVisibility(
+                visible = écran == ÉcranRacine.Registre,
+                modifier = Modifier.align(Alignment.BottomCenter),
+                enter = fadeIn(tween(200)) + slideInVertically(tween(220)) { it },
+                exit = fadeOut(tween(160)) + slideOutVertically(tween(180)) { it },
+            ) {
+                GlassBottomBar(
+                    onglets = Onglets.map { onglet ->
+                        VerreOnglet(
+                            icône = onglet.icone,
+                            libellé = onglet.label,
+                            sélectionné = routeCourante == onglet.route,
+                            onClick = { navController.allerÀLOnglet(onglet.route) },
+                        )
+                    },
+                    backdrop = backdrop,
+                    modifier = Modifier
+                        .navigationBarsPadding()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                )
+            }
         }
     }
 }

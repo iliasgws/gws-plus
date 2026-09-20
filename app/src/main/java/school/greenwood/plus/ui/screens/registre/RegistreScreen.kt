@@ -34,7 +34,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -69,6 +68,7 @@ import school.greenwood.plus.ui.RegistreViewModel
 import school.greenwood.plus.ui.components.BandeauErreur
 import school.greenwood.plus.ui.components.EmptyState
 import school.greenwood.plus.ui.components.ErrorInline
+import school.greenwood.plus.ui.components.FeuilleVerre
 import school.greenwood.plus.ui.components.GwsAvatar
 import school.greenwood.plus.ui.components.GwsBouton
 import school.greenwood.plus.ui.components.GwsCard
@@ -76,7 +76,6 @@ import school.greenwood.plus.ui.components.Puce
 import school.greenwood.plus.ui.components.SectionLabel
 import school.greenwood.plus.ui.components.SqueletteRegistre
 import school.greenwood.plus.ui.theme.ControlShape
-import school.greenwood.plus.ui.theme.PageShape
 import school.greenwood.plus.ui.theme.RegistreTheme
 import school.greenwood.plus.ui.theme.SheetShape
 import school.greenwood.plus.util.frenchFull
@@ -150,37 +149,31 @@ fun RegistreScreen(
                 cascade.value = true
             }
 
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(
-                    start = 20.dp,
-                    end = 20.dp,
-                    top = padding.calculateTopPadding(),
-                    bottom = padding.calculateBottomPadding() + 16.dp,
-                ),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                item(key = "entete") {
-                    EnTête(
-                        date = LocalDate.now(),
-                        eleve = état.eleve,
-                        surOuvrirFeuille = { feuilleOuverte = true },
-                        surActualiser = vm::charger,
-                    )
-                }
-
-                // Erreur non bloquante (issue #21) : le contenu connu reste
-                // affiché, l'échec se pose en annotation au-dessus de lui.
-                état.erreur?.let { message ->
-                    item(key = "erreur") {
-                        BandeauErreur(
-                            message = message,
-                            réessayer = { vm.charger(force = true) },
-                        )
+            // La barre d'en-tête flottante recouvre le flux : les cartes
+            // défilent SOUS la feuille de verre (docs/product/DESIGN.md §2).
+            Box(Modifier.fillMaxSize()) {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(
+                        start = 20.dp,
+                        end = 20.dp,
+                        top = padding.calculateTopPadding() + 104.dp,
+                        bottom = padding.calculateBottomPadding() + 16.dp,
+                    ),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    // Erreur non bloquante (issue #21) : le contenu connu reste
+                    // affiché, l'échec se pose en annotation au-dessus de lui.
+                    état.erreur?.let { message ->
+                        item(key = "erreur") {
+                            BandeauErreur(
+                                message = message,
+                                réessayer = { vm.charger(force = true) },
+                            )
+                        }
                     }
-                }
 
-                item(key = "ce-soir") { CarteCeSoir(registre) }
+                    item(key = "ce-soir") { CarteCeSoir(registre) }
 
                 item(key = "label-jour") { SectionLabel(text = "Aujourd'hui") }
 
@@ -204,7 +197,32 @@ fun RegistreScreen(
                     }
                 }
 
-                item(key = "demandes") { LigneDemandes(ouvrirDemandes) }
+                    item(key = "demandes") { LigneDemandes(ouvrirDemandes) }
+                }
+
+                // La barre de verre flottante, au-dessus du flux : la date en
+                // Fraunces, l'enfant consulté, actualiser — les cartes passent
+                // derrière elle en défilant, et l'aurore se réfracte à ses bords.
+                FeuilleVerre(
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(
+                            top = padding.calculateTopPadding() + 8.dp,
+                            start = 16.dp,
+                            end = 16.dp,
+                        )
+                        .fillMaxWidth(),
+                    teinte = RegistreTheme.colors.glass.bar,
+                    flou = 16.dp,
+                    réfraction = 12.dp,
+                ) {
+                    EnTête(
+                        date = LocalDate.now(),
+                        eleve = état.eleve,
+                        surOuvrirFeuille = { feuilleOuverte = true },
+                        surActualiser = vm::charger,
+                    )
+                }
             }
         }
     }
@@ -230,7 +248,7 @@ private fun EnTête(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 8.dp),
+            .padding(start = 16.dp, end = 4.dp, top = 10.dp, bottom = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         // La date doit rester lisible en entier (« jeudi 18 septembre ») :
@@ -292,93 +310,100 @@ private fun EnTête(
 }
 
 /**
- * La carte focale (docs/product/DESIGN.md §2) : fond sage, liseré encre. Le rouge n'y
- * apparaît que sur les devoirs pas encore faits — l'action requise.
+ * La carte focale (docs/product/DESIGN.md §2) : une feuille de verre réelle
+ * teintée de sage (l'identité reste), liseré encre — la réfraction fait vivre
+ * l'aurore à ses bords. Le rouge n'y apparaît que sur les devoirs pas encore
+ * faits — l'action requise.
  */
 @Composable
 private fun CarteCeSoir(registre: RegistreDuJour) {
-    Surface(
+    FeuilleVerre(
         modifier = Modifier.fillMaxWidth(),
-        shape = PageShape,
-        color = RegistreTheme.colors.sage,
-        border = BorderStroke(1.5.dp, RegistreTheme.colors.ink),
+        teinte = RegistreTheme.colors.sage.copy(alpha = 0.55f),
+        liseré = BorderStroke(1.5.dp, RegistreTheme.colors.ink),
+        flou = 10.dp,
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Column {
-                Text(
-                    text = "Ce soir",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = RegistreTheme.colors.ink,
-                )
-                val demain = registre.date.plusDays(1)
-                val sousTitre = if (registre.horizonCeSoir == demain) {
-                    "à rendre pour demain"
-                } else {
-                    "à rendre pour ${registre.horizonCeSoir.frenchLongDay()}"
-                }
-                Text(
-                    text = sousTitre,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = RegistreTheme.colors.chalk,
-                )
-            }
+        ContenuCeSoir(registre)
+    }
+}
 
-            if (registre.ceSoir.isEmpty()) {
-                // Le vide est une bonne nouvelle, pas un manque.
-                Text(
-                    text = "Rien pour demain",
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = RegistreTheme.colors.ink,
-                )
-                Text(
-                    text = "La rentrée prochaine est tranquille.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = RegistreTheme.colors.chalk,
-                )
+@Composable
+private fun ContenuCeSoir(registre: RegistreDuJour) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Column {
+            Text(
+                text = "Ce soir",
+                style = MaterialTheme.typography.titleMedium,
+                color = RegistreTheme.colors.ink,
+            )
+            val demain = registre.date.plusDays(1)
+            val sousTitre = if (registre.horizonCeSoir == demain) {
+                "à rendre pour demain"
             } else {
-                registre.ceSoir.forEach { devoir ->
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    ) {
-                        Puce(label = devoir.matiere.ifBlank { "Devoir" })
-                        Column(modifier = Modifier.weight(1f)) {
+                "à rendre pour ${registre.horizonCeSoir.frenchLongDay()}"
+            }
+            Text(
+                text = sousTitre,
+                style = MaterialTheme.typography.labelMedium,
+                color = RegistreTheme.colors.chalk,
+            )
+        }
+
+        if (registre.ceSoir.isEmpty()) {
+            // Le vide est une bonne nouvelle, pas un manque.
+            Text(
+                text = "Rien pour demain",
+                style = MaterialTheme.typography.headlineMedium,
+                color = RegistreTheme.colors.ink,
+            )
+            Text(
+                text = "La rentrée prochaine est tranquille.",
+                style = MaterialTheme.typography.bodySmall,
+                color = RegistreTheme.colors.chalk,
+            )
+        } else {
+            registre.ceSoir.forEach { devoir ->
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    Puce(label = devoir.matiere.ifBlank { "Devoir" })
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = devoir.title,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = RegistreTheme.colors.ink,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        devoir.enseignant?.let { enseignant ->
                             Text(
-                                text = devoir.title,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = RegistreTheme.colors.ink,
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                            devoir.enseignant?.let { enseignant ->
-                                Text(
-                                    text = enseignant,
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = RegistreTheme.colors.chalk,
-                                    maxLines = 1,
-                                )
-                            }
-                        }
-                        if (devoir.fait) {
-                            Icon(
-                                imageVector = Icons.Rounded.Check,
-                                contentDescription = "Fait",
-                                tint = RegistreTheme.colors.ink,
-                                modifier = Modifier.size(18.dp),
-                            )
-                        } else {
-                            Box(
-                                modifier = Modifier
-                                    .size(6.dp)
-                                    .clip(CircleShape)
-                                    .background(RegistreTheme.colors.redPen),
+                                text = enseignant,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = RegistreTheme.colors.chalk,
+                                maxLines = 1,
                             )
                         }
+                    }
+                    if (devoir.fait) {
+                        Icon(
+                            imageVector = Icons.Rounded.Check,
+                            contentDescription = "Fait",
+                            tint = RegistreTheme.colors.ink,
+                            modifier = Modifier.size(18.dp),
+                        )
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .size(6.dp)
+                                .clip(CircleShape)
+                                .background(RegistreTheme.colors.redPen),
+                        )
                     }
                 }
             }

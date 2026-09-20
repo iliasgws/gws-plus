@@ -39,7 +39,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import school.greenwood.plus.AppContainer
 import school.greenwood.plus.ui.ConnexionViewModel
 import school.greenwood.plus.ui.components.ErrorInline
-import school.greenwood.plus.ui.components.GwsCard
+import school.greenwood.plus.ui.components.FeuilleVerre
 import school.greenwood.plus.ui.theme.ControlShape
 import school.greenwood.plus.ui.theme.RegistreTheme
 
@@ -82,9 +82,12 @@ fun LoginScreen(
                 color = RegistreTheme.colors.chalk,
             )
 
-            GwsCard(modifier = Modifier
-                .widthIn(max = 420.dp)
-                .padding(top = 24.dp)) {
+            FeuilleVerre(
+                modifier = Modifier
+                    .widthIn(max = 420.dp)
+                    .padding(top = 24.dp),
+                teinte = RegistreTheme.colors.glass.card,
+            ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()

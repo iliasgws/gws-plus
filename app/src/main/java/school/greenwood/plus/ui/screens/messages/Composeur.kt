@@ -42,9 +42,9 @@ import android.content.pm.PackageManager
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import kotlinx.coroutines.delay
+import school.greenwood.plus.ui.components.FeuilleVerre
 import school.greenwood.plus.ui.components.GlassSurface
 import school.greenwood.plus.ui.theme.ControlShape
-import school.greenwood.plus.ui.theme.PageShape
 import school.greenwood.plus.ui.theme.RegistreTheme
 import java.io.File
 import java.util.Locale
@@ -112,14 +112,15 @@ fun Composeur(
             }
         }
 
-        // Verre fort : le composeur reste posé sur du contenu qui bouge et au-
-        // dessus du clavier — pas d'échantillonnage ici, la lisibilité d'abord.
-        GlassSurface(
+        // Feuille de verre réelle : elle échantillonne le fil qui défile
+        // derrière elle (réfraction incluse) et flotte au-dessus du clavier.
+        FeuilleVerre(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 8.dp),
-            shape = PageShape,
-            strong = true,
+            teinte = RegistreTheme.colors.glass.card,
+            flou = 16.dp,
+            réfraction = 12.dp,
         ) {
             if (enregistre) {
                 // État d'enregistrement intégré : pastille rouge, chrono,

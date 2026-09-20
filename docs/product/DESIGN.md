@@ -48,21 +48,27 @@ l'app est une **aurore** : trois halos doux et immobiles (sauge, crème chaud,
 bleu-vert pâle) sur une base claire le jour, sombre la nuit. Jamais animée —
 un fond qui bouge fatigue, et l'app ne joue jamais d'animation pour rien.
 
-- **Verre calme** (cartes, bulles du parent, puces de choix, squelettes) : une
-  feuille translucide à ~72 % plus un liseré lumineux de 1 dp, **sans
-  floutage** — sur une aurore statique, flouter serait invisible et coûterait
-  pour rien.
-- **Verre réel** (la barre basse flottante) : le **seul nœud flouté de
-  l'app**. Elle échantillonne le contenu qui défile derrière elle via la
-  bibliothèque [`backdrop`](https://github.com/Kashif-E/KMPLiquidGlass)
-  (port KMP de AndroidLiquidGlass) — blur + colorControls uniquement ; jamais
-  de lens/vibrancy sur un fond qui bouge (jank). Refraction/lens réservés à
-  l'API 33+, floutage simple dès l'API 31.
-- **Verre fort** (feuilles modales, composeur, repli API < 31) : fill quasi
-  opaque à 95 %. Une feuille modale vit dans sa propre fenêtre : elle ne
-  peut pas échantillonner — le verre fort est conçu pour ça, pas rafistolé.
-  Sous l'API 31, le floutage n'existe pas : tout le verre bascule sur le verre
-  fort. La dégradation est conçue, pas accidentelle.
+- **Verre calme** (cartes du flux, bulles du parent, puces de choix,
+  squelettes) : une feuille translucide à ~72 % plus un liseré lumineux de
+  1 dp, **sans floutage** — une carte du flux n'a rien derrière elle : la
+  réfraction y serait invisible et ne coûterait que des passes de shader.
+- **Verre réel** — vibrance + flou + **réfraction** (`lens`, la partie
+  « liquide » du matériau) — réservé aux feuilles qui recouvrent réellement
+  quelque chose : la **barre basse flottante** (le contenu défile derrière),
+  la **barre d'en-tête du registre** (le flux passe dessous), le **composeur**
+  (le fil passe derrière), la carte « Ce soir » et la carte de connexion
+  (l'aurore se réfracte à leurs bords). Tous échantillonnent la scène capturée
+  une fois à la racine via la bibliothèque
+  [`backdrop`](https://github.com/Kashif-E/KMPLiquidGlass) (port KMP de
+  AndroidLiquidGlass). La réfraction est offerte dès l'API 33 (AGSL), le
+  floutage seul dès l'API 31. Les feuilles réelles se posent **par-dessus**
+  le contenu — le verre est une couche, pas une borne.
+- **Verre fort** (feuilles modales, repli API < 31 de tout le verre réel) :
+  fill quasi opaque à 95 %. Une feuille modale vit dans sa propre fenêtre :
+  elle ne peut pas échantillonner — le verre fort est conçu pour ça, pas
+  rafistolé. Sous l'API 31, le floutage n'existe pas : le verre réel bascule
+  sur son fill opaque (`teinte` en pleine opacité, sinon barStrong). La
+  dégradation est conçue, pas accidentelle.
 
 ### Palette (clarité / obscurité)
 

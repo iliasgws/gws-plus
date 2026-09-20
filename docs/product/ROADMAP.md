@@ -411,14 +411,23 @@ same tab gesture, same transitions, `enableOnBackInvokedCallback` untouched.
 - [x] Glass primitives: `AuroraBackdrop` (three static blobs, `drawBehind`,
       never animated), `GlassSurface` (translucent fill + 1 dp luminous
       stroke, `strong` = 95 % fallback), `GlassBottomBar` (real backdrop
-      sampling via `drawBackdrop`: blur 18 dp + colorControls only — no
-      lens/vibrancy over a moving backdrop; `<` API 31 renders the barStrong
+      sampling via `drawBackdrop`; `<` API 31 renders the barStrong
       capsule, designed fallback)
 - [x] Shell: one `layerBackdrop` capture at the AppNav root (aurora +
       screens); the floating glass bar is a sibling outside the captured
       layer so it never samples itself; Scaffold kept (transparent, empty
       bottomBar) purely for insets; screens receive bottom padding =
       nav inset + `GlassDefaults.BarTotal` and scroll under the bar
+- [x] Second pass (beta-1 feedback: no refraction, no overlaid components):
+      shared real-glass primitive `FeuilleVerre` (vibrancy + blur + lens via
+      `drawBackdrop`, opaque fallback when no capture or < API 31) plus
+      `LocalGlassBackdrop` (scene provided once at the AppNav root) — applied
+      to the floating bottom bar (full liquid stack: vibrancy + blur 18 +
+      lens 12/24), the composer, the « Ce soir » hero card (sage tint kept,
+      ink liseré kept) and the login card; the Registre date header becomes
+      a floating glass bar the feed scrolls UNDER (real component overlay);
+      calm feed cards stay fill-only on purpose (nothing with edges behind
+      them — refraction would be invisible and cost per-frame shaders)
 - [x] Screens: all 13 converted — transparent roots; day chips, nature
       filters, message categories, search field and action button extracted
       into shared `PuceChoix` / `ChampRecherche` / `GwsBouton`; quiz answers
