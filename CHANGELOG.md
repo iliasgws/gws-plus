@@ -22,6 +22,14 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
   son premier champ texte — l'onglet reste utilisable même si le serveur change
   de forme ; l'avertissement `restricted` du serveur s'affiche en carte dédiée
 
+### Corrigé
+
+- **Plantage à l'ouverture d'une actualité** (constaté sur appareil réel,
+  2026-09-20) : le squelette du détail de post imbriquait son propre
+  défilement vertical dans celui de l'écran — contraintes de hauteur infinie,
+  arrêt immédiat de l'app dès l'arrivée sur l'onglet Actualités ou la carte
+  « Dernière actualité » ; le squelette défile désormais avec son écran
+
 ## [0.6.0-bêta 1] — 2026-09-20
 
 Préversion : l'onglet Actualités et le détail des posts se publient en bêta
