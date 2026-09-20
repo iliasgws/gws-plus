@@ -4,21 +4,30 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
-## [0.6.0-bêta 3] — 2026-09-20
+## [0.6.0] — 2026-09-20
 
-Préversion : le restylage « École vivante » se publie en bêta depuis la
-branche `restyle-ecole-vivante` (empilée sur le fix du plantage et la bêta 2)
-pour être essayé sur un appareil réel avant la fusion. S'installe au-dessus
-de la bêta 2 sans désinstallation.
+Stable après trois bêtas essayées sur appareil réel : l'onglet Actualités
+(bêta 1), l'onglet Emploi du temps (bêta 2), le correctif du plantage et le
+restylage « École vivante » (bêta 3).
 
 ### Ajouté
 
-- **Onglet Emploi du temps** (branche `cours-onglet`, PR #29) : 6 onglets en
-  barre inférieure dans l'ordre Registre, Actualités, Cours, Devoirs, Documents,
-  Messages
-- **Vue semaine (GET `cours_v2`)** : navigation ←/→ entre semaines, résumé de la
-  semaine en puces de jours (lettre, date courte, nombre de cours) et créneaux du
-  jour choisi (horaire, matière, salle, enseignant)
+- **Onglet dédié Actualités** : 6 onglets en barre inférieure dans l'ordre
+  Registre, Actualités, Cours, Devoirs, Documents, Messages
+- **Détail d'une actualité (GET `post_view`)** : consultation complète — en-tête
+  (catégorie, signet, titre, date, auteur), corps riche, galerie d'images,
+  pièces jointes téléchargeables, commentaires imbriqués, quiz interactif ;
+  agit comme accusé de lecture côté serveur, avec repli sur le cache et le
+  flux `admin_nouveautes`
+- **Kill switch de sécurité pour l'écriture** : les POST d'écriture sur les
+  actualités (commentaires, réponses de quiz) sont désactivés par défaut via
+  une préférence DataStore `ecritureNouveautesActivée`
+- **Carte « Dernière actualité » sur le Registre** : la nouvelle la plus récente
+  sous l'en-tête (masquée si déjà dans le fil du jour)
+- **Pagination 1-based et défilement infini** du flux d'actualités, pull-to-refresh
+- **Onglet Emploi du temps** (GET `cours_v2`) : navigation ←/→ entre semaines,
+  résumé de la semaine en puces de jours et créneaux du jour choisi (horaire,
+  matière, salle, enseignant)
 - **Carte « Emploi du temps » sur le Registre** : lien discret vers l'onglet
 - **Parsage défensif des créneaux** : la forme intérieure des `seances[]` n'ayant
   jamais été observée (sondage du 2026-09-20), les champs plausibles sont tentés
@@ -28,7 +37,7 @@ de la bêta 2 sans désinstallation.
 
 ### Changé
 
-- **Restylage « École vivante »** (branche `restyle-ecole-vivante`) : une
+- **Restylage « École vivante »** : une
   famille d'accent par onglet (vert, ambre, bleu, violet, ocre, corail) qui
   teinte barre basse, puces, surligneurs de titres, carte focale et états
   vides, en clair comme en sombre ; fond crème chaud le jour, vert-charbon la
