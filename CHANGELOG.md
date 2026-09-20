@@ -4,7 +4,11 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
-## [Unreleased]
+## [0.5.0-bêta 1] — 2026-09-20
+
+Préversion : le verre liquide se publie en bêta depuis la branche
+`design/liquid-glass` (PR #27, non fusionnée) pour être essayé sur un
+appareil réel avant la fusion.
 
 ### Ajouté
 
