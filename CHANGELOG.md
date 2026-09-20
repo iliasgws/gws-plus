@@ -4,6 +4,20 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [0.5.0-bêta 6] — 2026-09-20
+
+### Corrigé
+
+- **La recherche et les puces retrouvent la réfraction** (bêta 5) : le
+  givre était trop opaque (60-72 %) pour laisser vivre la réfraction — la
+  recherche repose sur la recette du catalogue (givre à 25 %, flou,
+  colorControls, liseré lumineux) et le panneau englobant de Documents
+  disparaît : la recherche et les puces de nature sont des pilules de verre
+  flottantes individuelles au-dessus de la liste
+- **Puces de choix** : verre clair avec givre léger quand elles attendent
+  (la réfraction reste visible), encre pleine quand elles sont choisies —
+  et le repli sans verre garde la capsule calme d'avant
+
 ## [0.5.0-bêta 5] — 2026-09-20
 
 ### Corrigé

@@ -99,12 +99,15 @@ thème.
 
 **Superposition par écran** : un écran qui a quelque chose de flottant
 capture sa propre liste (`layerBackdrop` sur la LazyColumn) et fournit
-cette capture localement via `LocalGlassBackdrop` — le panneau verre de
-Documents (recherche + puces de nature) lit ainsi les cartes qui défilent
-derrière lui. La règle d'or tient toujours : le panneau est la sœur du
-nœud capturé, jamais dedans. Autre règle de survie (bêta 4) :
-`selectedTabIndex` de la barre doit lire un état snapshot — `snapshotFlow`
-ignore tout le reste, sinon un simple tap ne téléporte plus la pastille.
+cette capture localement via `LocalGlassBackdrop` — la recherche et les
+puces de nature de Documents sont des pilules flottantes individuelles qui
+lisent ainsi les cartes qui défilent derrière elles. Pas de panneau
+englobant : une masse de verre lourde (ou un givre trop opaque) écraserait
+la réfraction — le givre reste léger (25 % en clair, 40 % en sombre).
+La règle d'or tient toujours : les pilules sont les sœurs du nœud capturé,
+jamais dedans. Autre règle de survie (bêta 4) : `selectedTabIndex` de la
+barre doit lire un état snapshot — `snapshotFlow` ignore tout le reste,
+sinon un simple tap ne téléporte plus la pastille.
 
 ### Palette (clarité / obscurité)
 

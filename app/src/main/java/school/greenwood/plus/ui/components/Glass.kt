@@ -793,9 +793,26 @@ fun LiquidBottomTabs(
     }
 }
 
+/** Le verre réel est-il disponible ici ? (capture fournie + API 31+.) */
+@Composable
+fun verreRéelDisponible(): Boolean =
+    LocalGlassBackdrop.current != null && floutageDisponible
+
+/** Givre léger posé sur le verre : assez fin pour laisser la réfraction
+ *  vivre, assez présent pour le texte. 25 % en clair, comme la recette du
+ *  catalogue ; un peu plus en sombre. */
+@Composable
+fun givre(): Color =
+    if (isSystemInDarkTheme()) {
+        RegistreTheme.colors.page.copy(alpha = 0.4f)
+    } else {
+        Color.White.copy(alpha = 0.25f)
+    }
+
 /** Champ de recherche liquide — la recette GlassSearchField du catalogue :
- *  capsule de verre floutée + colorControls, loupe craie, texte encre.
- *  Repli (sans capture ou sous l'API 31) : capsule quasi opaque. */
+ *  capsule de verre floutée + colorControls, loupe craie, texte encre, givre
+ *  léger (25 %) pour que la réfraction reste visible derrière. Repli (sans
+ *  capture ou sous l'API 31) : capsule quasi opaque. */
 @Composable
 fun ChampRecherche(
     valeur: String,
@@ -805,6 +822,7 @@ fun ChampRecherche(
 ) {
     val colors = RegistreTheme.colors
     val backdrop = LocalGlassBackdrop.current
+    val teinteGivre = givre()
     Row(
         modifier
             .then(
@@ -817,7 +835,7 @@ fun ChampRecherche(
                             colorControls(saturation = 1.2f)
                         },
                         highlight = { Highlight.Default },
-                        onDrawSurface = { drawRect(colors.glass.bar) },
+                        onDrawSurface = { drawRect(teinteGivre) },
                     )
                 } else {
                     Modifier

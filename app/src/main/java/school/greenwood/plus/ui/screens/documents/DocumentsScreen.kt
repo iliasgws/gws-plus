@@ -39,7 +39,6 @@ import school.greenwood.plus.ui.components.BandeauErreur
 import school.greenwood.plus.ui.components.ChampRecherche
 import school.greenwood.plus.ui.components.EmptyState
 import school.greenwood.plus.ui.components.ErrorInline
-import school.greenwood.plus.ui.components.FeuilleVerre
 import school.greenwood.plus.ui.components.GwsBouton
 import school.greenwood.plus.ui.components.GwsCard
 import school.greenwood.plus.ui.components.LocalGlassBackdrop
@@ -82,14 +81,14 @@ fun DocumentsScreen(
             état.chargement -> Box(
                 Modifier
                     .fillMaxSize()
-                    .padding(top = hautStatut + 132.dp, bottom = bas),
+                    .padding(top = hautStatut + 112.dp, bottom = bas),
             ) {
                 SqueletteDocuments()
             }
             état.erreur != null && état.ressources.isEmpty() -> Column(
                 Modifier
                     .fillMaxSize()
-                    .padding(top = hautStatut + 132.dp, start = 16.dp, end = 16.dp, bottom = bas),
+                    .padding(top = hautStatut + 112.dp, start = 16.dp, end = 16.dp, bottom = bas),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 ErrorInline(message = état.erreur ?: "")
@@ -110,7 +109,7 @@ fun DocumentsScreen(
                     contentPadding = PaddingValues(
                         start = 16.dp,
                         end = 16.dp,
-                        top = hautStatut + 132.dp,
+                        top = hautStatut + 112.dp,
                         bottom = 16.dp + bas,
                     ),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -182,12 +181,13 @@ fun DocumentsScreen(
                     }
                 }
 
-                // Le panneau flottant de verre : recherche + puces de nature,
-                // posées PAR-DESSUS la liste. Le provider local redirige leur
-                // échantillonnage vers la capture de la liste — les cartes
-                // défilent visiblement derrière le verre.
+                // Recherche + puces de nature : pilules de verre flottantes,
+                // chacune échantillonnant la liste (provider local) — les
+                // cartes défilent visiblement derrière, réfraction comprise.
+                // Pas de panneau englobant : une masse de verre lourde
+                // écraserait la réfraction de ce qui vit dessous.
                 CompositionLocalProvider(LocalGlassBackdrop provides captureListe) {
-                    FeuilleVerre(
+                    Column(
                         modifier = Modifier
                             .align(Alignment.TopCenter)
                             .padding(
@@ -196,25 +196,18 @@ fun DocumentsScreen(
                                 end = 16.dp,
                             )
                             .fillMaxWidth(),
-                        teinte = RegistreTheme.colors.glass.bar,
-                        flou = 16.dp,
-                        réfraction = 12.dp,
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
                     ) {
-                        Column(
-                            modifier = Modifier.padding(12.dp),
-                            verticalArrangement = Arrangement.spacedBy(10.dp),
-                        ) {
-                            ChampRecherche(
-                                valeur = état.recherche,
-                                onChange = vm::modifierRecherche,
-                                placeholder = "Rechercher",
-                                modifier = Modifier.fillMaxWidth(),
-                            )
-                            FiltreNature(
-                                choisi = état.filtre,
-                                onChange = vm::choisirFiltre,
-                            )
-                        }
+                        ChampRecherche(
+                            valeur = état.recherche,
+                            onChange = vm::modifierRecherche,
+                            placeholder = "Rechercher",
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                        FiltreNature(
+                            choisi = état.filtre,
+                            onChange = vm::choisirFiltre,
+                        )
                     }
                 }
             }

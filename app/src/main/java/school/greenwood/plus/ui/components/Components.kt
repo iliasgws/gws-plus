@@ -230,9 +230,9 @@ fun GwsAvatar(
  */
 
 /** Puce de choix : le LiquidButton du catalogue en format puce — verre clair
- *  qui échantillonne ce qui passe derrière (l'encre pleine quand elle est
- *  choisie), déformation vers le doigt à l'appui. Repli : capsule de verre
- *  calme. */
+ *  avec givre léger quand elle attend (la réfraction du contenu derrière
+ *  reste visible), encre pleine quand elle est choisie, déformation vers le
+ *  doigt à l'appui. Repli (sans verre) : capsule de verre calme. */
 @Composable
 fun PuceChoix(
     label: String,
@@ -241,18 +241,42 @@ fun PuceChoix(
     modifier: Modifier = Modifier,
 ) {
     val colors = RegistreTheme.colors
-    LiquidButton(
-        onClick = onClick,
-        modifier = modifier,
-        hauteur = 36.dp,
-        surfaceColor = if (sélectionné) colors.ink else colors.glass.card,
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight(600),
-            color = if (sélectionné) colors.page else colors.ink,
-        )
+    if (verreRéelDisponible()) {
+        LiquidButton(
+            onClick = onClick,
+            modifier = modifier,
+            hauteur = 36.dp,
+            surfaceColor = if (sélectionné) colors.ink else givre(),
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight(600),
+                color = if (sélectionné) colors.page else colors.ink,
+            )
+        }
+    } else {
+        Box(
+            modifier = modifier
+                .clip(ControlShape)
+                .background(if (sélectionné) colors.ink else colors.glass.card)
+                .then(
+                    if (sélectionné) {
+                        Modifier
+                    } else {
+                        Modifier.border(1.dp, colors.glass.stroke, ControlShape)
+                    },
+                )
+                .clickable(onClick = onClick)
+                .padding(horizontal = 14.dp, vertical = 8.dp),
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight(600),
+                color = if (sélectionné) colors.page else colors.ink,
+            )
+        }
     }
 }
 

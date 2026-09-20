@@ -460,6 +460,14 @@ same tab gesture, same transitions, `enableOnBackInvokedCallback` untouched.
       cards scroll visibly behind the glass; `PuceChoix` upgraded to a
       compact `LiquidButton` (clear glass with lens when waiting, ink
       surface when chosen, `hauteur` param added for the 36 dp chip size)
+- [x] Fifth pass (beta-5 on-device feedback: nav bar confirmed, search/filter
+      still flat): the frost values were too opaque for refraction to show —
+      search now uses the catalog's 25 % light frost (40 % dark) + 6 dp blur
+      + colorControls + Highlight.Default; the wrapping Documents panel is
+      gone — the search pill and the nature chips are standalone floating
+      glass pills over the captured list; `PuceChoix` chips are clear-glass
+      `LiquidButton`s (25 % frost when waiting, ink surface when chosen);
+      `verreRéelDisponible()` + `givre()` helpers added to Glass.kt
 - [x] Screens: all 13 converted — transparent roots; day chips, nature
       filters, message categories, search field and action button extracted
       into shared `PuceChoix` / `ChampRecherche` / `GwsBouton`; quiz answers
