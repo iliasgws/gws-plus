@@ -8,8 +8,10 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
 
 ### Ajouté
 
-- **Onglet Emploi du temps** : 6 onglets en barre inférieure dans l'ordre Registre,
-  Actualités, Cours, Devoirs, Documents, Messages
+- **Onglet Emploi du temps** (0.6.0-bêta 2, branche `cours-onglet`, PR #29 —
+  à essayer sur appareil réel avant la fusion, comme la bêta 1) : 6 onglets en
+  barre inférieure dans l'ordre Registre, Actualités, Cours, Devoirs, Documents,
+  Messages
 - **Vue semaine (GET `cours_v2`)** : navigation ←/→ entre semaines, résumé de la
   semaine en puces de jours (lettre, date courte, nombre de cours) et créneaux du
   jour choisi (horaire, matière, salle, enseignant)
