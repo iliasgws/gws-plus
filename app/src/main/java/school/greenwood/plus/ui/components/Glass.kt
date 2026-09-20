@@ -282,6 +282,7 @@ fun LiquidButton(
     tint: Color = Color.Unspecified,
     surfaceColor: Color = Color.Unspecified,
     hauteur: Dp = 48.dp,
+    paddingHorizontal: Dp = 16.dp,
     content: @Composable RowScope.() -> Unit,
 ) {
     val backdrop = LocalGlassBackdrop.current
@@ -371,7 +372,7 @@ fun LiquidButton(
                 }
             )
             .height(hauteur)
-            .padding(horizontal = 16.dp),
+            .padding(horizontal = paddingHorizontal),
         horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
         verticalAlignment = Alignment.CenterVertically,
         content = content
@@ -970,10 +971,14 @@ fun GlassBottomBar(
     val glass = RegistreTheme.colors.glass
     val capsule = ControlShape
 
-    val indexExterne = onglets.indexOfFirst { it.sélectionné }.coerceAtLeast(0)
-    var indexÉtat by remember { mutableIntStateOf(indexExterne) }
+    // Sur un écran de détail (quiz, conversation, nouveau-message…), aucune
+    // puce ne correspond : indexExterne vaut -1 et l'état courant est
+    // CONSERVÉ — l'onglet qui a poussé l'écran reste allumé, la pastille ne
+    // retombe jamais sur l'accueil toute seule.
+    val indexExterne = onglets.indexOfFirst { it.sélectionné }
+    var indexÉtat by remember { mutableIntStateOf(indexExterne.coerceAtLeast(0)) }
     LaunchedEffect(indexExterne) {
-        if (indexÉtat != indexExterne) indexÉtat = indexExterne
+        if (indexExterne >= 0 && indexÉtat != indexExterne) indexÉtat = indexExterne
     }
 
     if (!floutageDisponible || backdrop == null) {

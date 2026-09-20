@@ -6,11 +6,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
@@ -21,11 +23,11 @@ import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -40,6 +42,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.kashif_e.backdrop.backdrops.layerBackdrop
+import com.kashif_e.backdrop.backdrops.rememberLayerBackdrop
 import kotlinx.coroutines.delay
 import school.greenwood.plus.AppContainer
 import school.greenwood.plus.model.Attachment
@@ -49,9 +53,13 @@ import school.greenwood.plus.ui.ConversationViewModel
 import school.greenwood.plus.ui.components.BandeauErreur
 import school.greenwood.plus.ui.components.EmptyState
 import school.greenwood.plus.ui.components.ErrorInline
+import school.greenwood.plus.ui.components.FeuilleVerre
 import school.greenwood.plus.ui.components.GlassSurface
 import school.greenwood.plus.ui.components.GwsBouton
+import school.greenwood.plus.ui.components.LiquidButton
+import school.greenwood.plus.ui.components.LocalGlassBackdrop
 import school.greenwood.plus.ui.components.SqueletteConversation
+import school.greenwood.plus.ui.components.givre
 import school.greenwood.plus.ui.theme.BubbleShape
 import school.greenwood.plus.ui.theme.ControlShape
 import school.greenwood.plus.ui.theme.RegistreTheme
@@ -88,96 +96,76 @@ fun ConversationScreen(
 
     // Le fil défile sous la barre flottante (Shell y a ajouté sa hauteur).
     val bas = padding.calculateBottomPadding()
+    val hautStatut = padding.calculateTopPadding()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            // Le clavier repousse le contenu (composeur visible au-dessus).
-            .imePadding(),
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = padding.calculateTopPadding() + 6.dp, start = 8.dp, end = 8.dp, bottom = 6.dp),
-            verticalAlignment = Alignment.CenterVertically,
+    // Capture du fil : l'en-tête teinté et le composeur flottants l'échantillonnent
+    // — sœurs du nœud capturé, jamais dedans (règle d'or du verre).
+    val captureFil = rememberLayerBackdrop()
+
+    CompositionLocalProvider(LocalGlassBackdrop provides captureFil) {
+        Box(
+            Modifier
+                .fillMaxSize()
+                // Le clavier repousse le contenu (composeur visible au-dessus).
+                .imePadding(),
         ) {
-            IconButton(onClick = retour) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                    contentDescription = "Retour",
-                    tint = RegistreTheme.colors.ink,
-                )
-            }
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(end = 16.dp),
-            ) {
-                Text(
-                    text = état.conversation?.sujet ?: "…",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = RegistreTheme.colors.ink,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Text(
-                    text = "Administration",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = RegistreTheme.colors.chalk,
-                )
-            }
-        }
-
-        when {
-            état.chargement -> Box(Modifier.fillMaxSize().padding(bottom = bas)) {
-                SqueletteConversation()
-            }
-            état.erreur != null && état.conversation == null -> Column(
-                Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-                    .padding(bottom = bas),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                ErrorInline(message = état.erreur ?: "")
-                GwsBouton(
-                    texte = "Réessayer",
-                    onClick = { vm.charger(force = true) },
-                )
-            }
-            état.conversation?.messages?.isEmpty() != false ->
-                Column(Modifier.fillMaxSize()) {
-                    état.erreur?.let { message ->
-                        // Le fil reste en place malgré l'échec (issue #21).
-                        BandeauErreur(
-                            message = message,
-                            réessayer = { vm.charger(force = true) },
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                        )
-                    }
-                    Box(
-                        Modifier
-                            .fillMaxWidth()
-                            .weight(1f)
-                            .padding(bottom = bas),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        EmptyState(
-                            titre = "Aucun message",
-                            message = "Les échanges de ce fil apparaîtront ici.",
-                        )
-                    }
+            when {
+                état.chargement -> Box(
+                    Modifier
+                        .fillMaxSize()
+                        .padding(top = hautStatut + 80.dp, bottom = bas),
+                ) {
+                    SqueletteConversation()
                 }
+                état.erreur != null && état.conversation == null -> Column(
+                    Modifier
+                        .fillMaxSize()
+                        .padding(top = hautStatut + 80.dp, start = 16.dp, end = 16.dp, bottom = bas),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    ErrorInline(message = état.erreur ?: "")
+                    GwsBouton(
+                        texte = "Réessayer",
+                        onClick = { vm.charger(force = true) },
+                    )
+                }
+                état.conversation?.messages?.isEmpty() != false ->
+                    Column(Modifier.fillMaxSize()) {
+                        état.erreur?.let { message ->
+                            // Le fil reste en place malgré l'échec (issue #21).
+                            BandeauErreur(
+                                message = message,
+                                réessayer = { vm.charger(force = true) },
+                                modifier = Modifier.padding(
+                                    top = hautStatut + 80.dp,
+                                    start = 16.dp,
+                                    end = 16.dp,
+                                    bottom = 8.dp,
+                                ),
+                            )
+                        }
+                        Box(
+                            Modifier
+                                .fillMaxSize()
+                                .padding(bottom = bas),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            EmptyState(
+                                titre = "Aucun message",
+                                message = "Les échanges de ce fil apparaîtront ici.",
+                            )
+                        }
+                    }
             else -> {
                 val conversation = état.conversation
                 val messages = conversation?.messages ?: emptyList()
                 val liste = rememberLazyListState()
 
-                // Nombre d'éléments rendus (séparateurs + bulles + envois en
-                // attente), pour l'ouverture en bas de fil comme une vraie
-                // messagerie.
-                val compteÉléments = remember(conversation, état.envois) {
-                    var n = 0
+                // Nombre d'éléments rendus (bandeau + séparateurs + bulles +
+                // envois en attente), pour l'ouverture en bas de fil comme une
+                // vraie messagerie.
+                val compteÉléments = remember(conversation, état.envois, état.erreur) {
+                    var n = if (état.erreur != null) 1 else 0
                     var précédent: java.time.LocalDate? = null
                     messages.forEach { m ->
                         val jour = m.date?.toLocalDate()
@@ -191,25 +179,29 @@ fun ConversationScreen(
                     if (compteÉléments > 0) liste.scrollToItem(compteÉléments - 1)
                 }
 
-                // Bandeau discret au-dessus du fil quand un échec réseau laisse
-                // la conversation connue affichée (issue #21).
-                état.erreur?.let { message ->
-                    BandeauErreur(
-                        message = message,
-                        réessayer = { vm.charger(force = true) },
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                    )
-                }
-
+                // Le fil défile SOUS l'en-tête teinté et le composeur de verre :
+                // les deux échantillonnent cette capture (sœurs du nœud capturé).
                 LazyColumn(
                     state = liste,
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                        .padding(horizontal = 16.dp),
-                    contentPadding = PaddingValues(top = 8.dp, bottom = 8.dp + bas),
+                        .fillMaxSize()
+                        .layerBackdrop(captureFil),
+                    contentPadding = PaddingValues(
+                        start = 16.dp,
+                        end = 16.dp,
+                        top = hautStatut + 80.dp,
+                        bottom = bas + 104.dp,
+                    ),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
+                    état.erreur?.let { message ->
+                        item(key = "erreur") {
+                            BandeauErreur(
+                                message = message,
+                                réessayer = { vm.charger(force = true) },
+                            )
+                        }
+                    }
                     messages.forEachIndexed { index, message ->
                         val jour = message.date?.toLocalDate()
                         val précédent = messages.getOrNull(index - 1)?.date?.toLocalDate()
@@ -236,8 +228,13 @@ fun ConversationScreen(
                 }
 
                 if (état.composeurActif) {
-                    // Le composeur flotte au-dessus de la barre de verre.
-                    Box(Modifier.padding(bottom = bas)) {
+                    // Le composeur flotte au-dessus de la barre de verre,
+                    // verre réel qui échantillonne le fil derrière lui.
+                    Box(
+                        Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(bottom = bas + 8.dp),
+                    ) {
                         Composeur(
                             texte = état.texte,
                             onTexte = vm::modifierTexte,
@@ -261,7 +258,55 @@ fun ConversationScreen(
                 }
             }
         }
+
+        // En-tête flottant teinté : bouton retour rond en verre + le fil.
+        FeuilleVerre(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = hautStatut + 8.dp, start = 16.dp, end = 16.dp)
+                .fillMaxWidth(),
+            teinte = RegistreTheme.colors.glass.bar,
+            flou = 12.dp,
+            réfraction = 8.dp,
+            vibrant = false,
+        ) {
+            Row(
+                modifier = Modifier.padding(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                LiquidButton(
+                    onClick = retour,
+                    modifier = Modifier.size(44.dp),
+                    hauteur = 44.dp,
+                    paddingHorizontal = 0.dp,
+                    surfaceColor = givre(),
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                        contentDescription = "Retour",
+                        tint = RegistreTheme.colors.ink,
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
+                Spacer(Modifier.width(10.dp))
+                Column {
+                    Text(
+                        text = état.conversation?.sujet ?: "…",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = RegistreTheme.colors.ink,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Text(
+                        text = "Administration",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = RegistreTheme.colors.chalk,
+                    )
+                }
+            }
+        }
     }
+}
 }
 
 @Composable

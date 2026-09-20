@@ -16,6 +16,12 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
 - **La recherche reçoit la déformation d'appui du LiquidButton** : l'exception
   « doigt stable pour le curseur » est retirée — la capsule se déforme vers
   le doigt comme un bouton (le champ de saisie reçoit toujours les touches)
+- **La barre basse ne retombe plus sur l'accueil** quand on ouvre un écran
+  de détail (quiz, conversation, nouveau-message…) : sans onglet
+  correspondant, l'état courant est conservé au lieu de revenir à l'index 0
+- **Conversation** : l'en-tête (bouton retour rond en verre + le fil) devient
+  une barre teintée flottante, le composeur passe en givre léger et
+  échantillonne le fil — les bulles défilent visiblement derrière lui
 
 ## [0.5.0-bêta 7] — 2026-09-20
 

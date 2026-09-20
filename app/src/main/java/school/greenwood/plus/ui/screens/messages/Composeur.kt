@@ -44,6 +44,7 @@ import androidx.core.content.ContextCompat
 import kotlinx.coroutines.delay
 import school.greenwood.plus.ui.components.FeuilleVerre
 import school.greenwood.plus.ui.components.GlassSurface
+import school.greenwood.plus.ui.components.givre
 import school.greenwood.plus.ui.theme.ControlShape
 import school.greenwood.plus.ui.theme.RegistreTheme
 import java.io.File
@@ -113,14 +114,16 @@ fun Composeur(
         }
 
         // Feuille de verre réelle : elle échantillonne le fil qui défile
-        // derrière elle (réfraction incluse) et flotte au-dessus du clavier.
+        // derrière elle et flotte au-dessus du clavier. Givre léger (pas de
+        // masse opaque) : on voit le fil à travers le verre.
         FeuilleVerre(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 8.dp),
-            teinte = RegistreTheme.colors.glass.card,
-            flou = 16.dp,
-            réfraction = 12.dp,
+            teinte = givre(),
+            flou = 12.dp,
+            réfraction = 10.dp,
+            vibrant = false,
         ) {
             if (enregistre) {
                 // État d'enregistrement intégré : pastille rouge, chrono,
