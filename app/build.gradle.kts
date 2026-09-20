@@ -12,14 +12,24 @@ android {
         applicationId = "school.greenwood.plus"
         minSdk = 26
         targetSdk = 36
-        versionCode = 7
-        versionName = "0.4.1"
+        versionCode = 19
+        versionName = "0.6.0-beta.1"
+    }
+
+    signingConfigs {
+        getByName("debug") {
+            val legacy = file("${System.getProperty("user.home")}/.android/debug.keystore")
+            if (legacy.exists()) {
+                storeFile = legacy
+            }
+        }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
+            signingConfig = signingConfigs.getByName("debug")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
