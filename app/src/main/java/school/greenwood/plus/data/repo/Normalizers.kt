@@ -17,7 +17,10 @@ import school.greenwood.plus.model.Devoir
 import school.greenwood.plus.model.Eleve
 import school.greenwood.plus.model.Message
 import school.greenwood.plus.model.ParentInfo
+import school.greenwood.plus.model.Commentaire
 import school.greenwood.plus.model.Post
+import school.greenwood.plus.model.PostDetail
+import school.greenwood.plus.model.QuestionPost
 import school.greenwood.plus.model.QuizDetail
 import school.greenwood.plus.model.QuizQuestion
 import school.greenwood.plus.model.QuizReponse
@@ -43,8 +46,14 @@ object Normalizers {
     fun int(obj: JsonObject, key: String): Int? =
         (obj[key] as? kotlinx.serialization.json.JsonPrimitive)?.contentOrNull?.toIntOrNull()
 
-    fun bool(obj: JsonObject, key: String): Boolean? =
-        (obj[key] as? kotlinx.serialization.json.JsonPrimitive)?.booleanOrNull
+    fun bool(obj: JsonObject, key: String): Boolean? {
+        val prim = obj[key] as? kotlinx.serialization.json.JsonPrimitive ?: return null
+        return prim.booleanOrNull ?: when (prim.contentOrNull) {
+            "1", "true", "True" -> true
+            "0", "false", "False" -> false
+            else -> null
+        }
+    }
 
     fun arr(obj: JsonObject, key: String): JsonArray =
         (obj[key] as? JsonArray) ?: JsonArray(emptyList())
@@ -87,13 +96,29 @@ object Normalizers {
 
     fun post(raw: JsonObject): Post? {
         val id = str(raw, "id") ?: return null
-        val pieces = arr(raw, "files").mapNotNull { f ->
-            (f as? JsonObject)?.let { o ->
-                MediaUrls.piècesJointes(str(o, "link"), str(o, "filename") ?: str(o, "text"))
-                    .firstOrNull()
-                    ?.let { Attachment(it.first, it.second) }
+        val pieces = buildList {
+            when (val f = raw["file"]) {
+                is JsonObject -> addAll(MediaUrls.piècesJointes(str(f, "link"), str(f, "text")))
+                is kotlinx.serialization.json.JsonPrimitive -> addAll(MediaUrls.piècesJointes(f.contentOrNull))
+                else -> {}
             }
-        }
+            arr(raw, "files").forEach { f ->
+                when (f) {
+                    is JsonObject -> addAll(MediaUrls.piècesJointes(str(f, "link"), str(f, "filename") ?: str(f, "text")))
+                    is kotlinx.serialization.json.JsonPrimitive -> addAll(MediaUrls.piècesJointes(f.contentOrNull))
+                    else -> {}
+                }
+            }
+        }.map { Attachment(it.first, it.second) }
+
+        val bookmark = str(raw, "bookmark") == "bookmark"
+        val auteur = (raw["user"] as? JsonObject)?.let { str(it, "nom") ?: str(it, "nomcomplet") }
+            ?: str(raw, "user_nom")
+            ?: str(raw, "user")
+        val permitComments = bool(raw, "permitComments") ?: bool(raw, "permit_comments") ?: false
+        val permitNewComments = bool(raw, "permitNewComments") ?: bool(raw, "permit_new_comments") ?: false
+        val permitQuiz = bool(raw, "permitQuiz") ?: bool(raw, "permit_quiz") ?: false
+
         return Post(
             id = id,
             title = str(raw, "title") ?: "",
@@ -103,8 +128,141 @@ object Normalizers {
             description = str(raw, "description"),
             image = MediaUrls.lienRéel(str(raw, "image")),
             attachments = pieces,
+            bookmark = bookmark,
+            auteur = auteur,
+            permitComments = permitComments,
+            permitNewComments = permitNewComments,
+            permitQuiz = permitQuiz,
         )
     }
+
+    fun commentaire(raw: JsonObject): Commentaire? {
+        val auteur = str(raw, "nom") ?: str(raw, "auteur") ?: ""
+        val texte = str(raw, "commentaire") ?: str(raw, "comment") ?: str(raw, "texte") ?: ""
+        if (auteur.isBlank() && texte.isBlank()) return null
+        val date = extractDateTime(str(raw, "date"))
+        val image = MediaUrls.lienRéel(str(raw, "img") ?: str(raw, "image"))
+        val sousCommentaires = buildList {
+            when (val sc = raw["sousComment"] ?: raw["sousCommentaires"]) {
+                is JsonArray -> addAll(sc.mapNotNull { (it as? JsonObject)?.let(::commentaire) })
+                is JsonObject -> addAll(arr(sc, "comments").mapNotNull { (it as? JsonObject)?.let(::commentaire) })
+                else -> {}
+            }
+        }
+        return Commentaire(
+            auteur = auteur,
+            texte = texte,
+            date = date,
+            image = image,
+            sousCommentaires = sousCommentaires,
+        )
+    }
+
+    fun questionPost(raw: JsonObject): QuestionPost? {
+        val label = str(raw, "label") ?: str(raw, "question") ?: return null
+        val alias = str(raw, "alias")
+        val réponses = arr(raw, "reponses").mapNotNull { r ->
+            when (r) {
+                is kotlinx.serialization.json.JsonPrimitive -> r.contentOrNull
+                is JsonObject -> str(r, "reponse") ?: str(r, "label")
+                else -> null
+            }
+        }
+        val réponseChoisie = str(raw, "res") ?: str(raw, "reponseChoisie")
+        return QuestionPost(
+            alias = alias,
+            label = label,
+            réponses = réponses,
+            réponseChoisie = réponseChoisie,
+        )
+    }
+
+    fun postDetail(raw: JsonObject): PostDetail? {
+        val data = (raw["data"] as? JsonObject) ?: raw
+        val postObj = (data["post"] as? JsonObject) ?: data
+        val id = str(postObj, "id") ?: str(data, "id") ?: return null
+
+        val pieces = buildList {
+            when (val f = postObj["file"] ?: data["file"]) {
+                is JsonObject -> addAll(MediaUrls.piècesJointes(str(f, "link"), str(f, "text")))
+                is kotlinx.serialization.json.JsonPrimitive -> addAll(MediaUrls.piècesJointes(f.contentOrNull))
+                else -> {}
+            }
+            arr(postObj, "files").ifEmpty { arr(data, "files") }.forEach { f ->
+                when (f) {
+                    is JsonObject -> addAll(MediaUrls.piècesJointes(str(f, "link"), str(f, "filename") ?: str(f, "text")))
+                    is kotlinx.serialization.json.JsonPrimitive -> addAll(MediaUrls.piècesJointes(f.contentOrNull))
+                    else -> {}
+                }
+            }
+        }.map { Attachment(it.first, it.second) }
+
+        val images = arr(data, "images").ifEmpty { arr(postObj, "images") }.mapNotNull { im ->
+            when (im) {
+                is kotlinx.serialization.json.JsonPrimitive -> im.contentOrNull?.let(MediaUrls::lienRéel)
+                is JsonObject -> str(im, "image")?.let(MediaUrls::lienRéel) ?: str(im, "url")?.let(MediaUrls::lienRéel)
+                else -> null
+            }
+        }
+
+        val commentaires = arr(data, "comments").ifEmpty { arr(data, "commentaires") }.ifEmpty { arr(postObj, "comments") }.ifEmpty { arr(postObj, "commentaires") }.mapNotNull { c ->
+            (c as? JsonObject)?.let(::commentaire)
+        }
+
+        val questionsRaw = arr(raw, "quiz").ifEmpty { arr(data, "quiz") }.ifEmpty { arr(postObj, "quiz") }
+        val questions = questionsRaw.mapNotNull { q ->
+            (q as? JsonObject)?.let(::questionPost)
+        }
+
+        val bookmark = str(postObj, "bookmark") == "bookmark"
+        val auteur = (postObj["user"] as? JsonObject)?.let { str(it, "nom") ?: str(it, "nomcomplet") }
+            ?: str(postObj, "user_nom")
+            ?: str(data, "user_nom")
+            ?: str(postObj, "user")
+        val peutCommenter = bool(postObj, "permitComments") ?: bool(postObj, "permit_comments") ?: bool(data, "permitComments") ?: bool(data, "permit_comments") ?: false
+        val peutNouveauCommentaire = bool(postObj, "permitNewComments") ?: bool(postObj, "permit_new_comments") ?: bool(data, "permitNewComments") ?: bool(data, "permit_new_comments") ?: false
+        val peutRépondre = bool(data, "canSendComment") ?: bool(data, "can_send_comment") ?: bool(postObj, "canSendComment") ?: bool(postObj, "can_send_comment") ?: false
+        val peutQuiz = bool(postObj, "permitQuiz") ?: bool(postObj, "permit_quiz") ?: bool(data, "permitQuiz") ?: bool(data, "permit_quiz") ?: false
+
+        return PostDetail(
+            id = id,
+            title = str(postObj, "title") ?: str(data, "title") ?: "",
+            categorie = str(postObj, "cat_name") ?: str(postObj, "categorie") ?: str(data, "categorie"),
+            date = extractDateTime(str(postObj, "date") ?: str(data, "date")),
+            intro = str(postObj, "intro") ?: str(data, "intro"),
+            descriptionHtml = str(postObj, "desc") ?: str(postObj, "description") ?: str(data, "desc") ?: str(data, "description"),
+            image = MediaUrls.lienRéel(str(postObj, "image") ?: str(data, "image")),
+            bookmark = bookmark,
+            auteur = auteur,
+            files = pieces,
+            images = images,
+            commentaires = commentaires,
+            peutCommenter = peutCommenter,
+            peutNouveauCommentaire = peutNouveauCommentaire,
+            peutRépondre = peutRépondre,
+            peutQuiz = peutQuiz,
+            questions = questions,
+        )
+    }
+
+    /**
+     * Fusionne deux pages de posts d'actualité.
+     * Si départ == 0, remplace la liste (pull-to-refresh ou première page).
+     * Sinon, ajoute les nouveaux éléments sans doublon d'identifiant.
+     */
+    fun fusionner(anciens: List<Post>, nouveaux: List<Post>, départ: Int): List<Post> {
+        if (départ == 0) return nouveaux
+        val idsExistants = anciens.map { it.id }.toSet()
+        val aAjouter = nouveaux.filter { it.id !in idsExistants }
+        return anciens + aAjouter
+    }
+
+    /**
+     * Sélectionne l'actualité la plus récente par date (utilisée pour la carte
+     * « Dernière actualité » du registre).
+     */
+    fun dernière(posts: List<Post>): Post? =
+        posts.maxByOrNull { it.date ?: LocalDateTime.MIN }
 
     // — Messages -----------------------------------------------------------
 

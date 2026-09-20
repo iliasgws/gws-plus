@@ -286,6 +286,13 @@ same length), `translation` (`title`, `label_author`).
 - `file` / `file_test` / `files` were `null` on every observed item; the
   non-empty shape is UNVERIFIED — do not rely.
 - Pagination via `start` / `limit`.
+- **Pagination (VERIFIED 2026-09-20)**: The server is **1-based**: `start=10&limit=10` re-serves the last item of page 1 (overlap 1); `start=11&limit=10` is a clean next page (overlap 0). The official app's rule is `start = accumulated length + 1`, `limit = 10`.
+- **Merge rule (bundle)**: `start == 0` → replace; else append.
+- **Pull-to-refresh (bundle)**: refetch `start=0, limit=current length`, replace.
+- **Write paths (bundle-derived, UNVERIFIED live)**:
+  - Add comment: **POST `nouveautes`** `{commentaire, post, eleve_id, user_id, parent_id, key}` (+ `replyTo: <comment.id>` for a reply); response `{commentaire:{…}}` pushed locally, no refetch.
+  - Post quiz: questions `{label, reponses[strings], alias, permitAnswer, res}`; answer = **POST `nouveautes`** `{alias_question, res, post, eleve_id, user_id, parent_id, key}`; completion alert when every question has `res`.
+  - Gates: `permitComments` (section), `permitNewComments` (form), `canSendComment` (replies), `permitQuiz` (quiz UI). All 10 probed posts have every flag false — ship gated OFF behind a session kill switch.
 
 ## pinned_posts — pinned news
 
@@ -309,6 +316,34 @@ Empty for this account:
 
 Assumed to return the same item shape as `nouveautes` when non-empty —
 UNVERIFIED — do not rely.
+
+**Decision (2026-09-20)**: Dropped in Greenwood+ — deep-link-only page needing a `category` id; the official list never merges pinned posts.
+
+## post_view — per-post detail
+
+**GET** `post_view` — probe params: standard envelope + `post=<id>`
+(`post_view.json`, VERIFIED 2026-09-20, read-only).
+
+Called on every post open by the official app; the visit is the de-facto mark-as-read (the « Vu le » badge then shows up in the list `intro` on next fetch). **No mark-read endpoint exists.**
+
+Top keys: `data, empty, empty_icon, empty_text, quiz, translation, preventScreenshot(false)`.
+
+`data` keys:
+- `canSendComment`: `null` observed (falsy)
+- `commentaires[]`: empty observed
+- `images[]`: empty observed
+- `post{}`: detailed post object
+
+`data.post` keys:
+- `id, title, categorie, date, description` (full HTML body)
+- `image, permitComments, permitNewComments, permitQuiz, quiz[]`
+- `files, file, file_test, reponses, user, DatePublication, DateExpiration, Parents, cat, promo, visible` (`files/file/file_test/reponses/user` null on probe sample — tolerant parsing required)
+
+`translation`: `commentaires, download, hideMore, label_author, no_commentaires, seeMore, sousCommentPlaceholder, votre_commentaire`.
+
+Top-level `quiz[]`: detail page's answer-state container (bundle).
+
+`admin_nouveautes` (~19 MB) is **never called by the official parent app** — kept only as fallback when `post_view` fails.
 
 ## absences — absences and retards
 
@@ -808,7 +843,6 @@ Top-level keys: `all_objects`, `types`, `empty`, `empty_icon`, `empty_text`,
 | endpoint | method(s) | note |
 |---|---|---|
 | `admin_nouveautes` | GET | announcement bodies (`description` HTML); ~19 MB — cache locally, never poll |
-| `post_view` | GET | per-post detail / mark-as-read |
 | `ressource_details` | GET | resource detail (quiz content, …) |
 | `cartable_numeriques`, `cartable_split` | GET | digital cartable |
 | `nouveau-message` | POST | send a message — fields bundle-verified (see section below); live text send validated 2026-09-19, attachment/voice parts still unproven |
@@ -830,3 +864,4 @@ Top-level keys: `all_objects`, `types`, `empty`, `empty_icon`, `empty_text`,
 - `nouveau-message`: live text send validated 2026-09-19 — non-empty `files[]`/`audio` parts and the new-thread response remain unproven
 - `pick_enfants`, `device_token`: POST fields
 - non-empty `files[]` shapes (nouveautes, messages, devoirs `devoir_fait`)
+- `nouveautes`: write paths (comments and quiz response POSTs)

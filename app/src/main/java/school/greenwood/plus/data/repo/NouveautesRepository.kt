@@ -7,15 +7,17 @@ import kotlinx.serialization.json.JsonObject
 import school.greenwood.plus.data.api.BotiClient
 import school.greenwood.plus.data.cache.CachesSession
 import school.greenwood.plus.data.session.SessionStore
+import school.greenwood.plus.model.Commentaire
 import school.greenwood.plus.model.Post
+import school.greenwood.plus.model.PostDetail
 import java.util.concurrent.ConcurrentHashMap
 
 /*
- * La liste `nouveautes` ne porte que titre, catégorie, date, intro, image et
- * fichiers — les corps (description, HTML) ne viennent QUE de
- * admin_nouveautes, une réponse d'environ 19 Mo qu'il ne faut ni poller ni
- * matérialiser en arbre JSON. On la lit en streaming (android.util.JsonReader),
- * on ne garde que id → description, une fois par session.
+ * Dépôt des actualités de l'école (flux `nouveautes`).
+ *
+ * Pagination 1-based (vérifiée 2026-09-20) : départ = 0 ou longueur cumulée + 1.
+ * Le détail unitaire arrive via GET `post_view?post=<id>`.
+ * Le flux admin_nouveautes (~19 Mo) est lu en streaming en repli.
  */
 class NouveautesRepository(
     private val client: BotiClient,
@@ -30,14 +32,128 @@ class NouveautesRepository(
      *  de compte ou d'enfant invalide le contenu du flux admin. */
     private var cléCorps: String? = null
 
-    suspend fun liste(): List<Post> {
-        val rep = client.get("nouveautes", mapOf("start" to "0", "limit" to "30"))
-        return Normalizers.listePosts(rep)
+    suspend fun liste(départ: Int = 0, limite: Int = 10): List<Post> {
+        val startVal = if (départ == 0) "0" else départ.toString()
+        val rep = client.get("nouveautes", mapOf("start" to startVal, "limit" to limite.toString()))
+        val résultat = Normalizers.listePosts(rep)
+        if (départ == 0) {
+            caches.clé()?.let { clé -> caches.posts.écrire(clé, résultat) }
+        }
+        return résultat
+    }
+
+    suspend fun listeEnCache(): List<Post>? {
+        val clé = caches.clé() ?: return null
+        return caches.posts.lire(clé)
     }
 
     suspend fun épinglés(): List<Post> {
         val rep = runCatching { client.get("pinned_posts") }.getOrElse { return emptyList() }
         return Normalizers.listePosts(rep)
+    }
+
+    /**
+     * Détail d'une actualité via GET `post_view?post=<id>`.
+     * Le serveur marque de facto la visite comme lue.
+     * En cas d'échec ou d'absence de corps, on retombe sur le cache de liste
+     * et le flux `admin_nouveautes` extrait en streaming.
+     */
+    suspend fun détail(postId: String): PostDetail {
+        val repDetail = runCatching {
+            client.get("post_view", mapOf("post" to postId))
+        }.getOrNull()
+
+        val parsed = repDetail?.let { Normalizers.postDetail(it) }
+
+        if (parsed != null && !parsed.descriptionHtml.isNullOrBlank()) {
+            return parsed
+        }
+
+        // Repli : post de la liste + corps issu de admin_nouveautes (~19 Mo)
+        val postListe = listeEnCache()?.firstOrNull { it.id == postId }
+        val corpsRepli = corps(postId)
+
+        if (parsed != null) {
+            return parsed.copy(descriptionHtml = parsed.descriptionHtml ?: corpsRepli)
+        }
+
+        if (postListe != null) {
+            return PostDetail(
+                id = postListe.id,
+                title = postListe.title,
+                categorie = postListe.categorie,
+                date = postListe.date,
+                intro = postListe.intro,
+                descriptionHtml = corpsRepli ?: postListe.description,
+                image = postListe.image,
+                bookmark = postListe.bookmark,
+                auteur = postListe.auteur,
+                files = postListe.attachments,
+                images = emptyList(),
+                commentaires = emptyList(),
+                peutCommenter = postListe.permitComments,
+                peutNouveauCommentaire = postListe.permitNewComments,
+                peutRépondre = false,
+                questions = emptyList(),
+            )
+        }
+
+        return PostDetail(
+            id = postId,
+            title = "Actualité",
+            descriptionHtml = corpsRepli,
+        )
+    }
+
+    /**
+     * Sélectionne la dernière actualité par date parmi la première page
+     * (utilisée pour la carte « Dernière actualité » du registre).
+     */
+    suspend fun dernière(): Post? {
+        val enCache = listeEnCache()
+        val posts = if (!enCache.isNullOrEmpty()) enCache else runCatching {
+            liste(départ = 0, limite = 10)
+        }.getOrElse { enCache ?: emptyList() }
+        return Normalizers.dernière(posts)
+    }
+
+    /**
+     * Publie un commentaire ou une réponse à un commentaire existant.
+     * NB : cette action est protégée par les drapeaux serveur et le kill switch de session.
+     */
+    suspend fun commenter(postId: String, texte: String, replyTo: String? = null): Commentaire? {
+        val s = session.state.first()
+        val fields = buildMap {
+            put("commentaire", texte)
+            put("post", postId)
+            put("eleve_id", s?.eleveId ?: "")
+            put("user_id", s?.userId ?: "")
+            put("parent_id", s?.parentId ?: "")
+            if (!replyTo.isNullOrBlank()) put("replyTo", replyTo)
+        }
+        val rep = client.post("nouveautes", fields)
+        val comObj = (rep["commentaire"] as? JsonObject) ?: rep
+        return Normalizers.commentaire(comObj) ?: Commentaire(
+            auteur = s?.parent?.nomComplet ?: "Moi",
+            texte = texte,
+            date = java.time.LocalDateTime.now(),
+        )
+    }
+
+    /**
+     * Répond à une question d'un quiz associé à un post d'actualité.
+     */
+    suspend fun répondreQuestionQuiz(postId: String, alias: String, réponse: String): JsonObject {
+        val s = session.state.first()
+        val fields = mapOf(
+            "alias_question" to alias,
+            "res" to réponse,
+            "post" to postId,
+            "eleve_id" to (s?.eleveId ?: ""),
+            "user_id" to (s?.userId ?: ""),
+            "parent_id" to (s?.parentId ?: ""),
+        )
+        return client.post("nouveautes", fields)
     }
 
     /** Corps HTML d'un post, à la demande (cache mémoire de session). */

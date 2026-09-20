@@ -69,6 +69,7 @@ import school.greenwood.plus.model.Eleve
 import school.greenwood.plus.model.Post
 import school.greenwood.plus.ui.RegistreViewModel
 import school.greenwood.plus.ui.components.BandeauErreur
+import school.greenwood.plus.ui.components.CarteActualité
 import school.greenwood.plus.ui.components.EmptyState
 import school.greenwood.plus.ui.components.ErrorInline
 import school.greenwood.plus.ui.components.GwsAvatar
@@ -158,6 +159,11 @@ fun RegistreScreen(
                 cascade.value = true
             }
 
+            val idPostsAujourdhui = remember(registre.entrees) {
+                registre.entrees.filterIsInstance<EntreeRegistre.Actualite>().map { it.post.id }.toSet()
+            }
+            val derniereActu = état.derniereActualite?.takeIf { it.id !in idPostsAujourdhui }
+
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
@@ -191,6 +197,18 @@ fun RegistreScreen(
                 }
 
                 item(key = "ce-soir") { CarteCeSoir(registre) }
+
+                if (derniereActu != null) {
+                    item(key = "derniere-actu") {
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            SectionLabel(text = "Dernière actualité")
+                            CarteActualité(
+                                post = derniereActu,
+                                onClick = { ouvrirPost(derniereActu.id) },
+                            )
+                        }
+                    }
+                }
 
                 item(key = "label-jour") { SectionLabel(text = "Aujourd'hui") }
 
@@ -399,52 +417,10 @@ private fun CarteCeSoir(registre: RegistreDuJour) {
 @Composable
 private fun CarteEntrée(entrée: EntreeRegistre, ouvrirPost: (String) -> Unit) {
     when (entrée) {
-        is EntreeRegistre.Actualite -> CarteActualité(entrée.post, ouvrirPost)
+        is EntreeRegistre.Actualite -> CarteActualité(entrée.post, onClick = { ouvrirPost(entrée.post.id) })
         is EntreeRegistre.DevoirDonné -> CarteDevoirDonné(entrée.devoir)
         is EntreeRegistre.AbsenceNotée -> CarteAbsence(entrée.absence)
         is EntreeRegistre.MessageReçu -> CarteMessage(entrée.conversation)
-    }
-}
-
-@Composable
-private fun CarteActualité(post: Post, ouvrirPost: (String) -> Unit) {
-    GwsCard(modifier = Modifier.fillMaxWidth().clickable { ouvrirPost(post.id) }) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(14.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                post.categorie?.takeIf { it.isNotBlank() }?.let { categorie ->
-                    Puce(label = categorie)
-                }
-                Text(
-                    text = post.title,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = RegistreTheme.colors.ink,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                post.date?.let { date ->
-                    Text(
-                        text = date.frenchFull(),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = RegistreTheme.colors.chalk,
-                    )
-                }
-            }
-            post.image?.let { url ->
-                AsyncImage(
-                    model = url,
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(64.dp)
-                        .clip(ControlShape),
-                    contentScale = ContentScale.Crop,
-                )
-            }
-        }
     }
 }
 

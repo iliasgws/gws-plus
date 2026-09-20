@@ -40,11 +40,59 @@ data class Post(
     val categorie: String? = null,
     val date: LocalDateTime? = null,
     val intro: String? = null,
-    /** Corps HTML complet — uniquement via admin_nouveautes (docs/api/BOTI-API.md). */
+    /** Corps HTML complet — uniquement via admin_nouveautes (docs/api/BOTI-API.md) ou post_view. */
     val description: String? = null,
     val image: String? = null,
     val attachments: List<Attachment> = emptyList(),
+    val bookmark: Boolean = false,
+    val auteur: String? = null,
+    val permitComments: Boolean = false,
+    val permitNewComments: Boolean = false,
+    val permitQuiz: Boolean = false,
 )
+
+/** Un commentaire sous un post d'actualité. */
+data class Commentaire(
+    val auteur: String,
+    val texte: String,
+    val date: LocalDateTime? = null,
+    val image: String? = null,
+    val sousCommentaires: List<Commentaire> = emptyList(),
+)
+
+/** Une question de quiz rattachée à un post d'actualité (GET post_view). */
+data class QuestionPost(
+    val alias: String? = null,
+    val label: String,
+    val réponses: List<String> = emptyList(),
+    val réponseChoisie: String? = null,
+)
+
+/**
+ * Détail complet d'un post (GET `post_view` — forme vérifiée 2026-09-20).
+ * Remplace la lecture du flux admin_nouveautes (~19 Mo), gardé en repli.
+ */
+data class PostDetail(
+    val id: String,
+    val title: String,
+    val categorie: String? = null,
+    val date: LocalDateTime? = null,
+    val intro: String? = null,
+    val descriptionHtml: String? = null,
+    val image: String? = null,
+    val bookmark: Boolean = false,
+    val auteur: String? = null,
+    val files: List<Attachment> = emptyList(),
+    val images: List<String> = emptyList(),
+    val commentaires: List<Commentaire> = emptyList(),
+    val peutCommenter: Boolean = false,
+    val peutNouveauCommentaire: Boolean = false,
+    val peutRépondre: Boolean = false,
+    val peutQuiz: Boolean = false,
+    val questions: List<QuestionPost> = emptyList(),
+) {
+    val attachments: List<Attachment> get() = files
+}
 
 /** Un fil de messages avec l'administration. */
 data class Conversation(

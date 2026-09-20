@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.MenuBook
 import androidx.compose.material.icons.rounded.Folder
+import androidx.compose.material.icons.rounded.Newspaper
+import school.greenwood.plus.ui.screens.actualites.ActualitesScreen
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.QuestionAnswer
 import androidx.compose.material3.Icon
@@ -72,6 +74,7 @@ data class Onglet(
 
 val Onglets = listOf(
     Onglet("registre", "Registre", Icons.Rounded.Home),
+    Onglet("actualites", "Actualités", Icons.Rounded.Newspaper),
     Onglet("devoirs", "Devoirs", Icons.AutoMirrored.Rounded.MenuBook),
     Onglet("documents", "Documents", Icons.Rounded.Folder),
     Onglet("messages", "Messages", Icons.Rounded.QuestionAnswer),
@@ -172,6 +175,13 @@ fun Shell(container: AppContainer) {
                     container = container,
                     padding = padding,
                     ouvrirDemandes = { navController.allerDétail("demandes") },
+                    ouvrirPost = { id -> navController.allerDétail("post/$id") },
+                )
+            }
+            composable("actualites") {
+                ActualitesScreen(
+                    container = container,
+                    padding = padding,
                     ouvrirPost = { id -> navController.allerDétail("post/$id") },
                 )
             }

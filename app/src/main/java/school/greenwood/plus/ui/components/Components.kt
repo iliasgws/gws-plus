@@ -648,3 +648,74 @@ fun SqueletteQuiz() {
         }
     }
 }
+
+/** Squelette du flux d'actualités : cartes d'actualités avec vignette. */
+@Composable
+fun SqueletteActualites() {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        repeat(4) { index ->
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = PageShape,
+                color = RegistreTheme.colors.page,
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(14.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        BlocSquelette(modifier = Modifier.width(70.dp).height(20.dp))
+                        BlocSquelette(
+                            modifier = Modifier
+                                .fillMaxWidth(if (index % 2 == 0) 0.85f else 0.7f)
+                                .height(18.dp),
+                            forme = ControlShape,
+                        )
+                        BlocSquelette(modifier = Modifier.width(120.dp).height(12.dp))
+                    }
+                    BlocSquelette(
+                        modifier = Modifier.size(64.dp),
+                        forme = ControlShape,
+                    )
+                }
+            }
+        }
+    }
+}
+
+/** Squelette du détail d'un post. */
+@Composable
+fun SquelettePostDetail() {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        BlocSquelette(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(200.dp),
+            forme = PageShape,
+        )
+        BlocSquelette(modifier = Modifier.width(80.dp).height(20.dp))
+        BlocSquelette(modifier = Modifier.fillMaxWidth(0.9f).height(24.dp), forme = ControlShape)
+        BlocSquelette(modifier = Modifier.width(140.dp).height(14.dp))
+        Spacer(Modifier.height(8.dp))
+        repeat(3) {
+            BlocSquelette(modifier = Modifier.fillMaxWidth().height(16.dp))
+        }
+    }
+}

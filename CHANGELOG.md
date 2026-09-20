@@ -4,6 +4,35 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [0.5.0] — 2026-09-20
+
+### Ajouté
+
+- **Onglet dédié Actualités** : 5 onglets en barre inférieure dans l'ordre Registre,
+  Actualités, Devoirs, Documents, Messages
+- **Pagination 1-based & défilement infini** : chargement paginé (`start = taille + 1`, `limit = 10`),
+  pull-to-refresh (`start = 0, limit = max(taille, 10)`) et défilement infini automatique
+  à l'approche des 3 derniers éléments
+- **Détail d'une actualité (`post_view`)** :
+  - Consultation via GET `post_view?post=<id>` agissant comme accusé de lecture côté serveur
+  - Repli transparent vers le cache et le flux streaming `admin_nouveautes`
+  - Affichage riche : en-tête avec catégorie, signet (`#fc942d`), titre, date, auteur
+  - Galerie d'images et téléchargement/ouverture native des pièces jointes
+  - Section commentaires (avec sous-commentaires imbriqués et formulaire de réponse)
+  - Questionnaire interactif (quiz rattaché au post avec alerte de fin)
+- **Kill switch de sécurité pour l'écriture** : les requêtes POST d'écriture sur les
+  actualités (commentaires et réponses de quiz) sont désactivées par défaut via une
+  préférence DataStore `ecritureNouveautesActivée`
+- **Carte « Dernière actualité » sur le Registre** : mise en valeur de la nouvelle la plus
+  récente sous l'en-tête du registre (masquée si elle figure déjà dans le fil du jour)
+- **Squelettes et cache de session** : squelettes de chargement dédiés (`SqueletteActualites`,
+  `SquelettePostDetail`) et cache mémoire isolé par session
+
+### Corrigé
+
+- Pièces jointes multiples : correction d'une troncature qui ne conservait que le premier fichier
+  lorsque plusieurs liens étaient séparés par des virgules
+
 ## [0.4.1] — 2026-09-20
 
 ### Corrigé

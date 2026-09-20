@@ -390,3 +390,27 @@ background, non-blocking error banners, and the registre date fix. Branch
 - [ ] (!) real-device pass: skeleton → content swap on each tab, warm
       reopen without flicker, banner + « Réessayer » under airplane mode,
       back gesture from Devoirs unchanged
+
+# TASKS — Plan Nouveautés « Onglet dédié Actualités & détail des posts »
+
+Living checklist for the Nouveautés milestone (plan `docs/product/PLAN-NOUVEAUTES.md`).
+Branch `nouveautes-onglet`.
+
+## Verification (2026-09-20)
+
+- [x] GET `nouveautes` live-probed: 1-based pagination verified (`start = accumulated length + 1`, `limit = 10`),
+      pull-to-refresh (`start = 0, limit = max(taille, 10)`), merge rule (`start == 0` replaces, `start > 0` appends)
+- [x] GET `post_view` live-probed read-only: per-post detail (`data`, `post`, `images`, `comments`, `quiz`, `translation`),
+      serves as server-side mark-as-read
+- [x] Write paths gated OFF behind DataStore kill switch (`ecritureNouveautesActivée = false`)
+
+## Branch `nouveautes-onglet`
+
+- [x] Step 1: Probes & docs (`docs/api/ENDPOINT-MAP.md` updated with pagination rules, write paths, post_view)
+- [x] Step 2: Models (`Post` extended with bookmark/auteur/permits, `Commentaire`, `QuestionPost`, `PostDetail`)
+- [x] Step 3: Normalizers (`post` with multi-file fix, `commentaire`, `questionPost`, `postDetail`, `fusionner`, `dernière`)
+- [x] Step 4: Repository & Session Cache (`CachesSession.posts`, `SessionStore.ecritureNouveautes`, `NouveautesRepository`)
+- [x] Step 5: ViewModels (`ActualitesViewModel`, `PostDetailViewModel`, `RegistreViewModel.derniereActualite`)
+- [x] Step 6: UI (`AppNav` 5 tabs, `CarteActualité`, `ActualitesScreen`, `PostDetailScreen`, `RegistreScreen`)
+- [x] Step 7: Tests (`NormalizersPostTest.kt` — 80 unit tests total, 0 failures)
+- [x] Step 8: Docs & delivery (`README.md`, `ROADMAP.md`, `CHANGELOG.md`, `AGENTS.md`)

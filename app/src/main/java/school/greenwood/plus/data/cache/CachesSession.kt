@@ -6,6 +6,7 @@ import school.greenwood.plus.data.repo.RegistreDuJour
 import school.greenwood.plus.data.session.SessionStore
 import school.greenwood.plus.model.Demande
 import school.greenwood.plus.model.Devoir
+import school.greenwood.plus.model.Post
 import school.greenwood.plus.model.Ressource
 
 /** Les caches de dernière donnée connue, tous isolés par la même clé de
@@ -18,6 +19,7 @@ class CachesSession(private val session: SessionStore) {
     val documents = MemoireSession<List<Ressource>>()
     val demandes = MemoireSession<List<Demande>>()
     val messages = MemoireSession<MessagesPage>()
+    val posts = MemoireSession<List<Post>>()
 
     /** Clé d'isolation courante ; null (jamais "") hors session. */
     suspend fun clé(): String? {
@@ -33,5 +35,6 @@ class CachesSession(private val session: SessionStore) {
         documents.vider()
         demandes.vider()
         messages.vider()
+        posts.vider()
     }
 }

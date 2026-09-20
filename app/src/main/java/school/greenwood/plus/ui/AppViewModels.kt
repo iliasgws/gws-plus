@@ -17,7 +17,9 @@ import school.greenwood.plus.model.Conversation
 import school.greenwood.plus.model.Demande
 import school.greenwood.plus.model.Devoir
 import school.greenwood.plus.model.Eleve
+import school.greenwood.plus.data.repo.Normalizers
 import school.greenwood.plus.model.Post
+import school.greenwood.plus.model.PostDetail
 import school.greenwood.plus.model.QuizDetail
 import school.greenwood.plus.model.QuizRésultat
 import school.greenwood.plus.model.Ressource
@@ -104,6 +106,7 @@ data class RegistreÉtat(
     val eleves: List<Eleve> = emptyList(),
     val posts: List<Post> = emptyList(),
     val bilans: BilanAbsences? = null,
+    val derniereActualite: Post? = null,
     /** Un rafraîchissement réseau tourne pendant que le contenu connu reste affiché. */
     val rafraîchissement: Boolean = false,
 )
@@ -130,8 +133,14 @@ class RegistreViewModel(private val container: AppContainer) : ViewModel() {
             // aux dernières données connues, puis le réseau rafraîchit en fond.
             if (!force) {
                 val enCache = runCatching { container.registre.registreEnCache() }.getOrNull()
-                if (enCache != null) {
-                    _état.update { st -> if (st.registre == null) st.copy(registre = enCache) else st }
+                val derniereCache = runCatching { container.nouveautes.listeEnCache()?.let(Normalizers::dernière) }.getOrNull()
+                if (enCache != null || derniereCache != null) {
+                    _état.update { st ->
+                        st.copy(
+                            registre = st.registre ?: enCache,
+                            derniereActualite = st.derniereActualite ?: derniereCache,
+                        )
+                    }
                 }
             }
             // chargement = rien à montrer (squelette) ; sinon rafraîchissement
@@ -144,11 +153,13 @@ class RegistreViewModel(private val container: AppContainer) : ViewModel() {
             }
             try {
                 val registre = container.registre.charger()
+                val derniere = runCatching { container.nouveautes.dernière() }.getOrNull()
                 _état.update {
                     it.copy(
                         chargement = false,
                         rafraîchissement = false,
                         registre = registre,
+                        derniereActualite = derniere ?: it.derniereActualite,
                         erreur = null,
                     )
                 }
@@ -1020,4 +1031,270 @@ class DemandesViewModel(private val container: AppContainer) : ViewModel() {
         }
     }
 
+}
+
+/** — Actualités -------------------------------------------------------- */
+data class ActualitesÉtat(
+    val chargement: Boolean = true,
+    val rafraîchissement: Boolean = false,
+    val chargementPageSuivante: Boolean = false,
+    val erreur: String? = null,
+    val liste: List<Post> = emptyList(),
+    val finAtteinte: Boolean = false,
+)
+
+class ActualitesViewModel(private val container: AppContainer) : ViewModel() {
+    private val _état = MutableStateFlow(ActualitesÉtat())
+    val état: StateFlow<ActualitesÉtat> = _état.asStateFlow()
+
+    init {
+        charger()
+    }
+
+    fun charger(force: Boolean = false) {
+        viewModelScope.launch {
+            if (!force) {
+                val enCache = runCatching { container.nouveautes.listeEnCache() }.getOrNull()
+                if (!enCache.isNullOrEmpty()) {
+                    _état.update { st -> if (st.liste.isEmpty()) st.copy(liste = enCache) else st }
+                }
+            }
+            _état.update {
+                it.copy(
+                    chargement = it.liste.isEmpty(),
+                    rafraîchissement = it.liste.isNotEmpty(),
+                )
+            }
+            try {
+                val posts = container.nouveautes.liste(départ = 0, limite = 10)
+                _état.update {
+                    it.copy(
+                        chargement = false,
+                        rafraîchissement = false,
+                        liste = posts,
+                        finAtteinte = posts.isEmpty(),
+                        erreur = null,
+                    )
+                }
+            } catch (err: BotiErreur) {
+                _état.update {
+                    it.copy(chargement = false, rafraîchissement = false, erreur = err.messageUtilisateur)
+                }
+            } catch (err: Exception) {
+                _état.update {
+                    it.copy(
+                        chargement = false,
+                        rafraîchissement = false,
+                        erreur = "Les actualités n'ont pas pu être chargées",
+                    )
+                }
+            }
+        }
+    }
+
+    fun pageSuivante() {
+        val courante = _état.value
+        if (courante.finAtteinte || courante.chargement || courante.chargementPageSuivante || courante.rafraîchissement) return
+
+        viewModelScope.launch {
+            _état.update { it.copy(chargementPageSuivante = true) }
+            try {
+                val départ = courante.liste.size + 1
+                val nouveaux = container.nouveautes.liste(départ = départ, limite = 10)
+                _état.update { st ->
+                    if (nouveaux.isEmpty()) {
+                        st.copy(chargementPageSuivante = false, finAtteinte = true)
+                    } else {
+                        val fusion = Normalizers.fusionner(st.liste, nouveaux, départ)
+                        st.copy(
+                            chargementPageSuivante = false,
+                            liste = fusion,
+                            finAtteinte = nouveaux.size < 10,
+                        )
+                    }
+                }
+            } catch (err: Exception) {
+                _état.update { it.copy(chargementPageSuivante = false) }
+            }
+        }
+    }
+
+    fun rafraîchir() {
+        viewModelScope.launch {
+            val tailleActuelle = maxOf(_état.value.liste.size, 10)
+            _état.update { it.copy(rafraîchissement = true) }
+            try {
+                val posts = container.nouveautes.liste(départ = 0, limite = tailleActuelle)
+                _état.update {
+                    it.copy(
+                        rafraîchissement = false,
+                        liste = posts,
+                        finAtteinte = false,
+                        erreur = null,
+                    )
+                }
+            } catch (err: BotiErreur) {
+                _état.update { it.copy(rafraîchissement = false, erreur = err.messageUtilisateur) }
+            } catch (err: Exception) {
+                _état.update {
+                    it.copy(rafraîchissement = false, erreur = "Actualisation impossible")
+                }
+            }
+        }
+    }
+}
+
+/** — Détail d'une actualité --------------------------------------------- */
+data class PostDetailÉtat(
+    val chargement: Boolean = true,
+    val rafraîchissement: Boolean = false,
+    val erreur: String? = null,
+    val detail: PostDetail? = null,
+    val ecritureActivee: Boolean = false,
+    val texteCommentaire: String = "",
+    val replyToId: String? = null,
+    val envoiCommentaire: Boolean = false,
+    val erreurEnvoiCommentaire: String? = null,
+    val alertMerci: Boolean = false,
+)
+
+class PostDetailViewModel(
+    private val container: AppContainer,
+    private val postId: String,
+) : ViewModel() {
+    private val _état = MutableStateFlow(PostDetailÉtat())
+    val état: StateFlow<PostDetailÉtat> = _état.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            container.session.ecritureNouveautesActivée.collect { active ->
+                _état.update { it.copy(ecritureActivee = active) }
+            }
+        }
+        charger()
+    }
+
+    fun charger() {
+        viewModelScope.launch {
+            _état.update { it.copy(chargement = it.detail == null, rafraîchissement = it.detail != null) }
+            try {
+                val detail = container.nouveautes.détail(postId)
+                _état.update {
+                    it.copy(
+                        chargement = false,
+                        rafraîchissement = false,
+                        detail = detail,
+                        erreur = null,
+                    )
+                }
+            } catch (err: BotiErreur) {
+                _état.update {
+                    it.copy(chargement = false, rafraîchissement = false, erreur = err.messageUtilisateur)
+                }
+            } catch (err: Exception) {
+                _état.update {
+                    it.copy(
+                        chargement = false,
+                        rafraîchissement = false,
+                        erreur = "Impossible de charger le détail de l'actualité",
+                    )
+                }
+            }
+        }
+    }
+
+    fun majTexteCommentaire(texte: String) {
+        _état.update { it.copy(texteCommentaire = texte) }
+    }
+
+    fun définirRéponseÀ(replyToId: String?) {
+        _état.update { it.copy(replyToId = replyToId) }
+    }
+
+    fun envoyerCommentaire() {
+        val e = _état.value
+        val d = e.detail ?: return
+        if (!e.ecritureActivee || !d.peutCommenter || e.texteCommentaire.isBlank() || e.envoiCommentaire) return
+
+        viewModelScope.launch {
+            _état.update { it.copy(envoiCommentaire = true, erreurEnvoiCommentaire = null) }
+            try {
+                val nouveau = container.nouveautes.commenter(
+                    postId = postId,
+                    texte = e.texteCommentaire.trim(),
+                    replyTo = e.replyToId,
+                )
+                _état.update { st ->
+                    val det = st.detail
+                    val commentaires = if (det != null && nouveau != null) {
+                        det.commentaires + nouveau
+                    } else {
+                        det?.commentaires ?: emptyList()
+                    }
+                    st.copy(
+                        envoiCommentaire = false,
+                        texteCommentaire = "",
+                        replyToId = null,
+                        detail = det?.copy(commentaires = commentaires),
+                    )
+                }
+            } catch (err: Exception) {
+                _état.update {
+                    it.copy(
+                        envoiCommentaire = false,
+                        erreurEnvoiCommentaire = "Impossible d'envoyer le commentaire",
+                    )
+                }
+            }
+        }
+    }
+
+    fun répondreQuestionQuiz(alias: String?, réponse: String) {
+        val e = _état.value
+        val d = e.detail ?: return
+        if (!e.ecritureActivee || alias.isNullOrBlank()) return
+
+        viewModelScope.launch {
+            try {
+                container.nouveautes.répondreQuestionQuiz(postId, alias, réponse)
+                _état.update { st ->
+                    val det = st.detail ?: return@update st
+                    val questionsMaj = det.questions.map { q ->
+                        if (q.alias == alias) q.copy(réponseChoisie = réponse) else q
+                    }
+                    val toutesRepondues = questionsMaj.isNotEmpty() && questionsMaj.all { it.réponseChoisie != null }
+                    st.copy(
+                        detail = det.copy(questions = questionsMaj),
+                        alertMerci = toutesRepondues,
+                    )
+                }
+            } catch (_: Exception) {
+            }
+        }
+    }
+
+    fun masquerAlerteMerci() {
+        _état.update { it.copy(alertMerci = false) }
+    }
+
+    fun basculerKillSwitch(actif: Boolean) {
+        viewModelScope.launch {
+            container.session.définirEcritureNouveautes(actif)
+        }
+    }
+
+    fun téléchargerPièce(
+        pièce: school.greenwood.plus.model.Attachment,
+        context: android.content.Context,
+        onFait: (java.io.File?) -> Unit,
+    ) {
+        viewModelScope.launch {
+            val fichier = try {
+                school.greenwood.plus.util.Fichiers.télécharger(context, pièce.url, pièce.name)
+            } catch (err: Exception) {
+                null
+            }
+            onFait(fichier)
+        }
+    }
 }

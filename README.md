@@ -11,9 +11,9 @@ l'administration — dans une interface « Le registre » rapide et sobre.
 
 ## Fonctionnalités
 
-- 📔 **Registre** — le fil du jour : actualités, devoirs donnés, absences, messages
+- 📔 **Registre** — le fil du jour : dernière actualité, devoirs donnés, absences, messages
+- 📰 **Actualités** — onglet dédié, flux complet d'annonces de l'école (pagination 1-based, rafraîchissement, corps riche, galerie d'images, pièces jointes, quiz et commentaires)
 - 📚 **Devoirs** — par échéance, pièces jointes ouvrables nativement
-- 📰 **Actualités** — corps complets, images, PDF
 - 📁 **Documents** — ressources par matière, recherche, filtre par nature ;
   quiz jouables (décompte, bonne réponse affichée, score)
 - 📝 **Demandes** — suivi des demandes administratives et de leurs réponses
