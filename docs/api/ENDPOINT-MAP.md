@@ -836,6 +836,20 @@ Top-level keys: `all_objects`, `types`, `empty`, `empty_icon`, `empty_text`,
   Mondays for week navigation.
 - `translation` key `cahie_de_texte` (sic).
 
+**Client implementation (2026-09-20, Greenwood+)**: `NouveautesRepository`
+sibling `CoursRepository` reads this endpoint read-only.
+- Slot parsing is defensive over plausible field names (matiere/matière/
+  title/label/name/cours; heure_debut/start/hdebut; heure_fin/end/hfin;
+  salle/room; prof/professeur/enseignant/nom); an unrecognizable object
+  degrades to its first string field, a bare string becomes the label —
+  never trusted as verified.
+- Week navigation attempts `date=<ISO Monday>` — UNVERIFIED param; if the
+  server ignores it the returned week is displayed as-is. Arrows are driven
+  by the response's own `last_week`/`next_week`, so navigation never dead-ends.
+- Day dates are derived client-side from the week's Monday (ISO found in
+  `label`, fallback `last_week + 7d`) — the `Le 14 Sep 2026` labels are
+  display-only (English month abbreviations, not parseable — format table).
+
 ---
 
 ## Not probed (v1-adjacent — shapes UNVERIFIED, do not rely)

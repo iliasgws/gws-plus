@@ -24,6 +24,7 @@ import school.greenwood.plus.model.QuizDetail
 import school.greenwood.plus.model.QuizRésultat
 import school.greenwood.plus.model.Ressource
 import school.greenwood.plus.model.RéponseJouée
+import school.greenwood.plus.model.SemaineCours
 import java.time.LocalDate
 
 /*
@@ -1296,5 +1297,119 @@ class PostDetailViewModel(
             }
             onFait(fichier)
         }
+    }
+}
+
+/** — Emploi du temps ---------------------------------------------------- */
+data class CoursÉtat(
+    val chargement: Boolean = true,
+    val rafraîchissement: Boolean = false,
+    val erreur: String? = null,
+    val semaine: SemaineCours? = null,
+    /** Jour affiché, 1-based (lundi = 1) — conservé d'une semaine à l'autre. */
+    val jourChoisi: Int? = null,
+    /** Une navigation ←/→ tourne ; pas un rafraîchissement. */
+    val navigation: Boolean = false,
+)
+
+class CoursViewModel(private val container: AppContainer) : ViewModel() {
+    private val _état = MutableStateFlow(CoursÉtat())
+    val état: StateFlow<CoursÉtat> = _état.asStateFlow()
+
+    init {
+        charger()
+    }
+
+    fun charger(force: Boolean = false) {
+        viewModelScope.launch {
+            if (!force) {
+                // Ouverture à chaud : la dernière semaine connue, lecture muette (issue #21).
+                val enCache = runCatching { container.cours.semaineEnCache() }.getOrNull()
+                if (enCache != null) {
+                    _état.update { st ->
+                        if (st.semaine == null) {
+                            st.copy(semaine = enCache, jourChoisi = st.jourChoisi ?: enCache.jourSélectionné)
+                        } else {
+                            st
+                        }
+                    }
+                }
+            }
+            _état.update {
+                it.copy(
+                    chargement = it.semaine == null,
+                    rafraîchissement = it.semaine != null,
+                )
+            }
+            try {
+                val semaine = container.cours.semaine()
+                _état.update { st ->
+                    st.copy(
+                        chargement = false,
+                        rafraîchissement = false,
+                        erreur = null,
+                        semaine = semaine,
+                        jourChoisi = st.jourChoisi ?: semaine?.jourSélectionné ?: jourParDéfaut(semaine),
+                    )
+                }
+            } catch (err: BotiErreur) {
+                _état.update {
+                    it.copy(chargement = false, rafraîchissement = false, erreur = err.messageUtilisateur)
+                }
+            } catch (err: Exception) {
+                _état.update {
+                    it.copy(
+                        chargement = false,
+                        rafraîchissement = false,
+                        erreur = "Emploi du temps indisponible pour le moment",
+                    )
+                }
+            }
+        }
+    }
+
+    fun rafraîchir() = charger(force = true)
+
+    fun choisirJour(jour: Int) {
+        _état.update { it.copy(jourChoisi = jour) }
+    }
+
+    fun semainePrécédente() = naviguer(vers = _état.value.semaine?.semainePrécédente)
+
+    fun semaineSuivante() = naviguer(vers = _état.value.semaine?.semaineSuivante)
+
+    /**
+     * Navigation ←/→ : GET `cours_v2?date=<ISO lundi>` — paramètre NON vérifié ;
+     * si le serveur l'ignore, la semaine renvoyée reste affichée telle quelle.
+     */
+    private fun naviguer(vers: LocalDate?) {
+        if (vers == null) return
+        val courante = _état.value
+        if (courante.navigation || courante.chargement) return
+
+        viewModelScope.launch {
+            _état.update { it.copy(navigation = true, erreur = null) }
+            try {
+                val semaine = container.cours.semaine(vers)
+                _état.update { st ->
+                    st.copy(
+                        navigation = false,
+                        erreur = null,
+                        semaine = semaine,
+                        jourChoisi = st.jourChoisi ?: semaine?.jourSélectionné ?: jourParDéfaut(semaine),
+                    )
+                }
+            } catch (err: BotiErreur) {
+                _état.update { it.copy(navigation = false, erreur = err.messageUtilisateur) }
+            } catch (err: Exception) {
+                _état.update { it.copy(navigation = false, erreur = "Semaine indisponible") }
+            }
+        }
+    }
+
+    /** selected_day du serveur (1-based), sinon aujourd'hui borné au samedi. */
+    private fun jourParDéfaut(semaine: SemaineCours?): Int {
+        semaine?.jourSélectionné?.takeIf { it in 1..7 }?.let { return it }
+        return LocalDate.now().dayOfWeek.value.coerceIn(1, 6)
     }
 }

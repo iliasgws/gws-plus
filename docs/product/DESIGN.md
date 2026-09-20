@@ -90,9 +90,11 @@ puis utiliser le geste retour Android casse la navigation. En Compose avec
 Navigation-Compose, on hérite du retour prédictif d'Android 15 ; le contrat
 est fixé ici pour ne pas le reperdre :
 
-- **Barre basse à 4 destinations** : Registre (accueil), Devoirs, Documents,
-  Messages. Les actualités et demandes vivent dans le Registre et l'admin
-  reste joignable depuis Messages — pas 7 onglets.
+- **Barre basse à 6 destinations** : Registre (accueil), Actualités, Cours
+  (emploi du temps), Devoirs, Documents, Messages — amendé en deux étapes par
+  décision utilisateur explicite (Actualités 2026-09-20, Cours 2026-09-20) ;
+  les demandes restent dans le Registre et l'admin reste joignable depuis
+  Messages — toujours pas de 7ᵉ onglet.
 - Chaque onglet garde **sa propre pile** ; basculer d'onglet ne dépile rien
   (`saveState`/`restoreState`), le geste retour depuis un onglet racine
   retourne au Registre, et depuis le Registre il quitte l'app (comportement

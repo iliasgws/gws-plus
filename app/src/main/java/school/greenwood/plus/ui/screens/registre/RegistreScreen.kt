@@ -26,6 +26,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.CalendarMonth
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Description
 import androidx.compose.material.icons.rounded.Refresh
@@ -98,6 +99,7 @@ fun RegistreScreen(
     padding: PaddingValues,
     ouvrirDemandes: () -> Unit,
     ouvrirPost: (String) -> Unit,
+    ouvrirEmploi: () -> Unit,
 ) {
     // Une seule instance de VM partagée entre le registre et le détail d'un
     // post (portée activité) : le détail hérite du registre déjà chargé.
@@ -210,6 +212,13 @@ fun RegistreScreen(
                     }
                 }
 
+                item(key = "lien-emploi") {
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        SectionLabel(text = "Emploi du temps")
+                        CarteLienEmploi(ouvrirEmploi)
+                    }
+                }
+
                 item(key = "label-jour") { SectionLabel(text = "Aujourd'hui") }
 
                 if (registre.entrees.isEmpty() && registre.ceSoir.isEmpty()) {
@@ -314,6 +323,43 @@ private fun EnTête(
                         )
                     }
                 }
+            }
+        }
+    }
+}
+
+/** Lien discret vers l'onglet Emploi du temps, depuis l'accueil. */
+@Composable
+private fun CarteLienEmploi(ouvrirEmploi: () -> Unit) {
+    GwsCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = ouvrirEmploi),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.CalendarMonth,
+                contentDescription = null,
+                tint = RegistreTheme.colors.ink,
+                modifier = Modifier.size(20.dp),
+            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "Emploi du temps",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = RegistreTheme.colors.ink,
+                )
+                Text(
+                    text = "La semaine de l'école, jour par jour",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = RegistreTheme.colors.chalk,
+                )
             }
         }
     }

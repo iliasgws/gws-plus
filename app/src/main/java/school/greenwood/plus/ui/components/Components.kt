@@ -719,3 +719,66 @@ fun SquelettePostDetail() {
         }
     }
 }
+
+/** Squelette de l'emploi du temps : navigation de semaine, puces de jours, créneaux. */
+@Composable
+fun SqueletteCours() {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        BlocSquelette(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(24.dp),
+            forme = ControlShape,
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            repeat(6) {
+                BlocSquelette(
+                    modifier = Modifier
+                        .width(56.dp)
+                        .height(44.dp),
+                    forme = ControlShape,
+                )
+            }
+        }
+        repeat(4) { index ->
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = PageShape,
+                color = RegistreTheme.colors.page,
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(14.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    BlocSquelette(
+                        modifier = Modifier
+                            .width(56.dp)
+                            .height(36.dp),
+                        forme = ControlShape,
+                    )
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        BlocSquelette(
+                            modifier = Modifier
+                                .fillMaxWidth(if (index % 2 == 0) 0.6f else 0.45f)
+                                .height(16.dp),
+                            forme = ControlShape,
+                        )
+                        BlocSquelette(modifier = Modifier.width(90.dp).height(12.dp))
+                    }
+                }
+            }
+        }
+    }
+}

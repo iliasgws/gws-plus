@@ -17,6 +17,7 @@ import java.util.Locale
 private val SLASH_DATE = Regex("""(\d{1,2})/(\d{1,2})/(\d{4})""")
 private val ISO_DATE = Regex("""(\d{4})-(\d{2})-(\d{2})""")
 private val TIME = Regex("""(\d{1,2}):(\d{2})(?::(\d{2}))?""")
+private val HEURE_FR = Regex("""(\d{1,2})\s*[hH]\s*(\d{1,2})?""")
 
 /** Première date trouvée, « dd/mm/yyyy » ou « yyyy-mm-dd », sinon null. */
 fun extractDate(raw: String?): LocalDate? {
@@ -28,6 +29,24 @@ fun extractDate(raw: String?): LocalDate? {
     ISO_DATE.find(raw)?.let { m ->
         val (y, mth, d) = m.destructured
         return runCatching { LocalDate.of(y.toInt(), mth.toInt(), d.toInt()) }.getOrNull()
+    }
+    return null
+}
+
+/** Première heure « HH:MM » (ou « 10h30 ») d'un texte, normalisée. */
+fun extractHeure(raw: String?): String? {
+    if (raw.isNullOrBlank()) return null
+    TIME.find(raw)?.let { m ->
+        val (h, min) = m.destructured
+        val heure = h.toIntOrNull()?.takeIf { it in 0..23 } ?: return null
+        val minute = min.toIntOrNull()?.takeIf { it in 0..59 } ?: return null
+        return "%02d:%02d".format(heure, minute)
+    }
+    HEURE_FR.find(raw)?.let { m ->
+        val (h, min) = m.destructured
+        val heure = h.toIntOrNull()?.takeIf { it in 0..23 } ?: return null
+        val minute = min.toIntOrNull()?.takeIf { it in 0..59 } ?: 0
+        return "%02d:%02d".format(heure, minute)
     }
     return null
 }

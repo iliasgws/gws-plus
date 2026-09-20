@@ -94,6 +94,52 @@ data class PostDetail(
     val attachments: List<Attachment> get() = files
 }
 
+/**
+ * Un créneau de cours (GET `cours_v2`, `seances[].seances[]`). La forme
+ * intérieure n'a JAMAIS été observée (sondage 2026-09-20 : `seances[]` vide,
+ * ENDPOINT-MAP « do not rely ») — parsing défensif sur des noms de champs
+ * plausibles, tout est facultatif.
+ */
+data class Créneau(
+    val matière: String? = null,
+    val début: String? = null,
+    val fin: String? = null,
+    val salle: String? = null,
+    val enseignant: String? = null,
+)
+
+/** Un jour de la semaine d'emploi du temps (`seances[]` externe, lundi = 1). */
+data class JournéeCours(
+    val jour: Int,
+    val label: String? = null,
+    /** Date réelle du jour, dérivée du lundi de semaine (le libellé serveur
+     *  « Le 14 Sep 2026 » n'est pas analysable — mois abrégé anglais). */
+    val date: LocalDate? = null,
+    val créneaux: List<Créneau> = emptyList(),
+)
+
+/**
+ * Une semaine d'emploi du temps (GET `cours_v2` — forme de tête vérifiée
+ * 2026-09-20, ENDPOINT-MAP). Les journées non reconnues sont tolérées.
+ */
+data class SemaineCours(
+    /** Libellé serveur « Du  2026/09/14 Au  2026/09/20 ». */
+    val label: String? = null,
+    /** Lundi de la semaine affichée (extrait du libellé ou dérivé de last_week). */
+    val lundi: LocalDate? = null,
+    /** Jour présélectionné par le serveur (`selected_day`, 1-based). */
+    val jourSélectionné: Int? = null,
+    val journées: List<JournéeCours> = emptyList(),
+    /** `next_week` / `last_week` (ISO) pour la navigation entre semaines. */
+    val semaineSuivante: LocalDate? = null,
+    val semainePrécédente: LocalDate? = null,
+    /** Textes serveur (translation) avec repli côté app. */
+    val aucunCours: String? = null,
+    val restreint: Boolean = false,
+    /** `restricted.label` (HTML brut, conservé tel quel — aplati à l'écran). */
+    val messageRestriction: String? = null,
+)
+
 /** Un fil de messages avec l'administration. */
 data class Conversation(
     val id: String,

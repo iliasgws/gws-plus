@@ -259,8 +259,13 @@ simply go dark in the Devoirs tab, and the parent finds out too late.
 The administration itself says the timetable is provisional — parents spot
 the changes first, in the corridors.
 
-- [ ] Read-only first: is the timetable even in the API? (`cours_v2`
-      inner `seances[]` — still on the unverified list)
+- [x] Read-only first: the timetable IS in the API (`cours_v2` — top-level week
+      shape verified 2026-09-20); inner `seances[]` slots were empty in the
+      probe, parsed defensively (plausible field names, never trusted)
+- [ ] Parent-side report: flag a slot as wrong/changed, in-app note —
+      local first, no shared write path without a decision
+- [ ] Community layer only if/when several parents use the app: shared
+      corrections with authorship, opt-in, moderation story
 - [ ] Parent-side report: flag a slot as wrong/changed, in-app note —
       local first, no shared write path without a decision
 - [ ] Community layer only if/when several parents use the app: shared
@@ -414,3 +419,45 @@ Branch `nouveautes-onglet`.
 - [x] Step 6: UI (`AppNav` 5 tabs, `CarteActualité`, `ActualitesScreen`, `PostDetailScreen`, `RegistreScreen`)
 - [x] Step 7: Tests (`NormalizersPostTest.kt` — 80 unit tests total, 0 failures)
 - [x] Step 8: Docs & delivery (`README.md`, `ROADMAP.md`, `CHANGELOG.md`, `AGENTS.md`)
+
+# TASKS — « Emploi du temps » (tab, week view) — branch `cours-onglet`
+
+## Verification (2026-09-20)
+
+- [x] `cours_v2` top-level shape live-probed read-only and documented
+      (ENDPOINT-MAP §cours_v2: `translation`, `next_week`/`last_week` ISO
+      Mondays, `selected_day` 1-based, `label`, `seances[]` day entries)
+- [ ] Inner `seances[]` slots: shape UNVERIFIED (empty in the probe) — parsed
+      defensively (plausible field names: matiere/title/label, heure_debut/
+      start/hdebut, heure_fin/end, salle/room, prof/enseignant/nom; any
+      unrecognizable object degrades to its first string field; a bare string
+      becomes the slot label). Needs a live check on an account with real slots.
+- [ ] Week navigation param: UNVERIFIED — client sends `date=<ISO Monday>`
+      with `cours_v2`; if the server ignores it the returned week is displayed
+      as-is. Needs a live check; the ←/→ arrows use the response's own
+      `last_week`/`next_week` so nothing breaks either way.
+
+## Design decisions
+
+- 6th bottom tab (user decision, same path as the Actualités 5th tab) —
+  `Onglet("cours", "Cours", CalendarMonth)`; DESIGN.md §3 amended.
+- The tab shows BOTH the week overview and the day detail: a chip per day
+  (letter + short date + slot count) above the selected day's slot cards.
+- Read-only first: no parent-side writes; the `restricted` server block is
+  surfaced as a notice card when the school restricts access.
+- Day dates are derived from the week's Monday (extracted from the ISO label,
+  fallback `last_week + 7d`) — the server day labels (« Le 14 Sep 2026 ») are
+  display-only (English month abbreviations, not parseable).
+
+## Branch `cours-onglet` (stacked on `nouveautes-onglet`, PR #28)
+
+- [x] Step 1: Models (`Créneau`, `JournéeCours`, `SemaineCours`)
+- [x] Step 2: Normalizers (`semaineCours`, `journéeCours`, `créneau`, `extractHeure`)
+- [x] Step 3: Repository & cache (`CoursRepository`, `CachesSession.cours`)
+- [x] Step 4: ViewModel (`CoursViewModel` — warm open from cache, ←/→ navigation,
+      day selection kept across weeks)
+- [x] Step 5: UI (`AppNav` 6 tabs, `CoursScreen` + `SqueletteCours`,
+      `RegistreScreen` « Emploi du temps » link card)
+- [x] Step 6: Tests (`NormalizersCoursTest.kt` — 89 unit tests total, 0 failures)
+- [x] Step 7: Docs & delivery (`DESIGN.md` §3, `README.md`, `ROADMAP.md`,
+      `CHANGELOG.md`, `AGENTS.md`, `ENDPOINT-MAP.md`)

@@ -13,6 +13,7 @@ l'administration — dans une interface « Le registre » rapide et sobre.
 
 - 📔 **Registre** — le fil du jour : dernière actualité, devoirs donnés, absences, messages
 - 📰 **Actualités** — onglet dédié, flux complet d'annonces de l'école (pagination 1-based, rafraîchissement, corps riche, galerie d'images, pièces jointes, quiz et commentaires)
+- 🗓️ **Emploi du temps** — onglet dédié, vue semaine navigable (←/→), résumé par jour et créneaux du jour choisi (horaire, matière, salle, enseignant)
 - 📚 **Devoirs** — par échéance, pièces jointes ouvrables nativement
 - 📁 **Documents** — ressources par matière, recherche, filtre par nature ;
   quiz jouables (décompte, bonne réponse affichée, score)

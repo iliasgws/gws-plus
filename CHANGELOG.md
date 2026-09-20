@@ -4,6 +4,22 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [Non publié]
+
+### Ajouté
+
+- **Onglet Emploi du temps** : 6 onglets en barre inférieure dans l'ordre Registre,
+  Actualités, Cours, Devoirs, Documents, Messages
+- **Vue semaine (GET `cours_v2`)** : navigation ←/→ entre semaines, résumé de la
+  semaine en puces de jours (lettre, date courte, nombre de cours) et créneaux du
+  jour choisi (horaire, matière, salle, enseignant)
+- **Carte « Emploi du temps » sur le Registre** : lien discret vers l'onglet
+- **Parsage défensif des créneaux** : la forme intérieure des `seances[]` n'ayant
+  jamais été observée (sondage du 2026-09-20), les champs plausibles sont tentés
+  (matiere/heure_debut/salle/prof…) et toute forme méconnaissable se replie sur
+  son premier champ texte — l'onglet reste utilisable même si le serveur change
+  de forme ; l'avertissement `restricted` du serveur s'affiche en carte dédiée
+
 ## [0.6.0-bêta 1] — 2026-09-20
 
 Préversion : l'onglet Actualités et le détail des posts se publient en bêta

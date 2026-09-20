@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.MenuBook
+import androidx.compose.material.icons.rounded.CalendarMonth
 import androidx.compose.material.icons.rounded.Folder
 import androidx.compose.material.icons.rounded.Newspaper
 import school.greenwood.plus.ui.screens.actualites.ActualitesScreen
@@ -48,6 +49,7 @@ import school.greenwood.plus.ui.screens.documents.QuizScreen
 import school.greenwood.plus.ui.screens.messages.ConversationScreen
 import school.greenwood.plus.ui.screens.messages.MessagesScreen
 import school.greenwood.plus.ui.screens.messages.NouveauMessageScreen
+import school.greenwood.plus.ui.screens.cours.CoursScreen
 import school.greenwood.plus.ui.screens.registre.PostDetailScreen
 import school.greenwood.plus.ui.screens.registre.RegistreScreen
 import school.greenwood.plus.ui.theme.RegistreTheme
@@ -75,6 +77,7 @@ data class Onglet(
 val Onglets = listOf(
     Onglet("registre", "Registre", Icons.Rounded.Home),
     Onglet("actualites", "Actualités", Icons.Rounded.Newspaper),
+    Onglet("cours", "Cours", Icons.Rounded.CalendarMonth),
     Onglet("devoirs", "Devoirs", Icons.AutoMirrored.Rounded.MenuBook),
     Onglet("documents", "Documents", Icons.Rounded.Folder),
     Onglet("messages", "Messages", Icons.Rounded.QuestionAnswer),
@@ -176,6 +179,7 @@ fun Shell(container: AppContainer) {
                     padding = padding,
                     ouvrirDemandes = { navController.allerDétail("demandes") },
                     ouvrirPost = { id -> navController.allerDétail("post/$id") },
+                    ouvrirEmploi = { navController.allerÀLOnglet("cours") },
                 )
             }
             composable("actualites") {
@@ -184,6 +188,9 @@ fun Shell(container: AppContainer) {
                     padding = padding,
                     ouvrirPost = { id -> navController.allerDétail("post/$id") },
                 )
+            }
+            composable("cours") {
+                CoursScreen(container = container, padding = padding)
             }
             composable("devoirs") {
                 DevoirsScreen(container = container, padding = padding)

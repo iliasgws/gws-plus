@@ -11,10 +11,12 @@ import school.greenwood.plus.data.api.MediaUrls
 import school.greenwood.plus.model.Absence
 import school.greenwood.plus.model.Attachment
 import school.greenwood.plus.model.Conversation
+import school.greenwood.plus.model.Créneau
 import school.greenwood.plus.model.Demande
 import school.greenwood.plus.model.DemandeReponse
 import school.greenwood.plus.model.Devoir
 import school.greenwood.plus.model.Eleve
+import school.greenwood.plus.model.JournéeCours
 import school.greenwood.plus.model.Message
 import school.greenwood.plus.model.ParentInfo
 import school.greenwood.plus.model.Commentaire
@@ -26,9 +28,11 @@ import school.greenwood.plus.model.QuizQuestion
 import school.greenwood.plus.model.QuizReponse
 import school.greenwood.plus.model.QuizRésultat
 import school.greenwood.plus.model.Ressource
+import school.greenwood.plus.model.SemaineCours
 import school.greenwood.plus.model.ThemeMessage
 import school.greenwood.plus.util.extractDate
 import school.greenwood.plus.util.extractDateTime
+import school.greenwood.plus.util.extractHeure
 import java.time.LocalDate
 import java.time.LocalDateTime
 
@@ -263,6 +267,96 @@ object Normalizers {
      */
     fun dernière(posts: List<Post>): Post? =
         posts.maxByOrNull { it.date ?: LocalDateTime.MIN }
+
+    // — Emploi du temps ------------------------------------------------------
+
+    /**
+     * Semaine d'emploi du temps (GET `cours_v2`). La forme de tête est vérifiée
+     * (2026-09-20, ENDPOINT-MAP) ; la forme des créneaux intérieurs NE l'est PAS
+     * (sondage : `seances[]` vide — « do not rely »). Extraction défensive sur
+     * des noms de champs plausibles ; une réponse méconnaissable rend null.
+     */
+    fun semaineCours(rep: JsonObject): SemaineCours? {
+        val data = (rep["data"] as? JsonObject) ?: rep
+        if (data.isEmpty() || arr(data, "seances").isEmpty()) return null
+
+        val translation = (data["translation"] as? JsonObject) ?: JsonObject(emptyMap())
+        val restricted = data["restricted"] as? JsonObject
+
+        // Le libellé porte l'ISO du lundi (« Du  2026/09/14 … ») ; repli :
+        // la veille de la semaine renvoyée est last_week + 7 jours.
+        val lundi = extractDate(str(data, "label"))
+            ?: str(data, "last_week")?.let(::extractDate)?.plusDays(7)
+
+        val jours = arr(data, "seances").mapIndexed { position, élément ->
+            (élément as? JsonObject)?.let { journéeCours(it, lundi, position + 1) }
+        }.filterNotNull().sortedBy { it.jour }
+
+        return SemaineCours(
+            label = str(data, "label"),
+            lundi = lundi,
+            jourSélectionné = int(data, "selected_day"),
+            journées = jours,
+            semaineSuivante = str(data, "next_week")?.let(::extractDate),
+            semainePrécédente = str(data, "last_week")?.let(::extractDate),
+            aucunCours = str(translation, "aucun_cours"),
+            restreint = restricted?.let { bool(it, "restricted") } == true,
+            // HTML brut — aplati à l'écran (le normaliseur reste JVM-testable).
+            messageRestriction = str(restricted ?: JsonObject(emptyMap()), "label")
+                ?: str(restricted ?: JsonObject(emptyMap()), "contact"),
+        )
+    }
+
+    /** Un jour : `day` 1-based (lundi = 1), libellé « L », date dérivée du lundi. */
+    private fun journéeCours(raw: JsonObject, lundi: LocalDate?, position: Int): JournéeCours? {
+        val jour = int(raw, "day") ?: position
+        val créneaux = arr(raw, "seances").mapNotNull { s ->
+            when (s) {
+                is JsonObject -> créneau(s)
+                is kotlinx.serialization.json.JsonPrimitive ->
+                    s.contentOrNull?.takeIf { it.isNotBlank() }?.let { Créneau(matière = it) }
+                else -> null
+            }
+        }
+        return JournéeCours(
+            jour = jour,
+            label = str(raw, "label"),
+            date = lundi?.plusDays((jour - 1).coerceIn(0, 6).toLong()),
+            créneaux = créneaux,
+        )
+    }
+
+    /**
+     * Créneau intérieur — forme INCONNUE (ENDPOINT-MAP « do not rely ») :
+     * on tente des noms de champs plausibles, matière/heure/salle/prof ; à
+     * défaut le premier champ texte disponible devient le libellé affiché.
+     */
+    private fun créneau(raw: JsonObject): Créneau? {
+        val matière = str(raw, "matiere") ?: str(raw, "matière") ?: str(raw, "title")
+            ?: str(raw, "label") ?: str(raw, "name") ?: str(raw, "cours")
+        val début = extractHeure(
+            str(raw, "heure_debut") ?: str(raw, "heureDebut") ?: str(raw, "hdebut")
+                ?: str(raw, "start") ?: str(raw, "debut"),
+        )
+        val fin = extractHeure(
+            str(raw, "heure_fin") ?: str(raw, "heureFin") ?: str(raw, "hfin")
+                ?: str(raw, "end") ?: str(raw, "fin"),
+        )
+        val salle = str(raw, "salle") ?: str(raw, "room") ?: str(raw, "classroom")
+        val enseignant = str(raw, "prof") ?: str(raw, "professeur") ?: str(raw, "enseignant")
+            ?: str(raw, "nom") ?: (raw["user"] as? JsonObject)?.let { str(it, "nom") ?: str(it, "nomcomplet") }
+
+        if (matière == null && début == null && fin == null && salle == null && enseignant == null) {
+            // Forme totalement méconnaissable : d'abord un vrai texte (jamais
+            // un identifiant numérique), à défaut n'importe quelle valeur.
+            val primitives = raw.values.filterIsInstance<kotlinx.serialization.json.JsonPrimitive>()
+            val texte = primitives.firstOrNull { it.isString && !it.contentOrNull.isNullOrBlank() }?.contentOrNull
+                ?: primitives.mapNotNull { it.contentOrNull }.firstOrNull { it.isNotBlank() }
+                ?: return null
+            return Créneau(matière = texte)
+        }
+        return Créneau(matière = matière, début = début, fin = fin, salle = salle, enseignant = enseignant)
+    }
 
     // — Messages -----------------------------------------------------------
 
