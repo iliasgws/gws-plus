@@ -46,6 +46,26 @@ La couleur d'accent de l'écran (voir `accentDe`) reste, elle, statique : le
 détail d'une actualité porte toujours la teinte Actualités, même ouvert depuis
 le Registre — la pile pilote la sélection, la table pilote la teinte.
 
+## Sortie d'un quiz en jeu (issue #17)
+
+Un quiz lancé (phase `Jeu`) protège sa sortie — ses réponses seraient perdues
+et le score non enregistré. Trois chemins, une même confirmation
+(`DialogueQuitterQuiz`) :
+
+- geste/bouton retour système → `BackHandler` dans `QuizScreen` (actif
+  uniquement pendant `Jeu`) ;
+- flèche d'en-tête de l'écran quiz → même état de confirmation ;
+- changement d'onglet dans la barre basse → la coquille observe le signal
+  `container.quizEnJeu` (piloté par le `QuizViewModel` : levé à `démarrer`,
+  baissé au résultat, au rechargement et dans `onCleared`) et met l'onglet
+  demandé en attente le temps du dialogue.
+
+Quitter confirmé : le quiz est dépilé **sans** sauvegarde d'état
+(`popBackStack(…, saveState = false)` — le ViewModel meurt, on ne retombe
+jamais sur une partie abandonnée) puis l'onglet demandé est suivi via
+`allerÀLOnglet`. Les phases `Départ` et `Résultat` restent librement
+quittables — rien à perdre.
+
 ## Retour prédictif
 
 `enableOnBackInvokedCallback` dans le manifeste, edge-to-edge partout :

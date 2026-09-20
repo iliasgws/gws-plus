@@ -14,6 +14,7 @@ import school.greenwood.plus.data.repo.MessagesRepository
 import school.greenwood.plus.data.repo.NouveautesRepository
 import school.greenwood.plus.data.repo.RegistreRepository
 import school.greenwood.plus.data.session.SessionStore
+import kotlinx.coroutines.flow.MutableStateFlow
 
 /*
  * Conteneur manuel — un module :app, pas de framework DI (docs/product/DESIGN.md §5).
@@ -25,6 +26,12 @@ class AppContainer(context: Context) {
 
     // Caches de dernière donnée connue, isolés par session (issue #21).
     val caches = CachesSession(session)
+
+    // Signal « un quiz est en cours de jeu » (issue #17) : piloté par le
+    // QuizViewModel, observé par la coquille — sortie d'un quiz en jeu
+    // (onglet, retour) doit être confirmée, le score d'un quiz abandonné
+    // n'est pas enregistré.
+    val quizEnJeu = MutableStateFlow(false)
 
     val auth = AuthRepository(client, session, caches)
     val registre = RegistreRepository(client, session, caches)

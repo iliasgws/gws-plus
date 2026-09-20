@@ -331,6 +331,13 @@ document type, and actually opening the quizzes. Branch `documents-quiz`.
       The installed app had also played a quiz earlier the same evening —
       the app's own POST worked live too. Shapes distilled into
       `docs/api/ENDPOINT-MAP.md` (`quiz_post.json`, `quiz_play_apres.json`).
+- [x] Protected exit while playing: during the Jeu phase, every path out of
+      the quiz asks for confirmation — system back gesture/button
+      (`BackHandler`), the screen's own back arrow, and any bottom-bar tab
+      switch (the shell watches the `container.quizEnJeu` signal driven by
+      `QuizViewModel`); confirming abandons the attempt (popped without
+      state, score not recorded), « Continuer le quiz » cancels. Départ and
+      Résultat stay freely exitable — nothing to lose there
 
 # TASKS — Issue #21 « Skeleton screens, data cache, truncated dates »
 

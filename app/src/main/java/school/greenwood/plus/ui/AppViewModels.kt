@@ -437,9 +437,16 @@ class QuizViewModel(
         charger()
     }
 
+    /** Le quiz quitte l'écran : plus rien à protéger (signal pour la coquille). */
+    override fun onCleared() {
+        container.quizEnJeu.value = false
+        super.onCleared()
+    }
+
     fun charger() {
         viewModelScope.launch {
             _état.update { it.copy(chargement = true, erreur = null) }
+            container.quizEnJeu.value = false
             try {
                 val chargé = container.documents.quiz(quizId)
                 questionsBrutes = chargé.questionsBrutes
@@ -454,10 +461,12 @@ class QuizViewModel(
         }
     }
 
-    /** Démarre (ou rejoue) : remet compteur et réponses à zéro. */
+    /** Démarre (ou rejoue) : remet compteur et réponses à zéro. La partie
+     *  protège désormais sa sortie (signal vu par la coquille). */
     fun démarrer() {
         val quiz = _état.value.quiz ?: return
         if (quiz.questions.isEmpty()) return
+        container.quizEnJeu.value = true
         _état.update {
             it.copy(
                 phase = PhaseQuiz.Jeu,
@@ -532,6 +541,7 @@ class QuizViewModel(
             }
         } else {
             _état.update { it.copy(phase = PhaseQuiz.Résultat, secondesRestantes = null) }
+            container.quizEnJeu.value = false
             enregistrer()
         }
     }
