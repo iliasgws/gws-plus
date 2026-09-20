@@ -12,8 +12,8 @@ android {
         applicationId = "school.greenwood.plus"
         minSdk = 26
         targetSdk = 36
-        versionCode = 14
-        versionName = "0.5.0-beta.7"
+        versionCode = 15
+        versionName = "0.5.0-beta.8"
     }
 
     buildTypes {

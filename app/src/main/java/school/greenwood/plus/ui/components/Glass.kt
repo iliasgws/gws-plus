@@ -94,6 +94,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import school.greenwood.plus.ui.theme.ControlShape
+import school.greenwood.plus.ui.theme.GwsColors
 import school.greenwood.plus.ui.theme.PageShape
 import school.greenwood.plus.ui.theme.RegistreTheme
 import kotlin.math.abs
@@ -671,10 +672,13 @@ fun LiquidBottomTabs(
                 .drawBackdrop(
                     backdrop = backdrop,
                     shape = { ControlShape },
+                    // Sans vibrance, et lens modéré : sur une scène claire
+                    // (aurore + cartes blanches), la vibrance et un lens fort
+                    // font fleurir la barre — un halo brillant qui empeste
+                    // la surexposition (vu en bêta 7).
                     effects = {
-                        vibrancy()
                         blur(8.dp.toPx())
-                        lens(24.dp.toPx(), 24.dp.toPx())
+                        lens(10.dp.toPx(), 16.dp.toPx())
                     },
                     layerBlock = {
                         val progress = dampedDragAnimation.pressProgress
@@ -710,11 +714,10 @@ fun LiquidBottomTabs(
                         shape = { ControlShape },
                         effects = {
                             val progress = dampedDragAnimation.pressProgress
-                            vibrancy()
                             blur(8.dp.toPx())
                             lens(
-                                24.dp.toPx() * progress,
-                                24.dp.toPx() * progress
+                                12.dp.toPx() * progress,
+                                16.dp.toPx() * progress
                             )
                         },
                         highlight = {
@@ -809,10 +812,11 @@ fun givre(): Color =
     }
 
 /** Champ de recherche liquide : la pile de verre du LiquidButton (vibrance,
- *  flou, réfraction) sur une capsule champ — loupe craie, texte encre, givre
- *  léger (25 %) pour que la réfraction reste visible derrière. Pas de
- *  déformation d'appui : le doigt doit rester stable pour le curseur de
- *  saisie. Repli (sans capture ou sous l'API 31) : capsule quasi opaque. */
+ *  flou, réfraction) sur une capsule champ, avec la déformation tanh du
+ *  bouton à l'appui — aucun traitement de faveur : le même verre que les
+ *  boutons, sans la vibrance (elle fait fleurir le verre sur une scène
+ *  claire) et avec un lens réduit. Repli (sans capture ou sous l'API 31) :
+ *  capsule quasi opaque. */
 @Composable
 fun ChampRecherche(
     valeur: String,
@@ -823,31 +827,75 @@ fun ChampRecherche(
     val colors = RegistreTheme.colors
     val backdrop = LocalGlassBackdrop.current
     val teinteGivre = givre()
+    if (backdrop == null || !floutageDisponible) {
+        Row(
+            modifier
+                .clip(ControlShape)
+                .background(colors.glass.barStrong)
+                .border(1.dp, colors.glass.stroke, ControlShape)
+                .height(44.dp)
+                .padding(horizontal = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.Search,
+                contentDescription = null,
+                tint = colors.chalk,
+                modifier = Modifier.size(18.dp),
+            )
+            ChampTexte(
+                valeur = valeur,
+                onChange = onChange,
+                placeholder = placeholder,
+                colors = colors,
+                modifier = Modifier.weight(1f),
+            )
+        }
+        return
+    }
+
+    val animationScope = rememberCoroutineScope()
+    val interactiveHighlight = remember(animationScope) {
+        InteractiveHighlight(animationScope = animationScope)
+    }
     Row(
         modifier
-            .then(
-                if (backdrop != null && floutageDisponible) {
-                    Modifier.drawBackdrop(
-                        backdrop = backdrop,
-                        shape = { ControlShape },
-                        // La pile liquide du LiquidButton, appliquée au champ :
-                        // vibrance, flou, réfraction — le même verre que les
-                        // boutons. Pas de déformation tanh ici : le doigt
-                        // doit rester stable pour le curseur de saisie.
-                        effects = {
-                            vibrancy()
-                            blur(6.dp.toPx())
-                            lens(12.dp.toPx(), 24.dp.toPx())
-                        },
-                        onDrawSurface = { drawRect(teinteGivre) },
-                    )
-                } else {
-                    Modifier
-                        .clip(ControlShape)
-                        .background(colors.glass.barStrong)
-                        .border(1.dp, colors.glass.stroke, ControlShape)
+            .drawBackdrop(
+                backdrop = backdrop,
+                shape = { ControlShape },
+                effects = {
+                    blur(6.dp.toPx())
+                    lens(8.dp.toPx(), 14.dp.toPx())
                 },
+                layerBlock = {
+                    val width = size.width
+                    val height = size.height
+
+                    val progress = interactiveHighlight.pressProgress
+                    val scale = lerp(1f, 1f + 4f.dp.toPx() / size.height, progress)
+
+                    val maxOffset = size.minDimension
+                    val initialDerivative = 0.05f
+                    val offset = interactiveHighlight.offset
+                    translationX = maxOffset * tanh(initialDerivative * offset.x / maxOffset)
+                    translationY = maxOffset * tanh(initialDerivative * offset.y / maxOffset)
+
+                    val maxDragScale = 4f.dp.toPx() / size.height
+                    val offsetAngle = atan2(offset.y, offset.x)
+                    scaleX =
+                        scale +
+                            maxDragScale * abs(cos(offsetAngle) * offset.x / size.maxDimension) *
+                            (width / height).fastCoerceAtMost(1f)
+                    scaleY =
+                        scale +
+                            maxDragScale * abs(sin(offsetAngle) * offset.y / size.maxDimension) *
+                            (height / width).fastCoerceAtMost(1f)
+                },
+                onDrawSurface = { drawRect(teinteGivre) },
             )
+            .then(interactiveHighlight.modifier)
+            .then(interactiveHighlight.gestureModifier)
             .height(44.dp)
             .padding(horizontal = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -859,31 +907,50 @@ fun ChampRecherche(
             tint = colors.chalk,
             modifier = Modifier.size(18.dp),
         )
-        BasicTextField(
-            value = valeur,
-            onValueChange = onChange,
+        ChampTexte(
+            valeur = valeur,
+            onChange = onChange,
+            placeholder = placeholder,
+            colors = colors,
             modifier = Modifier.weight(1f),
-            singleLine = true,
-            textStyle = TextStyle(
-                color = colors.ink,
-                fontFamily = MaterialTheme.typography.bodyMedium.fontFamily,
-                fontSize = MaterialTheme.typography.bodyMedium.fontSize,
-            ),
-            cursorBrush = SolidColor(colors.ink),
-            decorationBox = { champInterne ->
-                Box {
-                    if (valeur.isEmpty()) {
-                        Text(
-                            text = placeholder,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = colors.chalk,
-                        )
-                    }
-                    champInterne()
-                }
-            },
         )
     }
+}
+
+/** Contenu partagé des deux branches du champ : loupe posée par l'appelant,
+ *  ici la saisie encre avec placeholder craie. */
+@Composable
+private fun ChampTexte(
+    valeur: String,
+    onChange: (String) -> Unit,
+    placeholder: String,
+    colors: GwsColors,
+    modifier: Modifier = Modifier,
+) {
+    BasicTextField(
+        value = valeur,
+        onValueChange = onChange,
+        modifier = modifier,
+        singleLine = true,
+        textStyle = TextStyle(
+            color = colors.ink,
+            fontFamily = MaterialTheme.typography.bodyMedium.fontFamily,
+            fontSize = MaterialTheme.typography.bodyMedium.fontSize,
+        ),
+        cursorBrush = SolidColor(colors.ink),
+        decorationBox = { champInterne ->
+            Box {
+                if (valeur.isEmpty()) {
+                    Text(
+                        text = placeholder,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = colors.chalk,
+                    )
+                }
+                champInterne()
+            }
+        },
+    )
 }
 
 /** Barre basse flottante de l'app : la LiquidBottomTabs du catalogue habillée

@@ -4,6 +4,19 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [0.5.0-bêta 8] — 2026-09-20
+
+### Corrigé
+
+- **Fini le halo sur la recherche et la barre basse** (bêta 7) : sur une
+  scène claire (aurore + cartes blanches), la vibrance et un lens fort
+  faisaient fleurir le verre — un halo brillant qui empeste la
+  surexposition. Vibrance retirée des deux, lens réduit (10/16 sur la
+  barre et sa copie fantôme, 8/14 sur la recherche)
+- **La recherche reçoit la déformation d'appui du LiquidButton** : l'exception
+  « doigt stable pour le curseur » est retirée — la capsule se déforme vers
+  le doigt comme un bouton (le champ de saisie reçoit toujours les touches)
+
 ## [0.5.0-bêta 7] — 2026-09-20
 
 ### Modifié
