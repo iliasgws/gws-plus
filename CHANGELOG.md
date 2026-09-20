@@ -4,6 +4,20 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [0.6.1-bêta 1] — 2026-09-20
+
+Préversion : le correctif de l'onglet actif se publie en bêta depuis la
+branche `issue-34-onglet-actif` (PR #35, non fusionnée) pour être essayé sur
+un appareil réel avant la fusion.
+
+### Corrigé
+
+- **Onglet actif conservé sous une sous-page** (issue #34) : ouvrir une
+  actualité, un quiz, une conversation ou une demande ne désélectionne plus la
+  barre basse — l'onglet parent reste actif, calculé depuis la pile de
+  navigation, et le retour arrière remet l'onglet d'origine sans
+  réinitialisation
+
 ## [0.6.0] — 2026-09-20
 
 Stable après trois bêtas essayées sur appareil réel : l'onglet Actualités

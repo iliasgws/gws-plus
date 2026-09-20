@@ -30,6 +30,22 @@ Messages) autour d'un `NavHost`. Chaque onglet garde sa pile via
 Les détails (post, demandes, conversation, nouveau message) poussent sur la
 pile de leur onglet avec `launchSingleTop`.
 
+## L'onglet actif et les sous-pages (issue #34)
+
+La barre basse ne lit pas la route exacte : `ongletActifDe` (AppNav.kt) lit la
+pile complète (`NavController.currentBackStack`, StateFlow public) et prend le
+**dernier écran racine d'onglet** qu'elle contient. C'est l'onglet qui
+« possède » la sous-page affichée au-dessus :
+
+- post ouvert depuis le Registre → l'onglet Registre reste actif ;
+- post ouvert depuis Actualités → l'onglet Actualités reste actif ;
+- retour arrière → la pile se recalcule et l'onglet d'origine se remet en
+  surbrillance, sans état mémorisé à réinitialiser.
+
+La couleur d'accent de l'écran (voir `accentDe`) reste, elle, statique : le
+détail d'une actualité porte toujours la teinte Actualités, même ouvert depuis
+le Registre — la pile pilote la sélection, la table pilote la teinte.
+
 ## Retour prédictif
 
 `enableOnBackInvokedCallback` dans le manifeste, edge-to-edge partout :

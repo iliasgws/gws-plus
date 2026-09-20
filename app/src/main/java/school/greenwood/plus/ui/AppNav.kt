@@ -29,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -82,6 +83,12 @@ val Onglets = listOf(
     Onglet("documents", "Documents", Icons.Rounded.Folder),
     Onglet("messages", "Messages", Icons.Rounded.QuestionAnswer),
 )
+
+/** Les routes racines des onglets (destination de départ incluse). */
+private val RoutesOnglets = Onglets.map { it.route }.toSet()
+
+/** La route de départ de la coquille, utilisée comme repère de toutes les piles. */
+private const val RouteDépart = "registre"
 
 private enum class ÉcranRacine { Chargement, Onboarding, Connexion, Registre }
 
@@ -137,12 +144,30 @@ private fun accentDe(route: String?, couleurs: school.greenwood.plus.ui.theme.Gw
         }
     }
 
+/**
+ * L'onglet actif se lit sur la pile de navigation, pas sur la route exacte
+ * (issue #34) : le dernier écran racine d'onglet présent dans la pile est
+ * l'onglet qui « possède » la sous-page affichée au-dessus. Un post ouvert
+ * depuis le Registre garde le Registre actif ; ouvert depuis Actualités,
+ * Actualités — le retour dépile et l'onglet se recalcule tout seul.
+ */
+private fun ongletActifDe(pile: List<NavBackStackEntry>): String? =
+    pile.lastOrNull { entrée ->
+        val route = entrée.destination?.route
+        route != null && route in RoutesOnglets
+    }?.destination?.route
+
 /** La coquille : barre basse 6 onglets à accents + piles d'onglets. */
 @Composable
 fun Shell(container: AppContainer) {
     val navController = rememberNavController()
     val destinationCourante by navController.currentBackStackEntryAsState()
     val routeCourante = destinationCourante?.destination?.route
+
+    // L'onglet actif suit la pile : une sous-page (post, quiz, conversation…)
+    // laisse son onglet parent actif dans la barre basse (issue #34).
+    val pile by navController.currentBackStack.collectAsStateWithLifecycle(initialValue = emptyList())
+    val ongletActif = ongletActifDe(pile) ?: RouteDépart
 
     // L'accent suit l'écran, en fondu : puces, surligneurs et états vides se
     // teintent de la matière de l'endroit où l'on se trouve.
@@ -171,7 +196,7 @@ fun Shell(container: AppContainer) {
             bottomBar = {
                 BarreOnglets(
                     onglets = Onglets,
-                    routeSélectionnée = routeCourante,
+                    routeSélectionnée = ongletActif,
                     accents = couleurs.accents,
                     onOnglet = { route -> navController.allerÀLOnglet(route) },
                 )
@@ -179,7 +204,7 @@ fun Shell(container: AppContainer) {
         ) { padding ->
         NavHost(
             navController = navController,
-            startDestination = "registre",
+            startDestination = RouteDépart,
             modifier = Modifier
                 .fillMaxSize()
                 .background(RegistreTheme.colors.paper),
