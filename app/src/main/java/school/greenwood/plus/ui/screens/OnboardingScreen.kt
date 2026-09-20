@@ -14,6 +14,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -21,11 +24,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import school.greenwood.plus.ui.theme.ControlShape
@@ -107,16 +112,26 @@ fun OnboardingScreen(onFini: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 pages.indices.forEach { index ->
                     val actif = index == pagerState.currentPage
+                    val largeur by animateDpAsState(
+                        targetValue = if (actif) 20.dp else 8.dp,
+                        animationSpec = spring<Dp>(
+                            dampingRatio = Spring.DampingRatioNoBouncy,
+                            stiffness = Spring.StiffnessMediumLow,
+                        ),
+                        label = "pastille",
+                    )
                     Box(
                         modifier = Modifier
-                            .padding(4.dp)
-                            .size(8.dp)
+                            .size(width = largeur, height = 8.dp)
                             .clip(CircleShape)
                             .background(
-                                if (actif) RegistreTheme.colors.ink
+                                if (actif) RegistreTheme.accent.teinte
                                 else RegistreTheme.colors.sage,
                             ),
                     )

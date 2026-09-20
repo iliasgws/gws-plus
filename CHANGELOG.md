@@ -22,6 +22,22 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
   son premier champ texte — l'onglet reste utilisable même si le serveur change
   de forme ; l'avertissement `restricted` du serveur s'affiche en carte dédiée
 
+### Changé
+
+- **Restylage « École vivante »** (branche `restyle-ecole-vivante`) : une
+  famille d'accent par onglet (vert, ambre, bleu, violet, ocre, corail) qui
+  teinte barre basse, puces, surligneurs de titres, carte focale et états
+  vides, en clair comme en sombre ; fond crème chaud le jour, vert-charbon la
+  nuit ; affichage en Bricolage Grotesque (le serif Fraunces quitte l'app) ;
+  rayons plus généreux (24/16/10) ; chiffres tabulaires sur dates, horaires
+  et comptes ; ressorts sous les sélections ; profondeur tonale des surfaces
+  (marches `surfaceContainer*` distinctes) ; fond système et icônes de barres
+  accordés au thème
+- **Barre basse à accents** : libellés sur une ligne (les libellés «
+  Actualités », « Documents », « Messages » se coupaient en deux lignes),
+  capsule de sélection colorée par onglet, sélection animée en ressort — le
+  contrat de navigation (piles par onglet, geste retour) est inchangé
+
 ### Corrigé
 
 - **Plantage à l'ouverture d'une actualité** (constaté sur appareil réel,

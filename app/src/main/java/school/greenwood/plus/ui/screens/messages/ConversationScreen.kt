@@ -55,6 +55,7 @@ import school.greenwood.plus.ui.components.EmptyState
 import school.greenwood.plus.ui.components.ErrorInline
 import school.greenwood.plus.ui.components.SqueletteConversation
 import school.greenwood.plus.ui.theme.ControlShape
+import school.greenwood.plus.ui.theme.tabulaire
 import school.greenwood.plus.ui.theme.RegistreTheme
 import school.greenwood.plus.util.Fichiers
 import school.greenwood.plus.util.LecteurAudio
@@ -405,7 +406,7 @@ private fun Bulle(
             message.date?.let {
                 Text(
                     text = it.frenchTime(),
-                    style = MaterialTheme.typography.labelSmall,
+                    style = MaterialTheme.typography.labelSmall.tabulaire(),
                     color = RegistreTheme.colors.chalk,
                 )
             }
@@ -414,7 +415,7 @@ private fun Bulle(
                 message.vuLe?.let {
                     Text(
                         text = "Vu ${it.frenchFull()}",
-                        style = MaterialTheme.typography.labelSmall,
+                        style = MaterialTheme.typography.labelSmall.tabulaire(),
                         color = RegistreTheme.colors.chalk,
                     )
                 }

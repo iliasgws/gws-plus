@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Description
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.InsertDriveFile
 import androidx.compose.material3.Button
@@ -27,6 +28,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -40,6 +42,7 @@ import school.greenwood.plus.ui.components.ErrorInline
 import school.greenwood.plus.ui.components.GwsCard
 import school.greenwood.plus.ui.components.Puce
 import school.greenwood.plus.ui.components.SqueletteDemandes
+import school.greenwood.plus.ui.theme.AnnotationShape
 import school.greenwood.plus.ui.theme.ControlShape
 import school.greenwood.plus.ui.theme.RegistreTheme
 
@@ -82,6 +85,14 @@ fun DemandesScreen(
                 style = MaterialTheme.typography.displayLarge,
                 color = RegistreTheme.colors.ink,
             )
+            // Le surligneur : le trait de l'onglet, sous le titre.
+            Box(
+                modifier = Modifier
+                    .padding(top = 6.dp)
+                    .size(width = 56.dp, height = 5.dp)
+                    .clip(AnnotationShape)
+                    .background(RegistreTheme.accent.conteneur),
+            )
         }
 
         when {
@@ -108,6 +119,7 @@ fun DemandesScreen(
                 EmptyState(
                     titre = "Aucune demande",
                     message = "Tes demandes apparaîtront ici.",
+                    icone = Icons.Rounded.Description,
                 )
             }
             else -> {

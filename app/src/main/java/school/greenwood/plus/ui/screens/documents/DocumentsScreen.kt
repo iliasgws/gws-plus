@@ -17,7 +17,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Folder
 import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material.icons.rounded.SearchOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -28,6 +30,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -79,6 +82,14 @@ fun DocumentsScreen(
                 text = "Documents",
                 style = MaterialTheme.typography.displayLarge,
                 color = RegistreTheme.colors.ink,
+            )
+            // Le surligneur : le trait de l'onglet, sous le titre.
+            Box(
+                modifier = Modifier
+                    .padding(top = 6.dp)
+                    .size(width = 56.dp, height = 5.dp)
+                    .clip(AnnotationShape)
+                    .background(RegistreTheme.accent.conteneur),
             )
             Spacer(Modifier.height(12.dp))
             ChampRecherche(
@@ -134,6 +145,7 @@ fun DocumentsScreen(
                             EmptyState(
                                 titre = "Aucun document",
                                 message = "Les ressources de la classe apparaîtront ici.",
+                                icone = Icons.Rounded.Folder,
                             )
                         }
                     } else if (filtrées.isEmpty()) {
@@ -150,6 +162,7 @@ fun DocumentsScreen(
                                 } else {
                                     "Essaie un autre mot."
                                 },
+                                icone = Icons.Rounded.SearchOff,
                             )
                         }
                     } else {
@@ -211,9 +224,10 @@ private fun PuceFiltre(
     sélectionné: Boolean,
     onClick: () -> Unit,
 ) {
+    val accent = RegistreTheme.accent
     Surface(
         shape = ControlShape,
-        color = if (sélectionné) RegistreTheme.colors.sage else RegistreTheme.colors.page,
+        color = if (sélectionné) accent.conteneur else RegistreTheme.colors.page,
         border = if (sélectionné) null else BorderStroke(1.dp, RegistreTheme.colors.sage),
         modifier = Modifier.clickable(onClick = onClick),
     ) {
@@ -221,7 +235,7 @@ private fun PuceFiltre(
             text = label,
             modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
             style = MaterialTheme.typography.labelMedium,
-            color = if (sélectionné) RegistreTheme.colors.ink else RegistreTheme.colors.chalk,
+            color = if (sélectionné) accent.surConteneur else RegistreTheme.colors.chalk,
         )
     }
 }
@@ -295,17 +309,17 @@ private fun LigneRessource(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            // Monogramme du type sur annotation sage (6 dp).
+            // Monogramme du type sur l'accent de l'onglet.
             Surface(
                 shape = AnnotationShape,
-                color = RegistreTheme.colors.sage,
+                color = RegistreTheme.accent.conteneur,
                 modifier = Modifier.size(48.dp),
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Text(
                         text = ressource.type?.take(1)?.uppercase()?.ifEmpty { "•" } ?: "•",
                         style = MaterialTheme.typography.titleMedium,
-                        color = RegistreTheme.colors.ink,
+                        color = RegistreTheme.accent.surConteneur,
                     )
                 }
             }

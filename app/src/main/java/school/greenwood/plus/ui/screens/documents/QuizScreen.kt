@@ -54,6 +54,7 @@ import school.greenwood.plus.ui.components.GwsCard
 import school.greenwood.plus.ui.components.Puce
 import school.greenwood.plus.ui.components.SqueletteQuiz
 import school.greenwood.plus.ui.theme.ControlShape
+import school.greenwood.plus.ui.theme.tabulaire
 import school.greenwood.plus.ui.theme.PageShape
 import school.greenwood.plus.ui.theme.RegistreTheme
 
@@ -189,8 +190,8 @@ private fun DépartQuiz(
                     overflow = TextOverflow.Ellipsis,
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    quiz.matiere?.takeIf { it.isNotBlank() }?.let { Puce(it) }
-                    quiz.niveau?.takeIf { it.isNotBlank() }?.let { Puce(it) }
+                    quiz.matiere?.takeIf { it.isNotBlank() }?.let { Puce(it, accent = RegistreTheme.accent) }
+                    quiz.niveau?.takeIf { it.isNotBlank() }?.let { Puce(it, accent = RegistreTheme.accent) }
                 }
                 Text(
                     text = duréeQuiz(quiz),
@@ -311,6 +312,7 @@ private fun JeuQuiz(état: QuizÉtat, vm: QuizViewModel) {
 /** « Question 2 sur 5 », barre de progression et décompte mm:ss. */
 @Composable
 private fun EnTêteQuestion(état: QuizÉtat, total: Int) {
+    val accent = RegistreTheme.accent
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -318,18 +320,18 @@ private fun EnTêteQuestion(état: QuizÉtat, total: Int) {
         ) {
             Text(
                 text = "Question ${état.indexQuestion + 1} sur $total",
-                style = MaterialTheme.typography.labelMedium,
+                style = MaterialTheme.typography.labelMedium.tabulaire(),
                 color = RegistreTheme.colors.chalk,
                 modifier = Modifier.weight(1f),
             )
             état.secondesRestantes?.let { restantes ->
-                Puce(horloge(restantes))
+                Puce(horloge(restantes), accent = accent)
             }
         }
         LinearProgressIndicator(
             progress = { état.indexQuestion / total.toFloat() },
             modifier = Modifier.fillMaxWidth(),
-            color = RegistreTheme.colors.ink,
+            color = accent.teinte,
             trackColor = RegistreTheme.colors.sage,
         )
     }
@@ -356,10 +358,12 @@ private fun CarteRéponse(
     onClick: () -> Unit,
 ) {
     val marquée = jouée && choisie
+    val accent = RegistreTheme.accent
+    val vert = RegistreTheme.colors.accents["registre"]
     Surface(
         shape = ControlShape,
         color = when {
-            marquée && correcte -> RegistreTheme.colors.sage
+            marquée && correcte -> vert?.conteneur ?: RegistreTheme.colors.sage
             marquée -> RegistreTheme.colors.redPen
             else -> RegistreTheme.colors.page
         },
@@ -377,7 +381,7 @@ private fun CarteRéponse(
                 Icon(
                     imageVector = if (correcte) Icons.Rounded.CheckCircle else Icons.Rounded.Cancel,
                     contentDescription = if (correcte) "Bonne réponse" else "Mauvaise réponse",
-                    tint = if (correcte) RegistreTheme.colors.ink else RegistreTheme.colors.page,
+                    tint = if (correcte) (vert?.teinte ?: RegistreTheme.colors.ink) else RegistreTheme.colors.page,
                     modifier = Modifier.size(20.dp),
                 )
             }
@@ -385,7 +389,7 @@ private fun CarteRéponse(
                 text = texte,
                 style = MaterialTheme.typography.bodyMedium,
                 color = when {
-                    marquée && correcte -> RegistreTheme.colors.ink
+                    marquée && correcte -> (vert?.surConteneur ?: RegistreTheme.colors.ink)
                     marquée -> RegistreTheme.colors.page
                     else -> RegistreTheme.colors.ink
                 },

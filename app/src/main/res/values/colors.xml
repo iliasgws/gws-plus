@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Fond de démarrage : le papier du thème clair (voir values-night). -->
-    <color name="paper">#FAFAF7</color>
+    <!-- Fond de démarrage : le crème chaud du thème clair (voir values-night). -->
+    <color name="paper">#F7F1E5</color>
 </resources>

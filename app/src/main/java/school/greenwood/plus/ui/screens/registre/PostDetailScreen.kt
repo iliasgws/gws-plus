@@ -71,12 +71,11 @@ import school.greenwood.plus.ui.theme.AnnotationShape
 import school.greenwood.plus.ui.theme.ControlShape
 import school.greenwood.plus.ui.theme.PageShape
 import school.greenwood.plus.ui.theme.RegistreTheme
+import school.greenwood.plus.ui.theme.tabulaire
 import school.greenwood.plus.util.Fichiers
 import school.greenwood.plus.util.frenchFull
 import school.greenwood.plus.util.frenchShort
 import school.greenwood.plus.util.htmlToPlainMultiline
-
-private val CouleurSignet = Color(0xFFFC942D)
 
 /**
  * Détail d'une actualité (GET `post_view?post=<id>`).
@@ -146,13 +145,13 @@ fun PostDetailScreen(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
                             detail.categorie?.takeIf { it.isNotBlank() }?.let { categorie ->
-                                Puce(label = categorie)
+                                Puce(label = categorie, accent = RegistreTheme.accent)
                             }
                             if (detail.bookmark) {
                                 Icon(
                                     imageVector = Icons.Rounded.Bookmark,
                                     contentDescription = "Signet",
-                                    tint = CouleurSignet,
+                                    tint = RegistreTheme.colors.signetVif,
                                     modifier = Modifier.size(18.dp),
                                 )
                             }
@@ -231,7 +230,10 @@ fun PostDetailScreen(
 
                         // Pièces jointes
                         if (detail.files.isNotEmpty()) {
-                            SectionLabel(text = "Pièces jointes (${detail.files.size})")
+                            SectionLabel(
+                                text = "Pièces jointes (${detail.files.size})",
+                                pointAccent = true,
+                            )
                             detail.files.forEach { pièce ->
                                 LignePièceJointePost(
                                     pièce = pièce,
@@ -261,7 +263,7 @@ fun PostDetailScreen(
                                 .padding(18.dp),
                             verticalArrangement = Arrangement.spacedBy(14.dp),
                         ) {
-                            SectionLabel(text = "Questionnaire")
+                            SectionLabel(text = "Questionnaire", pointAccent = true)
                             if (!état.ecritureActivee) {
                                 Text(
                                     text = "Mode lecture seule — participation aux quiz désactivée.",
@@ -292,7 +294,10 @@ fun PostDetailScreen(
                                 .padding(18.dp),
                             verticalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
-                            SectionLabel(text = "Commentaires (${detail.commentaires.size})")
+                            SectionLabel(
+                                text = "Commentaires (${detail.commentaires.size})",
+                                pointAccent = true,
+                            )
 
                             if (detail.commentaires.isEmpty()) {
                                 Text(
@@ -493,7 +498,7 @@ private fun CarteCommentaire(
                 commentaire.date?.let { d ->
                     Text(
                         text = d.toLocalDate().frenchShort(),
-                        style = MaterialTheme.typography.labelSmall,
+                        style = MaterialTheme.typography.labelSmall.tabulaire(),
                         color = RegistreTheme.colors.chalk,
                     )
                 }
@@ -551,7 +556,7 @@ private fun CarteQuestionPost(
                 val estChoisie = question.réponseChoisie == rep
                 Surface(
                     shape = ControlShape,
-                    color = if (estChoisie) RegistreTheme.colors.sage else Color.Transparent,
+                    color = if (estChoisie) RegistreTheme.accent.conteneur else Color.Transparent,
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable(enabled = interactive) { onRépondre(rep) },
@@ -566,7 +571,7 @@ private fun CarteQuestionPost(
                         Icon(
                             imageVector = if (estChoisie) Icons.Rounded.RadioButtonChecked else Icons.Rounded.RadioButtonUnchecked,
                             contentDescription = null,
-                            tint = if (estChoisie) RegistreTheme.colors.ink else RegistreTheme.colors.chalk,
+                            tint = if (estChoisie) RegistreTheme.accent.teinte else RegistreTheme.colors.chalk,
                             modifier = Modifier.size(18.dp),
                         )
                         Text(

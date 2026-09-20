@@ -34,6 +34,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -47,8 +48,10 @@ import school.greenwood.plus.ui.components.EmptyState
 import school.greenwood.plus.ui.components.GwsCard
 import school.greenwood.plus.ui.components.SectionLabel
 import school.greenwood.plus.ui.components.SqueletteCours
+import school.greenwood.plus.ui.theme.AnnotationShape
 import school.greenwood.plus.ui.theme.ControlShape
 import school.greenwood.plus.ui.theme.RegistreTheme
+import school.greenwood.plus.ui.theme.tabulaire
 import school.greenwood.plus.util.frenchLongDay
 import school.greenwood.plus.util.frenchShort
 import school.greenwood.plus.util.htmlToPlainMultiline
@@ -92,6 +95,14 @@ fun CoursScreen(
                 style = MaterialTheme.typography.displayLarge,
                 color = RegistreTheme.colors.ink,
             )
+            // Le surligneur : le trait de l'onglet, sous le titre.
+            Box(
+                modifier = Modifier
+                    .padding(top = 6.dp)
+                    .size(width = 56.dp, height = 5.dp)
+                    .clip(AnnotationShape)
+                    .background(RegistreTheme.accent.conteneur),
+            )
             Spacer(Modifier.height(4.dp))
             Text(
                 text = "La semaine de l'école, jour par jour",
@@ -127,12 +138,12 @@ fun CoursScreen(
                     CircularProgressIndicator(
                         modifier = Modifier.size(16.dp),
                         strokeWidth = 2.dp,
-                        color = RegistreTheme.colors.ink,
+                        color = RegistreTheme.accent.teinte,
                     )
                 } else {
                     Text(
                         text = plageSemaine ?: "—",
-                        style = MaterialTheme.typography.labelMedium,
+                        style = MaterialTheme.typography.labelMedium.tabulaire(),
                         color = RegistreTheme.colors.chalk,
                     )
                 }
@@ -237,9 +248,10 @@ private fun PuceJourCours(
     sélectionné: Boolean,
     onClick: () -> Unit,
 ) {
+    val accent = RegistreTheme.accent
     Surface(
         shape = ControlShape,
-        color = if (sélectionné) RegistreTheme.colors.sage else RegistreTheme.colors.page,
+        color = if (sélectionné) accent.conteneur else RegistreTheme.colors.page,
         border = if (sélectionné) null else BorderStroke(1.dp, RegistreTheme.colors.sage),
         modifier = Modifier.clickable(onClick = onClick),
     ) {
@@ -252,20 +264,20 @@ private fun PuceJourCours(
                 text = journée.label ?: "${journée.jour}",
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight(600),
-                color = if (sélectionné) RegistreTheme.colors.ink else RegistreTheme.colors.chalk,
+                color = if (sélectionné) accent.surConteneur else RegistreTheme.colors.chalk,
             )
             journée.date?.let { date ->
                 Text(
                     text = date.frenchShort(),
                     style = MaterialTheme.typography.labelSmall,
-                    color = if (sélectionné) RegistreTheme.colors.ink else RegistreTheme.colors.chalk,
+                    color = if (sélectionné) accent.surConteneur else RegistreTheme.colors.chalk,
                 )
             }
             if (journée.créneaux.isNotEmpty()) {
                 Text(
                     text = "${journée.créneaux.size} cours",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = if (sélectionné) RegistreTheme.colors.ink else RegistreTheme.colors.chalk,
+                    style = MaterialTheme.typography.labelSmall.tabulaire(),
+                    color = if (sélectionné) accent.surConteneur else RegistreTheme.colors.chalk,
                 )
             }
         }
@@ -292,13 +304,13 @@ private fun CarteCréneau(
             ) {
                 Text(
                     text = créneau.début ?: "—",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = RegistreTheme.colors.ink,
+                    style = MaterialTheme.typography.titleMedium.tabulaire(),
+                    color = RegistreTheme.accent.teinte,
                 )
                 créneau.fin?.let { fin ->
                     Text(
                         text = fin,
-                        style = MaterialTheme.typography.bodySmall,
+                        style = MaterialTheme.typography.bodySmall.tabulaire(),
                         color = RegistreTheme.colors.chalk,
                     )
                 }

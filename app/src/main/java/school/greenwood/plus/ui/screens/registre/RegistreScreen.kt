@@ -78,9 +78,11 @@ import school.greenwood.plus.ui.components.GwsCard
 import school.greenwood.plus.ui.components.Puce
 import school.greenwood.plus.ui.components.SectionLabel
 import school.greenwood.plus.ui.components.SqueletteRegistre
+import school.greenwood.plus.ui.theme.AnnotationShape
 import school.greenwood.plus.ui.theme.ControlShape
 import school.greenwood.plus.ui.theme.PageShape
 import school.greenwood.plus.ui.theme.RegistreTheme
+import school.greenwood.plus.ui.theme.tabulaire
 import school.greenwood.plus.util.frenchFull
 import school.greenwood.plus.util.frenchLongDay
 import school.greenwood.plus.util.frenchNumeric
@@ -256,7 +258,7 @@ fun RegistreScreen(
     }
 }
 
-/** En-tête : la date en Fraunces, l'enfant consulté à droite, actualiser. */
+/** En-tête : la date en Bricolage, l'enfant consulté à droite, actualiser. */
 @Composable
 private fun EnTête(
     date: LocalDate,
@@ -270,17 +272,26 @@ private fun EnTête(
             .padding(top = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        // La date doit rester lisible en entier (« jeudi 18 septembre ») :
-        // elle passe sur deux lignes plutôt que de se couper (issue #21) —
-        // la coupure n'arrive qu'en toute dernière extrémité.
-        Text(
-            text = date.frenchLongDay(),
-            style = MaterialTheme.typography.displayLarge,
-            color = RegistreTheme.colors.ink,
-            modifier = Modifier.weight(1f),
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-        )
+        Column(modifier = Modifier.weight(1f)) {
+            // La date doit rester lisible en entier (« jeudi 18 septembre ») :
+            // elle passe sur deux lignes plutôt que de se couper (issue #21) —
+            // la coupure n'arrive qu'en toute dernière extrémité.
+            Text(
+                text = date.frenchLongDay(),
+                style = MaterialTheme.typography.displayLarge,
+                color = RegistreTheme.colors.ink,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+            // Le surligneur : le trait de l'onglet, sous le titre.
+            Box(
+                modifier = Modifier
+                    .padding(top = 6.dp)
+                    .size(width = 56.dp, height = 5.dp)
+                    .clip(AnnotationShape)
+                    .background(RegistreTheme.accent.conteneur),
+            )
+        }
         IconButton(onClick = surActualiser) {
             Icon(
                 imageVector = Icons.Rounded.Refresh,
@@ -328,9 +339,11 @@ private fun EnTête(
     }
 }
 
-/** Lien discret vers l'onglet Emploi du temps, depuis l'accueil. */
+/** Lien discret vers l'onglet Emploi du temps, depuis l'accueil — habillé
+ *  de l'accent bleu de l'onglet Cours. */
 @Composable
 private fun CarteLienEmploi(ouvrirEmploi: () -> Unit) {
+    val accentCours = RegistreTheme.colors.accents["cours"]
     GwsCard(
         modifier = Modifier
             .fillMaxWidth()
@@ -343,12 +356,20 @@ private fun CarteLienEmploi(ouvrirEmploi: () -> Unit) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            Icon(
-                imageVector = Icons.Rounded.CalendarMonth,
-                contentDescription = null,
-                tint = RegistreTheme.colors.ink,
-                modifier = Modifier.size(20.dp),
-            )
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .clip(ControlShape)
+                    .background(accentCours?.conteneur ?: RegistreTheme.colors.sage),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.CalendarMonth,
+                    contentDescription = null,
+                    tint = accentCours?.teinte ?: RegistreTheme.colors.ink,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = "Emploi du temps",
@@ -366,16 +387,18 @@ private fun CarteLienEmploi(ouvrirEmploi: () -> Unit) {
 }
 
 /**
- * La carte focale (docs/product/DESIGN.md §2) : fond sage, liseré encre. Le rouge n'y
- * apparaît que sur les devoirs pas encore faits — l'action requise.
+ * La carte focale (docs/product/DESIGN.md §2) : fond de l'accent vert du
+ * Registre, liseré assorti. Le rouge n'y apparaît que sur les devoirs pas
+ * encore faits — l'action requise.
  */
 @Composable
 private fun CarteCeSoir(registre: RegistreDuJour) {
+    val accent = RegistreTheme.accent
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = PageShape,
-        color = RegistreTheme.colors.sage,
-        border = BorderStroke(1.5.dp, RegistreTheme.colors.ink),
+        color = accent.conteneur,
+        border = BorderStroke(1.5.dp, accent.teinte),
     ) {
         Column(
             modifier = Modifier
@@ -387,7 +410,7 @@ private fun CarteCeSoir(registre: RegistreDuJour) {
                 Text(
                     text = "Ce soir",
                     style = MaterialTheme.typography.titleMedium,
-                    color = RegistreTheme.colors.ink,
+                    color = accent.surConteneur,
                 )
                 val demain = registre.date.plusDays(1)
                 val sousTitre = if (registre.horizonCeSoir == demain) {
@@ -407,7 +430,7 @@ private fun CarteCeSoir(registre: RegistreDuJour) {
                 Text(
                     text = "Rien pour demain",
                     style = MaterialTheme.typography.headlineMedium,
-                    color = RegistreTheme.colors.ink,
+                    color = accent.surConteneur,
                 )
                 Text(
                     text = "La rentrée prochaine est tranquille.",
@@ -442,7 +465,7 @@ private fun CarteCeSoir(registre: RegistreDuJour) {
                             Icon(
                                 imageVector = Icons.Rounded.Check,
                                 contentDescription = "Fait",
-                                tint = RegistreTheme.colors.ink,
+                                tint = accent.teinte,
                                 modifier = Modifier.size(18.dp),
                             )
                         } else {
@@ -498,7 +521,7 @@ private fun CarteDevoirDonné(devoir: Devoir) {
             devoir.publication?.let { publication ->
                 Text(
                     text = publication.frenchTime(),
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.bodySmall.tabulaire(),
                     color = RegistreTheme.colors.chalk,
                 )
             }
@@ -531,7 +554,7 @@ private fun CarteAbsence(absence: Absence) {
                 if (dates.isNotBlank()) {
                     Text(
                         text = dates,
-                        style = MaterialTheme.typography.labelSmall,
+                        style = MaterialTheme.typography.labelSmall.tabulaire(),
                         color = RegistreTheme.colors.chalk,
                     )
                 }
@@ -581,6 +604,7 @@ private fun CarteMessage(conversation: Conversation) {
 
 @Composable
 private fun LigneDemandes(ouvrirDemandes: () -> Unit) {
+    val accentDemandes = RegistreTheme.colors.accents["messages"]
     GwsCard(modifier = Modifier.fillMaxWidth().clickable { ouvrirDemandes() }) {
         Row(
             modifier = Modifier
@@ -592,7 +616,7 @@ private fun LigneDemandes(ouvrirDemandes: () -> Unit) {
             Icon(
                 imageVector = Icons.Rounded.Description,
                 contentDescription = null,
-                tint = RegistreTheme.colors.chalk,
+                tint = accentDemandes?.teinte ?: RegistreTheme.colors.chalk,
                 modifier = Modifier.size(18.dp),
             )
             Text(

@@ -5,17 +5,23 @@ import androidx.compose.material3.Shapes
 import androidx.compose.ui.unit.dp
 
 /*
- * Forme (docs/product/DESIGN.md §2) : le rayon encode le rang, pas la décoration.
- * Pages (cartes de contenu) : 20 dp. Champs et boutons : 12 dp.
- * Annotations (puces, statuts, compteurs) : 6 dp.
+ * Forme « École vivante » (docs/product/DESIGN.md §2) : le rayon encode le
+ * rang, plus généreux qu'avant — l'école vit. Pages (cartes de contenu) :
+ * 24 dp. Champs et boutons : 16 dp. Annotations (puces, statuts) : 10 dp.
+ * La pilule est réservée à la capsule de la barre basse.
  */
 
-val PageShape = RoundedCornerShape(20.dp)
-val ControlShape = RoundedCornerShape(12.dp)
-val AnnotationShape = RoundedCornerShape(6.dp)
+val PageShape = RoundedCornerShape(24.dp)
+val ControlShape = RoundedCornerShape(16.dp)
+val AnnotationShape = RoundedCornerShape(10.dp)
+
+/** Capsule pleine — réservée à la sélection de la barre basse. */
+val PiluleShape = RoundedCornerShape(50)
 
 val GwsShapes = Shapes(
+    extraSmall = AnnotationShape,
     small = AnnotationShape,
     medium = ControlShape,
     large = PageShape,
+    extraLarge = RoundedCornerShape(28.dp),
 )

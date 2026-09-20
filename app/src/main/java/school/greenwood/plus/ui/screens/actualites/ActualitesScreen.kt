@@ -10,9 +10,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Newspaper
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -25,6 +28,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -34,6 +38,7 @@ import school.greenwood.plus.ui.components.BandeauErreur
 import school.greenwood.plus.ui.components.CarteActualité
 import school.greenwood.plus.ui.components.EmptyState
 import school.greenwood.plus.ui.components.SqueletteActualites
+import school.greenwood.plus.ui.theme.AnnotationShape
 import school.greenwood.plus.ui.theme.RegistreTheme
 
 /*
@@ -84,6 +89,14 @@ fun ActualitesScreen(
                 style = MaterialTheme.typography.displayLarge,
                 color = RegistreTheme.colors.ink,
             )
+            // Le surligneur : le trait de l'onglet, sous le titre.
+            Box(
+                modifier = Modifier
+                    .padding(top = 6.dp)
+                    .size(width = 56.dp, height = 5.dp)
+                    .clip(AnnotationShape)
+                    .background(RegistreTheme.accent.conteneur),
+            )
             Spacer(Modifier.height(4.dp))
             Text(
                 text = "Nouvelles et annonces de l'école",
@@ -115,6 +128,7 @@ fun ActualitesScreen(
                         titre = "Aucune actualité",
                         message = "L'école n'a pas encore publié d'actualités.",
                         modifier = Modifier.padding(top = 40.dp),
+                        icone = Icons.Rounded.Newspaper,
                     )
                 }
 
@@ -141,7 +155,7 @@ fun ActualitesScreen(
                                     contentAlignment = Alignment.Center,
                                 ) {
                                     CircularProgressIndicator(
-                                        color = RegistreTheme.colors.ink,
+                                        color = RegistreTheme.accent.teinte,
                                     )
                                 }
                             }

@@ -19,6 +19,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Send
 import androidx.compose.material.icons.rounded.Call
+import androidx.compose.material.icons.rounded.Forum
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -47,6 +48,7 @@ import school.greenwood.plus.ui.components.GwsCard
 import school.greenwood.plus.ui.components.Puce
 import school.greenwood.plus.ui.components.SectionLabel
 import school.greenwood.plus.ui.components.SqueletteMessages
+import school.greenwood.plus.ui.theme.AnnotationShape
 import school.greenwood.plus.ui.theme.ControlShape
 import school.greenwood.plus.ui.theme.RegistreTheme
 import school.greenwood.plus.util.frenchFull
@@ -89,12 +91,21 @@ fun MessagesScreen(
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                text = "Messages",
-                style = MaterialTheme.typography.displayLarge,
-                color = RegistreTheme.colors.ink,
-                modifier = Modifier.weight(1f),
-            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "Messages",
+                    style = MaterialTheme.typography.displayLarge,
+                    color = RegistreTheme.colors.ink,
+                )
+                // Le surligneur : le trait de l'onglet, sous le titre.
+                Box(
+                    modifier = Modifier
+                        .padding(top = 6.dp)
+                        .size(width = 56.dp, height = 5.dp)
+                        .clip(AnnotationShape)
+                        .background(RegistreTheme.accent.conteneur),
+                )
+            }
             IconButton(onClick = { vm.définirComposeur(!état.composeurActivé) }) {
                 Icon(
                     imageVector = Icons.Rounded.Tune,
@@ -145,6 +156,7 @@ fun MessagesScreen(
                             EmptyState(
                                 titre = "Aucun message",
                                 message = "Les échanges avec l'administration apparaîtront ici.",
+                                icone = Icons.Rounded.Forum,
                             )
                         }
                     }
@@ -230,7 +242,7 @@ private fun CarteConversation(
                     modifier = Modifier.weight(1f),
                 )
                 if (conversation.messages.size > 1) {
-                    Puce("${conversation.messages.size}")
+                    Puce("${conversation.messages.size}", accent = RegistreTheme.accent)
                 }
             }
             dernier?.let {
@@ -303,7 +315,7 @@ private fun PuceAction(
 ) {
     Surface(
         shape = ControlShape,
-        color = RegistreTheme.colors.sage,
+        color = RegistreTheme.accent.conteneur,
         modifier = Modifier.clickable(onClick = onClick),
     ) {
         Row(
@@ -315,14 +327,14 @@ private fun PuceAction(
                 Icon(
                     imageVector = it,
                     contentDescription = null,
-                    tint = RegistreTheme.colors.ink,
+                    tint = RegistreTheme.accent.surConteneur,
                     modifier = Modifier.size(16.dp),
                 )
             }
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelMedium,
-                color = RegistreTheme.colors.ink,
+                color = RegistreTheme.accent.surConteneur,
             )
         }
     }

@@ -467,3 +467,43 @@ Branch `nouveautes-onglet`.
 - [x] Step 6: Tests (`NormalizersCoursTest.kt` — 89 unit tests total, 0 failures)
 - [x] Step 7: Docs & delivery (`DESIGN.md` §3, `README.md`, `ROADMAP.md`,
       `CHANGELOG.md`, `AGENTS.md`, `ENDPOINT-MAP.md`)
+
+# TASKS — « École vivante » (full-app visual restyle) — branch `restyle-ecole-vivante`
+
+## Design decisions (2026-09-20)
+
+- Direction chosen with the user (dad's verdict on beta 2: « not stunning »):
+  bold & colorful, full-app scope, BOTH light and dark crafted.
+- Concept: schoolyard energy — warm cream paper (light) / deep green-charcoal
+  (dark), one accent family per tab (green, amber, blue, violet, ochre, coral),
+  like subject-notebook covers. Reading surfaces stay neutral; `redPen` keeps
+  its required-action-only discipline and never meets the coral (different hue,
+  never in the same component).
+- Display font: bundled-unused Bricolage Grotesque replaces Fraunces (removed
+  from the APK); Public Sans stays for text; every changing/aligned number goes
+  through the new `tabulaire()` (tnum).
+- Radii up (24/16/10 + bar pill); tonal depth via distinct `surfaceContainer*`
+  steps; custom `BarreOnglets` replaces stock NavigationBar — single-line labels
+  (the 2-line wrap of « Actualités » etc. is fixed), per-tab accent pill, spring
+  selection. Navigation contract (allerÀLOnglet, saveState/restoreState) untouched.
+
+## Branch `restyle-ecole-vivante` (stacked on `fix-post-detail-scroll-crash`)
+
+- [x] Tokens: Color.kt (neutrals + 6 accent triads + signetVif, light/dark),
+      Tokens.kt (GwsAccent, accents map, LocalGwsAccent), Theme.kt (tonal
+      ladders, error container, system-bar icon contrast SideEffect), Type.kt
+      (Bricolage display, tabulaire()), Shape.kt, Mouvement.kt
+- [x] Components: Puce/SectionLabel accent params, EmptyState playful mark,
+      BandeauErreur M3 tint, EntréeCascade, BarreOnglets.kt, CarteActualité
+      accent + signetVif token (hardcoded #FC942D gone)
+- [x] AppNav: route→accent table + animated ambient accent + custom bar
+- [x] Screens: Registre (focal card in green accent, highlighter, blue Cours
+      link, coral Demandes line), Actualités + PostDetail (amber), Cours (blue
+      chips/times), Devoirs (violet chips), Documents + Quiz (ochre; correct
+      answer = universal green), Messages/Conversation/Composeur/Demandes
+      (coral; recording dot is state, not required-action), Login + Onboarding
+      (default green, pill pager)
+- [x] System: launch windowBackground cream/charcoal
+- [x] Docs: DESIGN.md §2 rewritten, CHANGELOG, AGENTS
+- [ ] On-device pass: screenshots of every tab, light AND dark
+      (`adb shell cmd uimode night no/yes`), back-gesture contract re-check

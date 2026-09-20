@@ -44,6 +44,7 @@ import android.widget.Toast
 import androidx.core.content.ContextCompat
 import kotlinx.coroutines.delay
 import school.greenwood.plus.ui.theme.ControlShape
+import school.greenwood.plus.ui.theme.tabulaire
 import school.greenwood.plus.ui.theme.RegistreTheme
 import java.io.File
 import java.util.Locale
@@ -145,7 +146,7 @@ fun Composeur(
                         Icon(
                             imageVector = Icons.Rounded.Stop,
                             contentDescription = "Terminer le message vocal",
-                            tint = RegistreTheme.colors.redPen,
+                            tint = RegistreTheme.accent.teinte,
                         )
                     }
                 }
@@ -303,11 +304,11 @@ private fun PastilleEnregistrement() {
             modifier = Modifier
                 .size(8.dp)
                 .clip(CircleShape)
-                .background(RegistreTheme.colors.redPen),
+                .background(RegistreTheme.accent.teinte),
         )
         Text(
             text = String.format(Locale.FRENCH, "%d:%02d", secondes / 60, secondes % 60),
-            style = MaterialTheme.typography.labelSmall,
+            style = MaterialTheme.typography.labelSmall.tabulaire(),
             color = RegistreTheme.colors.chalk,
         )
     }

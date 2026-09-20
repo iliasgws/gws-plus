@@ -16,7 +16,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -27,14 +26,13 @@ import school.greenwood.plus.ui.theme.RegistreTheme
 import school.greenwood.plus.util.frenchFull
 import school.greenwood.plus.util.htmlToPlainSingleLine
 
-private val CouleurSignet = Color(0xFFFC942D)
-
 /**
  * Carte d'une actualité (partagée entre le flux Actualités et le Registre).
  *
- * Affiche la catégorie, l'icône de signet (#fc942d) si présent, le titre,
- * la date de publication, le badge de lecture (« Vu le … » issu de `intro`),
- * l'auteur si présent, et la vignette d'image.
+ * Affiche la catégorie, l'icône de signet si présent, le titre, la date de
+ * publication, le badge de lecture (« Vu le … » issu de `intro`), l'auteur si
+ * présent, et la vignette d'image. La puce et le signet se mettent à l'accent
+ * de l'endroit d'où la carte est ouverte (vert au Registre, ambre dans le flux).
  */
 @Composable
 fun CarteActualité(
@@ -62,13 +60,13 @@ fun CarteActualité(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
                     post.categorie?.takeIf { it.isNotBlank() }?.let { categorie ->
-                        Puce(label = categorie)
+                        Puce(label = categorie, accent = RegistreTheme.accent)
                     }
                     if (post.bookmark) {
                         Icon(
                             imageVector = Icons.Rounded.Bookmark,
                             contentDescription = "Signet",
-                            tint = CouleurSignet,
+                            tint = RegistreTheme.colors.signetVif,
                             modifier = Modifier.size(16.dp),
                         )
                     }

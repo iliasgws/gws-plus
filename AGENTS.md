@@ -43,8 +43,8 @@ Current contents (update this section whenever files are added or removed):
 | `…/MainActivity.kt` | Single activity, edge-to-edge, Compose |
 | `…/ui/AppNav.kt` | Root state (onboarding → connexion → registre) + 6-tab shell (Registre, Actualités, Cours, Devoirs, Documents, Messages), back-stack contract |
 | `…/ui/AppViewModels.kt` | One ViewModel per screen |
-| `…/ui/theme/` | « Le registre » tokens: colors, Fraunces/Bricolage/Public Sans type, 20/12/6 shapes |
-| `…/ui/components/Components.kt` | Shared composables (GwsCard, Puce, EmptyState, ErrorInline, GwsAvatar…) |
+| `…/ui/theme/` | « École vivante » tokens: colors + per-tab accents, Bricolage/Public Sans type, 24/16/10 shapes, motion springs (Mouvement.kt) |
+| `…/ui/components/` | Shared composables (Components.kt: GwsCard, Puce, EmptyState, skeletons…; CarteActualite.kt; BarreOnglets.kt: custom accent bottom bar) |
 | `…/ui/screens/` | Login, Onboarding, registre, actualites (+ Post detail), cours (Emploi du temps), devoirs, documents (+ Quiz play), messages (+ Conversation + composer), demandes |
 | `…/data/api/` | BotiApi/BotiClient (generic GET/POST multipart + envelope), BotiEnvelope, MediaUrls (single-decode) |
 | `…/data/session/SessionStore.kt` | DataStore session (keyToken, user, eleves; never passwords) + composer switch |
