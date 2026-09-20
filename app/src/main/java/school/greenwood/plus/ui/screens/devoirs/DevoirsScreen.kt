@@ -2,8 +2,6 @@ package school.greenwood.plus.ui.screens.devoirs
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.spring
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,13 +20,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Attachment
 import androidx.compose.material.icons.rounded.Download
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -49,10 +44,11 @@ import school.greenwood.plus.ui.DevoirsViewModel
 import school.greenwood.plus.ui.components.BandeauErreur
 import school.greenwood.plus.ui.components.EmptyState
 import school.greenwood.plus.ui.components.ErrorInline
+import school.greenwood.plus.ui.components.GwsBouton
 import school.greenwood.plus.ui.components.GwsCard
 import school.greenwood.plus.ui.components.Puce
+import school.greenwood.plus.ui.components.PuceChoix
 import school.greenwood.plus.ui.components.SqueletteDevoirs
-import school.greenwood.plus.ui.theme.ControlShape
 import school.greenwood.plus.ui.theme.RegistreTheme
 import school.greenwood.plus.util.Fichiers
 import school.greenwood.plus.util.frenchShort
@@ -73,13 +69,20 @@ fun DevoirsScreen(
     val context = LocalContext.current
     val aujourdhui = LocalDate.now()
 
+    // La liste défile sous la barre flottante (Shell y a ajouté sa hauteur).
+    val bas = padding.calculateBottomPadding()
+
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(RegistreTheme.colors.paper)
-            .padding(padding),
+        modifier = Modifier.fillMaxSize(),
     ) {
-        Column(Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
+        Column(
+            Modifier.padding(
+                top = padding.calculateTopPadding() + 12.dp,
+                start = 16.dp,
+                end = 16.dp,
+                bottom = 12.dp,
+            ),
+        ) {
             Text(
                 text = "Devoirs",
                 style = MaterialTheme.typography.displayLarge,
@@ -104,8 +107,8 @@ fun DevoirsScreen(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             items(jours) { jour ->
-                JourChip(
-                    jour = jour,
+                PuceChoix(
+                    label = if (jour == LocalDate.now()) "Aujourd'hui" else jour.frenchShort(),
                     sélectionné = jour == état.jourChoisi,
                     onClick = { vm.choisirJour(jour) },
                 )
@@ -113,24 +116,21 @@ fun DevoirsScreen(
         }
 
         when {
-            état.chargement -> SqueletteDevoirs()
+            état.chargement -> Box(Modifier.fillMaxSize().padding(bottom = bas)) {
+                SqueletteDevoirs()
+            }
             état.erreur != null && état.tous.isEmpty() -> Column(
                 Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
+                    .padding(16.dp)
+                    .padding(bottom = bas),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 ErrorInline(message = état.erreur ?: "")
-                Button(
+                GwsBouton(
+                    texte = "Réessayer",
                     onClick = { vm.charger(force = true) },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = RegistreTheme.colors.ink,
-                        contentColor = RegistreTheme.colors.page,
-                    ),
-                    shape = ControlShape,
-                ) {
-                    Text("Réessayer")
-                }
+                )
             }
             else -> {
                 // Bandeau discret au-dessus de la liste quand un échec réseau
@@ -161,7 +161,12 @@ fun DevoirsScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .weight(1f),
-                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+                            contentPadding = PaddingValues(
+                                start = 16.dp,
+                                end = 16.dp,
+                                top = 12.dp,
+                                bottom = 12.dp + bas,
+                            ),
                             verticalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
                             items(duJour, key = { it.id }) { devoir ->
@@ -178,27 +183,6 @@ fun DevoirsScreen(
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun JourChip(
-    jour: LocalDate,
-    sélectionné: Boolean,
-    onClick: () -> Unit,
-) {
-    Surface(
-        shape = ControlShape,
-        color = if (sélectionné) RegistreTheme.colors.sage else RegistreTheme.colors.page,
-        border = if (sélectionné) null else BorderStroke(1.dp, RegistreTheme.colors.sage),
-        modifier = Modifier.clickable(onClick = onClick),
-    ) {
-        Text(
-            text = if (jour == LocalDate.now()) "Aujourd'hui" else jour.frenchShort(),
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
-            style = MaterialTheme.typography.labelMedium,
-            color = if (sélectionné) RegistreTheme.colors.ink else RegistreTheme.colors.chalk,
-        )
     }
 }
 

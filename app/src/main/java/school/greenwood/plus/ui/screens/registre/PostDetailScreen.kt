@@ -1,7 +1,6 @@
 package school.greenwood.plus.ui.screens.registre
 
 import androidx.activity.ComponentActivity
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -87,8 +86,7 @@ fun PostDetailScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(RegistreTheme.colors.paper)
-            .padding(padding)
+            .padding(top = padding.calculateTopPadding(), bottom = padding.calculateBottomPadding())
             .padding(horizontal = 20.dp)
             .verticalScroll(rememberScrollState()),
     ) {

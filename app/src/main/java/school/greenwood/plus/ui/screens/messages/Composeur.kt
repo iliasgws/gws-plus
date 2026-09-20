@@ -22,7 +22,6 @@ import androidx.compose.material.icons.rounded.Stop
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -43,7 +42,9 @@ import android.content.pm.PackageManager
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import kotlinx.coroutines.delay
+import school.greenwood.plus.ui.components.GlassSurface
 import school.greenwood.plus.ui.theme.ControlShape
+import school.greenwood.plus.ui.theme.PageShape
 import school.greenwood.plus.ui.theme.RegistreTheme
 import java.io.File
 import java.util.Locale
@@ -111,13 +112,14 @@ fun Composeur(
             }
         }
 
-        Surface(
+        // Verre fort : le composeur reste posé sur du contenu qui bouge et au-
+        // dessus du clavier — pas d'échantillonnage ici, la lisibilité d'abord.
+        GlassSurface(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 8.dp),
-            shape = ControlShape,
-            color = RegistreTheme.colors.page,
-            border = androidx.compose.foundation.BorderStroke(1.dp, RegistreTheme.colors.sage),
+            shape = PageShape,
+            strong = true,
         ) {
             if (enregistre) {
                 // État d'enregistrement intégré : pastille rouge, chrono,
@@ -251,9 +253,8 @@ private fun PucePièce(
     icone: androidx.compose.ui.graphics.vector.ImageVector? = null,
     onRetirer: () -> Unit,
 ) {
-    Surface(
+    GlassSurface(
         shape = ControlShape,
-        color = RegistreTheme.colors.sage,
     ) {
         Row(
             modifier = Modifier.padding(start = 10.dp, end = 2.dp, top = 2.dp, bottom = 2.dp),

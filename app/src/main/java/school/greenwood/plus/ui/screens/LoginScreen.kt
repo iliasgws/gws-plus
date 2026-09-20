@@ -1,6 +1,5 @@
 package school.greenwood.plus.ui.screens
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -61,7 +60,6 @@ fun LoginScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(RegistreTheme.colors.paper)
             .imePadding(),
     ) {
         Column(
@@ -157,6 +155,7 @@ fun LoginScreen(
                             )
                         }
                     }
+
 
                     état.erreur?.let { message ->
                         ErrorInline(message = message, icone = Icons.Rounded.Error)

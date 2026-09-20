@@ -20,12 +20,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Send
 import androidx.compose.material.icons.rounded.Call
 import androidx.compose.material.icons.rounded.Tune
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -43,6 +40,8 @@ import school.greenwood.plus.ui.MessagesViewModel
 import school.greenwood.plus.ui.components.BandeauErreur
 import school.greenwood.plus.ui.components.EmptyState
 import school.greenwood.plus.ui.components.ErrorInline
+import school.greenwood.plus.ui.components.GlassSurface
+import school.greenwood.plus.ui.components.GwsBouton
 import school.greenwood.plus.ui.components.GwsCard
 import school.greenwood.plus.ui.components.Puce
 import school.greenwood.plus.ui.components.SectionLabel
@@ -77,16 +76,21 @@ fun MessagesScreen(
     val état by vm.état.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
+    // La liste défile sous la barre flottante (Shell y a ajouté sa hauteur).
+    val bas = padding.calculateBottomPadding()
+
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(RegistreTheme.colors.paper)
-            .padding(padding),
+        modifier = Modifier.fillMaxSize(),
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .padding(
+                    top = padding.calculateTopPadding() + 12.dp,
+                    start = 16.dp,
+                    end = 16.dp,
+                    bottom = 12.dp,
+                ),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
@@ -105,29 +109,31 @@ fun MessagesScreen(
         }
 
         when {
-            état.chargement -> SqueletteMessages()
+            état.chargement -> Box(Modifier.fillMaxSize().padding(bottom = bas)) {
+                SqueletteMessages()
+            }
             état.erreur != null && état.conversations.isEmpty() -> Column(
                 Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
+                    .padding(16.dp)
+                    .padding(bottom = bas),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 ErrorInline(message = état.erreur ?: "")
-                Button(
+                GwsBouton(
+                    texte = "Réessayer",
                     onClick = { vm.charger(force = true) },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = RegistreTheme.colors.ink,
-                        contentColor = RegistreTheme.colors.page,
-                    ),
-                    shape = ControlShape,
-                ) {
-                    Text("Réessayer")
-                }
+                )
             }
             else -> {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+                    contentPadding = PaddingValues(
+                        start = 16.dp,
+                        end = 16.dp,
+                        top = 12.dp,
+                        bottom = 12.dp + bas,
+                    ),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     // Bandeau discret en tête de liste quand un échec réseau
@@ -301,9 +307,8 @@ private fun PuceAction(
     icone: androidx.compose.ui.graphics.vector.ImageVector? = null,
     onClick: () -> Unit,
 ) {
-    Surface(
+    GlassSurface(
         shape = ControlShape,
-        color = RegistreTheme.colors.sage,
         modifier = Modifier.clickable(onClick = onClick),
     ) {
         Row(

@@ -1,7 +1,5 @@
 package school.greenwood.plus.ui.screens.messages
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,8 +19,6 @@ import androidx.compose.material.icons.rounded.Attachment
 import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -53,7 +49,10 @@ import school.greenwood.plus.ui.ConversationViewModel
 import school.greenwood.plus.ui.components.BandeauErreur
 import school.greenwood.plus.ui.components.EmptyState
 import school.greenwood.plus.ui.components.ErrorInline
+import school.greenwood.plus.ui.components.GlassSurface
+import school.greenwood.plus.ui.components.GwsBouton
 import school.greenwood.plus.ui.components.SqueletteConversation
+import school.greenwood.plus.ui.theme.BubbleShape
 import school.greenwood.plus.ui.theme.ControlShape
 import school.greenwood.plus.ui.theme.RegistreTheme
 import school.greenwood.plus.util.Fichiers
@@ -87,18 +86,19 @@ fun ConversationScreen(
     val état by vm.état.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
+    // Le fil défile sous la barre flottante (Shell y a ajouté sa hauteur).
+    val bas = padding.calculateBottomPadding()
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(RegistreTheme.colors.paper)
             // Le clavier repousse le contenu (composeur visible au-dessus).
-            .imePadding()
-            .padding(padding),
+            .imePadding(),
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 6.dp),
+                .padding(top = padding.calculateTopPadding() + 6.dp, start = 8.dp, end = 8.dp, bottom = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             IconButton(onClick = retour) {
@@ -129,24 +129,21 @@ fun ConversationScreen(
         }
 
         when {
-            état.chargement -> SqueletteConversation()
+            état.chargement -> Box(Modifier.fillMaxSize().padding(bottom = bas)) {
+                SqueletteConversation()
+            }
             état.erreur != null && état.conversation == null -> Column(
                 Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
+                    .padding(16.dp)
+                    .padding(bottom = bas),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 ErrorInline(message = état.erreur ?: "")
-                Button(
+                GwsBouton(
+                    texte = "Réessayer",
                     onClick = { vm.charger(force = true) },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = RegistreTheme.colors.ink,
-                        contentColor = RegistreTheme.colors.page,
-                    ),
-                    shape = ControlShape,
-                ) {
-                    Text("Réessayer")
-                }
+                )
             }
             état.conversation?.messages?.isEmpty() != false ->
                 Column(Modifier.fillMaxSize()) {
@@ -161,7 +158,8 @@ fun ConversationScreen(
                     Box(
                         Modifier
                             .fillMaxWidth()
-                            .weight(1f),
+                            .weight(1f)
+                            .padding(bottom = bas),
                         contentAlignment = Alignment.Center,
                     ) {
                         EmptyState(
@@ -209,7 +207,7 @@ fun ConversationScreen(
                         .fillMaxWidth()
                         .weight(1f)
                         .padding(horizontal = 16.dp),
-                    contentPadding = PaddingValues(vertical = 8.dp),
+                    contentPadding = PaddingValues(top = 8.dp, bottom = 8.dp + bas),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     messages.forEachIndexed { index, message ->
@@ -238,25 +236,28 @@ fun ConversationScreen(
                 }
 
                 if (état.composeurActif) {
-                    Composeur(
-                        texte = état.texte,
-                        onTexte = vm::modifierTexte,
-                        pièces = état.pièces,
-                        onAjouterPièces = vm::ajouterPièces,
-                        onRetirerPièce = vm::retirerPièce,
-                        audio = état.audio,
-                        onRetirerAudio = vm::retirerAudio,
-                        enregistre = état.enregistre,
-                        onDémarrerEnregistrement = vm::démarrerEnregistrement,
-                        // Arrêter = repasser en composeur avec le vocal prêt
-                        // (puce « Message vocal prêt ») ; l'envoi reste un
-                        // geste séparé, comme pour une pièce jointe.
-                        onArrêterEnregistrement = vm::arrêterEnregistrement,
-                        onAnnulerEnregistrement = vm::annulerEnregistrement,
-                        envoiPossible = état.erreur == null,
-                        onEnvoyer = vm::envoyer,
-                        enCours = état.envois.any { it.statut == MessageEnvoi.Statut.EnCours },
-                    )
+                    // Le composeur flotte au-dessus de la barre de verre.
+                    Box(Modifier.padding(bottom = bas)) {
+                        Composeur(
+                            texte = état.texte,
+                            onTexte = vm::modifierTexte,
+                            pièces = état.pièces,
+                            onAjouterPièces = vm::ajouterPièces,
+                            onRetirerPièce = vm::retirerPièce,
+                            audio = état.audio,
+                            onRetirerAudio = vm::retirerAudio,
+                            enregistre = état.enregistre,
+                            onDémarrerEnregistrement = vm::démarrerEnregistrement,
+                            // Arrêter = repasser en composeur avec le vocal prêt
+                            // (puce « Message vocal prêt ») ; l'envoi reste un
+                            // geste séparé, comme pour une pièce jointe.
+                            onArrêterEnregistrement = vm::arrêterEnregistrement,
+                            onAnnulerEnregistrement = vm::annulerEnregistrement,
+                            envoiPossible = état.erreur == null,
+                            onEnvoyer = vm::envoyer,
+                            enCours = état.envois.any { it.statut == MessageEnvoi.Statut.EnCours },
+                        )
+                    }
                 }
             }
         }
@@ -286,10 +287,8 @@ private fun BulleEnvoi(
         horizontalAlignment = Alignment.End,
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
-        Surface(
-            shape = ControlShape,
-            color = RegistreTheme.colors.page,
-            border = BorderStroke(1.dp, RegistreTheme.colors.sage),
+        GlassSurface(
+            shape = BubbleShape,
         ) {
             Column(
                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
@@ -378,24 +377,21 @@ private fun Bulle(
         horizontalAlignment = if (alignéDroite) Alignment.End else Alignment.Start,
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
-        Surface(
-            shape = ControlShape,
-            color = if (message.deLAdmin) RegistreTheme.colors.sage else RegistreTheme.colors.page,
-            border = if (message.deLAdmin) null else BorderStroke(1.dp, RegistreTheme.colors.sage),
-        ) {
-            Column(
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
+        if (message.deLAdmin) {
+            // Voix de l'administration : sage plein — la seule masse teintée
+            // du fil (docs/product/DESIGN.md §2).
+            Surface(
+                shape = BubbleShape,
+                color = RegistreTheme.colors.sage,
             ) {
-                Text(
-                    text = message.texte.replace("\r\n", "\n"),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = RegistreTheme.colors.ink,
-                )
-                message.attachments.forEach { pièce ->
-                    LignePièceJointe(pièce = pièce, onTélécharger = onTélécharger)
-                }
-                message.audio?.let { pièce -> LigneAudio(pièce) }
+                ContenuBulle(message, onTélécharger)
+            }
+        } else {
+            // Voix du parent : feuille de verre.
+            GlassSurface(
+                shape = BubbleShape,
+            ) {
+                ContenuBulle(message, onTélécharger)
             }
         }
         Row(
@@ -420,6 +416,27 @@ private fun Bulle(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun ContenuBulle(
+    message: Message,
+    onTélécharger: (Attachment, (java.io.File?) -> Unit) -> Unit,
+) {
+    Column(
+        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Text(
+            text = message.texte.replace("\r\n", "\n"),
+            style = MaterialTheme.typography.bodyMedium,
+            color = RegistreTheme.colors.ink,
+        )
+        message.attachments.forEach { pièce ->
+            LignePièceJointe(pièce = pièce, onTélécharger = onTélécharger)
+        }
+        message.audio?.let { pièce -> LigneAudio(pièce) }
     }
 }
 

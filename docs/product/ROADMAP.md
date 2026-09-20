@@ -390,3 +390,47 @@ background, non-blocking error banners, and the registre date fix. Branch
 - [ ] (!) real-device pass: skeleton → content swap on each tab, warm
       reopen without flicker, banner + « Réessayer » under airplane mode,
       back gesture from Devoirs unchanged
+
+## Direction visuelle « liquid glass » (branch `design/liquid-glass`)
+
+Full visual restyle: the ink-and-paper theme becomes liquid glass — aurora
+backdrop, translucent glass sheets, floating frosted capsule tab bar. The
+navigation/back-stack contract (DESIGN.md §3) is untouched: same routes,
+same tab gesture, same transitions, `enableOnBackInvokedCallback` untouched.
+
+- [x] Library verified live on Maven Central:
+      `io.github.kashif-mehmood-km:backdrop:0.0.1-alpha02` (KMP Liquid Glass,
+      port of Kyant0's AndroidLiquidGlass). All library usage confined to
+      `ui/components/Glass.kt` — any API churn is a one-file fix
+- [x] Tokens: `GlassPalette` (card / bar / barStrong / stroke / auraA-B-C)
+      nested in `GwsColors`; `paper` repurposed as the aurora base; `chalk`
+      darkened (`#5F6F63`) to hold ≥ 4.5:1 through glass; `redPen` semantics
+      untouched everywhere
+- [x] Shapes: pages 24 / sheets 28 / bubbles 18 / controls capsule (50 %);
+      `AnnotationShape` removed, 4 call sites migrated
+- [x] Glass primitives: `AuroraBackdrop` (three static blobs, `drawBehind`,
+      never animated), `GlassSurface` (translucent fill + 1 dp luminous
+      stroke, `strong` = 95 % fallback), `GlassBottomBar` (real backdrop
+      sampling via `drawBackdrop`: blur 18 dp + colorControls only — no
+      lens/vibrancy over a moving backdrop; `<` API 31 renders the barStrong
+      capsule, designed fallback)
+- [x] Shell: one `layerBackdrop` capture at the AppNav root (aurora +
+      screens); the floating glass bar is a sibling outside the captured
+      layer so it never samples itself; Scaffold kept (transparent, empty
+      bottomBar) purely for insets; screens receive bottom padding =
+      nav inset + `GlassDefaults.BarTotal` and scroll under the bar
+- [x] Screens: all 13 converted — transparent roots; day chips, nature
+      filters, message categories, search field and action button extracted
+      into shared `PuceChoix` / `ChampRecherche` / `GwsBouton`; quiz answers
+      keep solid semantic fills (sage correct / redPen wrong — a verdict is
+      read, not seen through); admin bubbles stay solid sage, parent bubbles
+      and pending-send bubbles go glass; modal sheets use `barStrong` (own
+      window, cannot sample); skeletons converted to glass
+- [x] Docs: DESIGN.md §2 rewritten (material rules + new token tables),
+      §5 theme bullet updated; CHANGELOG `[Unreleased]`; this section
+- [x] `assembleDebug`, `assembleRelease` (minified) and `testDebugUnitTest`
+      green
+- [ ] (!) real-device pass (no emulator in the build environment): blur
+      visible on the floating bar (API 31+), lens refraction (API 33+),
+      `<` 31 fallback legible, contrast on glass in both themes, back
+      gesture from every section unchanged

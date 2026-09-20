@@ -17,11 +17,14 @@ Le ton : calme, précis, un peu scolaire sans être mièvre. L'app d'origine est
 « horrible » parce qu'elle crie de partout (badges, modales, slides
 publicitaires via `showSLides`) — GWS+ gagne en enlevant.
 
-## 2. Direction visuelle : « Le registre »
+## 2. Direction visuelle : « Liquid glass »
 
 Le cahier de liaison est le cœur de la communication école-familles en France.
-GWS+ reprend le vocabulaire du registre scolaire, mais en encre et papier
-réinventés, pas en skeuomorphisme : pas de lignes règlées, pas de spirales.
+GWS+ garde le vocabulaire du registre scolaire — l'encre verte, le stylo rouge
+— mais les surfaces ne sont plus du papier : le contenu se pose sur du
+**verre liquide**, des feuilles translucides au-dessus d'une aurore douce,
+dans l'esprit des matériaux d'iOS 26. Pas de skeuomorphisme : pas de lignes
+règlées, pas de spirales, pas de verre qui casse.
 
 **La chose dont on se souvient** : l'écran d'accueil est un registre du jour —
 un flux chronologique vertical de ce qui s'est passé (actualités, devoirs
@@ -34,23 +37,60 @@ plus discret.
 dominant (le nom de l'école), utilisé comme on utilise l'encre — pour écrire
 ce qui compte — et un rouge stylo de correction réservé aux seuls éléments qui
 réclament une action parent (demande à signer, devoir non consulté). Le rouge
-ne décore jamais : s'il est visible, il y a quelque chose à faire.
+ne décore jamais : s'il est visible, il y a quelque chose à faire. Sur verre,
+la règle est encore plus stricte : le rouge est un verdict, un badge, une
+action — jamais une teinte décorative.
+
+### Le matériau : deux niveaux de verre
+
+Le verre a besoin d'un fond avec de la variation pour être visible. Le fond de
+l'app est une **aurore** : trois halos doux et immobiles (sauge, crème chaud,
+bleu-vert pâle) sur une base claire le jour, sombre la nuit. Jamais animée —
+un fond qui bouge fatigue, et l'app ne joue jamais d'animation pour rien.
+
+- **Verre calme** (cartes, bulles du parent, puces de choix, squelettes) : une
+  feuille translucide à ~72 % plus un liseré lumineux de 1 dp, **sans
+  floutage** — sur une aurore statique, flouter serait invisible et coûterait
+  pour rien.
+- **Verre réel** (la barre basse flottante) : le **seul nœud flouté de
+  l'app**. Elle échantillonne le contenu qui défile derrière elle via la
+  bibliothèque [`backdrop`](https://github.com/Kashif-E/KMPLiquidGlass)
+  (port KMP de AndroidLiquidGlass) — blur + colorControls uniquement ; jamais
+  de lens/vibrancy sur un fond qui bouge (jank). Refraction/lens réservés à
+  l'API 33+, floutage simple dès l'API 31.
+- **Verre fort** (feuilles modales, composeur, repli API < 31) : fill quasi
+  opaque à 95 %. Une feuille modale vit dans sa propre fenêtre : elle ne
+  peut pas échantillonner — le verre fort est conçu pour ça, pas rafistolé.
+  Sous l'API 31, le floutage n'existe pas : tout le verre bascule sur le verre
+  fort. La dégradation est conçue, pas accidentelle.
 
 ### Palette (clarité / obscurité)
 
 | Jeton | Clair | Sombre | Rôle |
 |---|---|---|---|
 | `ink` | `#1F3D2B` | `#E8F0E9` | Vert encre : titres, texte principal, éléments actifs |
-| `paper` | `#FAFAF7` | `#121814` | Fond de l'app |
-| `page` | `#FFFFFF` | `#1B241E` | Surfaces (cartes registre, feuilles) |
-| `sage` | `#E9EFE7` | `#243026` | Conteneurs passifs, puces, séparateurs doux |
+| `paper` | `#EFF3ED` | `#0C110E` | Base de l'aurore, fond de l'app |
+| `page` | `#FFFFFF` | `#1B241E` | Texte posé sur une teinte pleine ; base des fills de verre sombres |
+| `sage` | `#E9EFE7` | `#243026` | Teintes pleines sémantiques : bulles admin, verdict du quiz, carte « Ce soir », indicateur d'onglet |
 | `redPen` | `#B3382A` | `#F0917F` | Action requise uniquement : badge, compte non lu, CTA « signer » |
-| `chalk` | `#6B7A6E` | `#93A396` | Texte secondaire, horodatages, états vides |
+| `chalk` | `#5F6F63` | `#93A396` | Texte secondaire — assombri pour rester lisible à travers le verre (≥ 4,5:1) |
+
+La palette de verre (`RegistreTheme.colors.glass`) complète les six rôles :
+
+| Jeton | Clair | Sombre | Rôle |
+|---|---|---|---|
+| `glass.card` | blanc 72 % | `#1B241E` 70 % | feuilles de verre calmes (cartes, puces, bulles) |
+| `glass.bar` | blanc 60 % | `#1B241E` 55 % | teinte de la barre flottante réellement floutée |
+| `glass.barStrong` | blanc 95 % | `#1B241E` 95 % | feuilles modales, composeur, repli API < 31 |
+| `glass.stroke` | blanc 35 % | blanc 16 % | liseré lumineux au bord de chaque feuille |
+| `glass.auraA/B/C` | sauge / crème / bleu-vert pâle | halos sombres | les trois blobs de l'aurore |
 
 Règles : `redPen` n'apparaît jamais en fond de grande surface ; la seule
-surface teintée pleine est la carte « Ce soir » (fond `sage`, liseré `ink`).
-Les erreurs partagent la teinte du `redPen` mais uniquement en texte inline
-avec pictogramme — un badge de correction n'est jamais une erreur.
+surface teintée pleine est la carte « Ce soir » (fond `sage`, liseré `ink`) —
+elle est focale justement parce qu'elle est la seule masse opaque au milieu
+du verre. Les erreurs partagent la teinte du `redPen` mais uniquement en
+texte inline avec pictogramme — un badge de correction n'est jamais une
+erreur.
 
 ### Typographie
 
@@ -64,24 +104,26 @@ avec pictogramme — un badge de correction n'est jamais une erreur.
   carte 17sp/600 Public Sans, corps 15sp/400, annotations 13sp. Jamais deux
   niveaux adjacents à 1sp d'écart.
 
-### Forme
+### Forme : le langage des capsules
 
-Le rayon encode le rang, pas la décoration :
+Chaque contrôle est une capsule pleine ; le contenu garde un rayon continu
+qui lui dit son rang :
 
-- **Pages** (cartes de contenu, feuilles du registre) : rayon 20dp — le plus
-  doux, le plus haut dans la hiérarchie visuelle.
-- **Annotations** (puces matière, statuts de demande, compteurs) : rayon 6dp —
-  crisp, rapide à scanner.
-- **Champs de saisie et boutons** : rayon 12dp, milieu — le doigt les
-  distingue des deux autres rangs.
+- **Contrôles** (barre flottante, boutons, champs, puces de choix, puces
+  d'annotation) : capsule — rayon 50 %. Le doigt reconnaît une forme ronde.
+- **Pages** (cartes de contenu, réponses de quiz, composeur) : rayon 24dp.
+- **Feuilles modales** : rayon 28dp. **Bulles et bandeaux d'erreur** :
+  rayon 18dp.
 
 ### Motion
 
 Une chorégraphie, pas dix tics : à la première ouverture de l'accueil, la
 pile du registre entre en cascade légère (la carte « Ce soir » d'abord, puis
-les entrées du jour, décalage 40ms, ressort). Ensuite tout est fonctionnel :
-expansion d'un devoir, changement de statut d'une demande, transitions
-élément-partagé carte → détail. Jamais d'animation déclenchée par rien.
+les entrées du jour, décalage 40ms, ressort). La barre flottante entre en
+fondu-glissement. Ensuite tout est fonctionnel : expansion d'un devoir,
+changement de statut d'une demande, transitions élément-partagé carte →
+détail. Jamais d'animation déclenchée par rien — l'aurore elle-même est
+immobile.
 
 ## 3. Navigation et geste retour — priorité n°1
 
@@ -165,9 +207,11 @@ consulté.
 
 - **Kotlin + Jetpack Compose + Material 3**, un module `:app` au début ; pas
   de multi-modules prématuré.
-- **Theme** : `MaterialTheme` custom (couleurs ci-dessus, typo Fraunces +
-  Public Sans, formes à trois rangs), jetons étendus (`redPen` sémantique)
-  via `CompositionLocal`.
+- **Theme** : `MaterialTheme` custom (couleurs ci-dessus + palette de verre,
+  typo Fraunces + Public Sans, capsules + rayons continus), jetons étendus
+  (`redPen` sémantique) via `CompositionLocal`. Le floutage réel est confiné
+  à `ui/components/Glass.kt`, seul fichier qui connaît la bibliothèque
+  `backdrop` (KMP Liquid Glass) — si son API bouge, seul ce fichier suit.
 - **Réseau** : OkHttp/Retrofit ; `keyToken` + `user_id` injectés par
   interceptor ; gestion des réponses `"disconnect": true` → retour connexion.
   Les bizarreries du serveur sont assumées : `paltform` (sic) est envoyé tel

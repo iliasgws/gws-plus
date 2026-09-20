@@ -8,7 +8,7 @@ la racine reste la porte d'entrée ; tout le reste vit ici.
 | Doc | Contenu |
 | --- | --- |
 | [`product/OVERVIEW.md`](product/OVERVIEW.md) | Ce que l'app fait, pour qui, ce qui est vérifié ou non |
-| [`product/DESIGN.md`](product/DESIGN.md) | Direction visuelle « Le registre », contrat de navigation, périmètre |
+| [`product/DESIGN.md`](product/DESIGN.md) | Direction visuelle « Liquid glass », contrat de navigation, périmètre |
 | [`product/ROADMAP.md`](product/ROADMAP.md) | Checklist vivante : milestone en cours + feuille de route |
 
 ## Development — comment c'est construit

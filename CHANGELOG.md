@@ -4,6 +4,38 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [Unreleased]
+
+### Ajouté
+
+- **Direction visuelle « liquid glass »** : le registre se pose sur du verre.
+  Le fond de l'app devient une aurore douce (trois halos immobiles, claire
+  comme sombre) ; cartes, bulles, composeur et squelettes deviennent des
+  feuilles de verre translucides avec liseré lumineux ; la barre basse devient
+  une capsule flottante de verre qui floute le contenu qui défile derrière
+  elle — le seul nœud flouté de l'app, via la bibliothèque `backdrop` (KMP
+  Liquid Glass). Floutage réel dès l'API 31, refraction dès l'API 33 ; en
+  dessous de l'API 31, tout le verre bascule sur un fill quasi opaque —
+  la dégradation est conçue, pas accidentelle
+- Les puces de choix (jours des devoirs, filtres des documents, catégories
+  des messages), le champ de recherche et le bouton d'action deviennent des
+  composables partagés (`PuceChoix`, `ChampRecherche`, `GwsBouton`) — un seul
+  gabarit de verre pour tout, quatre recopies supprimées
+
+### Modifié
+
+- La barre basse quitte le Scaffold : capsule flottante, décollée des bords,
+  le contenu défile sous elle dans tous les onglets et écrans de détail
+- Formes : pages 24 dp, feuilles modales 28 dp, bulles 18 dp, contrôles en
+  capsules (50 %) — l'ancien rang « annotations » (6 dp) disparaît
+- `chalk` s'assombrit (#6B7A6E → #5F6F63) pour rester lisible à travers le
+  verre ; `paper` devient la base de l'aurore (#FAFAF7 → #EFF3ED, sombre
+  #121814 → #0C110E)
+- La carte « Ce soir » reste la seule surface teintée pleine (sage + liseré
+  encre) — focale justement parce qu'elle est la seule masse opaque au milieu
+  du verre ; les bulles de l'administration restent sage plein, celles du
+  parent passent au verre
+
 ## [0.4.1] — 2026-09-20
 
 ### Corrigé

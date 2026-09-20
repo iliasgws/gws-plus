@@ -54,7 +54,6 @@ fun OnboardingScreen(onFini: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(RegistreTheme.colors.paper)
             .systemBarsPadding(),
     ) {
         TextButton(

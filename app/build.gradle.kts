@@ -65,5 +65,9 @@ dependencies {
     implementation("io.coil-kt.coil3:coil-compose:3.6.3")
     implementation("io.coil-kt.coil3:coil-network-okhttp:3.6.3")
 
+    // Liquid glass : capture d'arrière-plan + échantillonnage verre (blur, lens).
+    // Dégrade en douceur sous l'API 31 (fill translucide de secours côté Glass.kt).
+    implementation("io.github.kashif-mehmood-km:backdrop:0.0.1-alpha02")
+
     testImplementation("junit:junit:4.13.2")
 }

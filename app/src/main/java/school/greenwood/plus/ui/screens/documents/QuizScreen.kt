@@ -1,7 +1,5 @@
 package school.greenwood.plus.ui.screens.documents
 
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,8 +18,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Cancel
 import androidx.compose.material.icons.rounded.CheckCircle
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -37,6 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -50,10 +47,11 @@ import school.greenwood.plus.ui.QuizViewModel
 import school.greenwood.plus.ui.QuizÉtat
 import school.greenwood.plus.ui.components.EmptyState
 import school.greenwood.plus.ui.components.ErrorInline
+import school.greenwood.plus.ui.components.GlassSurface
+import school.greenwood.plus.ui.components.GwsBouton
 import school.greenwood.plus.ui.components.GwsCard
 import school.greenwood.plus.ui.components.Puce
 import school.greenwood.plus.ui.components.SqueletteQuiz
-import school.greenwood.plus.ui.theme.ControlShape
 import school.greenwood.plus.ui.theme.PageShape
 import school.greenwood.plus.ui.theme.RegistreTheme
 
@@ -75,14 +73,19 @@ fun QuizScreen(
     val vm: QuizViewModel = viewModel(key = "quiz-$quizId") { QuizViewModel(container, quizId) }
     val état by vm.état.collectAsStateWithLifecycle()
 
+    // La liste défile sous la barre flottante (Shell y a ajouté sa hauteur).
+    val bas = padding.calculateBottomPadding()
+
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(RegistreTheme.colors.paper)
-            .padding(padding),
+        modifier = Modifier.fillMaxSize(),
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
+            modifier = Modifier.padding(
+                top = padding.calculateTopPadding() + 8.dp,
+                start = 8.dp,
+                end = 8.dp,
+                bottom = 8.dp,
+            ),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             IconButton(onClick = retour) {
@@ -100,31 +103,33 @@ fun QuizScreen(
         }
 
         when {
-            état.chargement -> SqueletteQuiz()
+            état.chargement -> Box(Modifier.fillMaxSize().padding(bottom = bas)) {
+                SqueletteQuiz()
+            }
             état.erreur != null -> Column(
                 Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
+                    .padding(16.dp)
+                    .padding(bottom = bas),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 ErrorInline(message = état.erreur ?: "")
-                Button(
+                GwsBouton(
+                    texte = "Réessayer",
                     onClick = { vm.charger() },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = RegistreTheme.colors.ink,
-                        contentColor = RegistreTheme.colors.page,
-                    ),
-                    shape = ControlShape,
-                ) {
-                    Text("Réessayer")
-                }
+                )
             }
             else -> {
                 val quiz = état.quiz ?: return@Column
                 when (état.phase) {
-                    PhaseQuiz.Départ -> DépartQuiz(quiz, peutJouer = quiz.peutJouer, démarrer = vm::démarrer)
-                    PhaseQuiz.Jeu -> JeuQuiz(état, vm)
-                    PhaseQuiz.Résultat -> RésultatQuiz(état, quiz, rejouer = vm::démarrer)
+                    PhaseQuiz.Départ -> DépartQuiz(
+                        quiz,
+                        peutJouer = quiz.peutJouer,
+                        bas = bas,
+                        démarrer = vm::démarrer,
+                    )
+                    PhaseQuiz.Jeu -> JeuQuiz(état, vm, bas = bas)
+                    PhaseQuiz.Résultat -> RésultatQuiz(état, quiz, bas = bas, rejouer = vm::démarrer)
                 }
             }
         }
@@ -136,6 +141,7 @@ fun QuizScreen(
 private fun DépartQuiz(
     quiz: QuizDetail,
     peutJouer: Boolean,
+    bas: Dp,
     démarrer: () -> Unit,
 ) {
     if (!peutJouer) {
@@ -160,7 +166,8 @@ private fun DépartQuiz(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp),
+            .padding(horizontal = 16.dp)
+            .padding(bottom = bas),
     ) {
         GwsCard(modifier = Modifier.fillMaxWidth()) {
             Column(
@@ -197,16 +204,10 @@ private fun DépartQuiz(
                     style = MaterialTheme.typography.bodyMedium,
                     color = RegistreTheme.colors.chalk,
                 )
-                Button(
+                GwsBouton(
+                    texte = "Démarrer le quiz",
                     onClick = démarrer,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = RegistreTheme.colors.ink,
-                        contentColor = RegistreTheme.colors.page,
-                    ),
-                    shape = ControlShape,
-                ) {
-                    Text("Démarrer le quiz")
-                }
+                )
             }
         }
         Spacer(Modifier.size(12.dp))
@@ -236,7 +237,7 @@ internal fun duréeQuiz(quiz: QuizDetail): String {
 
 /** Le quiz joué : question courante, décompte, réponses. */
 @Composable
-private fun JeuQuiz(état: QuizÉtat, vm: QuizViewModel) {
+private fun JeuQuiz(état: QuizÉtat, vm: QuizViewModel, bas: Dp) {
     val quiz = état.quiz ?: return
     val question = quiz.questions.getOrNull(état.indexQuestion) ?: return
 
@@ -266,7 +267,8 @@ private fun JeuQuiz(état: QuizÉtat, vm: QuizViewModel) {
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp),
+            .padding(horizontal = 16.dp)
+            .padding(bottom = bas),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         EnTêteQuestion(état, quiz.nbQuestions)
@@ -342,10 +344,11 @@ internal fun horloge(secondes: Int): String {
 }
 
 /**
- * Une réponse : page calme avant le choix ; au retour visuel, la réponse
+ * Une réponse : verre calme avant le choix ; au retour visuel, la réponse
  * jouée passe à sage (bonne) ou stylo rouge (mauvaise) avec son picto —
  * mêmes sémantiques que le bundle (correct / wrong), palette du registre.
- * Les autres réponses se figent le temps du retour (bundle : pause).
+ * Les teintes pleines restent pleines : un verdict se lit, il ne se voit
+ * pas à travers. Les autres réponses se figent le temps du retour (bundle : pause).
  */
 @Composable
 private fun CarteRéponse(
@@ -356,41 +359,47 @@ private fun CarteRéponse(
     onClick: () -> Unit,
 ) {
     val marquée = jouée && choisie
-    Surface(
-        shape = ControlShape,
-        color = when {
-            marquée && correcte -> RegistreTheme.colors.sage
-            marquée -> RegistreTheme.colors.redPen
-            else -> RegistreTheme.colors.page
-        },
-        border = if (marquée) null else BorderStroke(1.dp, RegistreTheme.colors.sage),
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(enabled = !jouée, onClick = onClick),
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
+    val cadre = Modifier
+        .fillMaxWidth()
+        .clickable(enabled = !jouée, onClick = onClick)
+    if (marquée) {
+        Surface(
+            shape = PageShape,
+            color = if (correcte) RegistreTheme.colors.sage else RegistreTheme.colors.redPen,
+            modifier = cadre,
         ) {
-            if (marquée) {
-                Icon(
-                    imageVector = if (correcte) Icons.Rounded.CheckCircle else Icons.Rounded.Cancel,
-                    contentDescription = if (correcte) "Bonne réponse" else "Mauvaise réponse",
-                    tint = if (correcte) RegistreTheme.colors.ink else RegistreTheme.colors.page,
-                    modifier = Modifier.size(20.dp),
-                )
-            }
-            Text(
-                text = texte,
-                style = MaterialTheme.typography.bodyMedium,
-                color = when {
-                    marquée && correcte -> RegistreTheme.colors.ink
-                    marquée -> RegistreTheme.colors.page
-                    else -> RegistreTheme.colors.ink
-                },
+            ContenuRéponse(texte = texte, marquée = true, correcte = correcte)
+        }
+    } else {
+        GlassSurface(
+            shape = PageShape,
+            modifier = cadre,
+        ) {
+            ContenuRéponse(texte = texte, marquée = false, correcte = false)
+        }
+    }
+}
+
+@Composable
+private fun ContenuRéponse(texte: String, marquée: Boolean, correcte: Boolean) {
+    Row(
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        if (marquée) {
+            Icon(
+                imageVector = if (correcte) Icons.Rounded.CheckCircle else Icons.Rounded.Cancel,
+                contentDescription = if (correcte) "Bonne réponse" else "Mauvaise réponse",
+                tint = if (correcte) RegistreTheme.colors.ink else RegistreTheme.colors.page,
+                modifier = Modifier.size(20.dp),
             )
         }
+        Text(
+            text = texte,
+            style = MaterialTheme.typography.bodyMedium,
+            color = if (marquée && !correcte) RegistreTheme.colors.page else RegistreTheme.colors.ink,
+        )
     }
 }
 
@@ -399,13 +408,15 @@ private fun CarteRéponse(
 private fun RésultatQuiz(
     état: QuizÉtat,
     quiz: QuizDetail,
+    bas: Dp,
     rejouer: () -> Unit,
 ) {
     Column(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp),
+            .padding(horizontal = 16.dp)
+            .padding(bottom = bas),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         GwsCard(modifier = Modifier.fillMaxWidth()) {
@@ -466,16 +477,10 @@ private fun RésultatQuiz(
                 }
                 val peutRejouer = état.résultat?.peutRejouer ?: quiz.peutRejouer
                 if (peutRejouer) {
-                    Button(
+                    GwsBouton(
+                        texte = "Rejouer",
                         onClick = rejouer,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = RegistreTheme.colors.ink,
-                            contentColor = RegistreTheme.colors.page,
-                        ),
-                        shape = ControlShape,
-                    ) {
-                        Text("Rejouer")
-                    }
+                    )
                 }
             }
         }

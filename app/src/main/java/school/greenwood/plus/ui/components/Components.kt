@@ -7,6 +7,8 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,9 +22,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ErrorOutline
+import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -34,11 +40,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import school.greenwood.plus.ui.theme.AnnotationShape
+import school.greenwood.plus.ui.theme.BubbleShape
 import school.greenwood.plus.ui.theme.ControlShape
 import school.greenwood.plus.ui.theme.PageShape
 import school.greenwood.plus.ui.theme.RegistreTheme
@@ -54,11 +62,10 @@ fun GwsCard(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
-    Surface(
+    GlassSurface(
         modifier = modifier,
         shape = PageShape,
-        color = RegistreTheme.colors.page,
-        content = { content() },
+        content = content,
     )
 }
 
@@ -71,7 +78,7 @@ fun Puce(
 ) {
     Box(
         modifier = modifier
-            .clip(AnnotationShape)
+            .clip(ControlShape)
             .background(if (tintRed) RegistreTheme.colors.redPen else RegistreTheme.colors.sage)
             .padding(horizontal = 8.dp, vertical = 3.dp),
     ) {
@@ -163,10 +170,10 @@ fun BandeauErreur(
     réessayer: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Surface(
+    GlassSurface(
         modifier = modifier.fillMaxWidth(),
-        shape = AnnotationShape,
-        color = RegistreTheme.colors.sage,
+        shape = BubbleShape,
+        strong = true,
     ) {
         Row(
             modifier = Modifier.padding(start = 12.dp),
@@ -222,6 +229,125 @@ fun GwsAvatar(
 }
 
 /*
+ * Contrôles communes extraits des écrans (les puces de choix, la recherche et
+ * le bouton d'action étaient recopiées quatre fois) — restylées une fois en
+ * capsules de verre, partagées partout.
+ */
+
+/** Puce de choix : capsule de verre quand elle attend, encre pleine quand
+ *  elle est choisie — l'état actif reste la seule surface saturée du contrôle. */
+@Composable
+fun PuceChoix(
+    label: String,
+    sélectionné: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val colors = RegistreTheme.colors
+    Box(
+        modifier = modifier
+            .clip(ControlShape)
+            .background(if (sélectionné) colors.ink else colors.glass.card)
+            .then(
+                if (sélectionné) {
+                    Modifier
+                } else {
+                    Modifier.border(1.dp, colors.glass.stroke, ControlShape)
+                },
+            )
+            .clickable(onClick = onClick)
+            .padding(horizontal = 14.dp, vertical = 8.dp),
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight(600),
+            color = if (sélectionné) colors.page else colors.ink,
+        )
+    }
+}
+
+/** Champ de recherche : capsule de verre, loupe craie, texte encre. */
+@Composable
+fun ChampRecherche(
+    valeur: String,
+    onChange: (String) -> Unit,
+    placeholder: String,
+    modifier: Modifier = Modifier,
+) {
+    val colors = RegistreTheme.colors
+    GlassSurface(
+        modifier = modifier,
+        shape = ControlShape,
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.Search,
+                contentDescription = null,
+                tint = colors.chalk,
+                modifier = Modifier.size(18.dp),
+            )
+            BasicTextField(
+                value = valeur,
+                onValueChange = onChange,
+                modifier = Modifier.weight(1f),
+                singleLine = true,
+                textStyle = TextStyle(
+                    color = colors.ink,
+                    fontFamily = MaterialTheme.typography.bodyMedium.fontFamily,
+                    fontSize = MaterialTheme.typography.bodyMedium.fontSize,
+                ),
+                cursorBrush = SolidColor(colors.ink),
+                decorationBox = { champInterne ->
+                    Box {
+                        if (valeur.isEmpty()) {
+                            Text(
+                                text = placeholder,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = colors.chalk,
+                            )
+                        }
+                        champInterne()
+                    }
+                },
+            )
+        }
+    }
+}
+
+/** Bouton d'action : capsule encre pleine, texte page — le geste principal
+ *  reste la seule masse d'encre de l'écran. */
+@Composable
+fun GwsBouton(
+    texte: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+) {
+    val colors = RegistreTheme.colors
+    Button(
+        onClick = onClick,
+        modifier = modifier,
+        enabled = enabled,
+        shape = ControlShape,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = colors.ink,
+            contentColor = colors.page,
+        ),
+    ) {
+        Text(
+            text = texte,
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight(600),
+        )
+    }
+}
+
+/*
  * Squelettes (issue #21) : des blocs pulsés à la forme du contenu à venir, pour
  * qu'un premier chargement occupe déjà la page. Pure décoration — aucune
  * sémantique, les lecteurs d'écran ne les voient pas. La géométrie copie les
@@ -234,7 +360,7 @@ fun GwsAvatar(
 @Composable
 fun BlocSquelette(
     modifier: Modifier = Modifier,
-    forme: Shape = AnnotationShape,
+    forme: Shape = ControlShape,
 ) {
     val pulsation = rememberInfiniteTransition(label = "squelette")
     val alpha by pulsation.animateFloat(
@@ -310,12 +436,11 @@ fun SqueletteRegistre() {
 
         // Trois entrées du jour — pages blanches comme les cartes réelles.
         repeat(3) { index ->
-            Surface(
+            GlassSurface(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(88.dp),
                 shape = PageShape,
-                color = RegistreTheme.colors.page,
             ) {
                 Row(
                     modifier = Modifier
@@ -362,10 +487,9 @@ fun SqueletteDevoirs() {
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         repeat(2) { index ->
-            Surface(
+            GlassSurface(
                 modifier = Modifier.fillMaxWidth(),
                 shape = PageShape,
-                color = RegistreTheme.colors.page,
             ) {
                 Column(
                     modifier = Modifier
@@ -405,10 +529,9 @@ fun SqueletteDocuments() {
     ) {
         BlocSquelette(modifier = Modifier.width(90.dp).height(13.dp))
         repeat(3) { index ->
-            Surface(
+            GlassSurface(
                 modifier = Modifier.fillMaxWidth(),
                 shape = PageShape,
-                color = RegistreTheme.colors.page,
             ) {
                 Row(
                     modifier = Modifier
@@ -448,10 +571,9 @@ fun SqueletteMessages() {
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         repeat(4) { index ->
-            Surface(
+            GlassSurface(
                 modifier = Modifier.fillMaxWidth(),
                 shape = PageShape,
-                color = RegistreTheme.colors.page,
             ) {
                 Column(
                     modifier = Modifier
@@ -498,10 +620,9 @@ fun SqueletteDemandes() {
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         repeat(3) { index ->
-            Surface(
+            GlassSurface(
                 modifier = Modifier.fillMaxWidth(),
                 shape = PageShape,
-                color = RegistreTheme.colors.page,
             ) {
                 Column(
                     modifier = Modifier
@@ -581,14 +702,12 @@ private fun BulleSquelette(
             modifier = modifier
                 .width(largeur)
                 .height(hauteur),
-            forme = ControlShape,
+            forme = BubbleShape,
         )
     } else {
-        Surface(
+        GlassSurface(
             modifier = modifier,
-            shape = ControlShape,
-            color = RegistreTheme.colors.page,
-            border = BorderStroke(1.dp, RegistreTheme.colors.sage),
+            shape = BubbleShape,
         ) {
             BlocSquelette(
                 modifier = Modifier
@@ -632,11 +751,9 @@ fun SqueletteQuiz() {
             }
         }
         repeat(3) {
-            Surface(
+            GlassSurface(
                 modifier = Modifier.fillMaxWidth(),
-                shape = ControlShape,
-                color = RegistreTheme.colors.page,
-                border = BorderStroke(1.dp, RegistreTheme.colors.sage),
+                shape = PageShape,
             ) {
                 BlocSquelette(
                     modifier = Modifier

@@ -29,8 +29,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Description
 import androidx.compose.material.icons.rounded.Refresh
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -72,6 +70,7 @@ import school.greenwood.plus.ui.components.BandeauErreur
 import school.greenwood.plus.ui.components.EmptyState
 import school.greenwood.plus.ui.components.ErrorInline
 import school.greenwood.plus.ui.components.GwsAvatar
+import school.greenwood.plus.ui.components.GwsBouton
 import school.greenwood.plus.ui.components.GwsCard
 import school.greenwood.plus.ui.components.Puce
 import school.greenwood.plus.ui.components.SectionLabel
@@ -79,6 +78,7 @@ import school.greenwood.plus.ui.components.SqueletteRegistre
 import school.greenwood.plus.ui.theme.ControlShape
 import school.greenwood.plus.ui.theme.PageShape
 import school.greenwood.plus.ui.theme.RegistreTheme
+import school.greenwood.plus.ui.theme.SheetShape
 import school.greenwood.plus.util.frenchFull
 import school.greenwood.plus.util.frenchLongDay
 import school.greenwood.plus.util.frenchNumeric
@@ -115,23 +115,16 @@ fun RegistreScreen(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(RegistreTheme.colors.paper)
                     .padding(padding),
                 contentAlignment = Alignment.Center,
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     ErrorInline(message = état.erreur ?: "")
                     Spacer(Modifier.height(12.dp))
-                    Button(
+                    GwsBouton(
+                        texte = "Réessayer",
                         onClick = { vm.charger(force = true) },
-                        shape = ControlShape,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = RegistreTheme.colors.ink,
-                            contentColor = RegistreTheme.colors.page,
-                        ),
-                    ) {
-                        Text("Réessayer", style = MaterialTheme.typography.labelLarge)
-                    }
+                    )
                 }
             }
         }
@@ -141,8 +134,7 @@ fun RegistreScreen(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(RegistreTheme.colors.paper)
-                    .padding(padding),
+                    .padding(top = padding.calculateTopPadding(), bottom = padding.calculateBottomPadding()),
             ) {
                 SqueletteRegistre()
             }
@@ -159,9 +151,7 @@ fun RegistreScreen(
             }
 
             LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(RegistreTheme.colors.paper),
+                modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(
                     start = 20.dp,
                     end = 20.dp,
@@ -596,8 +586,10 @@ private fun FeuilleEleves(
     ModalBottomSheet(
         onDismissRequest = surFermer,
         sheetState = feuille,
-        containerColor = RegistreTheme.colors.page,
-        shape = PageShape,
+        // Feuille dans sa propre fenêtre : aucun échantillonnage possible —
+        // verre fort quasi opaque (docs/product/DESIGN.md §2).
+        containerColor = RegistreTheme.colors.glass.barStrong,
+        shape = SheetShape,
     ) {
         Column(
             modifier = Modifier

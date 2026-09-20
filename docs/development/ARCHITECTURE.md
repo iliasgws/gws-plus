@@ -4,7 +4,7 @@ Un seul module `:app`, pas de framework d'injection : un conteneur manuel,
 des couches étroites, un sens de dépendance unique.
 
 ```
-UI / Compose (écrans, composants, thème « Le registre »)
+UI / Compose (écrans, composants, verre liquide sur l'aurore)
       ↓
 ViewModels (un par écran, état unique, erreurs lisibles)
       ↓
@@ -19,11 +19,14 @@ Backend Greenwood/Boti (boti.education, protocole documenté dans docs/api/)
 
 ### UI (`ui/`)
 
-Compose + Material 3, thème « Le registre » (`ui/theme/` : encre, papier,
-sage, rouge stylo ; Fraunces / Bricolage Grotesque / Public Sans ; formes
-20/12/6 dp). Les briques partagées (cartes, puces, états vides, erreurs)
-vivent dans `ui/components/Components.kt`. Un écran par fichier, un
-ViewModel par écran.
+Compose + Material 3, thème verre liquide (`ui/theme/` : encre, aurore,
+sage, rouge stylo + palette de verre ; Fraunces / Bricolage Grotesque /
+Public Sans ; capsules de contrôle, rayons continus 24/18/28 dp). Les
+briques partagées (cartes, puces, états vides, erreurs) vivent dans
+`ui/components/Components.kt` ; les primitives de verre (aurore, surfaces
+translucides, barre flottante floutée — seul fichier qui connaît la
+bibliothèque `backdrop`) vivent dans `ui/components/Glass.kt`. Un écran
+par fichier, un ViewModel par écran.
 
 ### ViewModels (`ui/AppViewModels.kt`)
 

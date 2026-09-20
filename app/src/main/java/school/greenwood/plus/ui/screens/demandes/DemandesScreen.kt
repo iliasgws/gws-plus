@@ -1,6 +1,5 @@
 package school.greenwood.plus.ui.screens.demandes
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,8 +16,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.InsertDriveFile
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -37,10 +34,10 @@ import school.greenwood.plus.ui.DemandesViewModel
 import school.greenwood.plus.ui.components.BandeauErreur
 import school.greenwood.plus.ui.components.EmptyState
 import school.greenwood.plus.ui.components.ErrorInline
+import school.greenwood.plus.ui.components.GwsBouton
 import school.greenwood.plus.ui.components.GwsCard
 import school.greenwood.plus.ui.components.Puce
 import school.greenwood.plus.ui.components.SqueletteDemandes
-import school.greenwood.plus.ui.theme.ControlShape
 import school.greenwood.plus.ui.theme.RegistreTheme
 
 /*
@@ -60,14 +57,19 @@ fun DemandesScreen(
     val vm: DemandesViewModel = viewModel { DemandesViewModel(container) }
     val état by vm.état.collectAsStateWithLifecycle()
 
+    // La liste défile sous la barre flottante (Shell y a ajouté sa hauteur).
+    val bas = padding.calculateBottomPadding()
+
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(RegistreTheme.colors.paper)
-            .padding(padding),
+        modifier = Modifier.fillMaxSize(),
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
+            modifier = Modifier.padding(
+                top = padding.calculateTopPadding() + 8.dp,
+                start = 8.dp,
+                end = 8.dp,
+                bottom = 8.dp,
+            ),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             IconButton(onClick = retour) {
@@ -85,26 +87,28 @@ fun DemandesScreen(
         }
 
         when {
-            état.chargement -> SqueletteDemandes()
+            état.chargement -> Box(Modifier.fillMaxSize().padding(bottom = bas)) {
+                SqueletteDemandes()
+            }
             état.erreur != null && état.demandes.isEmpty() -> Column(
                 Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
+                    .padding(16.dp)
+                    .padding(bottom = bas),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 ErrorInline(message = état.erreur ?: "")
-                Button(
+                GwsBouton(
+                    texte = "Réessayer",
                     onClick = { vm.charger(force = true) },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = RegistreTheme.colors.ink,
-                        contentColor = RegistreTheme.colors.page,
-                    ),
-                    shape = ControlShape,
-                ) {
-                    Text("Réessayer")
-                }
+                )
             }
-            état.demandes.isEmpty() -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            état.demandes.isEmpty() -> Box(
+                Modifier
+                    .fillMaxSize()
+                    .padding(bottom = bas),
+                contentAlignment = Alignment.Center,
+            ) {
                 EmptyState(
                     titre = "Aucune demande",
                     message = "Tes demandes apparaîtront ici.",
@@ -125,7 +129,12 @@ fun DemandesScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .weight(1f),
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
+                        contentPadding = PaddingValues(
+                            start = 16.dp,
+                            end = 16.dp,
+                            top = 4.dp,
+                            bottom = 16.dp + bas,
+                        ),
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
                         items(état.demandes, key = { it.id }) { demande ->
