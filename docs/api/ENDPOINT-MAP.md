@@ -354,6 +354,14 @@ Top-level keys: `data`, `empty`, `empty_icon`, `certif_icon`, `empty_text`,
 
 **GET** `messages` — probe params: `page=1` (`messages.json`).
 
+**2026-09-20** — the vendor updated the handler: top-level keys now include
+`teachers[]`, `can_send_newmessage` and `hidesend` (absent from the
+2026-09-18 probe). During that rollout the endpoint intermittently answered
+a raw PHP `print_r` dump (`Models\Inscription Object (…)`) instead of JSON —
+request shape was irrelevant (the same params answered clean JSON from a
+fresh session while a phone session got the dump). gws-plus now salvages
+embedded JSON and retries illisible GETs up to three times (v0.4.1).
+
 `data[]` — one entry per conversation:
 
 ```json

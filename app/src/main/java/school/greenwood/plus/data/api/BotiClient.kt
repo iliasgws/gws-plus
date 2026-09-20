@@ -24,9 +24,9 @@ import java.io.File
 open class BotiErreur(val messageUtilisateur: String) : Exception(messageUtilisateur)
 
 /**
- * Le serveur n'a pas renvoyé du JSON (page HTML d'interception, corps vide…).
- * Typiquement transitoire : les GET relancent une fois automatiquement
- * (issue #14).
+ * Le serveur n'a pas renvoyé du JSON (page HTML d'interception, débogage PHP
+ * en clair, corps vide…). Typiquement transitoire : les GET relancent jusqu'à
+ * trois fois automatiquement (issue #14).
  */
 class RéponseIllisible(messageUtilisateur: String) : BotiErreur(messageUtilisateur)
 
@@ -55,17 +55,23 @@ class BotiClient(
     }
 
     /**
-     * GET avec params. Une réponse non JSON (page HTML transitoire) est
-     * relancée une fois automatiquement — au-delà, l'erreur remonte à
-     * l'écran (issue #14).
+     * GET avec params. Une réponse non JSON (page HTML transitoire, débogage
+     * PHP en clair — un `print_r` d'objet vu sur `messages` le 20/09/2026)
+     * est relancée jusqu'à trois fois, à délais croissants (700 ms puis
+     * 1,5 s) — au-delà, l'erreur remonte à l'écran (issue #14). Le POST n'est
+     * jamais relancé : un envoi doublé serait pire qu'un échec affiché.
      */
     suspend fun get(endpoint: String, extra: Map<String, String> = emptyMap()): JsonObject {
         val params = baseParams() + extra
-        return try {
-            unwrap(api.get(endpoint, params), endpoint)
-        } catch (err: RéponseIllisible) {
-            kotlinx.coroutines.delay(700)
-            unwrap(api.get(endpoint, params), endpoint)
+        var relance = 0
+        while (true) {
+            try {
+                return unwrap(api.get(endpoint, params), endpoint)
+            } catch (err: RéponseIllisible) {
+                relance++
+                if (relance >= 3) throw err
+                kotlinx.coroutines.delay(if (relance == 1) 700L else 1_500L)
+            }
         }
     }
 
