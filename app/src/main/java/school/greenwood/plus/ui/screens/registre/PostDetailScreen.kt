@@ -18,7 +18,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Description
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -41,6 +40,8 @@ import school.greenwood.plus.data.repo.EntreeRegistre
 import school.greenwood.plus.ui.RegistreViewModel
 import school.greenwood.plus.ui.components.BlocSquelette
 import school.greenwood.plus.ui.components.GwsCard
+import school.greenwood.plus.ui.components.LiquidIconButton
+import school.greenwood.plus.ui.components.givre
 import school.greenwood.plus.ui.components.Puce
 import school.greenwood.plus.ui.theme.PageShape
 import school.greenwood.plus.ui.theme.RegistreTheme
@@ -91,7 +92,7 @@ fun PostDetailScreen(
             .verticalScroll(rememberScrollState()),
     ) {
         Row {
-            IconButton(onClick = retour) {
+            LiquidIconButton(onClick = retour, surfaceColor = givre()) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
                     contentDescription = "Retour",

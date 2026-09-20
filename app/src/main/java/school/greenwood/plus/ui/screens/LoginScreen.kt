@@ -20,7 +20,6 @@ import androidx.compose.material.icons.rounded.Error
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -37,6 +36,8 @@ import school.greenwood.plus.ui.components.ErrorInline
 import school.greenwood.plus.ui.components.FeuilleVerre
 import school.greenwood.plus.ui.components.GwsBouton
 import school.greenwood.plus.ui.components.LiquidToggle
+import school.greenwood.plus.ui.components.LiquidButton
+import school.greenwood.plus.ui.components.givre
 import school.greenwood.plus.ui.theme.ControlShape
 import school.greenwood.plus.ui.theme.RegistreTheme
 
@@ -138,9 +139,11 @@ fun LoginScreen(
                         ErrorInline(message = message, icone = Icons.Rounded.Error)
                     }
 
-                    TextButton(
+                    LiquidButton(
                         onClick = vm::demanderRappel,
-                                                modifier = Modifier.align(Alignment.CenterHorizontally),
+                        modifier = Modifier.align(Alignment.CenterHorizontally),
+                        surfaceColor = givre(),
+                        hauteur = 40.dp,
                     ) {
                         Text(
                             text = "Mot de passe oublié ?",

@@ -54,7 +54,7 @@ Current contents (update this section whenever files are added or removed):
 | `…/data/cache/` | Last-known-data memory caches, session-stamped (`MemoireSession`, `CachesSession` — issue #21) |
 | `…/logic/CeSoir.kt` | The focal card's due-date window (Friday → Monday) |
 | `…/util/` | Dates (tolerant parsing), Html, Fichiers (download + FileProvider + SAF staging), Audio (playback), EnregistreurAudio (MediaRecorder) |
-| `app/src/test/` | Unit tests (dates, CeSoir, media URLs, envelope, message normalizers, composer data, quiz normalizers, document filters, session cache) |
+| `app/src/test/` | Unit tests (dates, CeSoir, media URLs, envelope, message normalizers, composer data, quiz normalizers, document filters, session cache, detail-to-tab route mapping) |
 | `app/fonts-licenses/` | OFL texts for the bundled fonts |
 
 ## Ground rules for agents

@@ -17,7 +17,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.InsertDriveFile
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -35,6 +34,8 @@ import school.greenwood.plus.ui.components.BandeauErreur
 import school.greenwood.plus.ui.components.EmptyState
 import school.greenwood.plus.ui.components.ErrorInline
 import school.greenwood.plus.ui.components.GwsBouton
+import school.greenwood.plus.ui.components.LiquidIconButton
+import school.greenwood.plus.ui.components.givre
 import school.greenwood.plus.ui.components.GwsCard
 import school.greenwood.plus.ui.components.Puce
 import school.greenwood.plus.ui.components.SqueletteDemandes
@@ -72,7 +73,7 @@ fun DemandesScreen(
             ),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            IconButton(onClick = retour) {
+            LiquidIconButton(onClick = retour, surfaceColor = givre()) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
                     contentDescription = "Retour",

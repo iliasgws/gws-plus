@@ -4,6 +4,23 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [0.5.0-bêta 9] — 2026-09-20
+
+### Corrigé
+
+- **Documents et conversations** : les listes paresseuses ne sont plus des
+  sources de capture du verre. Leur recyclage pendant le défilement ne peut
+  donc plus laisser de coordonnées détachées et faire planter l'application
+- **Quiz et fils de messages** : une route de détail reste associée à son
+  onglet parent. Après un changement d'onglet, la pastille de la barre basse
+  suit de nouveau Documents ou Messages sans perdre la pile conservée
+- **Floraison du verre** : les reflets, ombres et aberrations chromatiques qui
+  blanchissaient encore la recherche et la barre basse sont retirés. Le
+  flou, la réfraction et la déformation restent actifs avec un givre plus fin
+- **Boutons** : les boutons d'icône, de texte, de retour et de composeur
+  utilisent tous les composants liquides partagés ; le bouton retour du quiz
+  reste une capsule flottante sans panneau englobant
+
 ## [0.5.0-bêta 8] — 2026-09-20
 
 ### Corrigé

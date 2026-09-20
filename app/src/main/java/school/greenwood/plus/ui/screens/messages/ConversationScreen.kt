@@ -51,18 +51,20 @@ import school.greenwood.plus.ui.components.BandeauErreur
 import school.greenwood.plus.ui.components.EmptyState
 import school.greenwood.plus.ui.components.ErrorInline
 import school.greenwood.plus.ui.components.FeuilleVerre
+import school.greenwood.plus.ui.components.GlassSurface
 import school.greenwood.plus.ui.components.GwsBouton
-import school.greenwood.plus.ui.components.GwsCard
 import school.greenwood.plus.ui.components.LiquidButton
-import school.greenwood.plus.ui.components.Puce
 import school.greenwood.plus.ui.components.SqueletteConversation
 import school.greenwood.plus.ui.components.givre
-import school.greenwood.plus.ui.theme.BubbleInShape
-import school.greenwood.plus.ui.theme.BubbleOutShape
+import school.greenwood.plus.ui.theme.BubbleShape
 import school.greenwood.plus.ui.theme.ControlShape
 import school.greenwood.plus.ui.theme.RegistreTheme
+import school.greenwood.plus.util.Fichiers
+import school.greenwood.plus.util.LecteurAudio
+import school.greenwood.plus.util.frenchFull
 import school.greenwood.plus.util.frenchLongDay
-import school.greenwood.plus.util.formatHour
+import school.greenwood.plus.util.frenchTime
+import java.util.Locale
 
 /*
  * Fil de conversation (docs/product/DESIGN.md §5, issue #16).
@@ -302,4 +304,260 @@ private fun SéparateurDate(jour: java.time.LocalDate) {
             color = RegistreTheme.colors.chalk,
         )
     }
+}
+
+/** Message en attente d'envoi — même bulle que le parent, avec son état
+ *  d'envoi ou une action de relance liquide. */
+@Composable
+private fun BulleEnvoi(
+    envoi: MessageEnvoi,
+    onRelancer: () -> Unit,
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.End,
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        GlassSurface(shape = BubbleShape) {
+            Column(
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                if (envoi.texte.isNotBlank()) {
+                    Text(
+                        text = envoi.texte,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = RegistreTheme.colors.ink,
+                    )
+                }
+                envoi.pièces.forEach { fichier ->
+                    Text(
+                        text = fichier.name,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = RegistreTheme.colors.chalk,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                envoi.audio?.let {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Mic,
+                            contentDescription = null,
+                            tint = RegistreTheme.colors.chalk,
+                            modifier = Modifier.size(14.dp),
+                        )
+                        Text(
+                            text = "Message vocal",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = RegistreTheme.colors.chalk,
+                        )
+                    }
+                }
+            }
+        }
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            when (envoi.statut) {
+                MessageEnvoi.Statut.EnCours -> {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(12.dp),
+                        strokeWidth = 2.dp,
+                        color = RegistreTheme.colors.chalk,
+                    )
+                    Text(
+                        text = "Envoi…",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = RegistreTheme.colors.chalk,
+                    )
+                }
+                MessageEnvoi.Statut.Échec -> {
+                    Text(
+                        text = "Échec de l'envoi",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = RegistreTheme.colors.redPen,
+                    )
+                    LiquidButton(
+                        onClick = onRelancer,
+                        hauteur = 32.dp,
+                        surfaceColor = givre(),
+                    ) {
+                        Text(
+                            text = "Réessayer",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = RegistreTheme.colors.ink,
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun Bulle(
+    message: Message,
+    onTélécharger: (Attachment, (java.io.File?) -> Unit) -> Unit,
+) {
+    val alignéDroite = !message.deLAdmin
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = if (alignéDroite) Alignment.End else Alignment.Start,
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        if (message.deLAdmin) {
+            Surface(shape = BubbleShape, color = RegistreTheme.colors.sage) {
+                ContenuBulle(message, onTélécharger)
+            }
+        } else {
+            GlassSurface(shape = BubbleShape) {
+                ContenuBulle(message, onTélécharger)
+            }
+        }
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            message.date?.let {
+                Text(
+                    text = it.frenchTime(),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = RegistreTheme.colors.chalk,
+                )
+            }
+            if (!message.deLAdmin) {
+                message.vuLe?.let {
+                    Text(
+                        text = "Vu ${it.frenchFull()}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = RegistreTheme.colors.chalk,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ContenuBulle(
+    message: Message,
+    onTélécharger: (Attachment, (java.io.File?) -> Unit) -> Unit,
+) {
+    Column(
+        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Text(
+            text = message.texte.replace("\r\n", "\n"),
+            style = MaterialTheme.typography.bodyMedium,
+            color = RegistreTheme.colors.ink,
+        )
+        message.attachments.forEach { pièce ->
+            LignePièceJointe(pièce = pièce, onTélécharger = onTélécharger)
+        }
+        message.audio?.let { pièce -> LigneAudio(pièce) }
+    }
+}
+
+@Composable
+private fun LignePièceJointe(
+    pièce: Attachment,
+    onTélécharger: (Attachment, (java.io.File?) -> Unit) -> Unit,
+) {
+    val context = LocalContext.current
+    var enCours by remember(pièce.url) { mutableIntStateOf(0) }
+    val occupé = enCours > 0
+
+    Row(
+        modifier = Modifier
+            .clip(ControlShape)
+            .clickable(enabled = !occupé) {
+                enCours++
+                onTélécharger(pièce) { fichier ->
+                    enCours--
+                    if (fichier != null) {
+                        Fichiers.intentionOuvrir(context, fichier)?.let(context::startActivity)
+                    }
+                }
+            }
+            .padding(horizontal = 6.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        if (occupé) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(14.dp),
+                strokeWidth = 2.dp,
+                color = RegistreTheme.colors.chalk,
+            )
+        } else {
+            Icon(
+                imageVector = Icons.Rounded.Attachment,
+                contentDescription = null,
+                tint = RegistreTheme.colors.chalk,
+                modifier = Modifier.size(14.dp),
+            )
+        }
+        Text(
+            text = pièce.name,
+            style = MaterialTheme.typography.bodySmall,
+            color = RegistreTheme.colors.ink,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
+@Composable
+private fun LigneAudio(pièce: Attachment) {
+    var version by remember { mutableIntStateOf(0) }
+    val lecteur = remember(pièce.url) { LecteurAudio(pièce.url) { version++ } }
+    DisposableEffect(lecteur) {
+        onDispose { lecteur.libérer() }
+    }
+    LaunchedEffect(lecteur) {
+        while (true) {
+            delay(200)
+            version++
+        }
+    }
+
+    Row(
+        modifier = Modifier
+            .clip(ControlShape)
+            .clickable { lecteur.basculer() }
+            .padding(horizontal = 6.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Icon(
+            imageVector = if (lecteur.enLecture) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
+            contentDescription = if (lecteur.enLecture) "Pause" else "Lire",
+            tint = RegistreTheme.colors.ink,
+            modifier = Modifier.size(18.dp),
+        )
+        Text(
+            text = pièce.name.ifBlank { "Message vocal" },
+            style = MaterialTheme.typography.bodySmall,
+            color = RegistreTheme.colors.ink,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f, fill = false),
+        )
+        Text(
+            text = "${mmSs(lecteur.position())} / ${mmSs(lecteur.duréeMs)}",
+            style = MaterialTheme.typography.labelSmall,
+            color = RegistreTheme.colors.chalk,
+        )
+    }
+}
+
+private fun mmSs(ms: Int): String {
+    val total = (ms / 1000).coerceAtLeast(0)
+    return String.format(Locale.FRENCH, "%d:%02d", total / 60, total % 60)
 }

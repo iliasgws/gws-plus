@@ -110,6 +110,7 @@ fun AppNav(container: AppContainer) {
     val navController = rememberNavController()
     val destinationCourante by navController.currentBackStackEntryAsState()
     val routeCourante = destinationCourante?.destination?.route
+    val ongletCourant = ongletPourRoute(routeCourante)
 
     // Deux captures, une règle : une feuille de verre ne peut jamais
     // échantillonner une capture qui la contient (référence circulaire de
@@ -159,7 +160,7 @@ fun AppNav(container: AppContainer) {
                         VerreOnglet(
                             icône = onglet.icone,
                             libellé = onglet.label,
-                            sélectionné = routeCourante == onglet.route,
+                            sélectionné = ongletCourant == onglet.route,
                             onClick = { navController.allerÀLOnglet(onglet.route) },
                         )
                     },
@@ -294,4 +295,15 @@ private fun NavHostController.allerÀLOnglet(route: String) {
 
 private fun NavHostController.allerDétail(route: String) {
     navigate(route) { launchSingleTop = true }
+}
+
+/** Associe chaque détail à l'onglet qui porte sa pile. La barre basse garde
+ *  ainsi une source de vérité même quand la destination visible n'est pas
+ *  elle-même une racine d'onglet. */
+internal fun ongletPourRoute(route: String?): String? = when (route?.substringBefore('/')) {
+    "registre", "demandes", "post" -> "registre"
+    "devoirs" -> "devoirs"
+    "documents", "quiz" -> "documents"
+    "messages", "conversation", "nouveau-message" -> "messages"
+    else -> null
 }

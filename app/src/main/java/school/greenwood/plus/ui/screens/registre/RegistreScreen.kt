@@ -31,7 +31,6 @@ import androidx.compose.material.icons.rounded.Description
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
@@ -71,6 +70,8 @@ import school.greenwood.plus.ui.components.ErrorInline
 import school.greenwood.plus.ui.components.FeuilleVerre
 import school.greenwood.plus.ui.components.GwsAvatar
 import school.greenwood.plus.ui.components.GwsBouton
+import school.greenwood.plus.ui.components.LiquidIconButton
+import school.greenwood.plus.ui.components.givre
 import school.greenwood.plus.ui.components.GwsCard
 import school.greenwood.plus.ui.components.Puce
 import school.greenwood.plus.ui.components.SectionLabel
@@ -262,7 +263,7 @@ private fun EnTête(
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
         )
-        IconButton(onClick = surActualiser) {
+        LiquidIconButton(onClick = surActualiser, surfaceColor = givre()) {
             Icon(
                 imageVector = Icons.Rounded.Refresh,
                 contentDescription = "Actualiser",

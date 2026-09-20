@@ -21,7 +21,6 @@ import androidx.compose.material.icons.automirrored.rounded.Send
 import androidx.compose.material.icons.rounded.Call
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -42,6 +41,8 @@ import school.greenwood.plus.ui.components.EmptyState
 import school.greenwood.plus.ui.components.ErrorInline
 import school.greenwood.plus.ui.components.GlassSurface
 import school.greenwood.plus.ui.components.GwsBouton
+import school.greenwood.plus.ui.components.LiquidIconButton
+import school.greenwood.plus.ui.components.givre
 import school.greenwood.plus.ui.components.GwsCard
 import school.greenwood.plus.ui.components.Puce
 import school.greenwood.plus.ui.components.SectionLabel
@@ -99,7 +100,10 @@ fun MessagesScreen(
                 color = RegistreTheme.colors.ink,
                 modifier = Modifier.weight(1f),
             )
-            IconButton(onClick = { vm.définirComposeur(!état.composeurActivé) }) {
+            LiquidIconButton(
+                onClick = { vm.définirComposeur(!état.composeurActivé) },
+                surfaceColor = givre(),
+            ) {
                 Icon(
                     imageVector = Icons.Rounded.Tune,
                     contentDescription = if (état.composeurActivé) "Désactiver le composeur" else "Activer le composeur",

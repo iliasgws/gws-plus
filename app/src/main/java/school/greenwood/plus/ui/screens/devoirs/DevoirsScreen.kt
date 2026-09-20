@@ -22,7 +22,6 @@ import androidx.compose.material.icons.rounded.Attachment
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -45,6 +44,7 @@ import school.greenwood.plus.ui.components.BandeauErreur
 import school.greenwood.plus.ui.components.EmptyState
 import school.greenwood.plus.ui.components.ErrorInline
 import school.greenwood.plus.ui.components.GwsBouton
+import school.greenwood.plus.ui.components.LiquidIconButton
 import school.greenwood.plus.ui.components.GwsCard
 import school.greenwood.plus.ui.components.Puce
 import school.greenwood.plus.ui.components.PuceChoix
@@ -297,7 +297,7 @@ private fun LignePièceJointe(
                 modifier = Modifier.size(16.dp),
             )
         } else {
-            IconButton(onClick = onTélécharger, modifier = Modifier.size(28.dp)) {
+            LiquidIconButton(onClick = onTélécharger, taille = 32.dp) {
                 Icon(
                     imageVector = Icons.Rounded.Download,
                     contentDescription = "Télécharger ${pièce.name}",

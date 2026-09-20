@@ -17,7 +17,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -33,6 +32,8 @@ import school.greenwood.plus.AppContainer
 import school.greenwood.plus.ui.NouveauMessageViewModel
 import school.greenwood.plus.ui.components.ErrorInline
 import school.greenwood.plus.ui.components.PuceChoix
+import school.greenwood.plus.ui.components.LiquidIconButton
+import school.greenwood.plus.ui.components.givre
 import school.greenwood.plus.ui.theme.ControlShape
 import school.greenwood.plus.ui.theme.RegistreTheme
 
@@ -67,7 +68,7 @@ fun NouveauMessageScreen(
                 .padding(top = padding.calculateTopPadding() + 6.dp, start = 8.dp, end = 8.dp, bottom = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            IconButton(onClick = retour) {
+            LiquidIconButton(onClick = retour, surfaceColor = givre()) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
                     contentDescription = "Retour",

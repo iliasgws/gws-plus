@@ -5,7 +5,6 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.EaseOut
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -318,6 +317,7 @@ fun LiquidButton(
                     blur(2.dp.toPx())
                     lens(12.dp.toPx(), 24.dp.toPx())
                 },
+                highlight = { null },
                 layerBlock = if (isInteractive) {
                     {
                         val width = size.width
@@ -357,8 +357,9 @@ fun LiquidButton(
                 }
             )
             .clickable(
+                enabled = isInteractive,
                 interactionSource = null,
-                indication = if (isInteractive) null else LocalIndication.current,
+                indication = null,
                 role = Role.Button,
                 onClick = onClick
             )
@@ -376,6 +377,29 @@ fun LiquidButton(
         horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
         verticalAlignment = Alignment.CenterVertically,
         content = content
+    )
+}
+
+/** Bouton d'icône liquide compact. Les actions de barre et de composeur
+ *  partagent ainsi la même matière et la même physique que les CTA. */
+@Composable
+fun LiquidIconButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    taille: Dp = 44.dp,
+    surfaceColor: Color = Color.Unspecified,
+    content: @Composable RowScope.() -> Unit,
+) {
+    val fond = if (surfaceColor.isSpecified) surfaceColor else givre()
+    LiquidButton(
+        onClick = onClick,
+        modifier = modifier.size(taille),
+        isInteractive = enabled,
+        surfaceColor = fond,
+        hauteur = taille,
+        paddingHorizontal = 0.dp,
+        content = content,
     )
 }
 
@@ -576,11 +600,11 @@ fun LiquidBottomTabs(
     // Contrat : selectedTabIndex doit lire un état snapshot (mutableIntState…)
     // — la synchronisation passe par snapshotFlow, qui ignore les lectures
     // hors snapshot.
-    val glass = RegistreTheme.colors.glass
     val colors = RegistreTheme.colors
-    val isLightTheme = !isSystemInDarkTheme()
     val accentColor = colors.ink
-    val containerColor = glass.bar
+    // Un givre léger laisse lire la scène sans transformer les zones
+    // claires en halo blanc.
+    val containerColor = givre()
 
     val tabsBackdrop = rememberLayerBackdrop()
 
@@ -681,6 +705,7 @@ fun LiquidBottomTabs(
                         blur(8.dp.toPx())
                         lens(10.dp.toPx(), 16.dp.toPx())
                     },
+                    highlight = { null },
                     layerBlock = {
                         val progress = dampedDragAnimation.pressProgress
                         val scale = lerp(1f, 1f + 16f.dp.toPx() / size.width, progress)
@@ -721,10 +746,7 @@ fun LiquidBottomTabs(
                                 16.dp.toPx() * progress
                             )
                         },
-                        highlight = {
-                            val progress = dampedDragAnimation.pressProgress
-                            Highlight.Default.copy(alpha = progress)
-                        },
+                        highlight = { null },
                         onDrawSurface = { drawRect(containerColor) }
                     )
                     .then(interactiveHighlight.modifier)
@@ -755,24 +777,11 @@ fun LiquidBottomTabs(
                         lens(
                             10.dp.toPx() * progress,
                             14.dp.toPx() * progress,
-                            chromaticAberration = true
                         )
                     },
-                    highlight = {
-                        val progress = dampedDragAnimation.pressProgress
-                        Highlight.Default.copy(alpha = progress)
-                    },
-                    shadow = {
-                        val progress = dampedDragAnimation.pressProgress
-                        Shadow(alpha = progress)
-                    },
-                    innerShadow = {
-                        val progress = dampedDragAnimation.pressProgress
-                        InnerShadow(
-                            radius = 8.dp * progress,
-                            alpha = progress
-                        )
-                    },
+                    highlight = { null },
+                    shadow = { null },
+                    innerShadow = { null },
                     layerBlock = {
                         scaleX = dampedDragAnimation.scaleX
                         scaleY = dampedDragAnimation.scaleY
@@ -782,11 +791,7 @@ fun LiquidBottomTabs(
                     },
                     onDrawSurface = {
                         val progress = dampedDragAnimation.pressProgress
-                        drawRect(
-                            if (isLightTheme) Color.Black.copy(0.1f)
-                            else Color.White.copy(0.1f),
-                            alpha = 1f - progress
-                        )
+                        drawRect(Color.Black.copy(0.06f), alpha = 1f - progress)
                         drawRect(Color.Black.copy(alpha = 0.03f * progress))
                     }
                 )
@@ -869,6 +874,7 @@ fun ChampRecherche(
                     blur(6.dp.toPx())
                     lens(8.dp.toPx(), 14.dp.toPx())
                 },
+                highlight = { null },
                 layerBlock = {
                     val width = size.width
                     val height = size.height
@@ -971,10 +977,8 @@ fun GlassBottomBar(
     val glass = RegistreTheme.colors.glass
     val capsule = ControlShape
 
-    // Sur un écran de détail (quiz, conversation, nouveau-message…), aucune
-    // puce ne correspond : indexExterne vaut -1 et l'état courant est
-    // CONSERVÉ — l'onglet qui a poussé l'écran reste allumé, la pastille ne
-    // retombe jamais sur l'accueil toute seule.
+    // AppNav associe les routes de détail à leur onglet parent. La garde sur
+    // -1 couvre seulement les transitions ou une future route non associée.
     val indexExterne = onglets.indexOfFirst { it.sélectionné }
     var indexÉtat by remember { mutableIntStateOf(indexExterne.coerceAtLeast(0)) }
     LaunchedEffect(indexExterne) {

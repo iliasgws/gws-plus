@@ -30,6 +30,11 @@ Messages) autour d'un `NavHost`. Chaque onglet garde sa pile via
 Les détails (post, demandes, conversation, nouveau message) poussent sur la
 pile de leur onglet avec `launchSingleTop`.
 
+La barre basse résout aussi les routes de détail vers leur parent : `quiz`
+reste sélectionné dans Documents, `conversation` et `nouveau-message` dans
+Messages, `post` et `demandes` dans Registre. Le changement d'onglet conserve
+la pile du détail, puis restaure son indicateur et son contenu ensemble.
+
 ## Retour prédictif
 
 `enableOnBackInvokedCallback` dans le manifeste, edge-to-edge partout :

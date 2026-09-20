@@ -20,7 +20,6 @@ import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.Stop
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -44,6 +43,7 @@ import androidx.core.content.ContextCompat
 import kotlinx.coroutines.delay
 import school.greenwood.plus.ui.components.FeuilleVerre
 import school.greenwood.plus.ui.components.GlassSurface
+import school.greenwood.plus.ui.components.LiquidIconButton
 import school.greenwood.plus.ui.components.givre
 import school.greenwood.plus.ui.theme.ControlShape
 import school.greenwood.plus.ui.theme.RegistreTheme
@@ -134,7 +134,7 @@ fun Composeur(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     PastilleEnregistrement()
-                    IconButton(onClick = onAnnulerEnregistrement) {
+                    LiquidIconButton(onClick = onAnnulerEnregistrement, taille = 40.dp) {
                         Icon(
                             imageVector = Icons.Rounded.Close,
                             contentDescription = "Annuler l'enregistrement",
@@ -147,7 +147,7 @@ fun Composeur(
                         color = RegistreTheme.colors.ink,
                         modifier = Modifier.weight(1f),
                     )
-                    IconButton(onClick = onArrêterEnregistrement) {
+                    LiquidIconButton(onClick = onArrêterEnregistrement, taille = 40.dp) {
                         Icon(
                             imageVector = Icons.Rounded.Stop,
                             contentDescription = "Terminer le message vocal",
@@ -161,7 +161,10 @@ fun Composeur(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(2.dp),
                 ) {
-                    IconButton(onClick = { sélecteurFichiers.launch(arrayOf("*/*")) }) {
+                    LiquidIconButton(
+                        onClick = { sélecteurFichiers.launch(arrayOf("*/*")) },
+                        taille = 40.dp,
+                    ) {
                         Icon(
                             imageVector = Icons.Rounded.AttachFile,
                             contentDescription = "Joindre un fichier",
@@ -197,7 +200,7 @@ fun Composeur(
                         context,
                         Manifest.permission.RECORD_AUDIO,
                     ) == PackageManager.PERMISSION_GRANTED
-                    IconButton(
+                    LiquidIconButton(
                         onClick = {
                             if (microAccordé) {
                                 if (!onDémarrerEnregistrement(context)) {
@@ -211,6 +214,7 @@ fun Composeur(
                                 permissionMicro.launch(Manifest.permission.RECORD_AUDIO)
                             }
                         },
+                        taille = 40.dp,
                     ) {
                         Icon(
                             imageVector = Icons.Rounded.Mic,
@@ -218,9 +222,10 @@ fun Composeur(
                             tint = RegistreTheme.colors.chalk,
                         )
                     }
-                    IconButton(
+                    LiquidIconButton(
                         onClick = onEnvoyer,
                         enabled = envoiPossible && !enCours && (texte.isNotBlank() || pièces.isNotEmpty() || audio != null),
+                        taille = 40.dp,
                     ) {
                         if (enCours) {
                             androidx.compose.material3.CircularProgressIndicator(
@@ -281,7 +286,7 @@ private fun PucePièce(
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.padding(vertical = 4.dp),
             )
-            IconButton(onClick = onRetirer, modifier = Modifier.size(24.dp)) {
+            LiquidIconButton(onClick = onRetirer, taille = 24.dp) {
                 Icon(
                     imageVector = Icons.Rounded.Close,
                     contentDescription = "Retirer $nom",

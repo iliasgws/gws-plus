@@ -20,7 +20,6 @@ import androidx.compose.material.icons.rounded.Cancel
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -50,8 +49,10 @@ import school.greenwood.plus.ui.components.ErrorInline
 import school.greenwood.plus.ui.components.GlassSurface
 import school.greenwood.plus.ui.components.GwsBouton
 import school.greenwood.plus.ui.components.GwsCard
+import school.greenwood.plus.ui.components.LiquidIconButton
 import school.greenwood.plus.ui.components.Puce
 import school.greenwood.plus.ui.components.SqueletteQuiz
+import school.greenwood.plus.ui.components.givre
 import school.greenwood.plus.ui.theme.PageShape
 import school.greenwood.plus.ui.theme.RegistreTheme
 
@@ -88,7 +89,10 @@ fun QuizScreen(
             ),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            IconButton(onClick = retour) {
+            LiquidIconButton(
+                onClick = retour,
+                surfaceColor = givre(),
+            ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
                     contentDescription = "Retour",

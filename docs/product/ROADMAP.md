@@ -468,6 +468,17 @@ same tab gesture, same transitions, `enableOnBackInvokedCallback` untouched.
       glass pills over the captured list; `PuceChoix` chips are clear-glass
       `LiquidButton`s (25 % frost when waiting, ink surface when chosen);
       `verreRéelDisponible()` + `givre()` helpers added to Glass.kt
+- [x] Sixth pass (beta-8 on-device feedback): removed per-list backdrop
+      captures from Documents and Conversation because lazy recycling could
+      expose detached layout coordinates while scrolling; in-screen glass
+      safely samples the root aurora capture. Detail routes now resolve to
+      their owning tab (`quiz` → Documents, conversation/new message →
+      Messages, post/demandes → Registre), keeping the bottom indicator in
+      sync across saved tab stacks. Search and bottom navigation retain blur,
+      lens and press physics without the bright highlight/shadow/chromatic
+      passes that caused bloom. All Material screen actions were migrated to
+      the shared liquid button primitives, including the standalone floating
+      quiz back button
 - [x] Screens: all 13 converted — transparent roots; day chips, nature
       filters, message categories, search field and action button extracted
       into shared `PuceChoix` / `ChampRecherche` / `GwsBouton`; quiz answers

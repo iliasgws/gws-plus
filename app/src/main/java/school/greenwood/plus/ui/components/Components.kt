@@ -30,7 +30,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -179,7 +178,11 @@ fun BandeauErreur(
                 icone = Icons.Rounded.ErrorOutline,
                 modifier = Modifier.weight(1f),
             )
-            TextButton(onClick = réessayer) {
+            LiquidButton(
+                onClick = réessayer,
+                hauteur = 40.dp,
+                surfaceColor = givre(),
+            ) {
                 Text(
                     text = "Réessayer",
                     style = MaterialTheme.typography.labelMedium,
@@ -246,7 +249,7 @@ fun PuceChoix(
             onClick = onClick,
             modifier = modifier,
             hauteur = 36.dp,
-            surfaceColor = if (sélectionné) colors.ink else givre(),
+            surfaceColor = if (sélectionné) colors.ink.copy(alpha = 0.82f) else givre(),
         ) {
             Text(
                 text = label,
@@ -295,7 +298,7 @@ fun GwsBouton(
         onClick = onClick,
         modifier = modifier,
         isInteractive = enabled && !chargement,
-        surfaceColor = RegistreTheme.colors.ink,
+        surfaceColor = RegistreTheme.colors.ink.copy(alpha = 0.82f),
     ) {
         if (chargement) {
             CircularProgressIndicator(

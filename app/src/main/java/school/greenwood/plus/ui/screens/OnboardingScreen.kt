@@ -15,11 +15,8 @@ import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -28,7 +25,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
-import school.greenwood.plus.ui.theme.ControlShape
+import school.greenwood.plus.ui.components.GwsBouton
+import school.greenwood.plus.ui.components.LiquidButton
+import school.greenwood.plus.ui.components.givre
 import school.greenwood.plus.ui.theme.RegistreTheme
 
 /*
@@ -56,11 +55,13 @@ fun OnboardingScreen(onFini: () -> Unit) {
             .fillMaxSize()
             .systemBarsPadding(),
     ) {
-        TextButton(
+        LiquidButton(
             onClick = onFini,
-                        modifier = Modifier
+            modifier = Modifier
                 .align(Alignment.TopEnd)
                 .padding(16.dp),
+            surfaceColor = givre(),
+            hauteur = 40.dp,
         ) {
             Text(
                 text = "Passer",
@@ -122,28 +123,20 @@ fun OnboardingScreen(onFini: () -> Unit) {
                 }
             }
             if (pagerState.currentPage == pages.lastIndex) {
-                Button(
+                GwsBouton(
+                    texte = "Commencer",
                     onClick = onFini,
-                    shape = ControlShape,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = RegistreTheme.colors.ink,
-                        contentColor = RegistreTheme.colors.page,
-                    ),
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 60.dp),
-                ) {
-                    Text(
-                        text = "Commencer",
-                        style = MaterialTheme.typography.labelLarge,
-                    )
-                }
+                )
             } else {
-                TextButton(
+                LiquidButton(
                     onClick = {
                         scope.launch {
                             pagerState.animateScrollToPage(pagerState.currentPage + 1)
                         }
                     },
-                                    ) {
+                    surfaceColor = givre(),
+                ) {
                     Text(
                         text = "Suivant",
                         style = MaterialTheme.typography.labelLarge,
