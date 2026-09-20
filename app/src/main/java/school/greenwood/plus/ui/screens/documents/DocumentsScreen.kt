@@ -18,7 +18,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -33,8 +32,6 @@ import school.greenwood.plus.ui.DocumentsViewModel
 import school.greenwood.plus.ui.FiltreDocuments
 import school.greenwood.plus.ui.estQuiz
 import school.greenwood.plus.ui.filtrerRessources
-import com.kashif_e.backdrop.backdrops.layerBackdrop
-import com.kashif_e.backdrop.backdrops.rememberLayerBackdrop
 import school.greenwood.plus.ui.components.BandeauErreur
 import school.greenwood.plus.ui.components.ChampRecherche
 import school.greenwood.plus.ui.components.EmptyState
@@ -71,11 +68,6 @@ fun DocumentsScreen(
     val bas = padding.calculateBottomPadding()
     val hautStatut = padding.calculateTopPadding()
 
-    // Capture du contenu qui défile : la barre flottante (recherche + puces)
-    // l'échantillonne — elle est la sœur du nœud capturé, jamais dedans
-    // (règle d'or du verre : ne jamais lire une capture qui vous contient).
-    val captureListe = rememberLayerBackdrop()
-
     Box(Modifier.fillMaxSize()) {
         when {
             état.chargement -> Box(
@@ -103,9 +95,7 @@ fun DocumentsScreen(
                 // défile sous le panneau de verre.
                 val filtrées = filtrerRessources(état.ressources, état.recherche, état.filtre)
                 LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .layerBackdrop(captureListe),
+                    modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(
                         start = 16.dp,
                         end = 16.dp,
@@ -181,34 +171,29 @@ fun DocumentsScreen(
                     }
                 }
 
-                // Recherche + puces de nature : pilules de verre flottantes,
-                // chacune échantillonnant la liste (provider local) — les
-                // cartes défilent visiblement derrière, réfraction comprise.
-                // Pas de panneau englobant : une masse de verre lourde
-                // écraserait la réfraction de ce qui vit dessous.
-                CompositionLocalProvider(LocalGlassBackdrop provides captureListe) {
-                    Column(
-                        modifier = Modifier
-                            .align(Alignment.TopCenter)
-                            .padding(
-                                top = hautStatut + 8.dp,
-                                start = 16.dp,
-                                end = 16.dp,
-                            )
-                            .fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(10.dp),
-                    ) {
-                        ChampRecherche(
-                            valeur = état.recherche,
-                            onChange = vm::modifierRecherche,
-                            placeholder = "Rechercher",
-                            modifier = Modifier.fillMaxWidth(),
+                // Recherche + puces de nature : pilules de verre flottantes
+                // échantillonnant l'aurore via LocalGlassBackdrop.
+                Column(
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(
+                            top = hautStatut + 8.dp,
+                            start = 16.dp,
+                            end = 16.dp,
                         )
-                        FiltreNature(
-                            choisi = état.filtre,
-                            onChange = vm::choisirFiltre,
-                        )
-                    }
+                        .fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    ChampRecherche(
+                        valeur = état.recherche,
+                        onChange = vm::modifierRecherche,
+                        placeholder = "Rechercher",
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    FiltreNature(
+                        choisi = état.filtre,
+                        onChange = vm::choisirFiltre,
+                    )
                 }
             }
         }
