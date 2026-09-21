@@ -4,7 +4,11 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
-## [Non publié]
+## [0.7.0-bêta 1] — 2026-09-21
+
+Préversion : la Boutique de l'école, l'onglet Plus et le menu du haut du
+Registre se publient en bêta depuis la branche `boutique-ecole-plus` (non
+fusionnée) pour être essayés sur un appareil réel avant la fusion.
 
 ### Ajouté
 
