@@ -3,10 +3,15 @@ package school.greenwood.plus
 import school.greenwood.plus.data.repo.Normalizers
 import school.greenwood.plus.model.ProduitDétail
 import school.greenwood.plus.model.ProduitBoutique
+import school.greenwood.plus.model.CantineJour
 import school.greenwood.plus.ui.screens.boutique.boutonCommander
+import school.greenwood.plus.ui.screens.boutique.couleurHex
+import school.greenwood.plus.ui.screens.boutique.libelléJourRepas
 import school.greenwood.plus.ui.screens.boutique.libelléPrix
+import school.greenwood.plus.data.repo.commentaireRepas
 import school.greenwood.plus.ui.filtrerProduits
 import school.greenwood.plus.ui.prixUnitaire
+import androidx.compose.ui.graphics.toArgb
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import org.junit.Assert.assertEquals
@@ -134,6 +139,33 @@ class BoutiqueTest {
     fun `libellé du prix - entier sans décimales, décimales sinon`() {
         assertEquals("150 DH", libelléPrix(150.0))
         assertEquals("157.5 DH", libelléPrix(157.5))
+    }
+
+    @Test
+    fun `commentaire du repas - jour en français, ISO brute sinon`() {
+        assertEquals(
+            "Repas invité du 23/09/2026",
+            commentaireRepas("2026-09-23"),
+        )
+        // Le parseur est tolérant : un bruit qui traîne ne casse pas le jour.
+        assertEquals("Repas invité du 23/09/2026", commentaireRepas("2026-09-23?"))
+        assertEquals("Repas invité du", commentaireRepas(null).trim())
+    }
+
+    @Test
+    fun `couleur serveur - hex lisible, autre chose rejetée`() {
+        assertEquals(0xFF0DB748, couleurHex("#0DB748")?.toArgb()?.toLong()?.and(0xFFFFFFFFL))
+        assertNull(couleurHex(null))
+        assertNull(couleurHex("vert"))
+        assertNull(couleurHex("#12345"))
+    }
+
+    @Test
+    fun `libellé du jour du planning - date lisible, repli sur le serveur`() {
+        val jour = CantineJour(id = "25", jourValeur = "2026-09-23", jourDate = "Mer, 23 Septembre")
+        assertEquals("mercredi 23 septembre", libelléJourRepas(jour))
+        val sansDate = CantineJour(id = "25", jourDate = "Mer, 23 Septembre")
+        assertEquals("Mer, 23 Septembre", libelléJourRepas(sansDate))
     }
 
     @Test

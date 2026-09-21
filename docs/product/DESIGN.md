@@ -192,6 +192,15 @@ Boutique en sarcelle — comme des couvertures de cahiers côte à côte. Le
 détail d'actualité ouvert depuis l'Actualités garde l'onglet Plus actif
 (pile) et la teinte ambre (route) — le contrat accent-par-route est inchangé.
 
+### Repas invité (le planning cantine, même route `shop`)
+La rubrique « Repas invité » ne porte pas de produits : le serveur y met le
+planning des menus (`cantines[]` — jour, disponibilité teintée serveur, prix,
+« Réserver » / « Réservé 1/1 »). Deux portes y mènent : une carte « Cantine »
+du Registre et la rubrique dans la Boutique — même écran, on tape un jour, on
+confirme. Le POST est celui de la boutique (produit 25, vérifié) ; le jour
+choisi part dans le commentaire de la commande — le libellé « Réservé » du
+serveur ne compte que les commandes validées.
+
 ### Boutique de l'école (GET/POST `shop` — sondé le 21/09/2026)
 Catalogue par rubrique (puces filtre + recherche locale), détail produit
 (variantes = tailles avec stock et prix propres, quantité sous le doigt,

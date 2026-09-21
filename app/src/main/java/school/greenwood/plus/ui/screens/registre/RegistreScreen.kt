@@ -31,6 +31,7 @@ import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Description
 import androidx.compose.material.icons.rounded.Menu
 import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material.icons.rounded.Restaurant
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -109,6 +110,7 @@ fun RegistreScreen(
     padding: PaddingValues,
     ouvrirDemandes: () -> Unit,
     ouvrirParamètres: () -> Unit,
+    ouvrirRepas: () -> Unit,
     ouvrirPost: (String) -> Unit,
     ouvrirEmploi: () -> Unit,
 ) {
@@ -277,6 +279,13 @@ fun RegistreScreen(
                     }
                 }
 
+                item(key = "lien-repas") {
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        SectionLabel(text = "Cantine")
+                        CarteLienRepas(ouvrirRepas)
+                    }
+                }
+
                 item(key = "label-jour") { SectionLabel(text = "Aujourd'hui") }
 
                 if (registre.entrees.isEmpty() && registre.ceSoir.isEmpty()) {
@@ -442,6 +451,53 @@ private fun CarteLienEmploi(ouvrirEmploi: () -> Unit) {
                 )
                 Text(
                     text = "La semaine de l'école, jour par jour",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = RegistreTheme.colors.chalk,
+                )
+            }
+        }
+    }
+}
+
+/** Lien discret vers la réservation du repas invité, depuis l'accueil —
+ *  habillé de l'accent sarcelle de la Boutique dont il dépend. */
+@Composable
+private fun CarteLienRepas(ouvrirRepas: () -> Unit) {
+    val accentPlus = RegistreTheme.colors.accents["plus"]
+    GwsCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = ouvrirRepas),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .clip(ControlShape)
+                    .background(accentPlus?.conteneur ?: RegistreTheme.colors.sage),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.Restaurant,
+                    contentDescription = null,
+                    tint = accentPlus?.teinte ?: RegistreTheme.colors.ink,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "Repas invité",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = RegistreTheme.colors.ink,
+                )
+                Text(
+                    text = "Réserver le repas d'un jour de la cantine",
                     style = MaterialTheme.typography.labelSmall,
                     color = RegistreTheme.colors.chalk,
                 )

@@ -49,6 +49,7 @@ import school.greenwood.plus.ui.screens.OnboardingScreen
 import school.greenwood.plus.ui.screens.boutique.BoutiqueHistoriqueScreen
 import school.greenwood.plus.ui.screens.boutique.BoutiqueItemScreen
 import school.greenwood.plus.ui.screens.boutique.BoutiqueScreen
+import school.greenwood.plus.ui.screens.boutique.RepasInviteScreen
 import school.greenwood.plus.ui.screens.devoirs.DevoirsScreen
 import school.greenwood.plus.ui.screens.demandes.DemandesScreen
 import school.greenwood.plus.ui.screens.documents.DocumentsScreen
@@ -147,7 +148,7 @@ private fun accentDe(route: String?, couleurs: school.greenwood.plus.ui.theme.Gw
         "documents" -> couleurs.accents.getValue("documents")
         "messages", "demandes" -> couleurs.accents.getValue("messages")
         "parametres" -> couleurs.accents.getValue("registre")
-        "plus", "boutique", "boutique-historique" -> couleurs.accents.getValue("plus")
+        "plus", "boutique", "boutique-historique", "repas-invite" -> couleurs.accents.getValue("plus")
         else -> when {
             route?.startsWith("post/") == true -> couleurs.accents.getValue("actualites")
             route?.startsWith("quiz/") == true -> couleurs.accents.getValue("documents")
@@ -244,6 +245,7 @@ fun Shell(container: AppContainer) {
                     padding = padding,
                     ouvrirDemandes = { navController.allerDétail("demandes") },
                     ouvrirParamètres = { navController.allerDétail("parametres") },
+                    ouvrirRepas = { navController.allerDétail("repas-invite") },
                     ouvrirPost = { id -> navController.allerDétail("post/$id") },
                     ouvrirEmploi = { navController.allerÀLOnglet("cours") },
                 )
@@ -296,6 +298,13 @@ fun Shell(container: AppContainer) {
                     ouvrirModifier = { produitId, commandeId ->
                         navController.allerDétail("boutique/$produitId?commande=$commandeId")
                     },
+                    retour = { navController.popBackStack() },
+                )
+            }
+            composable("repas-invite") {
+                RepasInviteScreen(
+                    container = container,
+                    padding = padding,
                     retour = { navController.popBackStack() },
                 )
             }

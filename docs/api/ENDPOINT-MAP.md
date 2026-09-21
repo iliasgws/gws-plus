@@ -914,8 +914,32 @@ sibling `CoursRepository` reads this endpoint read-only.
   it is the raw number string.
 - `rubriques[].icon.notif` looked like the rubrique's product count —
   semantics unverified, not rendered.
-- `cantines` + `translation.showCantinePlanning` (false on this school):
-  the canteen block of the original screen — out of scope.
+- **`cantines` (VERIFIED 2026-09-21)**: empty on most calls, populated on
+  `rubrique=2` (« Repas invité ») where `products` is empty — the rubrique
+  IS the canteen planning, not a product list:
+
+```json
+"cantines": [ { "id": "25",
+  "date": { "label": "Demain", "date": "Mar, 22 Septembre", "value": "2026-09-22" },
+  "availability": { "label": "Disponible", "bg": "#EEFFF4", "color": "#0DB748" },
+  "img": "<signed URL>", "label": "Repas invité", "description": "",
+  "price": "50 DH", "active": true,
+  "can_reserve": true, "is_reserved": false, "reserved": "Réserver" } ]
+```
+
+  - `id` here is the **shop product id** (25 = « Repas invité », price 50,
+    single variant « Commander »). Ordering through the same POST as any
+    product was VERIFIED (order created « en-cours » then deleted; the
+    user's validated order #2275 confirms the full path).
+  - The day of the meal has **no field in the POST** — the only client-side
+    mention is the free `comment` (GWS+ writes « Repas invité du JJ/MM/AAAA »).
+  - `reserved` (« Réserver » / « Réservé 1/1 ») reflects **validated orders
+    only**: an « en-cours » order does not flip the planning display.
+  - `translation.showCantinePlanning` stays `false` on this school — the
+    original shop screen hides the block (and app 2.4.14 has no reserve
+    button anywhere; `cantine` is a GET-only weekly planner there).
+- `translation.showCantinePlanning` (false on this school): the canteen
+  block of the original screen — out of scope.
 
 **GET** `shop?product=<id>` — product detail. With `commande=<order id>`
 (edit mode) the response gains `commande: { "qte": 1, "size": "…", "comment":

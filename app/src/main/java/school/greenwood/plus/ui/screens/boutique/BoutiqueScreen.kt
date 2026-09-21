@@ -37,6 +37,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -48,6 +51,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import school.greenwood.plus.AppContainer
+import school.greenwood.plus.model.CantineJour
 import school.greenwood.plus.model.ProduitBoutique
 import school.greenwood.plus.model.RubriqueBoutique
 import school.greenwood.plus.ui.BoutiqueViewModel
@@ -79,6 +83,7 @@ fun BoutiqueScreen(
 ) {
     val vm: BoutiqueViewModel = viewModel { BoutiqueViewModel(container) }
     val état by vm.état.collectAsStateWithLifecycle()
+    var jourChoisi by remember { mutableStateOf<CantineJour?>(null) }
 
     Column(
         modifier = Modifier
@@ -165,53 +170,87 @@ fun BoutiqueScreen(
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                         )
                     }
-                    if (filtrés.isEmpty()) {
-                        Box(
-                            Modifier
-                                .fillMaxWidth()
-                                .weight(1f),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            if (état.recherche.isBlank()) {
-                                EmptyState(
-                                    titre = "Boutique vide",
-                                    message = "Aucun produit dans cette rubrique pour le moment.",
-                                    icone = Icons.Rounded.ShoppingBag,
-                                )
-                            } else {
+                    when {
+                        // La rubrique « Repas invité » ne porte pas de produits :
+                        // le serveur y met le planning des menus (cantines[]).
+                        filtrés.isEmpty() && état.cantines.isNotEmpty() ->
+                            PlanningCantine(
+                                jours = état.cantines,
+                                envoi = état.envoiRepas,
+                                surRéserver = { jour -> jourChoisi = jour },
+                            )
+                        filtrés.isEmpty() && état.recherche.isNotBlank() ->
+                            Box(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .weight(1f),
+                                contentAlignment = Alignment.Center,
+                            ) {
                                 EmptyState(
                                     titre = "Rien trouvé",
                                     message = "Essaie un autre mot.",
                                     icone = Icons.Rounded.SearchOff,
                                 )
                             }
-                        }
-                    } else {
-                        LazyVerticalGrid(
-                            columns = GridCells.Fixed(2),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .weight(1f),
-                            contentPadding = PaddingValues(
-                                start = 16.dp,
-                                end = 16.dp,
-                                top = 4.dp,
-                                bottom = 16.dp,
-                            ),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            verticalArrangement = Arrangement.spacedBy(12.dp),
-                        ) {
-                            items(filtrés, key = { it.id }) { produit ->
-                                CarteProduit(
-                                    produit = produit,
-                                    onClick = { ouvrirProduit(produit.id) },
+                        filtrés.isEmpty() ->
+                            Box(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .weight(1f),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                EmptyState(
+                                    titre = "Boutique vide",
+                                    message = "Aucun produit dans cette rubrique pour le moment.",
+                                    icone = Icons.Rounded.ShoppingBag,
                                 )
+                            }
+                        else -> {
+                            LazyVerticalGrid(
+                                columns = GridCells.Fixed(2),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .weight(1f),
+                                contentPadding = PaddingValues(
+                                    start = 16.dp,
+                                    end = 16.dp,
+                                    top = 4.dp,
+                                    bottom = 16.dp,
+                                ),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                verticalArrangement = Arrangement.spacedBy(12.dp),
+                            ) {
+                                items(filtrés, key = { it.id }) { produit ->
+                                    CarteProduit(
+                                        produit = produit,
+                                        onClick = { ouvrirProduit(produit.id) },
+                                    )
+                                }
                             }
                         }
                     }
                 }
             }
         }
+    }
+
+    jourChoisi?.let { jour ->
+        DialogueConfirmationRepas(
+            jour = jour,
+            envoi = état.envoiRepas,
+            onConfirmer = {
+                vm.réserverRepas(jour)
+                jourChoisi = null
+            },
+            onFermer = { jourChoisi = null },
+        )
+    }
+
+    état.succèsRepas?.let { résultat ->
+        DialogueSuccèsRepas(
+            résultat = résultat,
+            onFermer = { vm.acquisRepas() },
+        )
     }
 }
 

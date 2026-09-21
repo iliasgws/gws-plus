@@ -7,11 +7,14 @@ import kotlinx.coroutines.flow.first
 import kotlinx.serialization.json.JsonObject
 import school.greenwood.plus.data.api.BotiClient
 import school.greenwood.plus.data.session.SessionStore
+import school.greenwood.plus.model.CantineJour
 import school.greenwood.plus.model.CommandeBoutique
 import school.greenwood.plus.model.ProduitBoutique
 import school.greenwood.plus.model.ProduitDétail
 import school.greenwood.plus.model.RésultatCommande
 import school.greenwood.plus.model.RubriqueBoutique
+import school.greenwood.plus.util.extractDate
+import school.greenwood.plus.util.frenchNumeric
 
 /*
  * La Boutique de l'école (docs/product/DESIGN.md §4), une seule route `shop`
@@ -30,11 +33,13 @@ import school.greenwood.plus.model.RubriqueBoutique
  */
 
 /** Une page de catalogue : la liste des produits d'une rubrique, la liste
- *  complète des rubriques (toujours renvoyée) et le compteur de panier. */
+ *  complète des rubriques (toujours renvoyée), le compteur de panier et le
+ *  planning cantine (renseigné sur la rubrique « Repas invité »). */
 data class CatalogueBoutique(
     val produits: List<ProduitBoutique>,
     val rubriques: List<RubriqueBoutique>,
     val compteurPanier: Int,
+    val cantines: List<CantineJour> = emptyList(),
 )
 
 class BoutiqueRepository(
@@ -68,6 +73,8 @@ class BoutiqueRepository(
             rubriques = Normalizers.arr(rep, "rubriques")
                 .mapNotNull { (it as? JsonObject)?.let(Normalizers::rubrique) },
             compteurPanier = Normalizers.int(rep, "cart_count") ?: 0,
+            cantines = Normalizers.arr(rep, "cantines")
+                .mapNotNull { (it as? JsonObject)?.let(Normalizers::cantine) },
         )
     }
 
@@ -126,6 +133,27 @@ class BoutiqueRepository(
         ).also { if (it.succès) signalerChangement() }
     }
 
+    /**
+     * Réserver un repas invité : même POST que la boutique (sonde du
+     * 21/09/2026 — le produit 25 « Repas invité » se commande comme un autre,
+     * variante unique « Commander »). Le jour choisi part dans le
+     * commentaire de la commande, seule mention du jour côté client — le
+     * libellé de réservation du planning (« Réservé 1/1 ») ne compte que les
+     * commandes validées.
+     */
+    suspend fun commanderRepas(produitId: String, jourValeur: String?): RésultatCommande {
+        val détail = détail(produitId)
+        val variante = détail.variantes.firstOrNull()
+        return commander(
+            produitId = produitId,
+            varianteId = variante?.id,
+            taille = null,
+            quantité = 1,
+            commentaire = commentaireRepas(jourValeur),
+            prix = variante?.montant ?: détail.prixRaw,
+        )
+    }
+
     /** Historique des commandes, la plus récente d'abord (GET `new_history`). */
     suspend fun historique(): List<CommandeBoutique> {
         val rep = client.get("shop", mapOf("new_history" to "true"))
@@ -154,4 +182,15 @@ class BoutiqueRepository(
         return Normalizers.bool(rep, "error") != true
             .also { succès -> if (succès) signalerChangement() }
     }
+}
+
+/**
+ * Le commentaire qui porte le jour du repas (« Repas invité du 23/09/2026 »).
+ * L'ISO du planning (`date.value`) passe par le parseur tolérant ; sans date
+ * lisible, l'ISO brute — testé.
+ */
+fun commentaireRepas(jourValeur: String?): String {
+    val jour = jourValeur?.let { extractDate(it) }
+    return if (jour != null) "Repas invité du ${jour.frenchNumeric()}"
+    else "Repas invité du ${jourValeur ?: ""}".trim()
 }

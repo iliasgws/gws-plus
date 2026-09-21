@@ -12,6 +12,7 @@ import school.greenwood.plus.AppContainer
 import school.greenwood.plus.data.api.BotiErreur
 import school.greenwood.plus.data.repo.RegistreDuJour
 import school.greenwood.plus.model.BilanAbsences
+import school.greenwood.plus.model.CantineJour
 import school.greenwood.plus.model.CommandeBoutique
 import school.greenwood.plus.model.ContactEcole
 import school.greenwood.plus.model.Conversation
@@ -1501,6 +1502,11 @@ data class BoutiqueÉtat(
     val rafraîchissementSilencieux: Boolean = false,
     val produits: List<ProduitBoutique> = emptyList(),
     val rubriques: List<RubriqueBoutique> = emptyList(),
+    /** Planning cantine — renseigné sur la rubrique « Repas invité ». */
+    val cantines: List<CantineJour> = emptyList(),
+    /** Réservation de repas en cours, et le succès à confirmer. */
+    val envoiRepas: Boolean = false,
+    val succèsRepas: RésultatCommande? = null,
     /** Rubrique affichée — « -1 » = Tout (le serveur exige le paramètre). */
     val rubriqueActive: String = "-1",
     val recherche: String = "",
@@ -1541,6 +1547,7 @@ class BoutiqueViewModel(private val container: AppContainer) : ViewModel() {
                         rafraîchissementSilencieux = false,
                         produits = page.produits,
                         rubriques = page.rubriques,
+                        cantines = page.cantines,
                         erreur = null,
                     )
                 }
@@ -1572,6 +1579,29 @@ class BoutiqueViewModel(private val container: AppContainer) : ViewModel() {
 
     fun modifierRecherche(valeur: String) {
         _état.update { it.copy(recherche = valeur) }
+    }
+
+    /** Réserver le repas invité d'un jour du planning (POST vérifié). */
+    fun réserverRepas(jour: CantineJour) {
+        if (_état.value.envoiRepas) return
+        _état.update { it.copy(envoiRepas = true, erreur = null) }
+        viewModelScope.launch {
+            try {
+                val résultat = container.boutique.commanderRepas(jour.id, jour.jourValeur)
+                _état.update { it.copy(envoiRepas = false, succèsRepas = résultat) }
+            } catch (err: BotiErreur) {
+                _état.update { it.copy(envoiRepas = false, erreur = err.messageUtilisateur) }
+            } catch (err: Exception) {
+                _état.update {
+                    it.copy(envoiRepas = false, erreur = "Réservation impossible pour le moment")
+                }
+            }
+        }
+    }
+
+    /** L'alerte de réservation est fermée. */
+    fun acquisRepas() {
+        _état.update { it.copy(succèsRepas = null) }
     }
 }
 
@@ -1764,5 +1794,72 @@ class HistoriqueViewModel(private val container: AppContainer) : ViewModel() {
             // Recharge quoi qu'il arrive : le serveur fait foi.
             charger(force = true)
         }
+    }
+}
+
+/** — Boutique : réservation du repas invité ------------------------------- */
+
+/** L'état de l'écran Repas invité : le planning et une réservation en cours. */
+data class RepasÉtat(
+    val chargement: Boolean = true,
+    val erreur: String? = null,
+    val jours: List<CantineJour> = emptyList(),
+    val envoi: Boolean = false,
+    val succès: RésultatCommande? = null,
+)
+
+class RepasViewModel(private val container: AppContainer) : ViewModel() {
+    private val _état = MutableStateFlow(RepasÉtat())
+    val état: StateFlow<RepasÉtat> = _état.asStateFlow()
+
+    init {
+        charger()
+        viewModelScope.launch {
+            container.veille.retoursPérimés.collect { charger(force = true) }
+        }
+        viewModelScope.launch {
+            container.boutique.commandesChangées.collect { if (it > 0) charger(force = true) }
+        }
+    }
+
+    fun charger(force: Boolean = false) {
+        viewModelScope.launch {
+            _état.update { it.copy(chargement = it.jours.isEmpty()) }
+            try {
+                val page = container.boutique.catalogue(rubrique = "2", recherche = "")
+                _état.update {
+                    it.copy(
+                        chargement = false,
+                        jours = page.cantines,
+                        erreur = null,
+                    )
+                }
+            } catch (err: BotiErreur) {
+                _état.update { it.copy(chargement = false, erreur = err.messageUtilisateur) }
+            } catch (err: Exception) {
+                _état.update {
+                    it.copy(chargement = false, erreur = "Planning indisponible pour le moment")
+                }
+            }
+        }
+    }
+
+    fun réserver(jour: CantineJour) {
+        if (_état.value.envoi) return
+        _état.update { it.copy(envoi = true, erreur = null) }
+        viewModelScope.launch {
+            try {
+                val résultat = container.boutique.commanderRepas(jour.id, jour.jourValeur)
+                _état.update { it.copy(envoi = false, succès = résultat) }
+            } catch (err: BotiErreur) {
+                _état.update { it.copy(envoi = false, erreur = err.messageUtilisateur) }
+            } catch (err: Exception) {
+                _état.update { it.copy(envoi = false, erreur = "Réservation impossible pour le moment") }
+            }
+        }
+    }
+
+    fun acquis() {
+        _état.update { it.copy(succès = null) }
     }
 }

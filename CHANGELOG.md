@@ -4,6 +4,22 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [0.7.0-bêta 2] — 2026-09-21
+
+Préversion : le planning des repas invités se publie en bêta depuis la
+branche `boutique-ecole-plus` (non fusionnée), après la première bêta de
+la boutique.
+
+### Ajouté
+
+- **Repas invité** : la rubrique « Repas invité » de la Boutique affiche
+  désormais le planning des menus (`cantines[]`, sonde du 21/09/2026) au
+  lieu d'un vide — et un raccourci « Repas invité » arrive depuis le
+  Registre (section Cantine). On tape un jour, on confirme : la commande
+  passe par le POST vérifié de la boutique et le jour choisi part dans le
+  commentaire. Le libellé « Réservé » du planning ne compte que les
+  commandes validées.
+
 ## [0.7.0-bêta 1] — 2026-09-21
 
 Préversion : la Boutique de l'école, l'onglet Plus et le menu du haut du

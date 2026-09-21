@@ -342,6 +342,27 @@ data class ProduitBoutique(
     val prix: String? = null,
 )
 
+/** Un jour du planning des repas de la cantine (rubrique « Repas invité »,
+ *  GET `shop?rubrique=2` — `products` y est vide, le serveur renvoie
+ *  `cantines[]`). `id` est l'id du produit à commander. */
+data class CantineJour(
+    val id: String,
+    val jourLabel: String? = null,
+    val jourDate: String? = null,
+    val jourValeur: String? = null,
+    val dispoLabel: String? = null,
+    val dispoCouleur: String? = null,
+    val image: String? = null,
+    val label: String = "",
+    val description: String? = null,
+    val prix: String? = null,
+    val actif: Boolean = false,
+    val peutRéserver: Boolean = false,
+    val déjàRéservé: Boolean = false,
+    /** Libellé serveur du geste (« Réserver ») ou de l'état (« Réservé 1/1 »). */
+    val réservéLibellé: String? = null,
+)
+
 /** Une variante d'un produit (taille déclinée) : `amount` = prix du produit
  *  dans cette taille, `qte` = stock disponible — deux chaînes numériques. */
 data class VarianteBoutique(

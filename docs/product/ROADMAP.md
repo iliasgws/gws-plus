@@ -617,5 +617,20 @@ facts recorded in `docs/api/ENDPOINT-MAP.md` → « shop ».
 - [x] Docs synced: DESIGN.md (§2 accents, §3 nav + drawer, §4 Plus/Boutique,
       §6 scope), NAVIGATION.md (Plus + tiroir), CHANGELOG « Non publié »,
       AGENTS.md structure table, ENDPOINT-MAP.md « shop »
+- [x] Probe follow-up (beta 2): « Repas invité » is canteen planning, not
+      products — rubrique 2 returns `products: []` + `cantines[]` (day,
+      availability with server colors, price, « Réserver »/« Réservé 1/1 »);
+      the meal IS shop product 25, orderable through the same verified POST
+      (probed: order created then deleted; day carried by the `comment`
+      field — the only client-side mention; « Réservé » counts validated
+      orders only, app 2.4.14 has no reserve button at all)
+- [x] Registre shortcut: « Repas invité » card (section Cantine, sarcelle
+      accent) → day picker → confirmation dialog (day read back black on
+      white) → same POST; success alert from the server
+- [x] Boutique rubrique 2: the same planning replaces the false « Boutique
+      vide » empty state
+- [x] Tests: +3 (repas comment formatting, server-hex color parser, day
+      label) — 111 total, 0 failures
 - [ ] On-device check: open Boutique from Plus, place a real order, edit
-      and delete it from history — TODO on the beta build
+      and delete it from history; reserve a Repas invité from the Registre
+      shortcut — TODO on the beta 2 build

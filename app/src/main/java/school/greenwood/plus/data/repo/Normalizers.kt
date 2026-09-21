@@ -10,6 +10,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import school.greenwood.plus.data.api.MediaUrls
 import school.greenwood.plus.model.Absence
 import school.greenwood.plus.model.ArticleCommande
+import school.greenwood.plus.model.CantineJour
 import school.greenwood.plus.model.CommandeBoutique
 import school.greenwood.plus.model.PrérempliCommande
 import school.greenwood.plus.model.Attachment
@@ -624,6 +625,30 @@ object Normalizers {
             label = str(raw, "label") ?: "",
             image = MediaUrls.lienRéel(str(raw, "image")),
             prix = str(raw, "price"),
+        )
+    }
+
+    /** Un jour du planning cantine (sonde du 21/09/2026) : l'id est celui du
+     *  produit à commander, l'état de réservation est prêt à afficher. */
+    fun cantine(raw: JsonObject): CantineJour? {
+        val id = str(raw, "id") ?: int(raw, "id")?.toString() ?: return null
+        val jour = raw["date"] as? JsonObject
+        val dispo = raw["availability"] as? JsonObject
+        return CantineJour(
+            id = id,
+            jourLabel = jour?.let { str(it, "label") },
+            jourDate = jour?.let { str(it, "date") },
+            jourValeur = jour?.let { str(it, "value") },
+            dispoLabel = dispo?.let { str(it, "label") },
+            dispoCouleur = dispo?.let { str(it, "color") },
+            image = MediaUrls.lienRéel(str(raw, "img")),
+            label = str(raw, "label") ?: "",
+            description = str(raw, "description"),
+            prix = str(raw, "price"),
+            actif = bool(raw, "active") ?: false,
+            peutRéserver = bool(raw, "can_reserve") ?: false,
+            déjàRéservé = bool(raw, "is_reserved") ?: false,
+            réservéLibellé = str(raw, "reserved"),
         )
     }
 
