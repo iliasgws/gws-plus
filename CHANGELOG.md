@@ -4,6 +4,48 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [0.6.1] — 2026-09-21
+
+Stable après quatre bêtas essayées sur appareil réel : le correctif de
+l'onglet actif (bêta 1), la sortie protégée des quiz (bêta 2), l'icône
+dédiée des quiz (bêta 3), le rafraîchissement au retour et le panneau
+Paramètres (bêta 4).
+
+### Ajouté
+
+- **Rafraîchissement au retour au premier plan** : après une absence d'au
+  moins la durée choisie (5 minutes par défaut), la réouverture de l'app
+  relance en silence la charge réseau de tout ce qui est déjà affiché — les
+  écrans gardent leur contenu connu et son indicateur « rafraîchissement »,
+  sans remise à zéro, comme un tirer-pour-rafraîchir invisible. Le quiz en
+  jeu, le composeur (brouillon intact) et la connexion ne se rafraîchissent
+  pas ; la pagination des Actualités garde sa profondeur.
+- **Panneau Paramètres** (atteint depuis une ligne discrète du Registre,
+  sous la ligne Demandes) : choisir la durée d'absence qui déclenche
+  l'actualisation au retour — jamais, 1, 2, 5 ou 10 minutes. Le réglage
+  survit à la déconnexion.
+- **Sortie protégée d'un quiz en cours** (issue #17) : pendant la partie,
+  le geste de retour système, la flèche d'en-tête et tout changement d'onglet
+  en barre basse demandent confirmation — abandonner perd les réponses (score
+  non enregistré), « Continuer le quiz » reste en jeu ; les écrans de départ
+  et de résultat restent librement quittables
+
+### Modifié
+
+- **Icône dédiée pour les quiz dans les ressources** (issue #17) : dans la
+  liste du Documents, le badge du type affiche l'icône « quiz » — une fiche
+  avec « ? », même famille Material Rounded que le reste de l'app — au lieu
+  du monogramme « Q » ; les autres types de ressources gardent leur
+  monogramme
+
+### Corrigé
+
+- **Onglet actif conservé sous une sous-page** (issue #34) : ouvrir une
+  actualité, un quiz, une conversation ou une demande ne désélectionne plus la
+  barre basse — l'onglet parent reste actif, calculé depuis la pile de
+  navigation, et le retour arrière remet l'onglet d'origine sans
+  réinitialisation
+
 ## [0.6.1-bêta 4] — 2026-09-21
 
 Préversion : le rafraîchissement au retour et le panneau Paramètres se
