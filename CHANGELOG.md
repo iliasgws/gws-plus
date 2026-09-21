@@ -4,6 +4,20 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [0.6.1-bêta 3] — 2026-09-21
+
+Préversion : l'icône des quiz se publie en bêta depuis la branche
+`quiz-icon-documents` (PR #37, non fusionnée) pour être essayée sur un
+appareil réel avant la fusion.
+
+### Modifié
+
+- **Icône dédiée pour les quiz dans les ressources** (issue #17) : dans la
+  liste du Documents, le badge du type affiche l'icône « quiz » — une fiche
+  avec « ? », même famille Material Rounded que le reste de l'app — au lieu
+  du monogramme « Q » ; les autres types de ressources gardent leur
+  monogramme
+
 ## [0.6.1-bêta 1] — 2026-09-20
 
 Préversion : le correctif de l'onglet actif se publie en bêta depuis la
