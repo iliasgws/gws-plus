@@ -29,17 +29,22 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CalendarMonth
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Description
+import androidx.compose.material.icons.rounded.Menu
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -52,6 +57,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
@@ -81,6 +87,7 @@ import school.greenwood.plus.ui.components.SectionLabel
 import school.greenwood.plus.ui.components.SqueletteRegistre
 import school.greenwood.plus.ui.theme.AnnotationShape
 import school.greenwood.plus.ui.theme.ControlShape
+import school.greenwood.plus.ui.theme.GwsAccent
 import school.greenwood.plus.ui.theme.PageShape
 import school.greenwood.plus.ui.theme.RegistreTheme
 import school.greenwood.plus.ui.theme.tabulaire
@@ -117,7 +124,50 @@ fun RegistreScreen(
 
     var feuilleOuverte by remember { mutableStateOf(false) }
 
-    when {
+    // Le menu du haut : les gestes « hors flux du jour » (demandes,
+    // paramètres) vivent dans le tiroir, la liste du registre ne porte plus
+    // que du contenu (docs/product/DESIGN.md §4).
+    val portée = rememberCoroutineScope()
+    val tiroir = rememberDrawerState(DrawerValue.Closed)
+    val actionDepuisTiroir: (() -> Unit) -> Unit = { action ->
+        portée.launch { tiroir.close() }
+        action()
+    }
+
+    ModalNavigationDrawer(
+        drawerState = tiroir,
+        drawerContent = {
+            ModalDrawerSheet(drawerContainerColor = RegistreTheme.colors.page) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp, vertical = 20.dp),
+            ) {
+                Text(
+                    text = "Menu",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = RegistreTheme.colors.ink,
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                )
+                LigneTiroir(
+                    label = "Mes demandes",
+                    sousTitre = "Suivre et relancer",
+                    icone = Icons.Rounded.Description,
+                    accent = RegistreTheme.colors.accents["messages"],
+                    onClick = { actionDepuisTiroir(ouvrirDemandes) },
+                )
+                LigneTiroir(
+                    label = "Paramètres",
+                    sousTitre = "Actualisation au retour",
+                    icone = Icons.Rounded.Settings,
+                    accent = RegistreTheme.colors.accents["registre"],
+                    onClick = { actionDepuisTiroir(ouvrirParamètres) },
+                )
+            }
+            }
+        },
+    ) {
+        when {
         état.registre == null && état.erreur != null -> {
             Box(
                 modifier = Modifier
@@ -156,7 +206,8 @@ fun RegistreScreen(
         }
 
         else -> {
-            val registre = état.registre ?: return
+            val registre = état.registre
+            if (registre != null) {
             // La cascade ne joue qu'à la première ouverture de l'accueil
             // (docs/product/DESIGN.md §2) — survive aux changements d'onglet.
             val cascade = rememberSaveable { mutableStateOf(false) }
@@ -186,6 +237,9 @@ fun RegistreScreen(
                     EnTête(
                         date = LocalDate.now(),
                         eleve = état.eleve,
+                        surOuvrirTiroir = {
+                            portée.launch { tiroir.open() }
+                        },
                         surOuvrirFeuille = { feuilleOuverte = true },
                         surActualiser = vm::charger,
                     )
@@ -244,11 +298,9 @@ fun RegistreScreen(
                         CarteEntrée(entrée, ouvrirPost)
                     }
                 }
-
-                item(key = "demandes") { LigneDemandes(ouvrirDemandes) }
-                item(key = "parametres") { LigneParamètres(ouvrirParamètres) }
             }
         }
+    }
     }
 
     if (feuilleOuverte) {
@@ -259,13 +311,15 @@ fun RegistreScreen(
             surFermer = { feuilleOuverte = false },
         )
     }
+    }
 }
 
-/** En-tête : la date en Bricolage, l'enfant consulté à droite, actualiser. */
+/** En-tête : le menu, la date en Bricolage, l'enfant consulté à droite, actualiser. */
 @Composable
 private fun EnTête(
     date: LocalDate,
     eleve: Eleve?,
+    surOuvrirTiroir: () -> Unit,
     surOuvrirFeuille: () -> Unit,
     surActualiser: () -> Unit,
 ) {
@@ -275,6 +329,13 @@ private fun EnTête(
             .padding(top = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        IconButton(onClick = surOuvrirTiroir) {
+            Icon(
+                imageVector = Icons.Rounded.Menu,
+                contentDescription = "Menu",
+                tint = RegistreTheme.colors.ink,
+            )
+        }
         Column(modifier = Modifier.weight(1f)) {
             // La date doit rester lisible en entier (« jeudi 18 septembre ») :
             // elle passe sur deux lignes plutôt que de se couper (issue #21) —
@@ -605,54 +666,47 @@ private fun CarteMessage(conversation: Conversation) {
     }
 }
 
-/** Lien discret vers les Paramètres, depuis l'accueil — habillé de l'accent
- *  de l'onglet Registre (l'écran d'où on y arrive). */
+/** Une ligne du menu du haut : icône sur l'accent de sa destination, sous-titre. */
 @Composable
-private fun LigneParamètres(ouvrirParamètres: () -> Unit) {
-    val accentParamètres = RegistreTheme.colors.accents["registre"]
-    GwsCard(modifier = Modifier.fillMaxWidth().clickable { ouvrirParamètres() }) {
-        Row(
+private fun LigneTiroir(
+    label: String,
+    sousTitre: String,
+    icone: ImageVector,
+    accent: GwsAccent?,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(ControlShape)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 12.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 14.dp, vertical = 16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                .size(40.dp)
+                .clip(AnnotationShape)
+                .background(accent?.conteneur ?: RegistreTheme.colors.sage),
+            contentAlignment = Alignment.Center,
         ) {
             Icon(
-                imageVector = Icons.Rounded.Settings,
+                imageVector = icone,
                 contentDescription = null,
-                tint = accentParamètres?.teinte ?: RegistreTheme.colors.chalk,
-                modifier = Modifier.size(18.dp),
-            )
-            Text(
-                text = "Paramètres — actualisation au retour",
-                style = MaterialTheme.typography.bodySmall,
-                color = RegistreTheme.colors.chalk,
+                tint = accent?.teinte ?: RegistreTheme.colors.ink,
+                modifier = Modifier.size(20.dp),
             )
         }
-    }
-}
-
-@Composable
-private fun LigneDemandes(ouvrirDemandes: () -> Unit) {
-    val accentDemandes = RegistreTheme.colors.accents["messages"]
-    GwsCard(modifier = Modifier.fillMaxWidth().clickable { ouvrirDemandes() }) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 14.dp, vertical = 16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            Icon(
-                imageVector = Icons.Rounded.Description,
-                contentDescription = null,
-                tint = accentDemandes?.teinte ?: RegistreTheme.colors.chalk,
-                modifier = Modifier.size(18.dp),
+        Column {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyMedium,
+                color = RegistreTheme.colors.ink,
             )
             Text(
-                text = "Demandes administratives — suivre et relancer",
-                style = MaterialTheme.typography.bodySmall,
+                text = sousTitre,
+                style = MaterialTheme.typography.labelSmall,
                 color = RegistreTheme.colors.chalk,
             )
         }

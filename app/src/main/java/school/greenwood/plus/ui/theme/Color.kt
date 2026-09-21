@@ -105,3 +105,13 @@ val CorailSurConteneurLight = Color(0xFF8C2149)
 val CorailTeinteDark = Color(0xFFF59FB4)
 val CorailConteneurDark = Color(0xFF481D2C)
 val CorailSurConteneurDark = Color(0xFFFBD2DC)
+
+// — Plus / Boutique : la sarcelle de l'extra-scolaire (le « Plus » de la
+//   barre, la Boutique de l'école) — ~180°, la teinte libre entre le vert
+//   du Registre (~150°) et le bleu des Cours (~210°)
+val SarcelleTeinteLight = Color(0xFF16665E)
+val SarcelleConteneurLight = Color(0xFFD3EAE7)
+val SarcelleSurConteneurLight = Color(0xFF0B4B46)
+val SarcelleTeinteDark = Color(0xFF7FD8CF)
+val SarcelleConteneurDark = Color(0xFF173C38)
+val SarcelleSurConteneurDark = Color(0xFFA9E5DD)

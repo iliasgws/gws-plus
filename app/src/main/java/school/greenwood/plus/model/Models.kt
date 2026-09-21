@@ -321,3 +321,85 @@ data class ParentInfo(
     val nomComplet: String,
     val image: String? = null,
 )
+
+/** — Boutique de l'école (GET/POST `shop`, sondé le 21/09/2026) ----------- */
+
+/** Une rubrique du catalogue (« Tout » a l'id -1). `notif` est le badge
+ *  compteur du serveur, absent sur la plupart des rubriques. */
+data class RubriqueBoutique(
+    val id: String,
+    val label: String,
+    val icone: String? = null,
+    val fond: String? = null,
+    val notif: Int = 0,
+)
+
+/** Un produit du catalogue : le prix arrive en chaîne d'affichage (« 250 DH »). */
+data class ProduitBoutique(
+    val id: String,
+    val label: String,
+    val image: String? = null,
+    val prix: String? = null,
+)
+
+/** Une variante d'un produit (taille déclinée) : `amount` = prix du produit
+ *  dans cette taille, `qte` = stock disponible — deux chaînes numériques. */
+data class VarianteBoutique(
+    val id: String,
+    val label: String,
+    val couleur: String? = null,
+    val montant: String? = null,
+    val stock: Int? = null,
+)
+
+/** Le détail d'un produit (GET `shop?product=…`). `prixRaw` est le prix de
+ *  base, sans unité (« 150 »). */
+data class ProduitDétail(
+    val id: String,
+    val label: String,
+    val image: String? = null,
+    val description: String? = null,
+    val prixRaw: String? = null,
+    val peutCommander: Boolean = true,
+    val variantes: List<VarianteBoutique> = emptyList(),
+    /** Préremplissage d'une commande à modifier (GET avec `commande=…`). */
+    val prérempli: PrérempliCommande? = null,
+)
+
+/** Les choix d'une commande existante, renvoyés par le GET de modification. */
+data class PrérempliCommande(
+    val taille: String? = null,
+    val quantité: Int = 1,
+    val commentaire: String? = null,
+)
+
+/** Un article dans une commande passée. */
+data class ArticleCommande(
+    val id: String,
+    val produitId: String? = null,
+    val image: String? = null,
+    val label: String,
+    val taille: String? = null,
+    val quantité: Int? = null,
+    val prix: String? = null,
+    val modifiable: Boolean = false,
+    val supprimable: Boolean = false,
+)
+
+/** Une commande passée, avec son état serveur (« en-cours » / « validée »). */
+data class CommandeBoutique(
+    val id: String,
+    val date: String? = null,
+    val prix: String? = null,
+    val étatAlias: String? = null,
+    val étatLabel: String? = null,
+    val articles: List<ArticleCommande> = emptyList(),
+    val supprimable: Boolean = false,
+)
+
+/** La réponse du POST de commande : les champs d'alerte du serveur. */
+data class RésultatCommande(
+    val succès: Boolean,
+    val titre: String? = null,
+    val message: String? = null,
+)

@@ -41,11 +41,11 @@ Current contents (update this section whenever files are added or removed):
 | `app/src/main/java/school/greenwood/plus/` | Sources — key entries below |
 | `…/GwsApplication.kt` | Manual DI container (`AppContainer`) |
 | `…/MainActivity.kt` | Single activity, edge-to-edge, Compose |
-| `…/ui/AppNav.kt` | Root state (onboarding → connexion → registre) + 6-tab shell (Registre, Actualités, Cours, Devoirs, Documents, Messages), back-stack contract |
+| `…/ui/AppNav.kt` | Root state (onboarding → connexion → registre) + 6-tab shell (Registre, Cours, Devoirs, Documents, Messages, Plus — secondary sections live under Plus), back-stack contract |
 | `…/ui/AppViewModels.kt` | One ViewModel per screen |
 | `…/ui/theme/` | « École vivante » tokens: colors + per-tab accents, Bricolage/Public Sans type, 24/16/10 shapes, motion springs (Mouvement.kt) |
 | `…/ui/components/` | Shared composables (Components.kt: GwsCard, Puce, EmptyState, skeletons…; CarteActualite.kt; BarreOnglets.kt: custom accent bottom bar) |
-| `…/ui/screens/` | Login, Onboarding, registre, actualites (+ Post detail), cours (Emploi du temps), devoirs, documents (+ Quiz play), messages (+ Conversation + composer), demandes, parametres (settings panel) |
+| `…/ui/screens/` | Login, Onboarding, registre (+ drawer menu, Post detail), actualites, plus (secondary sections menu), boutique (catalogue, product detail, order history), cours (Emploi du temps), devoirs, documents (+ Quiz play), messages (+ Conversation + composer), demandes, parametres (settings panel) |
 | `…/data/api/` | BotiApi/BotiClient (generic GET/POST multipart + envelope), BotiEnvelope, MediaUrls (single-decode) |
 | `…/data/session/SessionStore.kt` | DataStore session (keyToken, user, eleves; never passwords) + composer switch + actualisation-au-retour duration |
 | `…/data/session/Veille.kt` | VeilleSession — foreground-return refresh signal (absence ≥ duration chosen in Paramètres) |
@@ -53,7 +53,7 @@ Current contents (update this section whenever files are added or removed):
 | `…/data/cache/` | Last-known-data memory caches, session-stamped (`MemoireSession`, `CachesSession` — issue #21) |
 | `…/logic/CeSoir.kt` | The focal card's due-date window (Friday → Monday) |
 | `…/util/` | Dates (tolerant parsing), Html, Fichiers (download + FileProvider + SAF staging), Audio (playback), EnregistreurAudio (MediaRecorder) |
-| `app/src/test/` | Unit tests (dates, CeSoir, media URLs, envelope, message normalizers, composer data, quiz normalizers, post normalizers, cours normalizers, document filters, session cache, veille) |
+| `app/src/test/` | Unit tests (dates, CeSoir, media URLs, envelope, message normalizers, composer data, quiz normalizers, post normalizers, cours normalizers, document filters, boutique, session cache, veille) |
 | `app/fonts-licenses/` | OFL texts for the bundled fonts |
 
 ## Ground rules for agents

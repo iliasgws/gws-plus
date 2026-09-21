@@ -14,6 +14,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.MenuBook
 import androidx.compose.material.icons.rounded.CalendarMonth
 import androidx.compose.material.icons.rounded.Folder
+import androidx.compose.material.icons.rounded.MoreHoriz
 import androidx.compose.material.icons.rounded.Newspaper
 import school.greenwood.plus.ui.screens.actualites.ActualitesScreen
 import androidx.compose.material.icons.rounded.Home
@@ -35,6 +36,8 @@ import kotlinx.coroutines.launch
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -43,6 +46,9 @@ import school.greenwood.plus.AppContainer
 import school.greenwood.plus.ui.components.BarreOnglets
 import school.greenwood.plus.ui.screens.LoginScreen
 import school.greenwood.plus.ui.screens.OnboardingScreen
+import school.greenwood.plus.ui.screens.boutique.BoutiqueHistoriqueScreen
+import school.greenwood.plus.ui.screens.boutique.BoutiqueItemScreen
+import school.greenwood.plus.ui.screens.boutique.BoutiqueScreen
 import school.greenwood.plus.ui.screens.devoirs.DevoirsScreen
 import school.greenwood.plus.ui.screens.demandes.DemandesScreen
 import school.greenwood.plus.ui.screens.documents.DocumentsScreen
@@ -53,6 +59,7 @@ import school.greenwood.plus.ui.screens.messages.MessagesScreen
 import school.greenwood.plus.ui.screens.messages.NouveauMessageScreen
 import school.greenwood.plus.ui.screens.cours.CoursScreen
 import school.greenwood.plus.ui.screens.parametres.ParametresScreen
+import school.greenwood.plus.ui.screens.plus.PlusScreen
 import school.greenwood.plus.ui.screens.registre.PostDetailScreen
 import school.greenwood.plus.ui.screens.registre.RegistreScreen
 import school.greenwood.plus.ui.theme.FonduCouleur
@@ -82,11 +89,11 @@ data class Onglet(
 
 val Onglets = listOf(
     Onglet("registre", "Registre", Icons.Rounded.Home),
-    Onglet("actualites", "Actualités", Icons.Rounded.Newspaper),
     Onglet("cours", "Cours", Icons.Rounded.CalendarMonth),
     Onglet("devoirs", "Devoirs", Icons.AutoMirrored.Rounded.MenuBook),
     Onglet("documents", "Documents", Icons.Rounded.Folder),
     Onglet("messages", "Messages", Icons.Rounded.QuestionAnswer),
+    Onglet("plus", "Plus", Icons.Rounded.MoreHoriz),
 )
 
 /** Les routes racines des onglets (destination de départ incluse). */
@@ -140,12 +147,14 @@ private fun accentDe(route: String?, couleurs: school.greenwood.plus.ui.theme.Gw
         "documents" -> couleurs.accents.getValue("documents")
         "messages", "demandes" -> couleurs.accents.getValue("messages")
         "parametres" -> couleurs.accents.getValue("registre")
+        "plus", "boutique", "boutique-historique" -> couleurs.accents.getValue("plus")
         else -> when {
             route?.startsWith("post/") == true -> couleurs.accents.getValue("actualites")
             route?.startsWith("quiz/") == true -> couleurs.accents.getValue("documents")
             route?.startsWith("conversation/") == true -> couleurs.accents.getValue("messages")
             route == "nouveau-message" -> couleurs.accents.getValue("messages")
             route == "demandes" -> couleurs.accents.getValue("messages")
+            route?.startsWith("boutique/") == true -> couleurs.accents.getValue("plus")
             else -> couleurs.accents.getValue("registre")
         }
     }
@@ -244,6 +253,50 @@ fun Shell(container: AppContainer) {
                     container = container,
                     padding = padding,
                     ouvrirPost = { id -> navController.allerDétail("post/$id") },
+                )
+            }
+            composable("plus") {
+                PlusScreen(
+                    padding = padding,
+                    ouvrirActualités = { navController.allerDétail("actualites") },
+                    ouvrirBoutique = { navController.allerDétail("boutique") },
+                )
+            }
+            composable("boutique") {
+                BoutiqueScreen(
+                    container = container,
+                    padding = padding,
+                    ouvrirProduit = { id -> navController.allerDétail("boutique/$id") },
+                    ouvrirHistorique = { navController.allerDétail("boutique-historique") },
+                )
+            }
+            composable(
+                route = "boutique/{produitId}?commande={commandeId}",
+                arguments = listOf(
+                    navArgument("produitId") { type = NavType.StringType },
+                    navArgument("commandeId") {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    },
+                ),
+            ) { entrée ->
+                BoutiqueItemScreen(
+                    container = container,
+                    padding = padding,
+                    produitId = entrée.arguments?.getString("produitId") ?: "",
+                    commandeId = entrée.arguments?.getString("commandeId"),
+                    retour = { navController.popBackStack() },
+                )
+            }
+            composable("boutique-historique") {
+                BoutiqueHistoriqueScreen(
+                    container = container,
+                    padding = padding,
+                    ouvrirModifier = { produitId, commandeId ->
+                        navController.allerDétail("boutique/$produitId?commande=$commandeId")
+                    },
+                    retour = { navController.popBackStack() },
                 )
             }
             composable("cours") {

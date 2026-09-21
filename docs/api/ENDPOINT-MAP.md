@@ -879,3 +879,98 @@ sibling `CoursRepository` reads this endpoint read-only.
 - `pick_enfants`, `device_token`: POST fields
 - non-empty `files[]` shapes (nouveautes, messages, devoirs `devoir_fait`)
 - `nouveautes`: write paths (comments and quiz response POSTs)
+
+## shop — school boutique (« Boutique de l'école »)
+
+> **Probed 2026-09-21** (GET catalogue / cart / history / detail, plus one
+> POST order + its immediate deletion on the real parent account). One
+> route, mode chosen by a flag in the payload — always include `rubrique`
+> and `search` on catalogue calls or the server prepends PHP `Undefined
+> index: rubrique` notices to the JSON (observed: the answer stays readable
+> but breaks strict JSON parsing).
+
+**GET** `shop?rubrique=-1&search=` — catalogue.
+
+```json
+{
+  "products": [
+    { "id": "2", "label": "<produit>", "barcode": null,
+      "image": "<signed media URL>", "price": "250 DH" }
+  ],
+  "rubriques": [
+    { "id": -1, "label": "Tout",
+      "icon": { "link": "<url>", "bg": "#F3F3F3", "notif": 0 } },
+    { "id": "1", "label": "<rubrique>", "icon": { "…": "…", "notif": "19" } }
+  ],
+  "cart_count": 0,
+  "cantines": [],
+  "translation": { "title": "Boutique de l'école", "shop_title": "…",
+    "search": "…", "showCantinePlanning": false, "…": "…" }
+}
+```
+
+- `rubriques[].id`: `-1` (int, « Tout ») or a string id.
+- `price` on catalogue products is a display string (« 250 DH »); on detail
+  it is the raw number string.
+- `rubriques[].icon.notif` looked like the rubrique's product count —
+  semantics unverified, not rendered.
+- `cantines` + `translation.showCantinePlanning` (false on this school):
+  the canteen block of the original screen — out of scope.
+
+**GET** `shop?product=<id>` — product detail. With `commande=<order id>`
+(edit mode) the response gains `commande: { "qte": 1, "size": "…", "comment":
+"" }` for prefill and `can_add_to_cart` is false.
+
+```json
+{
+  "product": { "id": "7", "label": "<produit>", "barcode": null,
+    "image": "<signed URL>", "price": "150", "inCart": false,
+    "can_add_to_cart": true },
+  "sizes":  [ { "value": "M", "label": "M" } ],
+  "variants": [ { "id": "30", "label": "M", "color": "#000000",
+                  "amount": "150", "qte": "5" } ],
+  "cart_count": "0"
+}
+```
+
+- `variants[]` are the size declinations with their own price (`amount`)
+  and stock (`qte`, string). `sizes[]` echoes the same labels.
+
+**GET** `shop?cart=true` — cart. Observed **always empty** in this
+deployment (`{"products": [], "translation": {...}}`); the original app's
+cart/checkout flow does not participate here.
+
+**GET** `shop?new_history=true` — order history, newest first.
+
+```json
+{ "products": [ { "id": "14", "date": "20 Jul 2026 14:01", "price": "150",
+    "articles_count": "x1 Articles",
+    "articles": [ { "id": "20", "product_id": "7", "image": "<signed URL>",
+                    "label": "<produit>", "size": "M", "quantity": "x1",
+                    "price": "150", "can_edit": true, "can_delete": true } ],
+    "state": { "alias": "en-cours", "label": "En cours" },
+    "can_delete": true } ] }
+```
+
+- `state.alias` observed: `en-cours`, `validée`. `can_delete` true only
+  while not validated.
+- Article `quantity` is a display string (« x1 »).
+
+**POST** `shop` — multipart, envelope fields + `eleve_id`/`user_id`/`parent_id`
+(the POST path does not inject them, same convention as the quiz POST):
+
+- `{product, commande?, variants, size, quantity, comment, price}` →
+  **creates the order immediately** (state « en-cours »): answer
+  `{"alert_classe":"success_alert_boti","header_msg":"Commande passée avec
+  succès","message":"…","back":true}`. With `commande` set this updates an
+  existing order. `price` = the unit price chosen (variant `amount` else
+  product `price`) — the server does the accounting.
+- `{commande, detailsId?, delete_history}` → delete the whole order
+  (`detailsId` absent) or one article. Observed answer: `[]` (empty body,
+  no alert fields) on success.
+- `{cartItemId, delete_cart}` / `{panier_command}` — cart paths of the
+  original app; UNVERIFIED (cart never fills in this deployment).
+
+Still unverified: the server-side flow of `panier_command` and the cart
+item shape; `notif` semantics on rubrique icons; multi-eleve behaviour
+(orders are per `eleve_id` envelope).

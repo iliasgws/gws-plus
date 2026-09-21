@@ -57,7 +57,8 @@ Familles d'accent par onglet — `GwsAccent(teinte, conteneur, surConteneur)` :
 la teinte écrit sur carte, le conteneur est le fond doux, `surConteneur` est
 le texte sur conteneur. Clés = routes : `registre` (vert), `actualites`
 (ambre), `cours` (bleu), `devoirs` (violet), `documents` (ocre), `messages`
-(corail — aussi Demandes). Valeurs exactes dans `ui/theme/Color.kt` ;
+(corail — aussi Demandes), `plus` (sarcelle — l'onglet Plus et la Boutique).
+Valeurs exactes dans `ui/theme/Color.kt` ;
 chaque paire est vérifiée ≥ 4,5:1 en texte, ≥ 3:1 en glyphe, clair et sombre.
 
 Règles :
@@ -108,11 +109,15 @@ puis utiliser le geste retour Android casse la navigation. En Compose avec
 Navigation-Compose, on hérite du retour prédictif d'Android 15 ; le contrat
 est fixé ici pour ne pas le reperdre :
 
-- **Barre basse à 6 destinations** : Registre (accueil), Actualités, Cours
-  (emploi du temps), Devoirs, Documents, Messages — amendé en deux étapes par
-  décision utilisateur explicite (Actualités 2026-09-20, Cours 2026-09-20) ;
-  les demandes restent dans le Registre et l'admin reste joignable depuis
-  Messages — toujours pas de 7ᵉ onglet.
+- **Barre basse à 6 destinations** : Registre (accueil), Cours (emploi du
+  temps), Devoirs, Documents, Messages, Plus — amendé en trois étapes par
+  décision utilisateur explicite (Actualités 2026-09-20, Cours 2026-09-20,
+  Plus 2026-09-21 : l'Actualités quitte la barre pour l'écran « Plus », qui
+  héberge les sections secondaires — Actualités et Boutique de l'école) ;
+  l'admin reste joignable depuis Messages — toujours pas de 7ᵉ onglet.
+- **Le menu du haut** (hamburger, en-tête du Registre) : un tiroir avec les
+  gestes hors flux du jour — Mes demandes et Paramètres. La liste du
+  Registre ne porte plus que du contenu.
 - Chaque onglet garde **sa propre pile** ; basculer d'onglet ne dépile rien
   (`saveState`/`restoreState`), le geste retour depuis un onglet racine
   retourne au Registre, et depuis le Registre il quitte l'app (comportement
@@ -181,6 +186,25 @@ POST `pick_enfants`). Switcher d'enfant rafraîchit le registre entier avec
 une transition fondue — et un avatar en tête de l'accueil rappelle l'enfant
 consulté.
 
+### Plus (menu des sections secondaires)
+Deux cartes portant l'accent de leur destination — l'Actualités en ambre, la
+Boutique en sarcelle — comme des couvertures de cahiers côte à côte. Le
+détail d'actualité ouvert depuis l'Actualités garde l'onglet Plus actif
+(pile) et la teinte ambre (route) — le contrat accent-par-route est inchangé.
+
+### Boutique de l'école (GET/POST `shop` — sondé le 21/09/2026)
+Catalogue par rubrique (puces filtre + recherche locale), détail produit
+(variantes = tailles avec stock et prix propres, quantité sous le doigt,
+commentaire facultatif), historique des commandes (état serveur, articles
+modifiables/supprimables tant que « en-cours »). Faits de sonde qui décident
+du périmètre : le POST d'un produit **crée la commande immédiatement** (alerte
+« Commande passée avec succès », état « en-cours ») — le panier serveur
+(`cart=true`) reste vide dans ce déploiement, il n'est pas exposé. La
+confirmation est donc demandée avant chaque envoi ; la modification d'une
+commande repasse par le détail (`product=…&commande=…`, préremplissage
+`{size, qte, comment}`). Un produit fermé à la commande (`can_add_to_cart`
+faux) s'affiche sans bouton.
+
 ## 5. Architecture (bref)
 
 - **Kotlin + Jetpack Compose + Material 3**, un module `:app` au début ; pas
@@ -200,8 +224,10 @@ consulté.
 
 - Les routes `admin_*`, `prof_*`, `collaborateur_*`, `encadrant_*` : rôles
   non-parents, non concernés.
-- Paiements (GET `paiements`, `online_paiements`), cantine, trajets, boutique,
-  portefeuille élève : éventuellement v2, pas au lancement.
+- Paiements (GET `paiements`, `online_paiements`), cantine (le bloc
+  `cantines` de la boutique, caché par `showCantinePlanning: false` chez
+  Greenwood), trajets, portefeuille élève : éventuellement v2, pas au
+  lancement.
 - Toute redistribution du code ou des assets de l'app d'origine : GWS+ est
   une implémentation propre du protocole, rien d'autre.
 

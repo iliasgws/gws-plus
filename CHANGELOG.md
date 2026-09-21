@@ -4,6 +4,22 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [Non publié]
+
+### Ajouté
+
+- **Boutique de l'école** (sonde API du 21/09/2026) : catalogue par rubrique
+  avec recherche, détail produit (variantes-tailles avec stock, quantité,
+  commentaire), commande directe confirmée avant envoi, historique des
+  commandes avec modification et suppression tant que la commande est
+  « en-cours ». Le panier serveur n'existe pas dans ce déploiement — le
+  POST passe la commande immédiatement.
+- **Onglet « Plus »** dans la barre basse : les sections secondaires s'y
+  rangent — l'Actualités (qui quitte la barre) et la Boutique, chacune sur
+  la carte à l'accent de sa destination.
+- **Menu du haut** du Registre (hamburger) : Mes demandes et Paramètres
+  quittent le bas de la liste du registre pour le tiroir.
+
 ## [0.6.1] — 2026-09-21
 
 Stable après quatre bêtas essayées sur appareil réel : le correctif de

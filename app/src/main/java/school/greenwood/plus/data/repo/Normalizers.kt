@@ -9,6 +9,9 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import school.greenwood.plus.data.api.MediaUrls
 import school.greenwood.plus.model.Absence
+import school.greenwood.plus.model.ArticleCommande
+import school.greenwood.plus.model.CommandeBoutique
+import school.greenwood.plus.model.PrérempliCommande
 import school.greenwood.plus.model.Attachment
 import school.greenwood.plus.model.Conversation
 import school.greenwood.plus.model.Créneau
@@ -22,13 +25,17 @@ import school.greenwood.plus.model.ParentInfo
 import school.greenwood.plus.model.Commentaire
 import school.greenwood.plus.model.Post
 import school.greenwood.plus.model.PostDetail
+import school.greenwood.plus.model.ProduitBoutique
+import school.greenwood.plus.model.ProduitDétail
 import school.greenwood.plus.model.QuestionPost
 import school.greenwood.plus.model.QuizDetail
 import school.greenwood.plus.model.QuizQuestion
 import school.greenwood.plus.model.QuizReponse
 import school.greenwood.plus.model.QuizRésultat
 import school.greenwood.plus.model.Ressource
+import school.greenwood.plus.model.RubriqueBoutique
 import school.greenwood.plus.model.SemaineCours
+import school.greenwood.plus.model.VarianteBoutique
 import school.greenwood.plus.model.ThemeMessage
 import school.greenwood.plus.util.extractDate
 import school.greenwood.plus.util.extractDateTime
@@ -593,6 +600,93 @@ object Normalizers {
 
     fun aujourdhuiOuRecent(date: LocalDateTime?, aujourdhui: LocalDate): Boolean =
         date != null && (date.toLocalDate() == aujourdhui || date.isAfter(LocalDateTime.now()))
+
+    // — Boutique (GET/POST `shop`, sondé le 21/09/2026) ---------------------
+
+    /** Rubrique du catalogue : l'id arrive en nombre (-1 = « Tout ») ou en
+     *  chaîne, selon l'entrée — tolérant aux deux. */
+    fun rubrique(raw: JsonObject): RubriqueBoutique? {
+        val id = str(raw, "id") ?: int(raw, "id")?.toString() ?: return null
+        val icône = raw["icon"] as? JsonObject
+        return RubriqueBoutique(
+            id = id,
+            label = str(raw, "label") ?: "",
+            icone = icône?.let { str(it, "link") },
+            fond = icône?.let { str(it, "bg") },
+            notif = icône?.let { int(it, "notif") } ?: 0,
+        )
+    }
+
+    fun produitCatalogue(raw: JsonObject): ProduitBoutique? {
+        val id = str(raw, "id") ?: return null
+        return ProduitBoutique(
+            id = id,
+            label = str(raw, "label") ?: "",
+            image = MediaUrls.lienRéel(str(raw, "image")),
+            prix = str(raw, "price"),
+        )
+    }
+
+    fun variante(raw: JsonObject): VarianteBoutique? {
+        val id = str(raw, "id") ?: int(raw, "id")?.toString() ?: return null
+        return VarianteBoutique(
+            id = id,
+            label = str(raw, "label") ?: str(raw, "value") ?: "",
+            couleur = str(raw, "color"),
+            montant = str(raw, "amount"),
+            stock = int(raw, "qte"),
+        )
+    }
+
+    fun produitDétail(rep: JsonObject): ProduitDétail? {
+        val produit = obj(rep["product"] ?: return null) ?: return null
+        val id = str(produit, "id") ?: return null
+        return ProduitDétail(
+            id = id,
+            label = str(produit, "label") ?: "",
+            image = MediaUrls.lienRéel(str(produit, "image")),
+            description = str(produit, "desc"),
+            prixRaw = str(produit, "price"),
+            peutCommander = bool(produit, "can_add_to_cart") ?: true,
+            variantes = arr(rep, "variants").mapNotNull { (it as? JsonObject)?.let(::variante) },
+            prérempli = (rep["commande"] as? JsonObject)?.let { prérempli ->
+                PrérempliCommande(
+                    taille = str(prérempli, "size"),
+                    quantité = int(prérempli, "qte") ?: 1,
+                    commentaire = str(prérempli, "comment"),
+                )
+            },
+        )
+    }
+
+    fun articleCommande(raw: JsonObject): ArticleCommande? {
+        val id = str(raw, "id") ?: int(raw, "id")?.toString() ?: return null
+        return ArticleCommande(
+            id = id,
+            produitId = str(raw, "product_id"),
+            image = MediaUrls.lienRéel(str(raw, "image")),
+            label = str(raw, "label") ?: "",
+            taille = str(raw, "size"),
+            quantité = str(raw, "quantity")?.filter { it.isDigit() }?.toIntOrNull(),
+            prix = str(raw, "price"),
+            modifiable = bool(raw, "can_edit") ?: false,
+            supprimable = bool(raw, "can_delete") ?: false,
+        )
+    }
+
+    fun commande(raw: JsonObject): CommandeBoutique? {
+        val id = str(raw, "id") ?: int(raw, "id")?.toString() ?: return null
+        val état = raw["state"] as? JsonObject
+        return CommandeBoutique(
+            id = id,
+            date = str(raw, "date"),
+            prix = str(raw, "price"),
+            étatAlias = état?.let { str(it, "alias") },
+            étatLabel = état?.let { str(it, "label") },
+            articles = arr(raw, "articles").mapNotNull { (it as? JsonObject)?.let(::articleCommande) },
+            supprimable = bool(raw, "can_delete") ?: false,
+        )
+    }
 }
 
 /** Alias court pour éviter un import bruyant. */
