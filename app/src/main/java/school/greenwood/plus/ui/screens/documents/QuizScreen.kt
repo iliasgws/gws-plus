@@ -1,5 +1,6 @@
 package school.greenwood.plus.ui.screens.documents
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -20,6 +21,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Cancel
 import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -29,9 +31,13 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -64,6 +70,11 @@ import school.greenwood.plus.ui.theme.RegistreTheme
  * feedback immédiat — le serveur porte le drapeau correct — puis 2 s
  * d'avance) → POST du tableau de questions enrichi, score affiché. Un échec
  * d'enregistrement ne casse rien : le score local reste affiché.
+ *
+ * Sortie protégée pendant le jeu (phase Jeu) : geste/retour système, flèche
+ * d'en-tête et changement d'onglet (côté coquille, via le signal
+ * `container.quizEnJeu`) demandent confirmation — un quiz quitté perd ses
+ * réponses, le score n'est pas enregistré.
  */
 
 @Composable
@@ -76,6 +87,11 @@ fun QuizScreen(
     val vm: QuizViewModel = viewModel(key = "quiz-$quizId") { QuizViewModel(container, quizId) }
     val état by vm.état.collectAsStateWithLifecycle()
 
+    // Confirmation de sortie pendant la partie : le retour (geste ou bouton
+    // système) et la flèche d'en-tête demandent avant d'abandonner.
+    var demanderQuitter by rememberSaveable { mutableStateOf(false) }
+    BackHandler(enabled = état.phase == PhaseQuiz.Jeu) { demanderQuitter = true }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -86,7 +102,9 @@ fun QuizScreen(
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            IconButton(onClick = retour) {
+            IconButton(onClick = {
+                if (état.phase == PhaseQuiz.Jeu) demanderQuitter = true else retour()
+            }) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
                     contentDescription = "Retour",
@@ -130,6 +148,49 @@ fun QuizScreen(
             }
         }
     }
+
+    if (demanderQuitter) {
+        DialogueQuitterQuiz(
+            onContinuer = { demanderQuitter = false },
+            onQuitter = {
+                demanderQuitter = false
+                retour()
+            },
+        )
+    }
+}
+
+/**
+ * Confirmation avant d'abandonner un quiz en cours — partagée par l'écran
+ * (retour système, flèche d'en-tête) et la coquille (changement d'onglet) :
+ * un quiz quitté perd ses réponses, le score n'est pas enregistré.
+ */
+@Composable
+internal fun DialogueQuitterQuiz(
+    onContinuer: () -> Unit,
+    onQuitter: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onContinuer,
+        title = { Text("Quitter le quiz ?", color = RegistreTheme.colors.ink) },
+        text = {
+            Text(
+                text = "Le quiz est en cours — vos réponses seront perdues et le " +
+                    "score ne sera pas enregistré.",
+                color = RegistreTheme.colors.ink,
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = onQuitter) {
+                Text("Quitter", color = RegistreTheme.colors.ink)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onContinuer) {
+                Text("Continuer le quiz", color = RegistreTheme.colors.ink)
+            }
+        },
+    )
 }
 
 /** Carte de départ : visuel, matières, volume, bouton « Démarrer le quiz ». */

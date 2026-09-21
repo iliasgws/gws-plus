@@ -24,7 +24,10 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -44,6 +47,7 @@ import school.greenwood.plus.ui.screens.devoirs.DevoirsScreen
 import school.greenwood.plus.ui.screens.demandes.DemandesScreen
 import school.greenwood.plus.ui.screens.documents.DocumentsScreen
 import school.greenwood.plus.ui.screens.documents.QuizScreen
+import school.greenwood.plus.ui.screens.documents.DialogueQuitterQuiz
 import school.greenwood.plus.ui.screens.messages.ConversationScreen
 import school.greenwood.plus.ui.screens.messages.MessagesScreen
 import school.greenwood.plus.ui.screens.messages.NouveauMessageScreen
@@ -169,6 +173,13 @@ fun Shell(container: AppContainer) {
     val pile by navController.currentBackStack.collectAsStateWithLifecycle(initialValue = emptyList())
     val ongletActif = ongletActifDe(pile) ?: RouteDépart
 
+    // Un quiz en cours protège sa sortie (issue #17) : changer d'onglet pendant
+    // la partie demande confirmation — l'onglet demandé est mis en attente le
+    // temps du dialogue, abandon confirmé → le quiz est dépilé sans sauvegarde
+    // (le ViewModel meurt, son signal retombe) puis l'onglet est suivi.
+    val quizEnJeu by container.quizEnJeu.collectAsStateWithLifecycle()
+    var ongletEnAttente by remember { mutableStateOf<String?>(null) }
+
     // L'accent suit l'écran, en fondu : puces, surligneurs et états vides se
     // teintent de la matière de l'endroit où l'on se trouve.
     val couleurs = RegistreTheme.colors
@@ -198,7 +209,10 @@ fun Shell(container: AppContainer) {
                     onglets = Onglets,
                     routeSélectionnée = ongletActif,
                     accents = couleurs.accents,
-                    onOnglet = { route -> navController.allerÀLOnglet(route) },
+                    onOnglet = { route ->
+                        if (quizEnJeu) ongletEnAttente = route
+                        else navController.allerÀLOnglet(route)
+                    },
                 )
             },
         ) { padding ->
@@ -290,6 +304,20 @@ fun Shell(container: AppContainer) {
                 )
             }
         }
+        }
+
+        // Sortie d'un quiz en jeu confirmée : on dépille le quiz sans
+        // sauvegarde puis l'onglet demandé est suivi (le modèle de piles
+        // d'onglets est inchangé — allerÀLOnglet reste le seul chemin).
+        ongletEnAttente?.let { cible ->
+            DialogueQuitterQuiz(
+                onContinuer = { ongletEnAttente = null },
+                onQuitter = {
+                    ongletEnAttente = null
+                    navController.popBackStack("quiz/{quizId}", inclusive = true, saveState = false)
+                    navController.allerÀLOnglet(cible)
+                },
+            )
         }
     }
 }

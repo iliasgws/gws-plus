@@ -18,6 +18,20 @@ appareil réel avant la fusion.
   du monogramme « Q » ; les autres types de ressources gardent leur
   monogramme
 
+## [0.6.1-bêta 2] — 2026-09-21
+
+Préversion : la sortie protégée des quiz se publie en bêta depuis la branche
+`quiz-confirmation-sortie` (PR #36, non fusionnée) pour être essayée sur un
+appareil réel avant la fusion.
+
+### Ajouté
+
+- **Sortie protégée d'un quiz en cours** (issue #17) : pendant la partie,
+  le geste de retour système, la flèche d'en-tête et tout changement d'onglet
+  en barre basse demandent confirmation — abandonner perd les réponses (score
+  non enregistré), « Continuer le quiz » reste en jeu ; les écrans de départ
+  et de résultat restent librement quittables
+
 ## [0.6.1-bêta 1] — 2026-09-20
 
 Préversion : le correctif de l'onglet actif se publie en bêta depuis la
