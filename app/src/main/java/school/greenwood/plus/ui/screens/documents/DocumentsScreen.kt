@@ -18,6 +18,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Folder
+import androidx.compose.material.icons.rounded.Quiz
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.SearchOff
 import androidx.compose.material3.Button
@@ -309,18 +310,27 @@ private fun LigneRessource(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            // Monogramme du type sur l'accent de l'onglet.
+            // Badge du type sur l'accent de l'onglet — icône quiz, monogramme sinon.
             Surface(
                 shape = AnnotationShape,
                 color = RegistreTheme.accent.conteneur,
                 modifier = Modifier.size(48.dp),
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    Text(
-                        text = ressource.type?.take(1)?.uppercase()?.ifEmpty { "•" } ?: "•",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = RegistreTheme.accent.surConteneur,
-                    )
+                    if (quiz) {
+                        Icon(
+                            imageVector = Icons.Rounded.Quiz,
+                            contentDescription = null,
+                            tint = RegistreTheme.accent.surConteneur,
+                            modifier = Modifier.size(24.dp),
+                        )
+                    } else {
+                        Text(
+                            text = ressource.type?.take(1)?.uppercase()?.ifEmpty { "•" } ?: "•",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = RegistreTheme.accent.surConteneur,
+                        )
+                    }
                 }
             }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
