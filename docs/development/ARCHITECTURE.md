@@ -72,9 +72,19 @@ Une seule interface `BotiApi` (un GET à paramètres, un POST multipart) et
 ## Session (`data/session/SessionStore.kt`)
 
 DataStore Preferences : `keyToken`, ids, liste des élèves, élève choisi,
-préférences (retenir, onboarding, composeur). **Les mots de passe ne sont
-jamais stockés.** La purge de session est totale et survit à une
-désactivation du composeur.
+préférences (retenir, onboarding, composeur, durée d'actualisation au
+retour). **Les mots de passe ne sont jamais stockés.** La purge de session
+est totale et survit à une désactivation du composeur.
+
+## Veille (`data/session/Veille.kt`)
+
+`VeilleSession` suit l'arrêt et la reprise de l'activité : au retour au
+premier plan après au moins la durée réglée dans Paramètres (0 = « jamais »),
+elle émet un signal (`retoursPérimés`) que chaque ViewModel de données
+écoute pour relancer son `charger` — le contenu connu reste affiché
+(`rafraîchissement`), aucun écran n'est remis à zéro. Le quiz en jeu, le
+composeur et la connexion ne s'abonnent pas ; l'Actualités passe par
+`rafraîchir()` pour garder sa profondeur de pagination.
 
 ## Médias signés (`data/api/MediaUrls.kt`, `util/Fichiers.kt`)
 

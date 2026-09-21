@@ -52,6 +52,7 @@ import school.greenwood.plus.ui.screens.messages.ConversationScreen
 import school.greenwood.plus.ui.screens.messages.MessagesScreen
 import school.greenwood.plus.ui.screens.messages.NouveauMessageScreen
 import school.greenwood.plus.ui.screens.cours.CoursScreen
+import school.greenwood.plus.ui.screens.parametres.ParametresScreen
 import school.greenwood.plus.ui.screens.registre.PostDetailScreen
 import school.greenwood.plus.ui.screens.registre.RegistreScreen
 import school.greenwood.plus.ui.theme.FonduCouleur
@@ -138,6 +139,7 @@ private fun accentDe(route: String?, couleurs: school.greenwood.plus.ui.theme.Gw
         "devoirs" -> couleurs.accents.getValue("devoirs")
         "documents" -> couleurs.accents.getValue("documents")
         "messages", "demandes" -> couleurs.accents.getValue("messages")
+        "parametres" -> couleurs.accents.getValue("registre")
         else -> when {
             route?.startsWith("post/") == true -> couleurs.accents.getValue("actualites")
             route?.startsWith("quiz/") == true -> couleurs.accents.getValue("documents")
@@ -232,6 +234,7 @@ fun Shell(container: AppContainer) {
                     container = container,
                     padding = padding,
                     ouvrirDemandes = { navController.allerDétail("demandes") },
+                    ouvrirParamètres = { navController.allerDétail("parametres") },
                     ouvrirPost = { id -> navController.allerDétail("post/$id") },
                     ouvrirEmploi = { navController.allerÀLOnglet("cours") },
                 )
@@ -300,6 +303,13 @@ fun Shell(container: AppContainer) {
                     container = container,
                     padding = padding,
                     postId = entrée.arguments?.getString("postId") ?: "",
+                    retour = { navController.popBackStack() },
+                )
+            }
+            composable("parametres") {
+                ParametresScreen(
+                    container = container,
+                    padding = padding,
                     retour = { navController.popBackStack() },
                 )
             }

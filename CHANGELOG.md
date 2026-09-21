@@ -4,6 +4,26 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [0.6.1-bêta 4] — 2026-09-21
+
+Préversion : le rafraîchissement au retour et le panneau Paramètres se
+publient en bêta depuis la branche `veille-retour-premier-plan` (non
+fusionnée) pour être essayés sur un appareil réel avant la fusion.
+
+### Ajouté
+
+- **Rafraîchissement au retour au premier plan** : après une absence d'au
+  moins la durée choisie (5 minutes par défaut), la réouverture de l'app
+  relance en silence la charge réseau de tout ce qui est déjà affiché — les
+  écrans gardent leur contenu connu et son indicateur « rafraîchissement »,
+  sans remise à zéro, comme un tirer-pour-rafraîchir invisible. Le quiz en
+  jeu, le composeur (brouillon intact) et la connexion ne se rafraîchissent
+  pas ; la pagination des Actualités garde sa profondeur.
+- **Panneau Paramètres** (atteint depuis une ligne discrète du Registre,
+  sous la ligne Demandes) : choisir la durée d'absence qui déclenche
+  l'actualisation au retour — jamais, 1, 2, 5 ou 10 minutes. Le réglage
+  survit à la déconnexion.
+
 ## [0.6.1-bêta 3] — 2026-09-21
 
 Préversion : l'icône des quiz se publie en bêta depuis la branche

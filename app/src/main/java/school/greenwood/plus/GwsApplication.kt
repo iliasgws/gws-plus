@@ -14,6 +14,7 @@ import school.greenwood.plus.data.repo.MessagesRepository
 import school.greenwood.plus.data.repo.NouveautesRepository
 import school.greenwood.plus.data.repo.RegistreRepository
 import school.greenwood.plus.data.session.SessionStore
+import school.greenwood.plus.data.session.VeilleSession
 import kotlinx.coroutines.flow.MutableStateFlow
 
 /*
@@ -32,6 +33,12 @@ class AppContainer(context: Context) {
     // (onglet, retour) doit être confirmée, le score d'un quiz abandonné
     // n'est pas enregistré.
     val quizEnJeu = MutableStateFlow(false)
+
+    // Veille de l'app : au retour au premier plan après une absence plus
+    // longue que la durée réglée dans les Paramètres, chaque écran chargé
+    // rafraîchit en silence — le contenu connu reste affiché, jamais de
+    // remise à zéro.
+    val veille = VeilleSession()
 
     val auth = AuthRepository(client, session, caches)
     val registre = RegistreRepository(client, session, caches)

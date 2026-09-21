@@ -125,6 +125,10 @@ class RegistreViewModel(private val container: AppContainer) : ViewModel() {
             )
             charger()
         }
+        // Retour après une absence longue : rafraîchir en silence (data/session/Veille.kt).
+        viewModelScope.launch {
+            container.veille.retoursPérimés.collect { charger(force = true) }
+        }
     }
 
     fun charger(force: Boolean = false) {
@@ -216,6 +220,10 @@ class DevoirsViewModel(private val container: AppContainer) : ViewModel() {
 
     init {
         charger()
+        // Retour après une absence longue : rafraîchir en silence (data/session/Veille.kt).
+        viewModelScope.launch {
+            container.veille.retoursPérimés.collect { charger(force = true) }
+        }
     }
 
     fun charger(force: Boolean = false) {
@@ -314,6 +322,10 @@ class DocumentsViewModel(private val container: AppContainer) : ViewModel() {
 
     init {
         charger()
+        // Retour après une absence longue : rafraîchir en silence (data/session/Veille.kt).
+        viewModelScope.launch {
+            container.veille.retoursPérimés.collect { charger(force = true) }
+        }
     }
 
     fun charger(force: Boolean = false) {
@@ -591,6 +603,10 @@ class MessagesViewModel(private val container: AppContainer) : ViewModel() {
                 _état.update { it.copy(composeurActivé = actif) }
             }
         }
+        // Retour après une absence longue : rafraîchir en silence (data/session/Veille.kt).
+        viewModelScope.launch {
+            container.veille.retoursPérimés.collect { charger(force = true) }
+        }
     }
 
     /** Recharge la liste. `force` ignore le cache TTL (bouton Réessayer,
@@ -697,6 +713,10 @@ class ConversationViewModel(
             container.session.composeurActivé.collect { actif ->
                 _état.update { it.copy(composeurActif = actif) }
             }
+        }
+        // Retour après une absence longue : rafraîchir en silence (data/session/Veille.kt).
+        viewModelScope.launch {
+            container.veille.retoursPérimés.collect { charger(force = true) }
         }
     }
 
@@ -993,6 +1013,10 @@ class DemandesViewModel(private val container: AppContainer) : ViewModel() {
 
     init {
         charger()
+        // Retour après une absence longue : rafraîchir en silence (data/session/Veille.kt).
+        viewModelScope.launch {
+            container.veille.retoursPérimés.collect { charger(force = true) }
+        }
     }
 
     fun charger(force: Boolean = false) {
@@ -1060,6 +1084,12 @@ class ActualitesViewModel(private val container: AppContainer) : ViewModel() {
 
     init {
         charger()
+        // Retour après une absence longue : rafraîchir en silence (data/session/Veille.kt).
+        // rafraîchir() garde la profondeur de pagination (limite = taille chargée),
+        // là où charger(force = true) ramènerait la liste aux dix premiers posts.
+        viewModelScope.launch {
+            container.veille.retoursPérimés.collect { rafraîchir() }
+        }
     }
 
     fun charger(force: Boolean = false) {
@@ -1181,6 +1211,10 @@ class PostDetailViewModel(
             container.session.ecritureNouveautesActivée.collect { active ->
                 _état.update { it.copy(ecritureActivee = active) }
             }
+        }
+        // Retour après une absence longue : rafraîchir en silence (data/session/Veille.kt).
+        viewModelScope.launch {
+            container.veille.retoursPérimés.collect { charger() }
         }
         charger()
     }
@@ -1328,6 +1362,10 @@ class CoursViewModel(private val container: AppContainer) : ViewModel() {
 
     init {
         charger()
+        // Retour après une absence longue : rafraîchir en silence (data/session/Veille.kt).
+        viewModelScope.launch {
+            container.veille.retoursPérimés.collect { charger(force = true) }
+        }
     }
 
     fun charger(force: Boolean = false) {
@@ -1421,5 +1459,30 @@ class CoursViewModel(private val container: AppContainer) : ViewModel() {
     private fun jourParDéfaut(semaine: SemaineCours?): Int {
         semaine?.jourSélectionné?.takeIf { it in 1..7 }?.let { return it }
         return LocalDate.now().dayOfWeek.value.coerceIn(1, 6)
+    }
+}
+
+/** — Paramètres --------------------------------------------------------- */
+data class ParamètresÉtat(
+    /** Minutes d'absence déclenchant l'actualisation au retour ; 0 = « jamais ». */
+    val minutesRetour: Int = 5,
+)
+
+class ParametresViewModel(private val container: AppContainer) : ViewModel() {
+    private val _état = MutableStateFlow(ParamètresÉtat())
+    val état: StateFlow<ParamètresÉtat> = _état.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            container.session.actualisationRetour.collect { minutes ->
+                _état.update { it.copy(minutesRetour = minutes) }
+            }
+        }
+    }
+
+    fun choisirDurée(minutes: Int) {
+        viewModelScope.launch {
+            container.session.définirActualisationRetour(minutes)
+        }
     }
 }

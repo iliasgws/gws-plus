@@ -67,6 +67,11 @@ class SessionStore(private val context: Context) {
          *  sert d'interrupteur, pas de verrou. Survit à une purge de session. */
         val composeurActivé = booleanPreferencesKey("composeur_active")
         val ecritureNouveautes = booleanPreferencesKey("ecriture_nouveautes_activee")
+
+        /** Actualisation au retour : minutes d'absence à partir desquelles les
+         *  écrans se rafraîchissent au retour au premier plan ; 0 = « jamais ».
+         *  Survit à une purge de session (préférence d'app, comme le composeur). */
+        val actualisationRetour = intPreferencesKey("actualisation_retour_minutes")
     }
 
     val events = MutableSharedFlow<SessionEvent>(extraBufferCapacity = 4)
@@ -110,6 +115,13 @@ class SessionStore(private val context: Context) {
 
     suspend fun définirEcritureNouveautes(actif: Boolean) {
         context.dataStore.edit { it[Clefs.ecritureNouveautes] = actif }
+    }
+
+    /** Minutes d'absence déclenchant l'actualisation au retour (0 = jamais). */
+    val actualisationRetour: Flow<Int> = context.dataStore.data.map { it[Clefs.actualisationRetour] ?: 5 }
+
+    suspend fun définirActualisationRetour(minutes: Int) {
+        context.dataStore.edit { it[Clefs.actualisationRetour] = minutes }
     }
 
     suspend fun enregistrer(

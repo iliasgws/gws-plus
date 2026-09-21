@@ -30,6 +30,7 @@ import androidx.compose.material.icons.rounded.CalendarMonth
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Description
 import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -100,6 +101,7 @@ fun RegistreScreen(
     container: AppContainer,
     padding: PaddingValues,
     ouvrirDemandes: () -> Unit,
+    ouvrirParamètres: () -> Unit,
     ouvrirPost: (String) -> Unit,
     ouvrirEmploi: () -> Unit,
 ) {
@@ -244,6 +246,7 @@ fun RegistreScreen(
                 }
 
                 item(key = "demandes") { LigneDemandes(ouvrirDemandes) }
+                item(key = "parametres") { LigneParamètres(ouvrirParamètres) }
             }
         }
     }
@@ -598,6 +601,34 @@ private fun CarteMessage(conversation: Conversation) {
                     )
                 }
             }
+        }
+    }
+}
+
+/** Lien discret vers les Paramètres, depuis l'accueil — habillé de l'accent
+ *  de l'onglet Registre (l'écran d'où on y arrive). */
+@Composable
+private fun LigneParamètres(ouvrirParamètres: () -> Unit) {
+    val accentParamètres = RegistreTheme.colors.accents["registre"]
+    GwsCard(modifier = Modifier.fillMaxWidth().clickable { ouvrirParamètres() }) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 14.dp, vertical = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.Settings,
+                contentDescription = null,
+                tint = accentParamètres?.teinte ?: RegistreTheme.colors.chalk,
+                modifier = Modifier.size(18.dp),
+            )
+            Text(
+                text = "Paramètres — actualisation au retour",
+                style = MaterialTheme.typography.bodySmall,
+                color = RegistreTheme.colors.chalk,
+            )
         }
     }
 }
