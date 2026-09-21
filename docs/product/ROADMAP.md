@@ -569,6 +569,7 @@ content stays visible while the network refreshes, never a wipe.
       minutes; route `parametres`, registre accent
 - [x] Tests: 10 new (threshold matrix, short cycles, newest-arrêt rule,
       « jamais » setting, flow delivery) — 99 total, 0 failures
-- [ ] On-device check: absence below the chosen duration → nothing happens;
+- [x] On-device check: absence below the chosen duration → nothing happens;
       absence above → content kept + silent refresh; change the duration in
-      Paramètres and repeat
+      Paramètres and repeat — DONE 2026-09-21: validated live on the Xiaomi
+      device
