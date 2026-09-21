@@ -537,3 +537,38 @@ detail screen belongs to the tab it was opened from.
 - [ ] On-device check: open a post from Registre and from Actualités, open a
       quiz / conversation / demande, verify the parent tab stays active and
       back restores it
+
+# TASKS — Foreground-return refresh (absence ≥ duration chosen in Paramètres)
+
+Small feature, no milestone: the app is opened several times a day; coming
+back after minutes away should show fresh data without anyone thinking
+about it. Same stale-while-revalidate semantics as issue #21 — known
+content stays visible while the network refreshes, never a wipe.
+
+## Branch `veille-retour-premier-plan`
+
+- [x] `VeilleSession` (data/session/Veille.kt): records activity
+      onStop/onStart, emits one `retoursPérimés` signal when the absence is
+      ≥ the duration chosen in Paramètres (0 = never); pure Kotlin, injected
+      timestamps, flow delivery tested
+- [x] MainActivity: onStop → `enregistrerArrêt`, onStart →
+      `enregistrerReprise(minutes)` with the duration read from
+      SessionStore (`actualisation_retour_minutes`, default 5, survives
+      logout like the composer switch)
+- [x] Subscribed screens: Registre, Devoirs, Documents, Demandes, Messages,
+      Conversation, Cours (`charger(force = true)` — force skips the 45 s
+      messages TTL and renews signed URLs), Actualités (`rafraîchir()` —
+      keeps pagination depth; a forced `charger` would collapse the list to
+      the first 10 posts), Post detail (`charger()`, already a pure network
+      refetch)
+- [x] Excluded: quiz in play (its `charger()` would reset `quizEnJeu`
+      mid-game, breaking the issue #17 exit protection), composer (draft
+      untouched), Connexion (no data)
+- [x] Paramètres panel (from a quiet line at the bottom of the Registre,
+      under the Demandes line): absence duration — jamais / 1 / 2 / 5 / 10
+      minutes; route `parametres`, registre accent
+- [x] Tests: 10 new (threshold matrix, short cycles, newest-arrêt rule,
+      « jamais » setting, flow delivery) — 99 total, 0 failures
+- [ ] On-device check: absence below the chosen duration → nothing happens;
+      absence above → content kept + silent refresh; change the duration in
+      Paramètres and repeat
