@@ -573,3 +573,64 @@ content stays visible while the network refreshes, never a wipe.
       absence above → content kept + silent refresh; change the duration in
       Paramètres and repeat — DONE 2026-09-21: validated live on the Xiaomi
       device
+
+## Branch `boutique-ecole-plus`
+
+Prerequisites: the `shop` route probed live on 2026-09-21 (GET catalogue /
+cart / history / detail-commande, POST order + order deletion on the real
+parent account; the accidental probe order was deleted right away). Protocol
+facts recorded in `docs/api/ENDPOINT-MAP.md` → « shop ».
+
+- [x] Probe: catalogue (rubrique + search — mandatory, else the server leaks
+      PHP notices before the JSON), cart (empty in this deployment),
+      history (orders + per-article can_edit/can_delete + state alias),
+      detail (product + variants{amount,qte} + commande prefill)
+- [x] Probe: POST product = **direct order** (alert « Commande passée avec
+      succès », order state « en-cours »); cart stays empty — the cart
+      screens of the original app do not participate here
+- [x] Theme: new accent family `plus` (sarcelle ~180°, light+dark, contrast
+      checked), used by the Plus tab and every boutique route
+- [x] Nav: bottom bar 6 destinations — Actualités leaves the bar for the new
+      **Plus** tab root; Plus screen = two cards wearing their destination's
+      accent (Actualités amber, Boutique teal); `accentDe` maps
+      plus/boutique/boutique-historique and `boutique/…` prefixes
+- [x] Boutique catalogue: rubrique chips (server list, « Tout » = -1),
+      local search, 2-column product grid (signed images, display price
+      « 250 DH »), skeleton, empty + error states, bandeau on stale content
+- [x] Boutique detail: variant chips (price + stock echo), quantity stepper
+      bounded 1..stock, comment field, total on the button; confirmation
+      dialogue **before** the POST (orders are immediate); server alert
+      shown on success; `can_add_to_cart` = false disables the button
+      (unless editing an order — `commande` mode, server decides)
+- [x] Boutique history: order cards (date, state chip — « validée » wears
+      the Registre green, price, articles with image/size/qty), per-article
+      edit (pushes detail with `commande` prefill) and delete, order delete
+      — all gated by the server's `can_edit`/`can_delete` flags, confirmed
+      before deletion
+- [x] Registre: hamburger drawer (ModalNavigationDrawer) with Mes demandes
+      and Paramètres — the two bottom list rows are gone; the drawer closes
+      before navigating; routes unchanged
+- [x] Repo signal `commandesChangées` (like `quizEnJeu`): catalogue and
+      history refresh when an order is placed or deleted
+- [x] Tests: BoutiqueTest (normalizers of the probed shapes, prix unitaire,
+      button label, local filter) — 108 total, 0 failures
+- [x] Docs synced: DESIGN.md (§2 accents, §3 nav + drawer, §4 Plus/Boutique,
+      §6 scope), NAVIGATION.md (Plus + tiroir), CHANGELOG « Non publié »,
+      AGENTS.md structure table, ENDPOINT-MAP.md « shop »
+- [x] Probe follow-up (beta 2): « Repas invité » is canteen planning, not
+      products — rubrique 2 returns `products: []` + `cantines[]` (day,
+      availability with server colors, price, « Réserver »/« Réservé 1/1 »);
+      the meal IS shop product 25, orderable through the same verified POST
+      (probed: order created then deleted; day carried by the `comment`
+      field — the only client-side mention; « Réservé » counts validated
+      orders only, app 2.4.14 has no reserve button at all)
+- [x] Registre shortcut: « Repas invité » card (section Cantine, sarcelle
+      accent) → day picker → confirmation dialog (day read back black on
+      white) → same POST; success alert from the server
+- [x] Boutique rubrique 2: the same planning replaces the false « Boutique
+      vide » empty state
+- [x] Tests: +3 (repas comment formatting, server-hex color parser, day
+      label) — 111 total, 0 failures
+- [ ] On-device check: open Boutique from Plus, place a real order, edit
+      and delete it from history; reserve a Repas invité from the Registre
+      shortcut — TODO on the beta 2 build

@@ -6,6 +6,7 @@ import school.greenwood.plus.data.api.BotiClient
 import school.greenwood.plus.data.api.BotiHttp
 import school.greenwood.plus.data.cache.CachesSession
 import school.greenwood.plus.data.repo.AuthRepository
+import school.greenwood.plus.data.repo.BoutiqueRepository
 import school.greenwood.plus.data.repo.CoursRepository
 import school.greenwood.plus.data.repo.DevoirsRepository
 import school.greenwood.plus.data.repo.DemandesRepository
@@ -48,6 +49,7 @@ class AppContainer(context: Context) {
     val messages = MessagesRepository(client, session, caches)
     val demandes = DemandesRepository(client, caches)
     val documents = DocumentsRepository(client, session, caches)
+    val boutique = BoutiqueRepository(client, session)
 }
 
 class GwsApplication : Application() {

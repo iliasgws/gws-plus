@@ -12,11 +12,17 @@ import school.greenwood.plus.AppContainer
 import school.greenwood.plus.data.api.BotiErreur
 import school.greenwood.plus.data.repo.RegistreDuJour
 import school.greenwood.plus.model.BilanAbsences
+import school.greenwood.plus.model.CantineJour
+import school.greenwood.plus.model.CommandeBoutique
 import school.greenwood.plus.model.ContactEcole
 import school.greenwood.plus.model.Conversation
 import school.greenwood.plus.model.Demande
 import school.greenwood.plus.model.Devoir
 import school.greenwood.plus.model.Eleve
+import school.greenwood.plus.model.ProduitBoutique
+import school.greenwood.plus.model.ProduitDétail
+import school.greenwood.plus.model.RésultatCommande
+import school.greenwood.plus.model.RubriqueBoutique
 import school.greenwood.plus.data.repo.Normalizers
 import school.greenwood.plus.model.Post
 import school.greenwood.plus.model.PostDetail
@@ -1484,5 +1490,376 @@ class ParametresViewModel(private val container: AppContainer) : ViewModel() {
         viewModelScope.launch {
             container.session.définirActualisationRetour(minutes)
         }
+    }
+}
+
+/** — Boutique de l'école (docs/product/DESIGN.md §4) --------------------- */
+
+data class BoutiqueÉtat(
+    val chargement: Boolean = true,
+    val erreur: String? = null,
+    /** Un rafraîchissement tourne pendant que le contenu connu reste affiché. */
+    val rafraîchissementSilencieux: Boolean = false,
+    val produits: List<ProduitBoutique> = emptyList(),
+    val rubriques: List<RubriqueBoutique> = emptyList(),
+    /** Planning cantine — renseigné sur la rubrique « Repas invité ». */
+    val cantines: List<CantineJour> = emptyList(),
+    /** Réservation de repas en cours, et le succès à confirmer. */
+    val envoiRepas: Boolean = false,
+    val succèsRepas: RésultatCommande? = null,
+    /** Rubrique affichée — « -1 » = Tout (le serveur exige le paramètre). */
+    val rubriqueActive: String = "-1",
+    val recherche: String = "",
+)
+
+class BoutiqueViewModel(private val container: AppContainer) : ViewModel() {
+    private val _état = MutableStateFlow(BoutiqueÉtat())
+    val état: StateFlow<BoutiqueÉtat> = _état.asStateFlow()
+
+    init {
+        charger()
+        // Retour après une absence longue : rafraîchir en silence (Veille.kt).
+        viewModelScope.launch {
+            container.veille.retoursPérimés.collect { charger(force = true) }
+        }
+        // Une commande passée ailleurs (détail) rafraîchit la liste.
+        viewModelScope.launch {
+            container.boutique.commandesChangées.collect { if (it > 0) charger(force = true) }
+        }
+    }
+
+    fun charger(force: Boolean = false) {
+        viewModelScope.launch {
+            _état.update {
+                it.copy(
+                    chargement = it.produits.isEmpty(),
+                    rafraîchissementSilencieux = it.produits.isNotEmpty(),
+                )
+            }
+            try {
+                val page = container.boutique.catalogue(
+                    rubrique = _état.value.rubriqueActive,
+                    recherche = "",
+                )
+                _état.update {
+                    it.copy(
+                        chargement = false,
+                        rafraîchissementSilencieux = false,
+                        produits = page.produits,
+                        rubriques = page.rubriques,
+                        cantines = page.cantines,
+                        erreur = null,
+                    )
+                }
+            } catch (err: BotiErreur) {
+                _état.update {
+                    it.copy(
+                        chargement = false,
+                        rafraîchissementSilencieux = false,
+                        erreur = err.messageUtilisateur,
+                    )
+                }
+            } catch (err: Exception) {
+                _état.update {
+                    it.copy(
+                        chargement = false,
+                        rafraîchissementSilencieux = false,
+                        erreur = "Boutique indisponible pour le moment",
+                    )
+                }
+            }
+        }
+    }
+
+    fun choisirRubrique(id: String) {
+        if (_état.value.rubriqueActive == id) return
+        _état.update { it.copy(rubriqueActive = id, recherche = "") }
+        charger(force = true)
+    }
+
+    fun modifierRecherche(valeur: String) {
+        _état.update { it.copy(recherche = valeur) }
+    }
+
+    /** Réserver le repas invité d'un jour du planning (POST vérifié). */
+    fun réserverRepas(jour: CantineJour) {
+        if (_état.value.envoiRepas) return
+        _état.update { it.copy(envoiRepas = true, erreur = null) }
+        viewModelScope.launch {
+            try {
+                val résultat = container.boutique.commanderRepas(jour.id, jour.jourValeur)
+                _état.update { it.copy(envoiRepas = false, succèsRepas = résultat) }
+            } catch (err: BotiErreur) {
+                _état.update { it.copy(envoiRepas = false, erreur = err.messageUtilisateur) }
+            } catch (err: Exception) {
+                _état.update {
+                    it.copy(envoiRepas = false, erreur = "Réservation impossible pour le moment")
+                }
+            }
+        }
+    }
+
+    /** L'alerte de réservation est fermée. */
+    fun acquisRepas() {
+        _état.update { it.copy(succèsRepas = null) }
+    }
+}
+
+/** Recherche locale sur le catalogue chargé (testé). */
+fun filtrerProduits(produits: List<ProduitBoutique>, recherche: String): List<ProduitBoutique> {
+    val requête = recherche.trim()
+    if (requête.isEmpty()) return produits
+    return produits.filter { it.label.contains(requête, ignoreCase = true) }
+}
+
+/**
+ * Le prix unitaire affiché au détail : celui de la variante choisie
+ * (`amount`) sinon le prix de base du produit (testé).
+ */
+fun prixUnitaire(produit: ProduitDétail, varianteId: String?): String? =
+    varianteId?.let { id ->
+        produit.variantes.firstOrNull { it.id == id }?.montant
+    } ?: produit.prixRaw
+
+/** — Boutique : détail d'un produit -------------------------------------- */
+
+data class ProduitÉtat(
+    val chargement: Boolean = true,
+    val erreur: String? = null,
+    val produit: ProduitDétail? = null,
+    val varianteId: String? = null,
+    val taille: String? = null,
+    val quantité: Int = 1,
+    val commentaire: String = "",
+    /** Envoi en cours — le bouton « Commander » est gelé. */
+    val envoi: Boolean = false,
+    /** Succès à confirmer avant de rebasculer en arrière. */
+    val succès: RésultatCommande? = null,
+)
+
+class ProduitViewModel(
+    private val container: AppContainer,
+    private val produitId: String,
+    /** Mode modification : la commande à reprendre (préremplissage serveur). */
+    private val commandeId: String? = null,
+) : ViewModel() {
+    private val _état = MutableStateFlow(ProduitÉtat())
+    val état: StateFlow<ProduitÉtat> = _état.asStateFlow()
+
+    init {
+        charger()
+    }
+
+    fun charger() {
+        viewModelScope.launch {
+            _état.update { it.copy(chargement = it.produit == null, erreur = null) }
+            try {
+                val produit = container.boutique.détail(produitId, commandeId)
+                _état.update { st ->
+                    st.copy(
+                        chargement = false,
+                        produit = produit,
+                        varianteId = null,
+                        taille = produit.prérempli?.taille ?: st.taille,
+                        quantité = produit.prérempli?.quantité ?: st.quantité,
+                        commentaire = produit.prérempli?.commentaire ?: st.commentaire,
+                    )
+                }
+            } catch (err: BotiErreur) {
+                _état.update { it.copy(chargement = false, erreur = err.messageUtilisateur) }
+            } catch (err: Exception) {
+                _état.update {
+                    it.copy(chargement = false, erreur = "Produit indisponible pour le moment")
+                }
+            }
+        }
+    }
+
+    fun choisirVariante(id: String) {
+        _état.update { st ->
+            if (st.produit?.variantes?.none { it.id == id } == true) st
+            else st.copy(varianteId = id, taille = st.produit?.variantes?.firstOrNull { it.id == id }?.label)
+        }
+    }
+
+    /** ±[delta] sur la quantité, borné 1..stock connu (99 sinon). */
+    fun modifierQuantité(delta: Int) {
+        _état.update { st ->
+            val plafond = st.produit?.variantes
+                ?.firstOrNull { it.id == st.varianteId }?.stock?.coerceAtLeast(1) ?: 99
+            st.copy(quantité = (st.quantité + delta).coerceIn(1, plafond))
+        }
+    }
+
+    fun modifierCommentaire(valeur: String) {
+        _état.update { it.copy(commentaire = valeur) }
+    }
+
+    /** Le prix unitaire courant : variante sinon produit (testé). */
+    fun prix(): String? = _état.value.produit?.let { prixUnitaire(it, _état.value.varianteId) }
+
+    fun commander() {
+        val st = _état.value
+        if (st.envoi || st.produit == null) return
+        _état.update { it.copy(envoi = true, erreur = null) }
+        viewModelScope.launch {
+            try {
+                val variante = st.produit.variantes.firstOrNull { it.id == st.varianteId }
+                val résultat = container.boutique.commander(
+                    produitId = produitId,
+                    varianteId = st.varianteId,
+                    taille = st.taille ?: variante?.label,
+                    quantité = st.quantité,
+                    commentaire = st.commentaire,
+                    prix = prix(),
+                    commandeId = commandeId,
+                )
+                _état.update { it.copy(envoi = false, succès = résultat) }
+            } catch (err: BotiErreur) {
+                _état.update { it.copy(envoi = false, erreur = err.messageUtilisateur) }
+            } catch (err: Exception) {
+                _état.update {
+                    it.copy(envoi = false, erreur = "Commande impossible pour le moment")
+                }
+            }
+        }
+    }
+
+    /** Le dialogue de succès est fermé → retour à l'écran d'où l'on venait. */
+    fun acquis() {
+        _état.update { it.copy(succès = null) }
+    }
+}
+
+/** — Boutique : historique des commandes --------------------------------- */
+
+data class HistoriqueÉtat(
+    val chargement: Boolean = true,
+    val erreur: String? = null,
+    val commandes: List<CommandeBoutique> = emptyList(),
+    /** Suppression en cours : l'id de la commande, ou « commande/article ». */
+    val suppression: String? = null,
+)
+
+class HistoriqueViewModel(private val container: AppContainer) : ViewModel() {
+    private val _état = MutableStateFlow(HistoriqueÉtat())
+    val état: StateFlow<HistoriqueÉtat> = _état.asStateFlow()
+
+    init {
+        charger()
+        viewModelScope.launch {
+            container.veille.retoursPérimés.collect { charger(force = true) }
+        }
+        viewModelScope.launch {
+            container.boutique.commandesChangées.collect { if (it > 0) charger(force = true) }
+        }
+    }
+
+    fun charger(force: Boolean = false) {
+        viewModelScope.launch {
+            _état.update {
+                it.copy(
+                    chargement = it.commandes.isEmpty(),
+                    erreur = if (force) it.erreur else null,
+                )
+            }
+            try {
+                val commandes = container.boutique.historique()
+                _état.update {
+                    it.copy(chargement = false, commandes = commandes, erreur = null)
+                }
+            } catch (err: BotiErreur) {
+                _état.update { it.copy(chargement = false, erreur = err.messageUtilisateur) }
+            } catch (err: Exception) {
+                _état.update {
+                    it.copy(chargement = false, erreur = "Historique indisponible pour le moment")
+                }
+            }
+        }
+    }
+
+    fun supprimer(commandeId: String, articleId: String?) {
+        if (_état.value.suppression != null) return
+        _état.update { it.copy(suppression = "$commandeId/${articleId ?: ""}") }
+        viewModelScope.launch {
+            try {
+                container.boutique.supprimer(commandeId, articleId)
+            } catch (err: BotiErreur) {
+                _état.update { it.copy(erreur = err.messageUtilisateur) }
+            } catch (err: Exception) {
+                _état.update { it.copy(erreur = "Suppression impossible pour le moment") }
+            } finally {
+                _état.update { it.copy(suppression = null) }
+            }
+            // Recharge quoi qu'il arrive : le serveur fait foi.
+            charger(force = true)
+        }
+    }
+}
+
+/** — Boutique : réservation du repas invité ------------------------------- */
+
+/** L'état de l'écran Repas invité : le planning et une réservation en cours. */
+data class RepasÉtat(
+    val chargement: Boolean = true,
+    val erreur: String? = null,
+    val jours: List<CantineJour> = emptyList(),
+    val envoi: Boolean = false,
+    val succès: RésultatCommande? = null,
+)
+
+class RepasViewModel(private val container: AppContainer) : ViewModel() {
+    private val _état = MutableStateFlow(RepasÉtat())
+    val état: StateFlow<RepasÉtat> = _état.asStateFlow()
+
+    init {
+        charger()
+        viewModelScope.launch {
+            container.veille.retoursPérimés.collect { charger(force = true) }
+        }
+        viewModelScope.launch {
+            container.boutique.commandesChangées.collect { if (it > 0) charger(force = true) }
+        }
+    }
+
+    fun charger(force: Boolean = false) {
+        viewModelScope.launch {
+            _état.update { it.copy(chargement = it.jours.isEmpty()) }
+            try {
+                val page = container.boutique.catalogue(rubrique = "2", recherche = "")
+                _état.update {
+                    it.copy(
+                        chargement = false,
+                        jours = page.cantines,
+                        erreur = null,
+                    )
+                }
+            } catch (err: BotiErreur) {
+                _état.update { it.copy(chargement = false, erreur = err.messageUtilisateur) }
+            } catch (err: Exception) {
+                _état.update {
+                    it.copy(chargement = false, erreur = "Planning indisponible pour le moment")
+                }
+            }
+        }
+    }
+
+    fun réserver(jour: CantineJour) {
+        if (_état.value.envoi) return
+        _état.update { it.copy(envoi = true, erreur = null) }
+        viewModelScope.launch {
+            try {
+                val résultat = container.boutique.commanderRepas(jour.id, jour.jourValeur)
+                _état.update { it.copy(envoi = false, succès = résultat) }
+            } catch (err: BotiErreur) {
+                _état.update { it.copy(envoi = false, erreur = err.messageUtilisateur) }
+            } catch (err: Exception) {
+                _état.update { it.copy(envoi = false, erreur = "Réservation impossible pour le moment") }
+            }
+        }
+    }
+
+    fun acquis() {
+        _état.update { it.copy(succès = null) }
     }
 }

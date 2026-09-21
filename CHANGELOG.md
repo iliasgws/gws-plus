@@ -4,6 +4,42 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [0.7.0-bêta 2] — 2026-09-21
+
+Préversion : le planning des repas invités se publie en bêta depuis la
+branche `boutique-ecole-plus` (non fusionnée), après la première bêta de
+la boutique.
+
+### Ajouté
+
+- **Repas invité** : la rubrique « Repas invité » de la Boutique affiche
+  désormais le planning des menus (`cantines[]`, sonde du 21/09/2026) au
+  lieu d'un vide — et un raccourci « Repas invité » arrive depuis le
+  Registre (section Cantine). On tape un jour, on confirme : la commande
+  passe par le POST vérifié de la boutique et le jour choisi part dans le
+  commentaire. Le libellé « Réservé » du planning ne compte que les
+  commandes validées.
+
+## [0.7.0-bêta 1] — 2026-09-21
+
+Préversion : la Boutique de l'école, l'onglet Plus et le menu du haut du
+Registre se publient en bêta depuis la branche `boutique-ecole-plus` (non
+fusionnée) pour être essayés sur un appareil réel avant la fusion.
+
+### Ajouté
+
+- **Boutique de l'école** (sonde API du 21/09/2026) : catalogue par rubrique
+  avec recherche, détail produit (variantes-tailles avec stock, quantité,
+  commentaire), commande directe confirmée avant envoi, historique des
+  commandes avec modification et suppression tant que la commande est
+  « en-cours ». Le panier serveur n'existe pas dans ce déploiement — le
+  POST passe la commande immédiatement.
+- **Onglet « Plus »** dans la barre basse : les sections secondaires s'y
+  rangent — l'Actualités (qui quitte la barre) et la Boutique, chacune sur
+  la carte à l'accent de sa destination.
+- **Menu du haut** du Registre (hamburger) : Mes demandes et Paramètres
+  quittent le bas de la liste du registre pour le tiroir.
+
 ## [0.6.1] — 2026-09-21
 
 Stable après quatre bêtas essayées sur appareil réel : le correctif de

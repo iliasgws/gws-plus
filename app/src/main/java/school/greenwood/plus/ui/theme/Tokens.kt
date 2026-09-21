@@ -49,6 +49,7 @@ fun lightGwsColors() = GwsColors(
         "devoirs" to GwsAccent(VioletTeinteLight, VioletConteneurLight, VioletSurConteneurLight),
         "documents" to GwsAccent(OcreTeinteLight, OcreConteneurLight, OcreSurConteneurLight),
         "messages" to GwsAccent(CorailTeinteLight, CorailConteneurLight, CorailSurConteneurLight),
+        "plus" to GwsAccent(SarcelleTeinteLight, SarcelleConteneurLight, SarcelleSurConteneurLight),
     ),
 )
 
@@ -67,6 +68,7 @@ fun darkGwsColors() = GwsColors(
         "devoirs" to GwsAccent(VioletTeinteDark, VioletConteneurDark, VioletSurConteneurDark),
         "documents" to GwsAccent(OcreTeinteDark, OcreConteneurDark, OcreSurConteneurDark),
         "messages" to GwsAccent(CorailTeinteDark, CorailConteneurDark, CorailSurConteneurDark),
+        "plus" to GwsAccent(SarcelleTeinteDark, SarcelleConteneurDark, SarcelleSurConteneurDark),
     ),
 )
 

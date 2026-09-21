@@ -16,10 +16,10 @@ Quand le serveur tue la session (`disconnect: true`), l'état retombe sur la
 connexion, **où que l'on soit** : `SessionStore` émet un événement, la
 coquille dépille sa pile et la racine bascule.
 
-## La coquille : quatre onglets, quatre piles
+## La coquille : six onglets, six piles
 
-`Shell` : un `Scaffold` + barre basse (Registre, Devoirs, Documents,
-Messages) autour d'un `NavHost`. Chaque onglet garde sa pile via
+`Shell` : un `Scaffold` + barre basse (Registre, Cours, Devoirs, Documents,
+Messages, **Plus**) autour d'un `NavHost`. Chaque onglet garde sa pile via
 `saveState`/`restoreState` (`allerÀLOnglet`) :
 
 - retour depuis un onglet racine → Registre ;
@@ -27,8 +27,22 @@ Messages) autour d'un `NavHost`. Chaque onglet garde sa pile via
 - jamais de racine poussée sur une pile de détail (`allerDétail` ne dépille
   rien).
 
-Les détails (post, demandes, conversation, nouveau message) poussent sur la
-pile de leur onglet avec `launchSingleTop`.
+Les détails (post, demandes, conversation, nouveau message, boutique,
+historique boutique) poussent sur la pile de leur onglet avec
+`launchSingleTop`.
+
+## L'onglet Plus et le tiroir du Registre (2026-09-21)
+
+- **Plus** est un onglet racine comme les autres ; ses sections (Actualités,
+  Boutique) sont poussées **sur la pile de Plus** en `allerDétail`. L'Actualités
+  n'est plus un onglet : sa route reste dans le `NavHost`, l'onglet actif
+  reste Plus (lecture de pile), la teinte reste ambre (table `accentDe`) —
+  le contrat accent-par-route absorbe le déménagement sans bricolage.
+- **Le menu du haut** : un hamburger dans l'en-tête du Registre ouvre un
+  `ModalNavigationDrawer` avec Mes demandes et Paramètres. Le tiroir ferme
+  avant de naviguer ; les routes `demandes` et `parametres` poussent sur la
+  pile du Registre, inchangées. La liste du Registre ne porte plus que du
+  contenu (les lignes Demandes/Paramètres de bas de liste ont disparu).
 
 ## L'onglet actif et les sous-pages (issue #34)
 
