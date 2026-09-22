@@ -4,6 +4,20 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [Non publié]
+
+### Ajouté
+
+- **Mises à jour intégrées** (issue #46) : l'app vérifie seule les nouvelles
+  versions sur les publications GitHub du projet (au plus une fois par 12 h,
+  sans jeton ni serveur intermédiaire). Une carte « Mise à jour disponible »
+  s'affiche en tête du Registre avec la version, le résumé des notes et un
+  bouton unique « Mettre à jour » — téléchargement via le lien direct GitHub
+  puis installateur du système. Une notification locale peut prévenir à la
+  sortie d'une version (permission demandée dans les Paramètres), qui
+  propose aussi le canal bêta en option (« Participer aux bêtas ») et un
+  contrôle manuel « Vérifier les mises à jour ».
+
 ## [0.7.1] — 2026-09-22
 
 Stable après la bêta 1 : la Bibliothèque des enseignants, publiée d'abord

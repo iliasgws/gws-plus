@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
@@ -72,6 +73,14 @@ class SessionStore(private val context: Context) {
          *  écrans se rafraîchissent au retour au premier plan ; 0 = « jamais ».
          *  Survit à une purge de session (préférence d'app, comme le composeur). */
         val actualisationRetour = intPreferencesKey("actualisation_retour_minutes")
+
+        /** Mises à jour (issue #46) : millisecondes du dernier contrôle GitHub,
+         *  canal choisi — stable par défaut, bêtas sur option — et dernière
+         *  publication vue (JSON) pour retrouver la carte après un redémarrage.
+         *  Préférences d'app : survivent à une purge de session. */
+        val majDernièreVérification = longPreferencesKey("maj_derniere_verification")
+        val majCanalBêta = booleanPreferencesKey("maj_canal_beta")
+        val majPublicationStockée = stringPreferencesKey("maj_publication_stockee")
     }
 
     val events = MutableSharedFlow<SessionEvent>(extraBufferCapacity = 4)
@@ -122,6 +131,28 @@ class SessionStore(private val context: Context) {
 
     suspend fun définirActualisationRetour(minutes: Int) {
         context.dataStore.edit { it[Clefs.actualisationRetour] = minutes }
+    }
+
+    /** Millisecondes du dernier contrôle de mise à jour (null = jamais). */
+    val majDernièreVérification: Flow<Long?> = context.dataStore.data.map { it[Clefs.majDernièreVérification] }
+
+    suspend fun définirMajDernièreVérification(millis: Long) {
+        context.dataStore.edit { it[Clefs.majDernièreVérification] = millis }
+    }
+
+    /** Canal de mise à jour : stable par défaut, bêtas sur option (issue #46). */
+    val majCanalBêta: Flow<Boolean> = context.dataStore.data.map { it[Clefs.majCanalBêta] ?: false }
+
+    suspend fun définirMajCanalBêta(actif: Boolean) {
+        context.dataStore.edit { it[Clefs.majCanalBêta] = actif }
+    }
+
+    /** Dernière publication vue (JSON de PublicationStockée), pour retrouver
+     *  la carte « Mise à jour disponible » après un redémarrage. */
+    val majPublicationStockée: Flow<String?> = context.dataStore.data.map { it[Clefs.majPublicationStockée] }
+
+    suspend fun définirMajPublicationStockée(json: String) {
+        context.dataStore.edit { it[Clefs.majPublicationStockée] = json }
     }
 
     suspend fun enregistrer(

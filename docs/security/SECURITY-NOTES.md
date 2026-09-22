@@ -79,3 +79,13 @@ document the use case next to the permission.
   source repo (`french` branch, `docs/DISCLOSURE.md`).
 - gws-plus should not test F1 against the live server beyond its existence in
   the bundle — that would cross into unauthorized access.
+
+## GWS+ note — update checker (issue #46, added 2026-09-22)
+
+The update checker talks to one third-party host beyond the school API:
+`api.github.com` (public repo `iliasgws/gws-plus`), unauthenticated GET,
+throttled to once per 12 h. No token, no personal data is sent — only the
+device's IP, like any HTTP client. APK downloads come from the release's
+direct `browser_download_url`. `REQUEST_INSTALL_PACKAGES` is declared for
+that single flow; `POST_NOTIFICATIONS` is runtime-requested from Paramètres
+only. Everything else in the permission list is still intentionally absent.

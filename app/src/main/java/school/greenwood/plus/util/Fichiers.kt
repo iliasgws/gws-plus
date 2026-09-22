@@ -103,4 +103,18 @@ object Fichiers {
             .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
         return if (intent.resolveActivity(context.packageManager) != null) intent else intent
     }
+
+    /** Lance l'installateur du système pour un APK téléchargé (issue #46).
+     *  Nécessite l'autorisation « apps inconnues » pour GWS+ ; l'écran de
+     *  mise à jour propose le réglage quand elle manque. */
+    fun intentionInstaller(context: Context, fichier: File): Intent {
+        val uri: Uri = FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.files",
+            fichier,
+        )
+        return Intent(Intent.ACTION_VIEW)
+            .setDataAndType(uri, "application/vnd.android.package-archive")
+            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
+    }
 }

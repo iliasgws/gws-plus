@@ -1,5 +1,7 @@
 package school.greenwood.plus.ui.screens.parametres
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -16,20 +18,30 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import school.greenwood.plus.AppContainer
+import school.greenwood.plus.BuildConfig
+import school.greenwood.plus.ui.MiseÀJourViewModel
 import school.greenwood.plus.ui.ParametresViewModel
+import school.greenwood.plus.ui.components.CarteMiseÀJour
+import school.greenwood.plus.ui.components.ErrorInline
 import school.greenwood.plus.ui.components.GwsCard
 import school.greenwood.plus.ui.components.SectionLabel
 import school.greenwood.plus.ui.theme.AnnotationShape
@@ -62,6 +74,16 @@ fun ParametresScreen(
 ) {
     val vm: ParametresViewModel = viewModel { ParametresViewModel(container) }
     val état by vm.état.collectAsStateWithLifecycle()
+    // Mises à jour (issue #46) — l'état partagé vit dans UpdatesRepository ;
+    // le VM du panneau ne porte que le canal bêta et les actions.
+    val majVm: MiseÀJourViewModel = viewModel { MiseÀJourViewModel(container) }
+    val majÉtat by container.misesÀJour.état.collectAsStateWithLifecycle()
+    val canalBêta by majVm.canalBêta.collectAsStateWithLifecycle()
+    val contexte = LocalContext.current
+    var notificationsAccordées by remember { mutableStateOf(container.misesÀJour.notificationsAccordées()) }
+    val demandeurNotification = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { accordé -> notificationsAccordées = accordé }
 
     Column(
         modifier = Modifier
@@ -139,6 +161,154 @@ fun ParametresScreen(
                 text = "Quand l'application reste en arrière-plan pendant au moins la durée choisie, " +
                     "sa réouverture relance le chargement des données — ce qui est déjà affiché " +
                     "reste visible pendant l'actualisation.",
+                style = MaterialTheme.typography.bodySmall,
+                color = RegistreTheme.colors.chalk,
+                modifier = Modifier.padding(top = 10.dp, start = 4.dp, end = 4.dp),
+            )
+
+            SectionLabel("Mises à jour")
+
+            // La même carte que le Registre quand une publication plus
+            // récente attend (issue #46).
+            if (majÉtat.disponible != null) {
+                CarteMiseÀJour(
+                    état = majÉtat,
+                    peutInstaller = container.misesÀJour.peutInstaller(),
+                    surMettreÀJour = majVm::mettreÀJour,
+                    surInstaller = majVm::relancerInstallation,
+                    modifier = Modifier.padding(bottom = 8.dp),
+                )
+            }
+
+            GwsCard(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(vertical = 4.dp)) {
+                    // Version installée.
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 14.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        Text(
+                            text = "Version installée",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = RegistreTheme.colors.ink,
+                            modifier = Modifier.weight(1f),
+                        )
+                        Text(
+                            text = BuildConfig.VERSION_NAME,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = RegistreTheme.colors.chalk,
+                        )
+                    }
+                    // Contrôle manuel.
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(ControlShape)
+                            .clickable(enabled = !majÉtat.contrôle) { majVm.vérifier() }
+                            .padding(horizontal = 14.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        Text(
+                            text = if (majÉtat.contrôle) "Vérification…" else "Vérifier les mises à jour",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = RegistreTheme.colors.ink,
+                            modifier = Modifier.weight(1f),
+                        )
+                        if (majÉtat.contrôle) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(18.dp),
+                                strokeWidth = 2.dp,
+                                color = RegistreTheme.colors.chalk,
+                            )
+                        }
+                    }
+                    // Canal bêta — stable par défaut, opt-in (issue #46).
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(ControlShape)
+                            .clickable { majVm.définirCanalBêta(!canalBêta) }
+                            .padding(horizontal = 14.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                text = "Participer aux bêtas",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = RegistreTheme.colors.ink,
+                            )
+                            Text(
+                                text = "Proposer aussi les préversions, avant leur publication stable.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = RegistreTheme.colors.chalk,
+                            )
+                        }
+                        if (canalBêta) {
+                            Icon(
+                                imageVector = Icons.Rounded.CheckCircle,
+                                contentDescription = "Actif",
+                                tint = RegistreTheme.accent.teinte,
+                                modifier = Modifier.size(18.dp),
+                            )
+                        }
+                    }
+                    // Permission notifications — utile seulement sous Android 13+.
+                    if (android.os.Build.VERSION.SDK_INT >= 33) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(ControlShape)
+                                .clickable(enabled = !notificationsAccordées) {
+                                    demandeurNotification.launch(
+                                        android.Manifest.permission.POST_NOTIFICATIONS,
+                                    )
+                                }
+                                .padding(horizontal = 14.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        ) {
+                            Column(Modifier.weight(1f)) {
+                                Text(
+                                    text = "Alertes de mise à jour",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = RegistreTheme.colors.ink,
+                                )
+                                Text(
+                                    text = if (notificationsAccordées) "Accordées" else "Autoriser la notification quand une version sort",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = RegistreTheme.colors.chalk,
+                                )
+                            }
+                            if (notificationsAccordées) {
+                                Icon(
+                                    imageVector = Icons.Rounded.CheckCircle,
+                                    contentDescription = "Accordées",
+                                    tint = RegistreTheme.accent.teinte,
+                                    modifier = Modifier.size(18.dp),
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            majÉtat.erreur?.let { message ->
+                ErrorInline(
+                    message = message,
+                    modifier = Modifier.padding(top = 8.dp, start = 4.dp, end = 4.dp),
+                )
+            }
+
+            Text(
+                text = "L'application vérifie les nouvelles versions sur la page GitHub du projet " +
+                    "(au plus une fois par 12 h, à l'ouverture) — aucun serveur intermédiaire, " +
+                    "aucune donnée personnelle. Le téléchargement passe par le lien direct de la " +
+                    "publication, puis l'installateur du système prend le relais.",
                 style = MaterialTheme.typography.bodySmall,
                 color = RegistreTheme.colors.chalk,
                 modifier = Modifier.padding(top = 10.dp, start = 4.dp, end = 4.dp),

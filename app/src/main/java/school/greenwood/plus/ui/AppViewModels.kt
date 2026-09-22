@@ -1555,6 +1555,38 @@ class ParametresViewModel(private val container: AppContainer) : ViewModel() {
     }
 }
 
+/** — Mises à jour de l'app (issue #46) ----------------------------------- */
+
+/** L'état partagé vit dans UpdatesRepository (le Registre et les Paramètres
+ *  observent le même) ; ce VM ne porte que le canal bêta, réglage du
+ *  panneau Paramètres. */
+class MiseÀJourViewModel(private val container: AppContainer) : ViewModel() {
+    private val _canalBêta = MutableStateFlow(false)
+    val canalBêta: StateFlow<Boolean> = _canalBêta.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            container.misesÀJour.état.collect { _canalBêta.value = it.canalBêta }
+        }
+    }
+
+    fun définirCanalBêta(actif: Boolean) {
+        viewModelScope.launch { container.misesÀJour.définirCanalBêta(actif) }
+    }
+
+    fun vérifier() {
+        viewModelScope.launch { container.misesÀJour.vérifier(manuel = true) }
+    }
+
+    fun mettreÀJour() {
+        viewModelScope.launch { container.misesÀJour.mettreÀJour() }
+    }
+
+    fun relancerInstallation() {
+        container.misesÀJour.relancerInstallation()
+    }
+}
+
 /** — Boutique de l'école (docs/product/DESIGN.md §4) --------------------- */
 
 data class BoutiqueÉtat(

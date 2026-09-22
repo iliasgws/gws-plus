@@ -71,6 +71,7 @@ import kotlinx.coroutines.launch
 import school.greenwood.plus.AppContainer
 import school.greenwood.plus.data.repo.EntreeRegistre
 import school.greenwood.plus.data.repo.RegistreDuJour
+import school.greenwood.plus.data.repo.TéléchargementMaj
 import school.greenwood.plus.model.Absence
 import school.greenwood.plus.model.Conversation
 import school.greenwood.plus.model.Devoir
@@ -79,6 +80,7 @@ import school.greenwood.plus.model.Post
 import school.greenwood.plus.ui.RegistreViewModel
 import school.greenwood.plus.ui.components.BandeauErreur
 import school.greenwood.plus.ui.components.CarteActualité
+import school.greenwood.plus.ui.components.CarteMiseÀJour
 import school.greenwood.plus.ui.components.EmptyState
 import school.greenwood.plus.ui.components.ErrorInline
 import school.greenwood.plus.ui.components.GwsAvatar
@@ -123,6 +125,12 @@ fun RegistreScreen(
         viewModel { RegistreViewModel(container) }
     }
     val état by vm.état.collectAsStateWithLifecycle()
+
+    // Mise à jour de l'app (issue #46) : contrôle au démarrage (au plus une
+    // fois par 12 h, échec silencieux) et carte en tête du flux quand une
+    // publication plus récente existe.
+    val majÉtat by container.misesÀJour.état.collectAsStateWithLifecycle()
+    LaunchedEffect(Unit) { container.misesÀJour.vérifierAuBesoin() }
 
     var feuilleOuverte by remember { mutableStateOf(false) }
 
@@ -254,6 +262,22 @@ fun RegistreScreen(
                         BandeauErreur(
                             message = message,
                             réessayer = { vm.charger(force = true) },
+                        )
+                    }
+                }
+
+                // Mise à jour de l'app (issue #46) — visible tant qu'une
+                // publication plus récente attend, ou qu'un téléchargement
+                // est en cours.
+                if (majÉtat.disponible != null || majÉtat.téléchargement != TéléchargementMaj.Inactif) {
+                    item(key = "mise-a-jour") {
+                        CarteMiseÀJour(
+                            état = majÉtat,
+                            peutInstaller = container.misesÀJour.peutInstaller(),
+                            surMettreÀJour = {
+                                portée.launch { container.misesÀJour.mettreÀJour() }
+                            },
+                            surInstaller = { container.misesÀJour.relancerInstallation() },
                         )
                     }
                 }
