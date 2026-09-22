@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import school.greenwood.plus.AppContainer
 import school.greenwood.plus.data.api.BotiErreur
@@ -19,6 +20,7 @@ import school.greenwood.plus.model.Conversation
 import school.greenwood.plus.model.Demande
 import school.greenwood.plus.model.Devoir
 import school.greenwood.plus.model.Eleve
+import school.greenwood.plus.model.FicheBibliotheque
 import school.greenwood.plus.model.ProduitBoutique
 import school.greenwood.plus.model.ProduitDétail
 import school.greenwood.plus.model.RésultatCommande
@@ -316,10 +318,14 @@ data class DocumentsÉtat(
     val chargement: Boolean = true,
     val erreur: String? = null,
     val ressources: List<Ressource> = emptyList(),
+    /** Fiches de la Bibliothèque (documents des enseignants, issue #43). */
+    val bibliotheque: List<FicheBibliotheque> = emptyList(),
     val recherche: String = "",
     val filtre: FiltreDocuments = FiltreDocuments.Tout,
     /** Un rafraîchissement réseau tourne pendant que le contenu connu reste affiché. */
     val rafraîchissement: Boolean = false,
+    /** Fiches en cours de téléchargement — id → en cours (issue #43). */
+    val téléchargementsFiche: Map<String, Boolean> = emptyMap(),
 )
 
 class DocumentsViewModel(private val container: AppContainer) : ViewModel() {
@@ -341,43 +347,75 @@ class DocumentsViewModel(private val container: AppContainer) : ViewModel() {
             // affiché et les listes ne sont jamais vidées entre deux états.
             if (!force) {
                 val enCache = runCatching { container.documents.ressourcesEnCache() }.getOrNull()
-                if (enCache != null) {
-                    _état.update { st -> if (st.ressources.isEmpty()) st.copy(ressources = enCache) else st }
+                val fichesEnCache = runCatching { container.documents.bibliothequeEnCache() }.getOrNull()
+                _état.update { st ->
+                    st.copy(
+                        ressources = st.ressources.ifEmpty { enCache ?: st.ressources },
+                        bibliotheque = st.bibliotheque.ifEmpty { fichesEnCache ?: st.bibliotheque },
+                    )
                 }
             }
             // chargement = rien à montrer (squelette) ; sinon rafraîchissement
             // en fond, le contenu affiché reste en place.
             _état.update {
                 it.copy(
-                    chargement = it.ressources.isEmpty(),
-                    rafraîchissement = it.ressources.isNotEmpty(),
+                    chargement = it.ressources.isEmpty() && it.bibliotheque.isEmpty(),
+                    rafraîchissement = it.ressources.isNotEmpty() || it.bibliotheque.isNotEmpty(),
                 )
             }
-            try {
-                val ressources = container.documents.ressources()
-                _état.update {
-                    it.copy(
-                        chargement = false,
-                        rafraîchissement = false,
-                        ressources = ressources,
-                        erreur = null,
-                    )
-                }
-            } catch (err: BotiErreur) {
-                // Échec : le contenu connu reste affiché, l'erreur est toujours
-                // signalée (bannière non bloquante, issue #21).
-                _état.update {
-                    it.copy(chargement = false, rafraîchissement = false, erreur = err.messageUtilisateur)
-                }
-            } catch (err: Exception) {
-                _état.update {
-                    it.copy(
-                        chargement = false,
-                        rafraîchissement = false,
-                        erreur = "Documents indisponibles pour le moment",
-                    )
-                }
+            // Deux sources indépendantes (issue #43) : exercices interactifs
+            // (`ressources_v2`) et Bibliothèque des enseignants (`bibliotheque`).
+            // Un échec sur l'une n'efface pas l'autre — le contenu connu reste
+            // affiché et l'erreur est toujours signalée (issue #21).
+            val résultatRessources = async { runCatching { container.documents.ressources() } }
+            val résultatFiches = async { runCatching { container.documents.bibliotheque() } }
+            val ressources = résultatRessources.await()
+            val fiches = résultatFiches.await()
+            val erreurs = listOfNotNull(
+                messageÉchec(ressources, "Documents indisponibles pour le moment"),
+                messageÉchec(fiches, "Bibliothèque indisponible pour le moment"),
+            ).distinct()
+            _état.update {
+                it.copy(
+                    chargement = false,
+                    rafraîchissement = false,
+                    ressources = ressources.getOrDefault(it.ressources),
+                    bibliotheque = fiches.getOrDefault(it.bibliotheque),
+                    erreur = erreurs.takeIf { liste -> liste.isNotEmpty() }?.joinToString(" · "),
+                )
             }
+        }
+    }
+
+    /** Message utilisateur d'un échec de source — null si la source a réussi. */
+    private fun messageÉchec(
+        résultat: Result<*>,
+        messageGénérique: String,
+    ): String? = when (val err = résultat.exceptionOrNull()) {
+        null -> null
+        is BotiErreur -> err.messageUtilisateur
+        else -> messageGénérique
+    }
+
+    /**
+     * Télécharge une fiche de la Bibliothèque et l'ouvre dans le lecteur du
+     * système (issue #43). Deux temps : le détail (`ressource_details`) porte
+     * l'URL média signée — la fiche de liste n'a qu'un nom de fichier — puis
+     * le téléchargement classique (Fichiers). En échec : onFait(null), l'écran
+     * montre l'état d'échec.
+     */
+    fun téléchargerFiche(fiche: FicheBibliotheque, context: android.content.Context, onFait: (java.io.File?) -> Unit) {
+        viewModelScope.launch {
+            _état.update { it.copy(téléchargementsFiche = it.téléchargementsFiche + (fiche.id to true)) }
+            val fichier = try {
+                val détail = container.documents.détailFiche(fiche.id)
+                val pièce = détail?.fichiers?.firstOrNull() ?: error("aucune pièce jointe signée")
+                school.greenwood.plus.util.Fichiers.télécharger(context, pièce.url, pièce.name)
+            } catch (err: Exception) {
+                null
+            }
+            _état.update { it.copy(téléchargementsFiche = it.téléchargementsFiche - fiche.id) }
+            onFait(fichier)
         }
     }
 
@@ -409,6 +447,30 @@ fun filtrerRessources(
                 FiltreDocuments.Tout -> true
                 FiltreDocuments.Quiz -> estQuiz(r)
                 FiltreDocuments.Documents -> !estQuiz(r)
+            }
+        }
+}
+
+/** Recherche + filtre pour les fiches de la Bibliothèque (issue #43) : les
+ *  fiches sont des documents — visibles sous « Tout » et « Documents »,
+ *  masquées sous « Quiz ». */
+fun filtrerFiches(
+    fiches: List<FicheBibliotheque>,
+    recherche: String,
+    filtre: FiltreDocuments,
+): List<FicheBibliotheque> {
+    val requête = recherche.trim()
+    return fiches
+        .filter { f ->
+            requête.isEmpty() ||
+                f.titre.contains(requête, ignoreCase = true) ||
+                f.matiere.contains(requête, ignoreCase = true)
+        }
+        .filter { f ->
+            when (filtre) {
+                FiltreDocuments.Tout -> true
+                FiltreDocuments.Quiz -> false
+                FiltreDocuments.Documents -> true
             }
         }
 }

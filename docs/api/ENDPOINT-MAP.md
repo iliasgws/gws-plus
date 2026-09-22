@@ -618,6 +618,116 @@ Top-level: `empty`, `logo` (empty string), `empty_icon`, `empty_text`,
 - Other `type` values (PDF, videos, …) expected but not observed for this
   account — shapes UNVERIFIED — do not rely.
 
+## bibliotheque — teacher document library (document space)
+
+**GET** `bibliotheque` — probed live read-only 2026-09-22 (issue #43;
+`diff_bibliotheque_*.json`).
+
+The parent resource space splits into three sections served by three
+endpoints: **Bibliothèque** (`bibliotheque`), **Cartable numérique**
+(`cartable_numeriques` — digital textbooks, see « Not probed ») and
+**Exercices interactifs** (`ressources_v2`, the quiz feed).
+
+**Units form** — GET with no extra param → `unites[]`:
+
+```json
+{
+  "id": "2",
+  "label": "Mathématiques",
+  "icon": "<URL image>",
+  "color": "#33a6e1",
+  "count_resources": "1",
+  "has_new": false
+}
+```
+
+- `count_resources` arrives as a string; `has_new` as boolean or string
+  ("true"/"false") — parse tolerantly.
+- Top-level: `empty`, `empty_icon`, `empty_text`, `data` (empty array here),
+  a `"0"` key (`{label_new_ressource: "Nouvelles ressources en lignes !!"}` —
+  the official banner text), `unites`, `translation` {`ressources`,
+  `no_data` {`img`, `label`}}.
+- The official units page sends bare session params only; it navigates to
+  the subject page with `unite` as a **query param** (chunk 6587.js).
+
+**Resources form** — GET with `unite=<unite id>` → `data[]`:
+
+```json
+{
+  "id": "25835",
+  "color": "558c4c",
+  "title": "<intitulé>",
+  "categorie": "Ressource",
+  "date": "22 Septembre 2026",
+  "file": {
+    "text": "Télécharger",
+    "link": "<nom de fichier>",
+    "path": "<nom de fichier>",
+    "mime": {"type": "application/octet-stream", "ext": "link"},
+    "filename": "<nom de fichier>"
+  },
+  "image": "<URL image>",
+  "intro": null,
+  "description": null,
+  "image_color": "",
+  "by": "<enseignant>"
+}
+```
+
+- `color` arrives **without** the `#` prefix (unlike `ressources_v2`).
+- `translation`: {`by`: "Par", `vue_btn`: "Visualiser", `no_data` {…}}.
+- **The list `file.link`/`file.path` is a bare filename, not a URL** — the
+  `download?link=<bare name>` proxy answers a PHP « readfile: No such file
+  or directory » for it. Real file URLs only exist in the detail, below.
+- The official page paginates (`start` = accumulated length + 1, `limit`
+  10, chunk 2662.js); the account probed has 1 unit / 1 resource, one
+  unpaged GET returned everything — re-check pagination if counts grow.
+
+## ressource_details — resource detail (document space)
+
+**GET** `ressource_details` — probed live read-only 2026-09-22 (issue #43).
+
+Params: **`ressource=<id>`** (French spelling — `resource`/`id`/`ressource_id`
+answer a PHP error page). For a Bibliothèque resource:
+
+```json
+{
+  "empty_date": {"img": "<URL>", "label": "Aucune donnée pour le moment."},
+  "groupe": "Toutes les Classes",
+  "title": "ressources",
+  "translation": [],
+  "data": {
+    "id": "25835",
+    "title": "<intitulé> - <matière>",
+    "categorie": "Ressource",
+    "date": null,
+    "description": "",
+    "files": [
+      {
+        "text": "Télécharger la pièce jointe1.pdf",
+        "link": "https://media.boti.education/view/<signed>/<size>/assets/schools/<school>/docs/posts/<fichier>.pdf",
+        "path": "<same signed URL>",
+        "type": "file",
+        "mime": {"type": "application/pdf", "ext": "file"},
+        "filename": "<fichier>.pdf"
+      }
+    ],
+    "matiere": "Mathématiques",
+    "matiereId": "2",
+    "image": null
+  }
+}
+```
+
+- **`files[].link`/`files[].path` carry the signed media URLs** —
+  `media.boti.education/view/<token>.<timestamp>/<size>/<path>` — the same
+  shape other feeds already download. This is the only place the real file
+  URL exists.
+- `date` is `null` in the detail (the display date lives on the list card);
+  `description` may be an empty string.
+- For quiz-type resources the official page renders an iframe of
+  `files[].link` (chunk 2921.js) — shape for that `categorie` UNVERIFIED.
+
 ## quiz — quiz list and play flow (document space)
 
 **GET** `quiz` — probed 2026-09-19 (`quiz_list.json`, `quiz_play.json`).
@@ -857,8 +967,7 @@ sibling `CoursRepository` reads this endpoint read-only.
 | endpoint | method(s) | note |
 |---|---|---|
 | `admin_nouveautes` | GET | announcement bodies (`description` HTML); ~19 MB — cache locally, never poll |
-| `ressource_details` | GET | resource detail (quiz content, …) |
-| `cartable_numeriques`, `cartable_split` | GET | digital cartable |
+| `cartable_numeriques`, `cartable_split` | GET | digital textbooks (manuels); unit list + per-unit PDFs probed read-only 2026-09-22 — unit `7` returned template data (Arabic-language textbook) — treat as gabarit, not wired |
 | `nouveau-message` | POST | send a message — fields bundle-verified (see section below); live text send validated 2026-09-19, attachment/voice parts still unproven |
 | `absences-justification` | POST | justify an absence — field names unverified |
 | `pick_enfants` | GET/POST | child switcher — POST fields unverified |
@@ -870,7 +979,6 @@ sibling `CoursRepository` reads this endpoint read-only.
 
 - `absences`: list items of `data.justifiees[]` / `data.non_justifiees[]`
 - `pinned_posts`: non-empty item shape (probe returned `data: []`)
-- `bibliotheque`: `data[]` / `unites[]` item shapes
 - `nouvelle-demande`: POST submission response; GET with a specific `id`
 - `devoirs_date_v2`: real submission multipart fields
 - `cours_v2`: inner `seances[]` slots

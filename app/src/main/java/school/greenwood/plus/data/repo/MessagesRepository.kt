@@ -285,17 +285,51 @@ class DocumentsRepository(
         return caches.documents.lire(clé)
     }
 
-    /** Bibliothèque — vide sur le compte sondé ; tolérant si le serveur
-     *  renvoie une structure différente. */
-    suspend fun bibliotheque(): List<school.greenwood.plus.model.Ressource> {
-        val rep = runCatching { client.get("bibliotheque") }.getOrElse { return emptyList() }
-        val data = rep["data"]
-        return when (data) {
-            is kotlinx.serialization.json.JsonArray -> data
-                .filterIsInstance<JsonObject>()
-                .mapNotNull(Normalizers::ressource)
-            else -> emptyList()
-        }
+    /** Bibliothèque — documents mis en ligne par les enseignants, rangés en
+     *  unités (matières). Formes vérifiées en sonde lecture-seule le
+     *  22/09/2026 (issue #43, docs/api/ENDPOINT-MAP.md) :
+     *  - GET `bibliotheque` → `unites[]` (matières avec count_resources),
+     *  - GET `bibliotheque?unite=<id>` → `data[]` (fiches, matière portée par
+     *    l'unité).
+     *  Fusionne ici le tout en une liste plate pour l'UI (groupage par
+     *  matière côté écran). Une unité vide ou un échec sur une unité ne
+     *  masque pas les autres. */
+    suspend fun bibliotheque(): List<school.greenwood.plus.model.FicheBibliotheque> {
+        val unites = unitesBibliotheque()
+        if (unites.isEmpty()) return emptyList()
+        val fiches = unites.map { unite ->
+            runCatching { fichesDeUnite(unite.id, unite.label) }.getOrElse { emptyList() }
+        }.flatten()
+        caches.clé()?.let { clé -> caches.bibliotheque.écrire(clé, fiches) }
+        return fiches
+    }
+
+    /** Les matières de la Bibliothèque — sert aussi à l'UI pour compter les
+     *  unités vides. */
+    suspend fun unitesBibliotheque(): List<school.greenwood.plus.model.UniteBibliotheque> {
+        val rep = client.get("bibliotheque")
+        return Normalizers.arr(rep, "unites")
+            .mapNotNull { (it as? JsonObject)?.let(Normalizers::uniteBibliotheque) }
+    }
+
+    /** Dernière liste de fiches connue, estampillée session — null si rien en
+     *  cache ou si la session a changé depuis l'écriture (issue #21). */
+    suspend fun bibliothequeEnCache(): List<school.greenwood.plus.model.FicheBibliotheque>? {
+        val clé = caches.clé() ?: return null
+        return caches.bibliotheque.lire(clé)
+    }
+
+    suspend fun fichesDeUnite(uniteId: String, matiere: String): List<school.greenwood.plus.model.FicheBibliotheque> {
+        val rep = client.get("bibliotheque", mapOf("unite" to uniteId))
+        return Normalizers.arr(rep, "data")
+            .mapNotNull { (it as? JsonObject)?.let { f -> Normalizers.ficheBibliotheque(f, uniteId, matiere) } }
+    }
+
+    /** Détail d'une fiche : les pièces jointes y portent enfin leur URL média
+     *  signée (le `file.link` de la liste n'est qu'un nom de fichier). */
+    suspend fun détailFiche(ressourceId: String): school.greenwood.plus.model.FicheBibliothequeDetail? {
+        val rep = client.get("ressource_details", mapOf("ressource" to ressourceId))
+        return Normalizers.détailBibliotheque(rep)
     }
 
     /**

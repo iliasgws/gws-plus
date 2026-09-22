@@ -6,6 +6,7 @@ import school.greenwood.plus.data.repo.RegistreDuJour
 import school.greenwood.plus.data.session.SessionStore
 import school.greenwood.plus.model.Demande
 import school.greenwood.plus.model.Devoir
+import school.greenwood.plus.model.FicheBibliotheque
 import school.greenwood.plus.model.Post
 import school.greenwood.plus.model.Ressource
 import school.greenwood.plus.model.SemaineCours
@@ -18,6 +19,7 @@ class CachesSession(private val session: SessionStore) {
     val registre = MemoireSession<RegistreDuJour>()
     val devoirs = MemoireSession<List<Devoir>>()
     val documents = MemoireSession<List<Ressource>>()
+    val bibliotheque = MemoireSession<List<FicheBibliotheque>>()
     val demandes = MemoireSession<List<Demande>>()
     val messages = MemoireSession<MessagesPage>()
     val posts = MemoireSession<List<Post>>()
@@ -35,6 +37,7 @@ class CachesSession(private val session: SessionStore) {
         registre.vider()
         devoirs.vider()
         documents.vider()
+        bibliotheque.vider()
         demandes.vider()
         messages.vider()
         posts.vider()

@@ -634,3 +634,49 @@ facts recorded in `docs/api/ENDPOINT-MAP.md` → « shop ».
 - [ ] On-device check: open Boutique from Plus, place a real order, edit
       and delete it from history; reserve a Repas invité from the Registre
       shortcut — TODO on the beta 2 build
+
+## Branch `bibliotheque-documents` (issue #43)
+
+The maths teacher published a document on 2026-09-22, visible in the official
+app but absent from GWS+. Diagnosis by live read-only probes (GET only,
+`diff_*.json` out of the repo): the parent resource space splits into three
+sections served by three endpoints — **Bibliothèque** (`bibliotheque`), where
+teacher documents live; **Cartable numérique** (`cartable_numeriques`, digital
+textbooks — template data on this account, out of scope here); **Exercices
+interactifs** (`ressources_v2`, the quiz feed — the only one GWS+ rendered).
+
+- [x] Probe: `bibliotheque` bare → `unites[]` (matières, `count_resources`
+      as string, `has_new`); compared against the 18/09 capture — the unit
+      Mathématiques appeared since then with 1 resource (the new doc)
+- [x] Probe: `bibliotheque?unite=<id>` → `data[]` fiche cards (`title`,
+      `categorie`, `date`, `by`, `color` without `#`); `file.link` is a bare
+      filename — `download?link=<bare name>` answers a PHP « No such file »
+      error, so the list alone cannot open the file
+- [x] Probe: `ressource_details?ressource=<id>` (French spelling; `resource`
+      answers a PHP error) → detail carrying **signed media URLs** in
+      `files[]` — the download path
+- [x] Probe: `download?link=<absolute URL>` streams remote files (verified
+      on a cartable textbook URL) — the proxy is URL-based, the bare list
+      filename is simply not a server path
+- [x] Repo: `bibliotheque()` (units → per-unit fiches, one unpaged GET each,
+      unit failure isolated), `unitesBibliotheque()`, `fichesDeUnite()`,
+      `détailFiche()`, cache `caches.bibliotheque` (session-stamped)
+- [x] Normalizers: `uniteBibliotheque` / `ficheBibliotheque` /
+      `détailBibliotheque` / `fichierRessource` — bare filenames never
+      become attachments; detail `description` blank → null
+- [x] ViewModel: both sources loaded in parallel, one failure never hides
+      the other (non-blocking banner joins the messages, issue #21 pattern);
+      cache prefill for the fiches too; `téléchargerFiche` = detail →
+      signed URL → `Fichiers.télécharger` → open via FileProvider
+- [x] UI: fiches grouped by matière **ahead of** the exercises in each
+      group, subtitle « date · Par <enseignant> », « Bibliothèque » chip,
+      download button with spinner and inline « Fichier indisponible » on
+      failure; nature filter: fiches count as Documents, hidden under Quiz;
+      item keys now carry the matière (ressources_v2 repeats one id per
+      matière — the old keys could collide in the LazyColumn)
+- [x] Tests: BibliothequeTest (units, fiches, detail signed files, bare-name
+      rejection, filter) — all green
+- [x] Docs synced: ENDPOINT-MAP (bibliotheque + ressource_details verified
+      sections, cartable note), CHANGELOG « Non publié », AGENTS.md status
+- [ ] On-device check: the maths doc visible under Mathématiques in the
+      Documents tab, download opens the PDF in the system reader
