@@ -680,3 +680,42 @@ interactifs** (`ressources_v2`, the quiz feed — the only one GWS+ rendered).
       sections, cartable note), CHANGELOG « Non publié », AGENTS.md status
 - [ ] On-device check: the maths doc visible under Mathématiques in the
       Documents tab, download opens the PDF in the system reader
+
+## Branch `mises-a-jour` (issue #46)
+
+GWS+ is sideloaded — nothing told parents a new version existed. Baked-in
+update system against the public GitHub Releases API (no server, no
+Obtainium, no FCM).
+
+- [x] Probe: real API shape confirmed (`tag_name`, `prerelease`,
+      `assets[].browser_download_url`); all existing beta releases were
+      **not flagged prerelease on GitHub** — re-flagged 2026-09-22
+      (`gh release edit --prerelease`), else the stable channel would have
+      offered betas
+- [x] `UpdatesRepository`: unauthenticated GET (60 req/h/IP, 12 h throttle
+      in DataStore), semantic version parsing/comparison
+      (`0.7.1-beta.1 < 0.7.1`, tolerant of the `v` tag prefix), release
+      picking by **highest parsed version** (list order not trusted — a
+      stable can sort after its own beta), APK asset isolation
+      (`GWS-*.apk`, .idsig ignored), persisted last-seen publication so the
+      card survives process death under throttle
+- [x] Channels: stable-only by default; « Participer aux bêtas » opt-in
+      toggle in Paramètres re-checks on switch
+- [x] UI: « Mise à jour disponible » card at the top of the Registre flow
+      (version, notes summary, one-click « Mettre à jour » → download via
+      direct link → system installer; « Installer » re-fire after leaving
+      the installer; « Réessayer » + inline error on failure; « Voir sur
+      GitHub » opens the release page) and the same card in Paramètres
+- [x] Permissions: `REQUEST_INSTALL_PACKAGES` (declarative), « apps
+      inconnues » system settings opened automatically when missing;
+      `POST_NOTIFICATIONS` runtime-requested from a Paramètres row (13+)
+      — local notification posted only when granted
+- [x] Honest limits documented: no push while the app is fully closed
+      (that would need a server or FCM) — the daily app-open check covers it
+- [x] Tests: MiseAJourTest (version parsing/ordering, channel picking
+      incl. order-independence, GitHub JSON parsing, APK asset isolation,
+      notes summary) — 125 total, 0 failures
+- [x] Docs synced: AGENTS.md, CHANGELOG « Non publié », SECURITY-NOTES
+      (GitHub third-party host note), ROADMAP (this section)
+- [ ] On-device check: install the beta, publish a newer release, verify
+      the card + notification + one-click install end-to-end

@@ -14,6 +14,7 @@ import school.greenwood.plus.data.repo.DocumentsRepository
 import school.greenwood.plus.data.repo.MessagesRepository
 import school.greenwood.plus.data.repo.NouveautesRepository
 import school.greenwood.plus.data.repo.RegistreRepository
+import school.greenwood.plus.data.repo.UpdatesRepository
 import school.greenwood.plus.data.session.SessionStore
 import school.greenwood.plus.data.session.VeilleSession
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -50,6 +51,9 @@ class AppContainer(context: Context) {
     val demandes = DemandesRepository(client, caches)
     val documents = DocumentsRepository(client, session, caches)
     val boutique = BoutiqueRepository(client, session)
+
+    // Mises à jour de l'app — GitHub Releases, sans serveur (issue #46).
+    val misesÀJour = UpdatesRepository(context, session)
 }
 
 class GwsApplication : Application() {
