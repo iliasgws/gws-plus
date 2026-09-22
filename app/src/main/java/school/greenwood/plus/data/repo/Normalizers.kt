@@ -19,6 +19,8 @@ import school.greenwood.plus.model.Créneau
 import school.greenwood.plus.model.Demande
 import school.greenwood.plus.model.DemandeReponse
 import school.greenwood.plus.model.Devoir
+import school.greenwood.plus.model.FicheBibliotheque
+import school.greenwood.plus.model.FicheBibliothequeDetail
 import school.greenwood.plus.model.Eleve
 import school.greenwood.plus.model.JournéeCours
 import school.greenwood.plus.model.Message
@@ -35,6 +37,7 @@ import school.greenwood.plus.model.QuizReponse
 import school.greenwood.plus.model.QuizRésultat
 import school.greenwood.plus.model.Ressource
 import school.greenwood.plus.model.RubriqueBoutique
+import school.greenwood.plus.model.UniteBibliotheque
 import school.greenwood.plus.model.SemaineCours
 import school.greenwood.plus.model.VarianteBoutique
 import school.greenwood.plus.model.ThemeMessage
@@ -513,6 +516,67 @@ object Normalizers {
             type = str(raw, "type"),
             couleur = str(raw, "color"),
             icone = str(raw, "icon")?.takeIf { it.startsWith("http") },
+        )
+    }
+
+    // — Bibliothèque ---------------------------------------------------------
+
+    /** Une matière (unité) de la Bibliothèque (GET `bibliotheque`, sonde du
+     *  22/09/2026). `count_resources` arrive en chaîne, `has_new` en booléen
+     *  ou en chaîne — bool() couvre les deux. */
+    fun uniteBibliotheque(raw: JsonObject): UniteBibliotheque? {
+        val id = str(raw, "id") ?: return null
+        return UniteBibliotheque(
+            id = id,
+            label = str(raw, "label") ?: "",
+            image = MediaUrls.lienRéel(str(raw, "icon"))?.takeIf { it.startsWith("http") },
+            couleur = str(raw, "color"),
+            nombreRessources = int(raw, "count_resources")
+                ?: str(raw, "count_resources")?.toIntOrNull(),
+            aDuNeuf = bool(raw, "has_new") == true,
+        )
+    }
+
+    /** Une fiche de la Bibliothèque (GET `bibliotheque?unite=<id>`). La fiche
+     *  ne porte pas sa matière — elle est portée par l'unité et passée ici. */
+    fun ficheBibliotheque(raw: JsonObject, uniteId: String, matiere: String): FicheBibliotheque? {
+        val id = str(raw, "id") ?: return null
+        return FicheBibliotheque(
+            id = id,
+            uniteId = uniteId,
+            matiere = matiere,
+            titre = str(raw, "title") ?: "",
+            categorie = str(raw, "categorie"),
+            date = str(raw, "date"),
+            par = str(raw, "by"),
+            couleur = str(raw, "color"),
+            image = MediaUrls.lienRéel(str(raw, "image"))?.takeIf { it.startsWith("http") },
+        )
+    }
+
+    /** Détail d'une fiche (GET `ressource_details?ressource=<id>` — le param
+     *  est `ressource`, pas `resource`) : les fichiers y portent enfin leur
+     *  URL média signée. Le `file.link` de la liste n'est qu'un nom de
+     *  fichier — on ne garde que les liens http réellement téléchargeables. */
+    fun détailBibliotheque(rep: JsonObject): FicheBibliothequeDetail? {
+        val data = (rep["data"] as? JsonObject) ?: rep
+        val id = str(data, "id") ?: return null
+        return FicheBibliothequeDetail(
+            id = id,
+            matiere = str(data, "matiere"),
+            description = str(data, "description"),
+            fichiers = arr(data, "files").mapNotNull { f ->
+                (f as? JsonObject)?.let(::fichierRessource)
+            },
+        )
+    }
+
+    fun fichierRessource(raw: JsonObject): Attachment? {
+        val url = MediaUrls.lienRéel(str(raw, "link") ?: str(raw, "path")) ?: return null
+        if (!url.startsWith("http")) return null
+        return Attachment(
+            name = str(raw, "filename") ?: str(raw, "name") ?: "document",
+            url = url,
         )
     }
 

@@ -205,6 +205,42 @@ data class DemandeReponse(
     val reponse: String,
 )
 
+/** Une matière (unité) de la Bibliothèque — GET `bibliotheque`, forme vérifiée
+ *  en sonde lecture-seule le 22/09/2026 (docs/api/ENDPOINT-MAP.md). */
+data class UniteBibliotheque(
+    val id: String,
+    val label: String,
+    val image: String? = null,
+    val couleur: String? = null,
+    val nombreRessources: Int? = null,
+    val aDuNeuf: Boolean = false,
+)
+
+/** Une fiche de la Bibliothèque (GET `bibliotheque?unite=<id>`). La fiche ne
+ *  porte pas sa matière : elle vient de l'unité consultée. Son `file` ne
+ *  contient qu'un nom de fichier — le vrai lien signé est dans le détail. */
+data class FicheBibliotheque(
+    val id: String,
+    val uniteId: String,
+    val matiere: String,
+    val titre: String,
+    val categorie: String? = null,
+    val date: String? = null,
+    val par: String? = null,
+    val couleur: String? = null,
+    val image: String? = null,
+)
+
+/** Le détail d'une fiche (GET `ressource_details?ressource=<id>` — forme
+ *  vérifiée en sonde le 22/09/2026) : c'est ici que les pièces jointes
+ *  portent leur URL média signée, prête pour Fichiers.télécharger. */
+data class FicheBibliothequeDetail(
+    val id: String,
+    val matiere: String? = null,
+    val description: String? = null,
+    val fichiers: List<Attachment> = emptyList(),
+)
+
 /** Une ressource pédagogique de l'espace documents. */
 data class Ressource(
     val id: String,

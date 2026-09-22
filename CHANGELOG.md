@@ -4,6 +4,22 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [0.7.1-bêta 1] — 2026-09-22
+
+Préversion : la Bibliothèque des enseignants se publie en bêta depuis la
+branche `bibliotheque-documents` (non fusionnée) pour être essayée sur un
+appareil réel avant la fusion.
+
+### Ajouté
+
+- **Bibliothèque des enseignants dans l'onglet Documents** (issue #43, sonde
+  API du 22/09/2026) : les documents mis en ligne par les professeurs
+  apparaissent désormais, rangés par matière devant les exercices, avec
+  leur date et « Par <enseignant> ». Chaque fiche se télécharge (le détail
+  `ressource_details` porte l'URL signée) et s'ouvre dans le lecteur du
+  système. Un échec sur la Bibliothèque n'efface plus les exercices — il
+  est signalé par un bandeau non bloquant.
+
 ## [0.7.0] — 2026-09-21
 
 Stable après deux bêtas essayées sur appareil réel : la Boutique de
