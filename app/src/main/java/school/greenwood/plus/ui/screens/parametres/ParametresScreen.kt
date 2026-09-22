@@ -37,6 +37,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import school.greenwood.plus.AppContainer
+import school.greenwood.plus.data.repo.UpdatesRepository
 import school.greenwood.plus.BuildConfig
 import school.greenwood.plus.ui.MiseÀJourViewModel
 import school.greenwood.plus.ui.ParametresViewModel
@@ -182,7 +183,8 @@ fun ParametresScreen(
 
             GwsCard(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(vertical = 4.dp)) {
-                    // Version installée.
+                    // Version installée, avec le lien vers la page GitHub —
+                    // un rappel discret de l'origine de l'app (issue #46).
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -196,10 +198,14 @@ fun ParametresScreen(
                             color = RegistreTheme.colors.ink,
                             modifier = Modifier.weight(1f),
                         )
+                        val uris = androidx.compose.ui.platform.LocalUriHandler.current
                         Text(
                             text = BuildConfig.VERSION_NAME,
                             style = MaterialTheme.typography.bodySmall,
                             color = RegistreTheme.colors.chalk,
+                            modifier = Modifier.clickable {
+                                uris.openUri(UpdatesRepository.PAGE_RELEASES)
+                            },
                         )
                     }
                     // Contrôle manuel.
