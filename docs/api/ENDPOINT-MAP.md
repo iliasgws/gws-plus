@@ -953,9 +953,12 @@ sibling `CoursRepository` reads this endpoint read-only.
   salle/room; prof/professeur/enseignant/nom); an unrecognizable object
   degrades to its first string field, a bare string becomes the label —
   never trusted as verified.
-- Week navigation attempts `date=<ISO Monday>` — UNVERIFIED param; if the
-  server ignores it the returned week is displayed as-is. Arrows are driven
-  by the response's own `last_week`/`next_week`, so navigation never dead-ends.
+- Week navigation VERIFIED live 2026-09-22: the server expects its own field
+  name echoed back — `prev(e)` → GET `cours_v2?last_week=<its last_week value>`,
+  `next(e)` → GET `cours_v2?next_week=<its next_week value>` (official app
+  chunk 6109.js). A generic `date=` param is silently ignored (probe: returns
+  the current week unchanged). Arrows are driven by the response's own
+  `last_week`/`next_week`, so navigation never dead-ends.
 - Day dates are derived client-side from the week's Monday (ISO found in
   `label`, fallback `last_week + 7d`) — the `Le 14 Sep 2026` labels are
   display-only (English month abbreviations, not parseable — format table).

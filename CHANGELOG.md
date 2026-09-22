@@ -4,6 +4,21 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [0.8.2] — 2026-09-22
+
+Stable après la bêta 1 : la correction de la navigation entre semaines de
+l'emploi du temps, essayée sur un appareil réel en préversion avant la
+fusion.
+
+### Corrigé
+
+- **Emploi du temps : les flèches ←/→ chargent enfin les semaines voisines**.
+  Le paramètre envoyé au serveur (`date=`) était une supposition jamais
+  vérifiée — le serveur l'ignorait et renvoyait toujours la semaine courante,
+  d'où l'impression que rien ne se chargeait. L'app envoie désormais les
+  champs attendus (`last_week=`/`next_week=` avec la valeur publiée par le
+  serveur, comme l'application officielle), vérifiés en sonde read-only.
+
 ## [0.8.1] — 2026-09-22
 
 Stable après la bêta 1 : premier essai de bout en bout du système de mise

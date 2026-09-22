@@ -11,6 +11,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import school.greenwood.plus.AppContainer
 import school.greenwood.plus.data.api.BotiErreur
+import school.greenwood.plus.data.repo.SensSemaine
 import school.greenwood.plus.data.repo.RegistreDuJour
 import school.greenwood.plus.model.BilanAbsences
 import school.greenwood.plus.model.CantineJour
@@ -1490,15 +1491,16 @@ class CoursViewModel(private val container: AppContainer) : ViewModel() {
         _état.update { it.copy(jourChoisi = jour) }
     }
 
-    fun semainePrécédente() = naviguer(vers = _état.value.semaine?.semainePrécédente)
+    fun semainePrécédente() = naviguer(SensSemaine.Précédente, _état.value.semaine?.semainePrécédente)
 
-    fun semaineSuivante() = naviguer(vers = _état.value.semaine?.semaineSuivante)
+    fun semaineSuivante() = naviguer(SensSemaine.Suivante, _état.value.semaine?.semaineSuivante)
 
     /**
-     * Navigation ←/→ : GET `cours_v2?date=<ISO lundi>` — paramètre NON vérifié ;
-     * si le serveur l'ignore, la semaine renvoyée reste affichée telle quelle.
+     * Navigation ←/→ : GET `cours_v2?last_week=<ISO lundi>` ou
+     * `?next_week=<ISO lundi>` — le serveur attend son propre champ de
+     * navigation (sonde 2026-09-22) ; un `date=` générique est ignoré.
      */
-    private fun naviguer(vers: LocalDate?) {
+    private fun naviguer(sens: SensSemaine, vers: LocalDate?) {
         if (vers == null) return
         val courante = _état.value
         if (courante.navigation || courante.chargement) return
@@ -1506,7 +1508,7 @@ class CoursViewModel(private val container: AppContainer) : ViewModel() {
         viewModelScope.launch {
             _état.update { it.copy(navigation = true, erreur = null) }
             try {
-                val semaine = container.cours.semaine(vers)
+                val semaine = container.cours.semaine(sens, vers)
                 _état.update { st ->
                     st.copy(
                         navigation = false,

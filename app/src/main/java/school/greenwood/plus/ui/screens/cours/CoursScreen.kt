@@ -58,8 +58,8 @@ import school.greenwood.plus.util.htmlToPlainMultiline
 
 /*
  * L'onglet Emploi du temps (GET `cours_v2`, ENDPOINT-MAP 2026-09-20) :
- * navigation entre semaines — le paramètre `date` est NON vérifié, la semaine
- * affichée reste celle que le serveur renvoie —, résumé de la semaine en puces
+ * navigation entre semaines — `last_week=`/`next_week=` avec la valeur ISO
+ * du serveur, vérifiée en sonde 2026-09-22 —, résumé de la semaine en puces
  * de jours, puis les créneaux du jour choisi. La forme des créneaux est
  * inconnue du sondage (`seances[]` vide) : parsing défensif côté dépôt,
  * affichage tolérant ici.

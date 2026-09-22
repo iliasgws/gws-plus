@@ -445,10 +445,11 @@ Branch `nouveautes-onglet`.
       start/hdebut, heure_fin/end, salle/room, prof/enseignant/nom; any
       unrecognizable object degrades to its first string field; a bare string
       becomes the slot label). Needs a live check on an account with real slots.
-- [ ] Week navigation param: UNVERIFIED — client sends `date=<ISO Monday>`
-      with `cours_v2`; if the server ignores it the returned week is displayed
-      as-is. Needs a live check; the ←/→ arrows use the response's own
-      `last_week`/`next_week` so nothing breaks either way.
+- [x] Week navigation param: VERIFIED live 2026-09-22 — the server expects
+      its own field name echoed back (`last_week=`/`next_week=` with the ISO
+      Monday it published; a generic `date=` is silently ignored). The ←/→
+      arrows use the response's own `last_week`/`next_week` so navigation
+      never dead-ends.
 
 ## Design decisions
 
