@@ -168,7 +168,10 @@ class UpdatesRepository(
         /** Dépôt public — la seule dépendance externe de l'app avec l'école. */
         const val DÉPÔT = "iliasgws/gws-plus"
         private const val API_RELEASES = "https://api.github.com/repos/$DÉPÔT/releases?per_page=10"
-        private const val PAGE_RELEASES = "https://github.com/$DÉPÔT/releases"
+
+        /** La page publique des publications — aussi ouverte par les
+         *  Paramètres depuis la ligne « Version installée ». */
+        const val PAGE_RELEASES = "https://github.com/$DÉPÔT/releases"
 
         /** Contrôle au démarrage : au plus une fois par 12 h (issue #46). */
         private const val INTERVALLE_MILLIS = 12L * 60 * 60 * 1000
