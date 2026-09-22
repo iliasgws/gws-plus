@@ -4,11 +4,11 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
-## [0.8.2-bêta 1] — 2026-09-22
+## [0.8.2] — 2026-09-22
 
-Préversion : la correction de la navigation entre semaines de l'emploi du
-temps se publie en bêta depuis la branche `cours-navigation-semaines` (non
-fusionnée) pour être essayée sur un appareil réel avant la fusion.
+Stable après la bêta 1 : la correction de la navigation entre semaines de
+l'emploi du temps, essayée sur un appareil réel en préversion avant la
+fusion.
 
 ### Corrigé
 
