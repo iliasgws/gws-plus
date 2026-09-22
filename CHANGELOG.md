@@ -4,11 +4,11 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
-## [0.7.1-bêta 1] — 2026-09-22
+## [0.7.1] — 2026-09-22
 
-Préversion : la Bibliothèque des enseignants se publie en bêta depuis la
-branche `bibliotheque-documents` (non fusionnée) pour être essayée sur un
-appareil réel avant la fusion.
+Stable après la bêta 1 : la Bibliothèque des enseignants, publiée d'abord
+en préversion depuis la branche `bibliotheque-documents` (PR #44) pour être
+essayée avant la fusion.
 
 ### Ajouté
 
