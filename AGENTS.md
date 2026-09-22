@@ -117,4 +117,8 @@ gh release create vX.Y.Z --target <branch-built-from> \
 - Notes follow the v0.2.2 format: built-from commit + PRs, feature bullets, « s'installe au-dessus de la X.Y.Z sans désinstallation », SHA-256.
 - Write notes to a **temp file** and pass `--notes-file` (a long heredoc on the command line can fail silently).
 - **After creating, always check the body is not empty** (`gh release view vX.Y.Z --json body --jq '.body | length'`); if it is, repair with `gh release edit vX.Y.Z --notes-file /tmp/notes.md`.
-- Betas of unmerged branches are released with `--target <branch>` and a « Préversion (bêta) » header; see v0.6.0-beta.1…3 for examples.
+- Betas of unmerged branches are released with `--target <branch>`,
+  **`--prerelease`** (the update checker of issue #46 reads that flag to
+  keep betas out of the stable channel — all beta releases were re-flagged
+  on 2026-09-22 after being published without it) and a
+  « Préversion (bêta) » header; see v0.6.0-beta.1…3 for examples.
