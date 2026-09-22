@@ -4,6 +4,18 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [0.8.1-bêta 1] — 2026-09-22
+
+Préversion : premier essai de bout en bout du système de mise à jour —
+publiée depuis la branche `essai-mise-a-jour` (non fusionnée). Les
+applications 0.8.0 devraient voir la carte « Mise à jour disponible »
+apparaître ; c'est le test.
+
+### Ajouté
+
+- Dans les Paramètres, toucher le numéro de « Version installée » ouvre la
+  page GitHub des publications.
+
 ## [0.8.0] — 2026-09-22
 
 Stable : les mises à jour intégrées (issue #46) — l'app se tient désormais
