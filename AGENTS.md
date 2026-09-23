@@ -36,6 +36,7 @@ Current contents (update this section whenever files are added or removed):
 | `docs/development/` | `SETUP.md` (toolchain), `ARCHITECTURE.md` (layers), `NAVIGATION.md` (back-stack contract) |
 | `docs/api/` | `BOTI-API.md` (protocol), `ENDPOINT-MAP.md` (observed shapes), `ENDPOINTS.md` (100-endpoint inventory) |
 | `docs/security/` | `SECURITY-NOTES.md` |
+| `presentation/` | Demo presentation: self-contained HTML slides (`slides.html`, wears the « Le registre » design) + run sheet (`script-demo.md`) — French, for the techno project |
 | `settings.gradle.kts`, `build.gradle.kts`, `gradle.properties`, `gradlew`, `gradle/wrapper/` | Gradle 9.6 build (AGP 9.4.1, Kotlin 2.4.20, built-in Kotlin — no `kotlin.android` plugin) |
 | `app/` | The Android application (`:app` module), namespace `school.greenwood.plus` |
 | `app/src/main/java/school/greenwood/plus/` | Sources — key entries below |
