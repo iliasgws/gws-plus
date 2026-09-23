@@ -2,6 +2,8 @@
 
 Diapos : `presentation/slides.html` — ouvrir dans Chromium/Firefox, **F** = plein écran, **←/→** = naviguer, clic gauche/droit aussi.
 
+Fil conducteur : **pas d'arguments, des faits** — les versions, les PRs, les issues fermées, puis la démo. Tout ce qui est à l'écran existe sur GitHub ; si on demande une preuve, la montrer en direct.
+
 ## La veille (checklist)
 
 - [ ] Téléphone chargé, **mode Ne pas déranger** activé
@@ -12,39 +14,53 @@ Diapos : `presentation/slides.html` — ouvrir dans Chromium/Firefox, **F** = pl
 
 ## Déroulé minute par minute
 
-### 0:00 → 0:30 · Diapos 1–2 · le problème
+### 0:00 → 0:20 · Diapo 1 · titre
 
-> « Bonjour. Mon projet part d'un constat simple : l'école a une application
-> officielle, mais elle est lente, et tout y est mélangé — l'essentiel se noie.
-> Je l'ai reconstruite de zéro en application Android native. »
+> « Mon projet : Greenwood School +, l'application de l'école refaite en
+> natif pour Android, en Kotlin. Je vous montre d'abord ce qui est fait,
+> avec l'historique du projet — puis l'app en vrai. »
 
-*Ne pas lire toute la diapo 2 ; la fiche officielle est juste là pour l'authenticité.*
+### 0:20 → 0:45 · Diapo 2 · ce que fait l'app
 
-### 0:30 → 1:00 · Diapo 3 · ce que j'ai construit
+> « Sept espaces, un par besoin de la journée : le registre du jour, les
+> actualités, l'emploi du temps, les devoirs, les documents, les demandes,
+> la messagerie. Je montre les trois principaux à la fin. »
 
-> « Sept espaces, un par besoin de la journée. Je vous montre les trois
-> principaux en vrai juste après : le registre, les devoirs, la messagerie. »
+Une phrase, un geste — ne pas lire les sept lignes.
 
-Ne pas lire les sept lignes — les montrer d'un geste.
+### 0:45 → 1:15 · Diapo 3 · cinq jours, dix-neuf versions
 
-### 1:00 → 1:45 · Diapo 4 · la démarche (la diapo la plus importante)
+> « Les faits d'abord. La première version du client est datée du 18
+> septembre. La dernière, la 0.8.2, du 22. Cinq jours, dix-neuf versions,
+> chacune installable depuis GitHub. Voici les grandes étapes. »
 
-> « J'ai procédé comme un ingénieur. **Observer** : j'ai sondé l'API de la
-> plateforme en lecture seule — jamais une seule requête d'écriture pendant
-> l'exploration. **Documenter** : chaque endpoint, chaque paramètre, chaque
-> piège, notés dans des fiches. **Construire** en Kotlin et Jetpack Compose.
-> **Publier** : chaque fonction part en bêta sur mon téléphone, puis devient
-> stable. »
+Passer vite : les dates et les PRs parlent seules.
 
-### 1:45 → 2:15 · Diapo 5 · le bug des semaines
+### 1:15 → 1:30 · Diapo 4 · les pull requests
 
-> « Un exemple concret de méthode. Les flèches de l'emploi du temps ne
-> changeaient jamais de semaine. Mon hypothèse : envoyer `date=` au serveur.
-> Constat : le serveur l'ignorait totalement. J'ai donc observé ce que
-> l'application officielle envoie *vraiment*, j'ai corrigé avec les mêmes
-> champs, vérifié, publié. Hypothèse, test, preuve, correction — comme en TP. »
+> « 41 pull requests fusionnées. Chaque fonction est passée par une branche
+> et une pull request : le composeur de messages ici, les squelettes et le
+> cache là, l'onglet Actualités, l'Emploi du temps, la Boutique, la
+> Bibliothèque des profs, et le système de mise à jour intégré. »
 
-### 2:15 → 2:20 · Diapo 6 · transition
+### 1:30 → 1:45 · Diapo 5 · les issues fermées
+
+> « Dix issues fermées, avec les vrais titres : la messagerie qui n'avait
+> pas de bouton d'envoi, les documents des profs invisibles, le système de
+> mise à jour demandé en issue #46 — construit de zéro. »
+
+Si une question arrive sur une issue précise, ouvrir GitHub en direct (plan B si pas de réseau : les captures locales).
+
+### 1:45 → 2:15 · Diapo 6 · un bug de près (PR #51)
+
+> « Un exemple, parce qu'un bug fermé raconte mieux qu'une liste. Les
+> flèches de l'emploi du temps ne changeaient jamais de semaine. Hypothèse :
+> envoyer `date=` au serveur. Constat : le serveur l'ignorait. J'ai regardé
+> ce que l'application officielle envoie *vraiment* — sonde en lecture seule
+> —, corrigé avec les mêmes champs, et la version 0.8.2 est sortie le soir
+> même. C'est la PR #51. »
+
+### 2:15 → 2:20 · Diapo 7 · transition
 
 > « Passons à la démo, sur mon téléphone. »
 
@@ -52,22 +68,23 @@ Ne pas lire les sept lignes — les montrer d'un geste.
 
 | Arrêt | Durée | Ce que tu montres | Ce que tu dis |
 |---|---|---|---|
-| 1. Registre | ~40 s | Le fil du jour ; la carte « Mise à jour disponible » si elle est là | « Tout ce qui compte aujourd'hui arrive ici, dans l'ordre. » |
-| 2. Emploi du temps | ~30 s | Les flèches ←/→ pour changer de semaine | « Et c'est exactement le bug de la diapo précédente — réparé hier. » |
+| 1. Registre | ~40 s | Le fil du jour ; la carte « Mise à jour disponible » si elle est là | « C'est le fil du jour : tout ce qui compte arrive ici, dans l'ordre. » |
+| 2. Emploi du temps | ~30 s | Les flèches ←/→ pour changer de semaine | « Et c'est exactement le bug d'avant — réparé dans la 0.8.2 que j'ai sur le téléphone. » |
 | 3. Devoirs | ~30 s | La liste par échéance, ouvrir une pièce jointe PDF | « Le PDF s'ouvre nativement, sans sortie de l'app. » |
-| 4. Messagerie | ~30 s | Un fil avec l'administration (ne pas envoyer en direct) | « On peut écrire à l'administration — les envois sont validés en conditions réelles. » |
+| 4. Messagerie | ~30 s | Un fil avec l'administration (ne pas envoyer en direct) | « On peut écrire à l'administration — l'envoi réel a été validé. » |
 
 Puis revenir au Registre et poser le téléphone écran visible.
 
-### 4:20 → 4:45 · Diapos 7–8 · chiffres et bilan
+### 4:20 → 4:45 · Diapos 8–9 · chiffres et honnêteté
 
-> « Au total : 15 789 lignes de Kotlin, 107 commits, 18 versions publiées.
-> Et pour être honnête sur ce qui reste : les demandes administratives sont
-> encore en lecture seule, et une montre compagnon est en préparation. »
+> « Les comptes : 15 789 lignes de Kotlin, 111 commits, 41 PRs, 19 versions.
+> Et pour rester honnête : les demandes administratives sont encore en
+> lecture seule, et une montre compagnon est en préparation. »
 
-### 4:45 → 5:00 · Diapo 9 · merci
+### 4:45 → 5:00 · Diapo 10 · merci
 
-> « Voilà. Merci — des questions ? »
+> « Tout est public sur le dépôt — les issues, les PRs, les versions.
+> Merci. Des questions ? »
 
 ## Si ça plante pendant la démo
 
@@ -90,12 +107,17 @@ Puis revenir au Registre et poser le téléphone écran visible.
   été vérifié à la main, sur un vrai téléphone. *(À ajuster selon ta réalité.)*
 - **« Comment tu as trouvé l'API ? »** → En observant les requêtes de l'app
   officielle avec mon propre compte, et en documentant tout.
+- **« 41 PRs, c'est beaucoup pour six jours ? »** → Ce sont de petites
+  PRs : une fonction, une branche, une fusion. L'historique complet est
+  public.
 - **« Les autres peuvent l'installer ? »** → Oui, chaque version est
   téléchargeable sur GitHub — c'est l'étape suivante : la diffuser aux
   familles.
 
 ## Si le temps manque (version 3 min)
 
-- Diapo 3 : une phrase au lieu des sept lignes.
+- Diapos 3–5 : une phrase chacune (« cinq jours, dix-neuf versions, 41 PRs,
+  dix issues fermées — tout est public »).
+- Diapo 6 : garder, c'est le meilleur moment oral.
 - Démo : registre + emploi du temps seulement.
-- Diapos 7–8 : garder les chiffres, passer le bilan en oral.
+- Diapo 9 (appris) : passer en oral.
