@@ -65,6 +65,7 @@ h2 { font-size: 44px; font-weight: 750; letter-spacing: -0.02em; line-height: 1.
 p, li { font-size: 19px; line-height: 1.55; }
 .muted { color: var(--chalk); }
 .small { font-size: 15px; }
+code { font-family: 'Public Sans', sans-serif; font-size: 15.5px; font-weight: 600; background: var(--sage); padding: 2px 8px; border-radius: 6px; }
 
 /* Ligne de journal (le motif récurrent) */
 .entry {
@@ -80,7 +81,7 @@ p, li { font-size: 19px; line-height: 1.55; }
 
 /* Compteur de diapositives */
 .counter {
-  position: absolute; right: 40px; bottom: 26px;
+  position: absolute; right: 84px; bottom: 22px;
   font-size: 13px; color: var(--chalk); letter-spacing: 0.04em;
 }
 .slide.night .counter { color: var(--dark-chalk); }
@@ -147,12 +148,12 @@ p, li { font-size: 19px; line-height: 1.55; }
 .sc-line.w85 { width: 85%; } .sc-line.w70 { width: 70%; } .sc-line.w55 { width: 55%; }
 
 /* ————— S7 · Chiffres ————— */
-.nums { display: flex; margin-top: 96px; }
+.nums { display: flex; margin-top: 118px; }
 .num { flex: 1; padding: 0 34px; border-left: 1.5px solid var(--rule); }
 .num:first-child { border-left: none; padding-left: 0; }
 .num .v { font-family: 'Bricolage Grotesque'; font-size: 62px; font-weight: 780; letter-spacing: -0.02em; }
 .num .l { margin-top: 8px; font-size: 15px; color: var(--chalk); line-height: 1.35; }
-.s7-foot { margin-top: 96px; border-top: 1.5px solid var(--rule); padding-top: 18px; font-size: 17px; color: var(--chalk); }
+.s7-foot { margin-top: 112px; border-top: 1.5px solid var(--rule); padding-top: 18px; font-size: 17px; color: var(--chalk); }
 
 /* ————— S8 · Appris ————— */
 .honest li { border-top: 1.5px solid var(--rule); }
@@ -166,6 +167,7 @@ p, li { font-size: 19px; line-height: 1.55; }
 :focus-visible { outline: 3px solid var(--red); outline-offset: 3px; border-radius: 4px; }
 @media (prefers-reduced-motion: reduce) { .slide { transition: none; } }
 @media print {
+  @page { size: 1280px 720px; margin: 0; }
   html, body { overflow: visible; background: #fff; }
   .stage { position: static; transform: none !important; width: auto; height: auto; }
   .slide { position: relative; inset: auto; width: 1280px; height: 720px; opacity: 1; visibility: visible; page-break-after: always; }
@@ -265,7 +267,7 @@ p, li { font-size: 19px; line-height: 1.55; }
     grâce à une sonde en lecture seule.</p></div>
     <div class="entry"><span class="when"><b>Correction</b></span><p class="what">Envoyer <code>last_week / next_week</code>, comme l'officielle —
     vérifié en sonde, essayé en bêta sur téléphone, publié en version 0.8.2.
-    <svg viewBox="0 0 300 10" aria-hidden="true"><path d="M3 6 C60 2, 130 9, 200 5 S 290 3, 297 5" fill="none" stroke="#B3382A" stroke-width="2" stroke-linecap="round"/></svg></p></div>
+    <svg viewBox="0 0 300 10" aria-hidden="true" style="max-width:560px"><path d="M3 6 C60 2, 130 9, 200 5 S 290 3, 297 5" fill="none" stroke="#B3382A" stroke-width="2" stroke-linecap="round"/></svg></p></div>
   </div>
   <p class="s5-aside">La même méthode qu'en physique : hypothèse → test → preuve → correction.</p>
   <div class="counter">5 / 9</div>
@@ -289,7 +291,7 @@ p, li { font-size: 19px; line-height: 1.55; }
     <div class="demo-list">
       <div class="entry"><span class="when">1 · Le registre</span><p class="what">Le fil du jour, en tête : les mises à jour, l'actualité, les devoirs donnés.</p></div>
       <div class="entry"><span class="when">2 · Emploi du temps</span><p class="what">Changer de semaine avec les flèches — le bug qu'on vient de voir, réparé.</p></div>
-      <div class="entry"><span class="when">3 · Devoirs</span><p class="what">Par échéance, et ouvrir une pièce jointe nativement.</p></div>
+      <div class="entry"><span class="when">3 · Devoirs</span><p class="what">Par échéance, avec une pièce jointe qui s'ouvre nativement.</p></div>
       <div class="entry"><span class="when">4 · Messagerie</span><p class="what">Écrire à l'administration, depuis une vraie interface de conversation.</p></div>
       <p class="when demo-hint">mode « ne pas déranger » activé — promis</p>
     </div>
@@ -307,13 +309,13 @@ p, li { font-size: 19px; line-height: 1.55; }
     <div class="num"><div class="v">18</div><div class="l">versions publiées</div></div>
     <div class="num"><div class="v">7</div><div class="l">espaces dans l'app</div></div>
   </div>
-  <p class="s7-foot">Du premier commit à la version 0.8.2, publiée le 22 septembre 2026 — chaque version installable depuis GitHub.</p>
+  <p class="s7-foot">Du premier commit à la version 0.8.2, publiée le 22 septembre 2026. Chaque version s'installe depuis GitHub.</p>
   <div class="counter">7 / 9</div>
 </section>
 
 <!-- 8 · Ce que j'ai appris -->
 <section class="slide">
-  <h2>Ce que j'ai appris — et ce qui reste honnête</h2>
+  <h2>Ce que j'ai appris, et ce qui reste à faire</h2>
   <div class="cols">
     <div>
       <p class="muted" style="margin-bottom:6px">Ce que je sais faire maintenant :</p>
