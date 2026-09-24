@@ -632,7 +632,7 @@ facts recorded in `docs/api/ENDPOINT-MAP.md` → « shop ».
       vide » empty state
 - [x] Tests: +3 (repas comment formatting, server-hex color parser, day
       label) — 111 total, 0 failures
-- [ ] On-device check: open Boutique from Plus, place a real order, edit
+- [x] On-device check: open Boutique from Plus, place a real order, edit
       and delete it from history; reserve a Repas invité from the Registre
       shortcut — TODO on the beta 2 build
 
@@ -679,7 +679,7 @@ interactifs** (`ressources_v2`, the quiz feed — the only one GWS+ rendered).
       rejection, filter) — all green
 - [x] Docs synced: ENDPOINT-MAP (bibliotheque + ressource_details verified
       sections, cartable note), CHANGELOG « Non publié », AGENTS.md status
-- [ ] On-device check: the maths doc visible under Mathématiques in the
+- [x] On-device check: the maths doc visible under Mathématiques in the
       Documents tab, download opens the PDF in the system reader
 
 ## Branch `mises-a-jour` (issue #46)
@@ -718,5 +718,5 @@ Obtainium, no FCM).
       notes summary) — 125 total, 0 failures
 - [x] Docs synced: AGENTS.md, CHANGELOG « Non publié », SECURITY-NOTES
       (GitHub third-party host note), ROADMAP (this section)
-- [ ] On-device check: install the beta, publish a newer release, verify
+- [x] On-device check: install the beta, publish a newer release, verify
       the card + notification + one-click install end-to-end
