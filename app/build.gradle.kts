@@ -12,8 +12,8 @@ android {
         applicationId = "school.greenwood.plus"
         minSdk = 26
         targetSdk = 36
-        versionCode = 43
-        versionName = "0.8.3-beta.6"
+        versionCode = 44
+        versionName = "0.8.3-beta.7"
     }
 
     signingConfigs {
