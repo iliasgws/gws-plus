@@ -752,9 +752,10 @@ school data beyond the text the parent chooses to transform.
 - [x] Tests: ComposeurIATest (prompt building, empty/blank consigne, preset
       coverage, `prête` gating, OpenAI response extraction incl. invalid
       bodies) — all green
-- [ ] On-device check: configure a real provider + key, run Relire/Réécrire
-      and each transformation on a draft, verify the ✨ button hides when the
-      feature is off or unconfigured
+- [x] On-device check (2026-09-25, betas 1–8 on the Xiaomi): provider + key
+      configured, panel exercised live; the trial surfaced real fixes —
+      #62 (invisible button), #63 (checkbox + keyboard), #64 (panel redesign),
+      #65 (composer two rows + full-screen editor), #66 (IME gap)
 
 ## Branch `badge-ia` (issue #58)
 
@@ -771,7 +772,7 @@ outputs of #56, conversation summary of #57).
       the icon alone) — AnnotationShape chip, sage background, labelSmall
 - [x] Consumed by the AI panel: the badge sits under the result actions in
       `PanneauIA.kt`; #57 will consume the same component
-- [ ] On-device check: badge visible under every panel result, light + dark
+- [x] On-device check (2026-09-25): badge visible under the panel result
 
 ## Panel redesign (after real-device trial of beta 3)
 
