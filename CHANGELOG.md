@@ -8,6 +8,12 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
 
 ### Ajouté
 
+- **Badge « Généré par IA »** (issue #58) : composant réutilisable
+  (`ui/components/BadgeIA.kt`) — icône compacte (carré arrondi « AI » +
+  étincelle, redessinée d'après le SVG de référence) et badge complet avec
+  libellé « Généré par IA », teintés par le thème. Posé sous les résultats
+  du panneau IA du composeur ; consommé par la future synthèse de
+  conversation (#57).
 - **Assistant IA dans le composeur** (issue #56) : un bouton ✨ à côté du
   micro ouvre un panneau inspiré des Writing Tools d'Apple — champ
   « Décrivez votre modification », actions Relire / Réécrire, tons

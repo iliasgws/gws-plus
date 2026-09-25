@@ -48,6 +48,7 @@ import school.greenwood.plus.data.ai.ActionIA
 import school.greenwood.plus.data.ai.ComposeurIA
 import school.greenwood.plus.data.ai.RéglagesIA
 import school.greenwood.plus.data.ai.TonIA
+import school.greenwood.plus.ui.components.BadgeGénéréIA
 import school.greenwood.plus.ui.theme.AnnotationShape
 import school.greenwood.plus.ui.theme.ControlShape
 import school.greenwood.plus.ui.theme.RegistreTheme
@@ -165,6 +166,9 @@ fun PanneauIA(
                         },
                     )
                 }
+                // Marquage « Généré par IA » (issue #58) : le résultat vient
+                // d'un modèle, ça doit se voir.
+                BadgeGénéréIA(modifier = Modifier.padding(top = 6.dp))
             } ?: run {
                 // Champ « Décrivez votre modification » (Writing Tools).
                 androidx.compose.foundation.text.BasicTextField(

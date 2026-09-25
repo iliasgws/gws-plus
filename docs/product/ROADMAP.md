@@ -755,3 +755,20 @@ school data beyond the text the parent chooses to transform.
 - [ ] On-device check: configure a real provider + key, run Relire/Réécrire
       and each transformation on a draft, verify the ✨ button hides when the
       feature is off or unconfigured
+
+## Branch `badge-ia` (issue #58)
+
+Reusable « Généré par IA » marker for every AI-produced surface (composer
+outputs of #56, conversation summary of #57).
+
+- [x] The reference SVG (512×512) was a rasterized vector trace (thousands of
+      1-unit segments) — redrawn clean as a Compose `ImageVector`:
+      rounded square (stroke) + monoline "AI" glyphs + filled 4-branch
+      sparkle bottom-right; theme-tinted (`tint`), never hard black
+- [x] `ui/components/BadgeIA.kt`: `IcôneGénéréIA` vector, `PuceIcôneIA`
+      (compact icon-only, contentDescription « Généré par IA ») and
+      `BadgeGénéréIA` (chip: icon + label, `compact = true` falls back to
+      the icon alone) — AnnotationShape chip, sage background, labelSmall
+- [x] Consumed by the AI panel: the badge sits under the result actions in
+      `PanneauIA.kt`; #57 will consume the same component
+- [ ] On-device check: badge visible under every panel result, light + dark

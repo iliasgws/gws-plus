@@ -44,7 +44,7 @@ Current contents (update this section whenever files are added or removed):
 | `…/ui/AppNav.kt` | Root state (onboarding → connexion → registre) + 6-tab shell (Registre, Cours, Devoirs, Documents, Messages, Plus — secondary sections live under Plus), back-stack contract |
 | `…/ui/AppViewModels.kt` | One ViewModel per screen |
 | `…/ui/theme/` | « École vivante » tokens: colors + per-tab accents, Bricolage/Public Sans type, 24/16/10 shapes, motion springs (Mouvement.kt) |
-| `…/ui/components/` | Shared composables (Components.kt: GwsCard, Puce, EmptyState, skeletons…; CarteActualite.kt; CarteMiseAJour.kt: GitHub update card; BarreOnglets.kt: custom accent bottom bar) |
+| `…/ui/components/` | Shared composables (Components.kt: GwsCard, Puce, EmptyState, skeletons…; CarteActualite.kt; CarteMiseAJour.kt: GitHub update card; BadgeIA.kt: « Généré par IA » icon + badge, issue #58; BarreOnglets.kt: custom accent bottom bar) |
 | `…/ui/screens/` | Login, Onboarding, registre (+ drawer menu, Post detail), actualites, plus (secondary sections menu), boutique (catalogue, product detail, order history), cours (Emploi du temps), devoirs, documents (+ Quiz play), messages (+ Conversation + composer + AI panel), demandes, parametres (settings panel, incl. AI settings) |
 | `…/data/api/` | BotiApi/BotiClient (generic GET/POST multipart + envelope), BotiEnvelope, MediaUrls (single-decode) |
 | `…/data/ai/ComposeurIA.kt` | AI composer (issue #56): OpenAI-compatible client (BYOK, provider presets), actions/tones with French labels, system-prompt builder |
@@ -87,6 +87,14 @@ Additional checks before opening a PR:
 ## Releasing a version
 
 Releases are **signed with the debug keystore** — every version ever published uses that same certificate (SHA-256 `775498f7…`), so an update installs over any previous one without uninstalling. Never switch keystores.
+
+**Mandatory: a beta build before every stable.** No stable `X.Y.Z` goes out
+without a `X.Y.Z-beta.1` (or higher) published first — built from the
+feature branch (or `main` if the work is already merged), released with
+`--prerelease` and `--target <branch>`, and installed on the test device
+before the stable is built and published. This is not optional: the
+on-device check catches what the Gradle build cannot (crashes, « opens
+Chrome » symptoms, layout on a real screen).
 
 ```bash
 # 1. Version bump on a feature branch + PR titled « Préparer la version X.Y.Z »
