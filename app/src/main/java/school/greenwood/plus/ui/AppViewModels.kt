@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import school.greenwood.plus.AppContainer
+import school.greenwood.plus.data.ai.RéglagesIA
 import school.greenwood.plus.data.api.BotiErreur
 import school.greenwood.plus.data.repo.SensSemaine
 import school.greenwood.plus.data.repo.RegistreDuJour
@@ -1554,6 +1555,25 @@ class ParametresViewModel(private val container: AppContainer) : ViewModel() {
         viewModelScope.launch {
             container.session.définirActualisationRetour(minutes)
         }
+    }
+}
+
+/** — Composeur IA (issue #56) ------------------------------------------- */
+
+/** Le VM du panneau Paramètres porte les réglages IA : activation, ton
+ *  par défaut, fournisseur (preset ou URL libre), modèle et clé BYOK. */
+class RéglagesIAViewModel(private val container: AppContainer) : ViewModel() {
+    private val _réglages = MutableStateFlow(RéglagesIA())
+    val réglages: StateFlow<RéglagesIA> = _réglages.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            container.session.réglagesIA.collect { _réglages.value = it }
+        }
+    }
+
+    fun définir(réglages: RéglagesIA) {
+        viewModelScope.launch { container.session.définirRéglagesIA(réglages) }
     }
 }
 

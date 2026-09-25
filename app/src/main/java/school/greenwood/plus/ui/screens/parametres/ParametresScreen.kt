@@ -18,6 +18,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material3.Surface
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -32,15 +33,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import school.greenwood.plus.AppContainer
+import school.greenwood.plus.data.ai.PresetsFournisseurs
+import school.greenwood.plus.data.ai.TonIA
 import school.greenwood.plus.data.repo.UpdatesRepository
 import school.greenwood.plus.BuildConfig
 import school.greenwood.plus.ui.MiseÀJourViewModel
 import school.greenwood.plus.ui.ParametresViewModel
+import school.greenwood.plus.ui.RéglagesIAViewModel
 import school.greenwood.plus.ui.components.CarteMiseÀJour
 import school.greenwood.plus.ui.components.ErrorInline
 import school.greenwood.plus.ui.components.GwsCard
@@ -78,6 +83,7 @@ fun ParametresScreen(
     // Mises à jour (issue #46) — l'état partagé vit dans UpdatesRepository ;
     // le VM du panneau ne porte que le canal bêta et les actions.
     val majVm: MiseÀJourViewModel = viewModel { MiseÀJourViewModel(container) }
+    val vmIA: RéglagesIAViewModel = viewModel { RéglagesIAViewModel(container) }
     val majÉtat by container.misesÀJour.état.collectAsStateWithLifecycle()
     val canalBêta by majVm.canalBêta.collectAsStateWithLifecycle()
     val contexte = LocalContext.current
@@ -166,6 +172,10 @@ fun ParametresScreen(
                 color = RegistreTheme.colors.chalk,
                 modifier = Modifier.padding(top = 10.dp, start = 4.dp, end = 4.dp),
             )
+
+            SectionLabel("Assistant IA")
+
+            SectionIA(vmIA = vmIA)
 
             SectionLabel("Mises à jour")
 
@@ -318,6 +328,199 @@ fun ParametresScreen(
                 style = MaterialTheme.typography.bodySmall,
                 color = RegistreTheme.colors.chalk,
                 modifier = Modifier.padding(top = 10.dp, start = 4.dp, end = 4.dp),
+            )
+        }
+    }
+}
+
+/*
+ * L'assistant IA du composeur (issue #56) : activation, ton par défaut,
+ * fournisseur OpenAI-compatible (presets ou URL libre), modèle et clé BYOK.
+ * La clé reste dans les préférences de l'app — elle n'est jamais loguée ni
+ * envoyée ailleurs qu'au fournisseur choisi.
+ */
+
+/** Un champ de saisie discret, dans le style du composeur. */
+@Composable
+private fun ChampRéglage(
+    valeur: String,
+    surChangement: (String) -> Unit,
+    indicé: String,
+    masqué: Boolean = false,
+) {
+    Surface(
+        shape = ControlShape,
+        color = RegistreTheme.colors.page,
+        border = androidx.compose.foundation.BorderStroke(1.dp, RegistreTheme.colors.sage),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+    ) {
+        androidx.compose.foundation.text.BasicTextField(
+            value = valeur,
+            onValueChange = surChangement,
+            modifier = Modifier
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+            textStyle = TextStyle(
+                color = RegistreTheme.colors.ink,
+                fontSize = MaterialTheme.typography.bodyMedium.fontSize,
+            ),
+            visualTransformation = if (masqué) {
+                androidx.compose.ui.text.input.PasswordVisualTransformation()
+            } else {
+                androidx.compose.ui.text.input.VisualTransformation.None
+            },
+            cursorBrush = androidx.compose.ui.graphics.SolidColor(RegistreTheme.colors.ink),
+            decorationBox = { champInterne ->
+                if (valeur.isEmpty()) {
+                    Text(
+                        text = indicé,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = RegistreTheme.colors.chalk,
+                        maxLines = 1,
+                    )
+                }
+                champInterne()
+            },
+            singleLine = true,
+        )
+    }
+}
+
+/** Une puce de choix (ton, fournisseur) : pleine quand choisie. */
+@Composable
+private fun PuceChoix(
+    libellé: String,
+    choisi: Boolean,
+    onChoisir: () -> Unit,
+) {
+    Surface(
+        shape = AnnotationShape,
+        color = if (choisi) RegistreTheme.colors.ink else RegistreTheme.colors.sage,
+        modifier = Modifier
+            .clip(AnnotationShape)
+            .clickable(onClick = onChoisir),
+    ) {
+        Text(
+            text = libellé,
+            style = MaterialTheme.typography.labelMedium,
+            color = if (choisi) RegistreTheme.colors.page else RegistreTheme.colors.ink,
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+        )
+    }
+}
+
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@Composable
+private fun SectionIA(vmIA: RéglagesIAViewModel) {
+    val réglages by vmIA.réglages.collectAsStateWithLifecycle()
+
+    Text(
+        text = "L'IA aide à relire et reformuler les messages du composeur. " +
+            "Elle fonctionne avec ton propre compte chez un fournisseur " +
+            "(clé API) — rien ne transite par l'école ni par l'app. " +
+            "Seul le texte que tu choisis de transformer est envoyé.",
+        style = MaterialTheme.typography.bodySmall,
+        color = RegistreTheme.colors.chalk,
+        modifier = Modifier.padding(top = 2.dp, start = 4.dp, end = 4.dp, bottom = 6.dp),
+    )
+
+    GwsCard(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(14.dp)) {
+            // Activation.
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(ControlShape)
+                    .clickable { vmIA.définir(réglages.copy(actif = !réglages.actif)) }
+                    .padding(vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        text = "IA dans le composeur",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = RegistreTheme.colors.ink,
+                    )
+                    Text(
+                        text = "Bouton ✨ à côté du micro, actions Relire, Réécrire et plus.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = RegistreTheme.colors.chalk,
+                    )
+                }
+                if (réglages.actif) {
+                    Icon(
+                        imageVector = Icons.Rounded.CheckCircle,
+                        contentDescription = "Actif",
+                        tint = RegistreTheme.accent.teinte,
+                        modifier = Modifier.size(18.dp),
+                    )
+                }
+            }
+
+            // Ton par défaut.
+            Text(
+                text = "Ton par défaut",
+                style = MaterialTheme.typography.labelMedium,
+                color = RegistreTheme.colors.chalk,
+                modifier = Modifier.padding(top = 12.dp, bottom = 6.dp),
+            )
+            androidx.compose.foundation.layout.FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                TonIA.entries.forEach { ton ->
+                    PuceChoix(
+                        libellé = ton.libellé,
+                        choisi = ton == réglages.ton,
+                        onChoisir = { vmIA.définir(réglages.copy(ton = ton)) },
+                    )
+                }
+            }
+
+            // Fournisseur : presets OpenAI-compatible, ou URL libre.
+            Text(
+                text = "Fournisseur",
+                style = MaterialTheme.typography.labelMedium,
+                color = RegistreTheme.colors.chalk,
+                modifier = Modifier.padding(top = 12.dp, bottom = 6.dp),
+            )
+            androidx.compose.foundation.layout.FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                val presetChoisi = PresetsFournisseurs.firstOrNull { it.base == réglages.base }
+                PresetsFournisseurs.forEach { preset ->
+                    PuceChoix(
+                        libellé = preset.nom,
+                        choisi = preset.base == réglages.base,
+                        onChoisir = { vmIA.définir(réglages.copy(base = preset.base)) },
+                    )
+                }
+                PuceChoix(
+                    libellé = "Autre",
+                    choisi = presetChoisi == null,
+                    onChoisir = { vmIA.définir(réglages.copy(base = "")) },
+                )
+            }
+            if (PresetsFournisseurs.none { it.base == réglages.base }) {
+                ChampRéglage(
+                    valeur = réglages.base,
+                    surChangement = { vmIA.définir(réglages.copy(base = it)) },
+                    indicé = "URL de base (ex. https://…/v1)",
+                )
+            }
+
+            // Modèle + clé.
+            ChampRéglage(
+                valeur = réglages.modèle,
+                surChangement = { vmIA.définir(réglages.copy(modèle = it)) },
+                indicé = "Modèle (ex. gpt-4o-mini, llama-3.1-8b-instant…)",
+            )
+            ChampRéglage(
+                valeur = réglages.clé,
+                surChangement = { vmIA.définir(réglages.copy(clé = it)) },
+                indicé = "Clé API",
+                masqué = true,
             )
         }
     }

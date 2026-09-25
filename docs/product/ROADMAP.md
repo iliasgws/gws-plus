@@ -720,3 +720,38 @@ Obtainium, no FCM).
       (GitHub third-party host note), ROADMAP (this section)
 - [ ] On-device check: install the beta, publish a newer release, verify
       the card + notification + one-click install end-to-end
+
+## Branch `composeur-ia` (issue #56)
+
+AI writing assist in the message composer, Apple-Writing-Tools style.
+BYOK against any OpenAI-compatible provider — no server of ours, no
+school data beyond the text the parent chooses to transform.
+
+- [x] `data/ai/ComposeurIA.kt`: provider presets (OpenRouter, Groq, DeepSeek,
+      Mistral AI, Together AI, Fireworks AI, Cerebras), `ActionIA`
+      (Relire/Réécrire/Résumé/Points clés/Tableau/Liste) + `TonIA`
+      (Amical/Professionnel/Concis) with French labels, system-prompt builder
+      (French output, accents, no preamble), single-shot
+      `POST {base}/chat/completions` with `Authorization: Bearer`, low
+      temperature, `choices[0].message.content` extraction
+- [x] Settings in `SessionStore` (app preferences, survive session purge):
+      active flag, base URL, model, BYOK API key (never logged — F3), default
+      tone; single `réglagesIA` flow + setter
+- [x] `ui/screens/messages/PanneauIA.kt`: floating rounded panel above the
+      composer — « Décrivez votre modification » field, quick actions
+      Relire/Réécrire, tone chips, transformation icon row (Résumé/Points
+      clés/Tableau/Liste), result shown in-panel with Remplacer / Réessayer /
+      Annuler (retry replays the same action)
+- [x] Composeur: ✨ button (`AutoAwesome`) right next to the mic (issue
+      placement requirement), only when the feature is configured and ready;
+      wired from both `ConversationScreen` and `NouveauMessageScreen` via the
+      session's `réglagesIA` flow
+- [x] Paramètres « Assistant IA » section: on/off toggle, default tone,
+      provider preset chips + free-form base URL (« Autre »), model field,
+      masked API key field
+- [x] Tests: ComposeurIATest (prompt building, empty/blank consigne, preset
+      coverage, `prête` gating, OpenAI response extraction incl. invalid
+      bodies) — all green
+- [ ] On-device check: configure a real provider + key, run Relire/Réécrire
+      and each transformation on a draft, verify the ✨ button hides when the
+      feature is off or unconfigured

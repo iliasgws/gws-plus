@@ -4,6 +4,20 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [Non publié]
+
+### Ajouté
+
+- **Assistant IA dans le composeur** (issue #56) : un bouton ✨ à côté du
+  micro ouvre un panneau inspiré des Writing Tools d'Apple — champ
+  « Décrivez votre modification », actions Relire / Réécrire, tons
+  Amical / Professionnel / Concis et transformations Résumé / Points clés /
+  Tableau / Liste. Le résultat s'affiche dans le panneau avant de remplacer
+  le texte. La fonction se règle dans les Paramètres : activation, ton par
+  défaut, fournisseur OpenAI-compatible (presets OpenRouter, Groq, DeepSeek,
+  Mistral AI, Together AI, Fireworks AI, Cerebras — ou URL libre), modèle et
+  clé API (BYOK). La clé reste dans l'app et n'est jamais loguée.
+
 ## [0.8.2] — 2026-09-22
 
 Stable après la bêta 1 : la correction de la navigation entre semaines de

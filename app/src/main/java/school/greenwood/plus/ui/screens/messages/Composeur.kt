@@ -16,6 +16,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Send
 import androidx.compose.material.icons.rounded.AttachFile
+import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.Stop
@@ -28,6 +29,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -43,6 +45,7 @@ import android.content.pm.PackageManager
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import kotlinx.coroutines.delay
+import school.greenwood.plus.data.ai.RéglagesIA
 import school.greenwood.plus.ui.theme.ControlShape
 import school.greenwood.plus.ui.theme.tabulaire
 import school.greenwood.plus.ui.theme.RegistreTheme
@@ -73,8 +76,13 @@ fun Composeur(
     onEnvoyer: () -> Unit,
     enCours: Boolean = false,
     limitePièces: Boolean = false,
+    ia: RéglagesIA? = null,
 ) {
     val context = LocalContext.current
+
+    // Panneau IA (issue #56) : posé au-dessus du champ, ouvert par le bouton
+    // ✨ à côté du micro — visible seulement si l'IA est réglée et prête.
+    var panneauIAOuvert by remember { mutableStateOf(false) }
 
     // Micro : permission runtime (RECORD_AUDIO), demandée au premier appui.
     val permissionMicro = rememberLauncherForActivityResult(
@@ -91,6 +99,15 @@ fun Composeur(
     }
 
     Column(Modifier.fillMaxWidth()) {
+        val iaPrête = ia?.prête == true
+        if (panneauIAOuvert && iaPrête) {
+            PanneauIA(
+                réglages = ia,
+                texte = texte,
+                onRemplacer = onTexte,
+                onFermer = { panneauIAOuvert = false },
+            )
+        }
         if (pièces.isNotEmpty() || audio != null) {
             Row(
                 modifier = Modifier
@@ -212,6 +229,20 @@ fun Composeur(
                             contentDescription = "Message vocal",
                             tint = RegistreTheme.colors.chalk,
                         )
+                    }
+                    // Le bouton IA, juste à côté du micro (issue #56) —
+                    // visible seulement quand la fonction est configurée.
+                    if (iaPrête) {
+                        IconButton(
+                            onClick = { panneauIAOuvert = !panneauIAOuvert },
+                            enabled = texte.isNotBlank(),
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.AutoAwesome,
+                                contentDescription = "Assistant IA",
+                                tint = if (panneauIAOuvert) RegistreTheme.accent.teinte else RegistreTheme.colors.chalk,
+                            )
+                        }
                     }
                     IconButton(
                         onClick = onEnvoyer,

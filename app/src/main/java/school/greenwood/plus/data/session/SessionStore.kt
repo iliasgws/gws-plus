@@ -13,6 +13,9 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import school.greenwood.plus.data.ai.PresetsFournisseurs
+import school.greenwood.plus.data.ai.RéglagesIA
+import school.greenwood.plus.data.ai.TonIA
 import school.greenwood.plus.model.Eleve
 import school.greenwood.plus.model.ParentInfo
 
@@ -81,6 +84,16 @@ class SessionStore(private val context: Context) {
         val majDernièreVérification = longPreferencesKey("maj_derniere_verification")
         val majCanalBêta = booleanPreferencesKey("maj_canal_beta")
         val majPublicationStockée = stringPreferencesKey("maj_publication_stockee")
+
+        /** Composeur IA (issue #56) : activation, fournisseur OpenAI-compatible
+         *  (preset ou URL libre), modèle, clé BYOK et ton par défaut. La clé ne
+         *  sort jamais de l'app et n'est jamais loguée (F3). Préférences d'app :
+         *  survivent à une purge de session. */
+        val iaActivé = booleanPreferencesKey("ia_active")
+        val iaBase = stringPreferencesKey("ia_base")
+        val iaModèle = stringPreferencesKey("ia_modele")
+        val iaClé = stringPreferencesKey("ia_cle")
+        val iaTon = stringPreferencesKey("ia_ton")
     }
 
     val events = MutableSharedFlow<SessionEvent>(extraBufferCapacity = 4)
@@ -153,6 +166,28 @@ class SessionStore(private val context: Context) {
 
     suspend fun définirMajPublicationStockée(json: String) {
         context.dataStore.edit { it[Clefs.majPublicationStockée] = json }
+    }
+
+    /** Réglages du composeur IA (issue #56), observables d'un seul flux. */
+    val réglagesIA: Flow<RéglagesIA> = context.dataStore.data.map { p ->
+        RéglagesIA(
+            actif = p[Clefs.iaActivé] ?: false,
+            base = p[Clefs.iaBase] ?: PresetsFournisseurs.first().base,
+            modèle = p[Clefs.iaModèle] ?: "",
+            clé = p[Clefs.iaClé] ?: "",
+            ton = p[Clefs.iaTon]?.let { nom -> TonIA.entries.firstOrNull { it.name == nom } }
+                ?: TonIA.AMICAL,
+        )
+    }
+
+    suspend fun définirRéglagesIA(réglages: RéglagesIA) {
+        context.dataStore.edit { p ->
+            p[Clefs.iaActivé] = réglages.actif
+            p[Clefs.iaBase] = réglages.base
+            p[Clefs.iaModèle] = réglages.modèle
+            p[Clefs.iaClé] = réglages.clé
+            p[Clefs.iaTon] = réglages.ton.name
+        }
     }
 
     suspend fun enregistrer(

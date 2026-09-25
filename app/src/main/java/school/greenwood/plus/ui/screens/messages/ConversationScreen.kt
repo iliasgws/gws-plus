@@ -86,6 +86,8 @@ fun ConversationScreen(
 ) {
     val vm: ConversationViewModel = viewModel { ConversationViewModel(container, conversationId) }
     val état by vm.état.collectAsStateWithLifecycle()
+    // Réglages du composeur IA (issue #56) — null tant que non configuré.
+    val réglagesIA by container.session.réglagesIA.collectAsStateWithLifecycle(initialValue = null)
     val context = LocalContext.current
 
     Column(
@@ -257,6 +259,7 @@ fun ConversationScreen(
                         envoiPossible = état.erreur == null,
                         onEnvoyer = vm::envoyer,
                         enCours = état.envois.any { it.statut == MessageEnvoi.Statut.EnCours },
+                        ia = réglagesIA,
                     )
                 }
             }
