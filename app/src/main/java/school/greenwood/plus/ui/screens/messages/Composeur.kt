@@ -99,8 +99,7 @@ fun Composeur(
     }
 
     Column(Modifier.fillMaxWidth()) {
-        val iaPrête = ia?.prête == true
-        if (panneauIAOuvert && iaPrête) {
+        if (panneauIAOuvert && ia?.prête == true) {
             PanneauIA(
                 réglages = ia,
                 texte = texte,
@@ -231,10 +230,21 @@ fun Composeur(
                         )
                     }
                     // Le bouton IA, juste à côté du micro (issue #56) —
-                    // visible seulement quand la fonction est configurée.
-                    if (iaPrête) {
+                    // visible dès que l'IA est activée ; s'il manque un
+                    // réglage (modèle, clé…), l'appui guide vers Paramètres.
+                    if (ia?.actif == true) {
                         IconButton(
-                            onClick = { panneauIAOuvert = !panneauIAOuvert },
+                            onClick = {
+                                if (ia.prête) {
+                                    panneauIAOuvert = !panneauIAOuvert
+                                } else {
+                                    Toast.makeText(
+                                        context,
+                                        "Termine le réglage de l'IA dans les Paramètres (modèle, clé…)",
+                                        Toast.LENGTH_SHORT,
+                                    ).show()
+                                }
+                            },
                             enabled = texte.isNotBlank(),
                         ) {
                             Icon(
