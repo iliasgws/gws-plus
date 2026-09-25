@@ -176,18 +176,37 @@ fun Composeur(
                 }
             } else {
                 Column {
-                    // La bande d'agrandissement : ⤢ ouvre l'éditeur plein
-                    // écran, où le brouillon devient confortable à relire.
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 8.dp),
-                        horizontalArrangement = Arrangement.End,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
+                    // Rangée 1 : le texte, aligné en haut à gauche, qui pousse
+                    // de 1 à 6 lignes puis défile ; ⤢ reste en haut à droite.
+                    Row(verticalAlignment = Alignment.Top) {
+                        BasicTextField(
+                            value = texte,
+                            onValueChange = onTexte,
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(start = 12.dp, top = 10.dp, bottom = 2.dp),
+                            textStyle = TextStyle(
+                                color = RegistreTheme.colors.ink,
+                                fontSize = MaterialTheme.typography.bodyMedium.fontSize,
+                            ),
+                            cursorBrush = SolidColor(RegistreTheme.colors.ink),
+                            decorationBox = { champInterne ->
+                                if (texte.isEmpty()) {
+                                    Text(
+                                        text = "Écris ton message…",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = RegistreTheme.colors.chalk,
+                                        maxLines = 1,
+                                    )
+                                }
+                                champInterne()
+                            },
+                            minLines = 1,
+                            maxLines = 6,
+                        )
                         IconButton(
                             onClick = { éditeurOuvert = true },
-                            modifier = Modifier.size(30.dp),
+                            modifier = Modifier.size(34.dp).padding(top = 4.dp, end = 4.dp),
                         ) {
                             Icon(
                                 imageVector = Icons.Rounded.OpenInFull,
@@ -197,118 +216,96 @@ fun Composeur(
                             )
                         }
                     }
+                    // Rangée 2 : la barre d'outils épinglée en bas — pièce
+                    // jointe à gauche, micro · IA · envoi à droite.
                     Row(
                         modifier = Modifier.padding(horizontal = 4.dp, vertical = 4.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(2.dp),
                     ) {
-                    IconButton(onClick = { sélecteurFichiers.launch(arrayOf("*/*")) }) {
-                        Icon(
-                            imageVector = Icons.Rounded.AttachFile,
-                            contentDescription = "Joindre un fichier",
-                            tint = RegistreTheme.colors.chalk,
-                        )
-                    }
-                    BasicTextField(
-                        value = texte,
-                        onValueChange = onTexte,
-                        modifier = Modifier
-                            .weight(1f)
-                            .heightIn(min = 88.dp)
-                            .padding(vertical = 8.dp),
-                        textStyle = TextStyle(
-                            color = RegistreTheme.colors.ink,
-                            fontSize = MaterialTheme.typography.bodyMedium.fontSize,
-                        ),
-                        cursorBrush = SolidColor(RegistreTheme.colors.ink),
-                        decorationBox = { champInterne ->
-                            if (texte.isEmpty()) {
-                                Text(
-                                    text = "Écris ton message…",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = RegistreTheme.colors.chalk,
-                                    maxLines = 1,
-                                )
-                            }
-                            champInterne()
-                        },
-                        maxLines = 10,
-                    )
-                    val microAccordé = ContextCompat.checkSelfPermission(
-                        context,
-                        Manifest.permission.RECORD_AUDIO,
-                    ) == PackageManager.PERMISSION_GRANTED
-                    IconButton(
-                        onClick = {
-                            if (microAccordé) {
-                                if (!onDémarrerEnregistrement(context)) {
-                                    Toast.makeText(
-                                        context,
-                                        "Micro indisponible",
-                                        Toast.LENGTH_SHORT,
-                                    ).show()
-                                }
-                            } else {
-                                permissionMicro.launch(Manifest.permission.RECORD_AUDIO)
-                            }
-                        },
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.Mic,
-                            contentDescription = "Message vocal",
-                            tint = RegistreTheme.colors.chalk,
-                        )
-                    }
-                    // Le bouton IA, juste à côté du micro (issue #56) —
-                    // visible dès que l'IA est activée ; s'il manque un
-                    // réglage (modèle, clé…), l'appui guide vers Paramètres.
-                    if (ia?.actif == true) {
+                        IconButton(onClick = { sélecteurFichiers.launch(arrayOf("*/*")) }) {
+                            Icon(
+                                imageVector = Icons.Rounded.AttachFile,
+                                contentDescription = "Joindre un fichier",
+                                tint = RegistreTheme.colors.chalk,
+                            )
+                        }
+                        androidx.compose.foundation.layout.Spacer(Modifier.weight(1f))
+                        val microAccordé = ContextCompat.checkSelfPermission(
+                            context,
+                            Manifest.permission.RECORD_AUDIO,
+                        ) == PackageManager.PERMISSION_GRANTED
                         IconButton(
                             onClick = {
-                                if (ia.prête) {
-                                    if (!panneauIAOuvert) {
-                                        // Le panneau s'ouvre sans le clavier —
-                                        // il ne revient que si on touche le
-                                        // champ « Décrivez votre modification ».
-                                        focusManager.clearFocus(force = true)
+                                if (microAccordé) {
+                                    if (!onDémarrerEnregistrement(context)) {
+                                        Toast.makeText(
+                                            context,
+                                            "Micro indisponible",
+                                            Toast.LENGTH_SHORT,
+                                        ).show()
                                     }
-                                    panneauIAOuvert = !panneauIAOuvert
                                 } else {
-                                    Toast.makeText(
-                                        context,
-                                        "Termine le réglage de l'IA dans les Paramètres (modèle, clé…)",
-                                        Toast.LENGTH_SHORT,
-                                    ).show()
+                                    permissionMicro.launch(Manifest.permission.RECORD_AUDIO)
                                 }
                             },
-                            enabled = texte.isNotBlank(),
                         ) {
                             Icon(
-                                imageVector = Icons.Rounded.AutoAwesome,
-                                contentDescription = "Assistant IA",
-                                tint = if (panneauIAOuvert) RegistreTheme.accent.teinte else RegistreTheme.colors.chalk,
+                                imageVector = Icons.Rounded.Mic,
+                                contentDescription = "Message vocal",
+                                tint = RegistreTheme.colors.chalk,
                             )
                         }
-                    }
-                    IconButton(
-                        onClick = onEnvoyer,
-                        enabled = envoiPossible && !enCours && (texte.isNotBlank() || pièces.isNotEmpty() || audio != null),
-                    ) {
-                        if (enCours) {
-                            androidx.compose.material3.CircularProgressIndicator(
-                                modifier = Modifier.size(18.dp),
-                                strokeWidth = 2.dp,
-                                color = RegistreTheme.colors.ink,
-                            )
-                        } else {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Rounded.Send,
-                                contentDescription = "Envoyer",
-                                tint = if (envoiPossible) RegistreTheme.colors.ink else RegistreTheme.colors.chalk,
-                            )
+                        // Le bouton IA, juste à côté du micro (issue #56) —
+                        // visible dès que l'IA est activée ; s'il manque un
+                        // réglage (modèle, clé…), l'appui guide vers Paramètres.
+                        if (ia?.actif == true) {
+                            IconButton(
+                                onClick = {
+                                    if (ia.prête) {
+                                        if (!panneauIAOuvert) {
+                                            // Le panneau s'ouvre sans le clavier —
+                                            // il ne revient que si on touche le
+                                            // champ d'instruction.
+                                            focusManager.clearFocus(force = true)
+                                        }
+                                        panneauIAOuvert = !panneauIAOuvert
+                                    } else {
+                                        Toast.makeText(
+                                            context,
+                                            "Termine le réglage de l'IA dans les Paramètres (modèle, clé…)",
+                                            Toast.LENGTH_SHORT,
+                                        ).show()
+                                    }
+                                },
+                                enabled = texte.isNotBlank(),
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.AutoAwesome,
+                                    contentDescription = "Assistant IA",
+                                    tint = if (panneauIAOuvert) RegistreTheme.accent.teinte else RegistreTheme.colors.chalk,
+                                )
+                            }
+                        }
+                        IconButton(
+                            onClick = onEnvoyer,
+                            enabled = envoiPossible && !enCours && (texte.isNotBlank() || pièces.isNotEmpty() || audio != null),
+                        ) {
+                            if (enCours) {
+                                androidx.compose.material3.CircularProgressIndicator(
+                                    modifier = Modifier.size(18.dp),
+                                    strokeWidth = 2.dp,
+                                    color = RegistreTheme.colors.ink,
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Rounded.Send,
+                                    contentDescription = "Envoyer",
+                                    tint = if (envoiPossible) RegistreTheme.colors.ink else RegistreTheme.colors.chalk,
+                                )
+                            }
                         }
                     }
-                }
                 }
             }
         }
@@ -375,20 +372,117 @@ fun Composeur(
                             champInterne()
                         },
                     )
-                    Surface(
-                        shape = ControlShape,
-                        color = RegistreTheme.accent.teinte,
+                    // En plein écran aussi, les quatre contrôles restent :
+                    // pièce jointe à gauche, micro · IA · envoi à droite,
+                    // « Terminé » referme l'éditeur.
+                    if (panneauIAOuvert && ia?.prête == true) {
+                        PanneauIA(
+                            réglages = ia,
+                            texte = texte,
+                            onRemplacer = onTexte,
+                            onFermer = { panneauIAOuvert = false },
+                        )
+                    }
+                    Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 20.dp, vertical = 12.dp)
+                            .padding(horizontal = 8.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(2.dp),
+                    ) {
+                        IconButton(onClick = { sélecteurFichiers.launch(arrayOf("*/*")) }) {
+                            Icon(
+                                imageVector = Icons.Rounded.AttachFile,
+                                contentDescription = "Joindre un fichier",
+                                tint = RegistreTheme.colors.chalk,
+                            )
+                        }
+                        androidx.compose.foundation.layout.Spacer(Modifier.weight(1f))
+                        val microAccordé = ContextCompat.checkSelfPermission(
+                            context,
+                            Manifest.permission.RECORD_AUDIO,
+                        ) == PackageManager.PERMISSION_GRANTED
+                        IconButton(
+                            onClick = {
+                                if (microAccordé) {
+                                    if (!onDémarrerEnregistrement(context)) {
+                                        Toast.makeText(
+                                            context,
+                                            "Micro indisponible",
+                                            Toast.LENGTH_SHORT,
+                                        ).show()
+                                    }
+                                } else {
+                                    permissionMicro.launch(Manifest.permission.RECORD_AUDIO)
+                                }
+                            },
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.Mic,
+                                contentDescription = "Message vocal",
+                                tint = RegistreTheme.colors.chalk,
+                            )
+                        }
+                        if (ia?.actif == true) {
+                            IconButton(
+                                onClick = {
+                                    if (ia.prête) {
+                                        panneauIAOuvert = !panneauIAOuvert
+                                    } else {
+                                        Toast.makeText(
+                                            context,
+                                            "Termine le réglage de l'IA dans les Paramètres (modèle, clé…)",
+                                            Toast.LENGTH_SHORT,
+                                        ).show()
+                                    }
+                                },
+                                enabled = texte.isNotBlank(),
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.AutoAwesome,
+                                    contentDescription = "Assistant IA",
+                                    tint = if (panneauIAOuvert) RegistreTheme.accent.teinte else RegistreTheme.colors.chalk,
+                                )
+                            }
+                        }
+                        IconButton(
+                            onClick = {
+                                éditeurOuvert = false
+                                onEnvoyer()
+                            },
+                            enabled = envoiPossible && !enCours && (texte.isNotBlank() || pièces.isNotEmpty() || audio != null),
+                        ) {
+                            if (enCours) {
+                                androidx.compose.material3.CircularProgressIndicator(
+                                    modifier = Modifier.size(18.dp),
+                                    strokeWidth = 2.dp,
+                                    color = RegistreTheme.colors.ink,
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Rounded.Send,
+                                    contentDescription = "Envoyer",
+                                    tint = if (envoiPossible) RegistreTheme.colors.ink else RegistreTheme.colors.chalk,
+                                )
+                            }
+                        }
+                    }
+                    Surface(
+                        shape = ControlShape,
+                        color = RegistreTheme.colors.sage,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp, vertical = 8.dp)
                             .clip(ControlShape)
                             .clickable { éditeurOuvert = false },
                     ) {
                         Text(
-                            text = "Terminer",
+                            text = "Terminé",
                             style = MaterialTheme.typography.labelLarge,
-                            color = RegistreTheme.colors.page,
-                            modifier = Modifier.padding(vertical = 11.dp).align(Alignment.CenterHorizontally),
+                            color = RegistreTheme.colors.ink,
+                            modifier = Modifier
+                                .padding(vertical = 11.dp)
+                                .align(Alignment.CenterHorizontally),
                         )
                     }
                 }
