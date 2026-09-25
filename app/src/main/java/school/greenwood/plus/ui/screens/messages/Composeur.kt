@@ -79,6 +79,7 @@ fun Composeur(
     ia: RéglagesIA? = null,
 ) {
     val context = LocalContext.current
+    val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
 
     // Panneau IA (issue #56) : posé au-dessus du champ, ouvert par le bouton
     // ✨ à côté du micro — visible seulement si l'IA est réglée et prête.
@@ -236,6 +237,12 @@ fun Composeur(
                         IconButton(
                             onClick = {
                                 if (ia.prête) {
+                                    if (!panneauIAOuvert) {
+                                        // Le panneau s'ouvre sans le clavier —
+                                        // il ne revient que si on touche le
+                                        // champ « Décrivez votre modification ».
+                                        focusManager.clearFocus(force = true)
+                                    }
                                     panneauIAOuvert = !panneauIAOuvert
                                 } else {
                                     Toast.makeText(
