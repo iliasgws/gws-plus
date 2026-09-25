@@ -457,6 +457,12 @@ private fun SectionIA(vmIA: RéglagesIAViewModel) {
                         modifier = Modifier.size(18.dp),
                     )
                 }
+                // Une vraie case à cocher, toujours visible — l'état ne doit
+                // jamais se deviner à l'absence d'une icône.
+                androidx.compose.material3.Checkbox(
+                    checked = réglages.actif,
+                    onCheckedChange = { vmIA.définir(réglages.copy(actif = it)) },
+                )
             }
 
             // Ton par défaut.

@@ -6,8 +6,30 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
 
 ## [Non publié]
 
+### Modifié
+
+- **Le composeur gagne de l'espace et un éditeur plein écran** : champ de
+  saisie plus haut (4 lignes visibles, jusqu'à 10, puis défilement interne)
+  et bouton ⤢ au-dessus du champ qui ouvre un éditeur plein écran
+  (« Terminer » pour revenir) — tout en changements d'état instantanés,
+  sans animation.
+- **Le panneau IA repensé après l'essai réel** : feuille basse compacte
+  (~250 dp fermée, dépliable par poignée), aperçu du message en cours,
+  champ « Que voulez-vous modifier ? » encadré, actions claires
+  (Corriger / Réécrire, puis Raccourcir / Développer / Structurer /
+  Simplifier dépliés), tons Amical / Professionnel / Neutre, bouton
+  principal « ✨ Générer », accent rose du ✨ partout dans le panneau.
+  Le clavier se masque à l'ouverture ; le réglage « IA dans le composeur »
+  porte une vraie case à cocher.
+
 ### Ajouté
 
+- **Badge « Généré par IA »** (issue #58) : composant réutilisable
+  (`ui/components/BadgeIA.kt`) — icône compacte (carré arrondi « AI » +
+  étincelle, redessinée d'après le SVG de référence) et badge complet avec
+  libellé « Généré par IA », teintés par le thème. Posé sous les résultats
+  du panneau IA du composeur ; consommé par la future synthèse de
+  conversation (#57).
 - **Assistant IA dans le composeur** (issue #56) : un bouton ✨ à côté du
   micro ouvre un panneau inspiré des Writing Tools d'Apple — champ
   « Décrivez votre modification », actions Relire / Réécrire, tons

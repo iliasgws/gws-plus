@@ -20,8 +20,8 @@ class ComposeurIATest {
 
     @Test
     fun `le prompt système porte la consigne d'action et le ton`() {
-        val prompt = promptSystème(ActionIA.RELIRE, TonIA.PROFESSIONNEL, null)
-        assertTrue(prompt.contains(ActionIA.RELIRE.consigne))
+        val prompt = promptSystème(ActionIA.CORRIGER, TonIA.PROFESSIONNEL, null)
+        assertTrue(prompt.contains(ActionIA.CORRIGER.consigne))
         assertTrue(prompt.contains("professionnel"))
         assertTrue(prompt.contains("français"))
     }
@@ -34,8 +34,8 @@ class ComposeurIATest {
 
     @Test
     fun `une consigne vide ou blanche n'ajoute rien`() {
-        val sans = promptSystème(ActionIA.LISTE, TonIA.CONCIS, null)
-        val vide = promptSystème(ActionIA.LISTE, TonIA.CONCIS, "   ")
+        val sans = promptSystème(ActionIA.RACCOURCIR, TonIA.NEUTRE, null)
+        val vide = promptSystème(ActionIA.RACCOURCIR, TonIA.NEUTRE, "   ")
         assertEquals(sans, vide)
         assertFalse(vide.contains("Consigne supplémentaire"))
     }
