@@ -4,9 +4,41 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
-## [Non publié]
+## [0.8.3] — 2026-09-26
+
+Stable après huit bêtas essayées sur appareil réel : l'assistant IA du
+composeur (issues #56, #58) et une série de correctifs repérés pendant
+ces essais (#62 à #66), publiés en préversions avant la fusion.
+
+### Ajouté
+
+- **Assistant IA dans le composeur** (issue #56, PR #59) : bouton ✨ à côté
+  du micro, panneau Writing-Tools repensé en feuille basse compacte —
+  aperçu du message, champ « Que voulez-vous modifier ? » encadré,
+  actions Corriger / Réécrire, Raccourcir / Développer / Structurer /
+  Simplifier dépliables, tons Amical / Professionnel / Neutre, bouton
+  « ✨ Générer », accent du ✨ partout. Réglages dans les Paramètres :
+  activation (case à cocher), ton par défaut, fournisseur OpenAI-compatible
+  (OpenRouter, Groq, DeepSeek, Mistral AI, Together AI, Fireworks AI,
+  Cerebras — ou URL libre), modèle et clé API BYOK, jamais loguée.
+- **Badge « Généré par IA »** (issue #58, PR #61) : composant réutilisable
+  (icône carré « AI » + étincelle, badge avec libellé), posé sous les
+  résultats du panneau IA.
 
 ### Modifié
+
+- **Composeur recomposé en deux rangées** (#65) : texte aligné en haut à
+  gauche (1→6 lignes, défilement interne), ⤢ en haut à droite ouvrant un
+  éditeur plein écran qui conserve les quatre contrôles, barre d'outils
+  épinglée en bas. Zéro animation.
+- **Le composeur colle au clavier** (#66) : le vide sous la carte quand le
+  clavier s'ouvre est corrigé (insets du Scaffold consommés avant
+  imePadding).
+- Le clavier se masque à l'ouverture du panneau IA ; le bouton ✨ est
+  visible dès l'activation de l'IA, avec un guide vers les Paramètres si
+  le réglage est incomplet (#62, #63).
+
+### Modifié (fonctionnement)
 
 - **Le composeur gagne de l'espace et un éditeur plein écran** : champ de
   saisie plus haut (4 lignes visibles, jusqu'à 10, puis défilement interne)
