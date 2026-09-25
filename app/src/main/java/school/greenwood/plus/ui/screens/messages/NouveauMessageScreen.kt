@@ -56,6 +56,8 @@ fun NouveauMessageScreen(
 ) {
     val vm: NouveauMessageViewModel = viewModel { NouveauMessageViewModel(container) }
     val état by vm.état.collectAsStateWithLifecycle()
+    // Réglages du composeur IA (issue #56) — null tant que non configuré.
+    val réglagesIA by container.session.réglagesIA.collectAsStateWithLifecycle(initialValue = null)
 
     Column(
         modifier = Modifier
@@ -157,6 +159,7 @@ fun NouveauMessageScreen(
             onEnvoyer = vm::envoyer,
             enCours = état.envoi,
             limitePièces = true,
+            ia = réglagesIA,
         )
 
         // L'envoi réussi rebascule sur la liste (bundle : navigate back).
