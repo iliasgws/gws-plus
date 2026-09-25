@@ -4,9 +4,11 @@ import android.content.Context
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -19,6 +21,7 @@ import androidx.compose.material.icons.rounded.AttachFile
 import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Mic
+import androidx.compose.material.icons.rounded.OpenInFull
 import androidx.compose.material.icons.rounded.Stop
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -84,6 +87,10 @@ fun Composeur(
     // Panneau IA (issue #56) : posé au-dessus du champ, ouvert par le bouton
     // ✨ à côté du micro — visible seulement si l'IA est réglée et prête.
     var panneauIAOuvert by remember { mutableStateOf(false) }
+
+    // L'éditeur plein écran (⤢) : le même brouillon, la place en plus —
+    // une boîte de dialogue instantanée, sans animation.
+    var éditeurOuvert by remember { mutableStateOf(false) }
 
     // Micro : permission runtime (RECORD_AUDIO), demandée au premier appui.
     val permissionMicro = rememberLauncherForActivityResult(
@@ -168,11 +175,33 @@ fun Composeur(
                     }
                 }
             } else {
-                Row(
-                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(2.dp),
-                ) {
+                Column {
+                    // La bande d'agrandissement : ⤢ ouvre l'éditeur plein
+                    // écran, où le brouillon devient confortable à relire.
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 8.dp),
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        IconButton(
+                            onClick = { éditeurOuvert = true },
+                            modifier = Modifier.size(30.dp),
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.OpenInFull,
+                                contentDescription = "Agrandir le message",
+                                tint = RegistreTheme.colors.chalk,
+                                modifier = Modifier.size(16.dp),
+                            )
+                        }
+                    }
+                    Row(
+                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(2.dp),
+                    ) {
                     IconButton(onClick = { sélecteurFichiers.launch(arrayOf("*/*")) }) {
                         Icon(
                             imageVector = Icons.Rounded.AttachFile,
@@ -185,7 +214,7 @@ fun Composeur(
                         onValueChange = onTexte,
                         modifier = Modifier
                             .weight(1f)
-                            .heightIn(min = 40.dp)
+                            .heightIn(min = 88.dp)
                             .padding(vertical = 8.dp),
                         textStyle = TextStyle(
                             color = RegistreTheme.colors.ink,
@@ -203,7 +232,7 @@ fun Composeur(
                             }
                             champInterne()
                         },
-                        maxLines = 6,
+                        maxLines = 10,
                     )
                     val microAccordé = ContextCompat.checkSelfPermission(
                         context,
@@ -280,6 +309,7 @@ fun Composeur(
                         }
                     }
                 }
+                }
             }
         }
         if (limitePièces) {
@@ -289,6 +319,80 @@ fun Composeur(
                 color = RegistreTheme.colors.chalk,
                 modifier = Modifier.padding(horizontal = 20.dp),
             )
+        }
+    }
+
+    if (éditeurOuvert) {
+        androidx.compose.ui.window.Dialog(
+            onDismissRequest = { éditeurOuvert = false },
+            properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false),
+        ) {
+            Surface(
+                modifier = Modifier.fillMaxSize(),
+                color = RegistreTheme.colors.paper,
+            ) {
+                Column(Modifier.fillMaxSize()) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 8.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = "Message",
+                            style = MaterialTheme.typography.displayLarge,
+                            color = RegistreTheme.colors.ink,
+                            modifier = Modifier.weight(1f),
+                        )
+                        IconButton(onClick = { éditeurOuvert = false }) {
+                            Icon(
+                                imageVector = Icons.Rounded.Close,
+                                contentDescription = "Réduire le message",
+                                tint = RegistreTheme.colors.ink,
+                            )
+                        }
+                    }
+                    BasicTextField(
+                        value = texte,
+                        onValueChange = onTexte,
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp),
+                        textStyle = TextStyle(
+                            color = RegistreTheme.colors.ink,
+                            fontSize = MaterialTheme.typography.bodyLarge.fontSize,
+                        ),
+                        cursorBrush = SolidColor(RegistreTheme.colors.ink),
+                        decorationBox = { champInterne ->
+                            if (texte.isEmpty()) {
+                                Text(
+                                    text = "Écris ton message…",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = RegistreTheme.colors.chalk,
+                                )
+                            }
+                            champInterne()
+                        },
+                    )
+                    Surface(
+                        shape = ControlShape,
+                        color = RegistreTheme.accent.teinte,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp, vertical = 12.dp)
+                            .clip(ControlShape)
+                            .clickable { éditeurOuvert = false },
+                    ) {
+                        Text(
+                            text = "Terminer",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = RegistreTheme.colors.page,
+                            modifier = Modifier.padding(vertical = 11.dp).align(Alignment.CenterHorizontally),
+                        )
+                    }
+                }
+            }
         }
     }
 }

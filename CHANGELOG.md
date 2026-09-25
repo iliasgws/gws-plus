@@ -8,6 +8,11 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
 
 ### Modifié
 
+- **Le composeur gagne de l'espace et un éditeur plein écran** : champ de
+  saisie plus haut (4 lignes visibles, jusqu'à 10, puis défilement interne)
+  et bouton ⤢ au-dessus du champ qui ouvre un éditeur plein écran
+  (« Terminer » pour revenir) — tout en changements d'état instantanés,
+  sans animation.
 - **Le panneau IA repensé après l'essai réel** : feuille basse compacte
   (~250 dp fermée, dépliable par poignée), aperçu du message en cours,
   champ « Que voulez-vous modifier ? » encadré, actions claires
