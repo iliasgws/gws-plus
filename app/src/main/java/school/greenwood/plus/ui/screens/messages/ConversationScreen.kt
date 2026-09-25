@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -95,8 +96,12 @@ fun ConversationScreen(
             .fillMaxSize()
             .background(RegistreTheme.colors.paper)
             // Le clavier repousse le contenu (composeur visible au-dessus).
-            .imePadding()
-            .padding(padding),
+            .padding(padding)
+            // Les insets du Scaffold (barre d'onglets, barre système) sont
+            // consommés : le clavier ne s'ajoute plus par-dessus — le
+            // composeur colle au clavier, sans vide.
+            .consumeWindowInsets(padding)
+            .imePadding(),
     ) {
         Row(
             modifier = Modifier
