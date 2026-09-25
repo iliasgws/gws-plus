@@ -43,17 +43,19 @@ val PresetsFournisseurs = listOf(
 enum class TonIA(val libellé: String) {
     AMICAL("Amical"),
     PROFESSIONNEL("Professionnel"),
-    CONCIS("Concis"),
+    NEUTRE("Neutre"),
 }
 
-/** Les actions du panneau, inspirées des Writing Tools d'Apple (libellés FR). */
+/** Les actions du panneau : deux principales (Corriger, Réécrire) et quatre
+ *  transformations explicites, chacune avec icône + libellé (issue #56,
+ *  retravaillé après essai réel de la bêta 3). */
 enum class ActionIA(val libellé: String, val consigne: String) {
-    RELIRE("Relire", "Corrige l'orthographe, la grammaire et la ponctuation du texte, sans changer le style ni le sens. Renvoie uniquement le texte corrigé."),
-    RÉÉCRIRE("Réécrire", "Réécris le texte pour le rendre plus clair et plus fluide, en conservant son sens et sa langue. Renvoie uniquement le texte réécrit."),
-    RÉSUMÉ("Résumé", "Résume le texte en quelques phrases naturelles. Renvoie uniquement le résumé."),
-    POINTS("Points clés", "Extrais les points clés du texte sous forme de liste à puces courtes, une par ligne, sans numérotation. Renvoie uniquement la liste."),
-    TABLEAU("Tableau", "S'il contient des données structurées, organise le texte en tableau markdown. Renvoie uniquement le tableau."),
-    LISTE("Liste", "Réorganise le texte en liste à puces claire et ordonnée. Renvoie uniquement la liste."),
+    CORRIGER("Corriger", "Corrige uniquement l'orthographe, la grammaire et la ponctuation du texte, sans changer le style, le ton ni le sens. Renvoie uniquement le texte corrigé."),
+    RÉÉCRIRE("Réécrire", "Réécris le texte pour le rendre plus clair et plus fluide, en conservant son sens, son niveau de détail et sa langue. Renvoie uniquement le texte réécrit."),
+    RACCOURCIR("Raccourcir", "Raccourcis le texte en conservant l'essentiel du message et la politesse. Renvoie uniquement le texte raccourci."),
+    DÉVELOPPER("Développer", "Développe le texte avec plus de détails et de naturel, sans inventer de faits nouveaux. Renvoie uniquement le texte développé."),
+    STRUCTURER("Structurer", "Réorganise le texte en paragraphes ou en liste claire, sans en changer le contenu. Renvoie uniquement le texte structuré."),
+    SIMPLIFIER("Simplifier", "Simplifie le vocabulaire et les phrases pour rendre le texte immédiat à lire, sans perdre le sens. Renvoie uniquement le texte simplifié."),
 }
 
 /** Réglages tels que stockés (SessionStore) et consommés par le composeur. */
@@ -72,7 +74,7 @@ fun promptSystème(action: ActionIA, ton: TonIA, consigne: String?): String {
     val tonTexte = when (ton) {
         TonIA.AMICAL -> "Ton : chaleureux et amical, adapté à un message destiné à l'école de son enfant."
         TonIA.PROFESSIONNEL -> "Ton : professionnel et respectueux, adapté à un message destiné à l'administration de l'école."
-        TonIA.CONCIS -> "Ton : concis, va droit au but sans perdre la politesse."
+        TonIA.NEUTRE -> "Ton : neutre et poli, sans familiarité ni emphase."
     }
     return buildString {
         append("Tu aides un parent à rédiger un message à l'école de son enfant. ")

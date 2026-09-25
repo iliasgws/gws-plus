@@ -772,3 +772,29 @@ outputs of #56, conversation summary of #57).
 - [x] Consumed by the AI panel: the badge sits under the result actions in
       `PanneauIA.kt`; #57 will consume the same component
 - [ ] On-device check: badge visible under every panel result, light + dark
+
+## Panel redesign (after real-device trial of beta 3)
+
+User feedback on the shipped beta: the panel was too tall/visually heavy,
+ambiguous in places. Redesigned as a compact bottom sheet:
+
+- [x] Actions renamed for clarity: **Corriger** (spelling only) / **Réécrire**
+      (reformulate) as the two primary actions; the unlabeled icon-only row is
+      replaced by explicit labeled transformations **Raccourcir / Développer /
+      Structurer / Simplifier**, tucked behind a drag handle (up = expand,
+      down = collapse; tap toggles too) — closed height ≈ 250 dp
+- [x] Tones: **Amical / Professionnel / Neutre** (« Concis » dropped — it was
+      length, not tone; stored CONCIS falls back to Amical)
+- [x] Instruction field is the clear starting point: outlined container,
+      label « Que voulez-vous modifier ? », example placeholder « Ex. Rends
+      ce message plus professionnel »
+- [x] Message preview at the top (« Message sélectionné », first 90 chars)
+      so it's obvious which draft is being edited in a long chat
+- [x] Primary action **✨ Générer** runs the selected action — the panel is
+      now a select-then-generate model, not tap-to-run
+- [x] Accent consistency: selected chips + primary button use the tab accent
+      (the pink of the ✨), not ink/sage mixing
+- [x] The two-stage compact-menu idea was folded into the sheet itself: the
+      collapsed sheet (what opens on tap) already shows only field + Corriger/
+      Réécrire + tones + Générer; transformations live one drag away
+- [x] Tests updated for the new enum sets — all green

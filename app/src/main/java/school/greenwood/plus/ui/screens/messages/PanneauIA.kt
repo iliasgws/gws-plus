@@ -2,31 +2,32 @@ package school.greenwood.plus.ui.screens.messages
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.ContentCut
 import androidx.compose.material.icons.rounded.Edit
-import androidx.compose.material.icons.rounded.FormatListBulleted
-import androidx.compose.material.icons.rounded.GridView
+import androidx.compose.material.icons.rounded.FormatAlignLeft
+import androidx.compose.material.icons.rounded.LinearScale
 import androidx.compose.material.icons.rounded.RestartAlt
-import androidx.compose.material.icons.rounded.SaveAlt
-import androidx.compose.material.icons.rounded.Send
-import androidx.compose.material.icons.rounded.ShortText
-import androidx.compose.material.icons.rounded.Subject
+import androidx.compose.material.icons.rounded.Spellcheck
+import androidx.compose.material.icons.rounded.UnfoldMore
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -40,6 +41,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -54,22 +56,28 @@ import school.greenwood.plus.ui.theme.ControlShape
 import school.greenwood.plus.ui.theme.RegistreTheme
 
 /*
- * Le panneau IA du composeur (issue #56), inspiré des Writing Tools d'Apple :
- * panneau flottant arrondi posé au-dessus du champ de saisie — un champ
- * « Décrivez votre modification », les actions rapides (Relire / Réécrire),
- * les tons (Amical / Professionnel / Concis) et les transformations
- * (Résumé / Points clés / Tableau / Liste). Le résultat s'affiche dans le
- * panneau : Remplacer renvoie le texte au composeur, Annuler referme.
+ * L'assistant d'écriture du composeur (issue #56), repensé après l'essai
+ * réel de la bêta 3 : une feuille basse compacte (~250 dp fermée), à la
+ * hiérarchie claire —
+ *  - poignée de glissement : vers le haut déplie les transformations,
+ *    vers le bas les replie ;
+ *  - aperçu du message en cours (« Message sélectionné ») ;
+ *  - champ d'instruction encadré (« Que voulez-vous modifier ? ») ;
+ *  - deux actions principales : Corriger / Réécrire ;
+ *  - les tons : Amical / Professionnel / Neutre ;
+ *  - déplié : Raccourcir / Développer / Structurer / Simplifier ;
+ *  - le bouton principal « ✨ Générer » lance l'action choisie.
+ * L'accent du panneau est celui de l'onglet (le rose du ✨), partout pareil.
  */
 
-/** Une action proposée avec son icône. */
+/** Une transformation proposée, avec son icône. */
 private data class TransformationIA(val action: ActionIA, val icône: ImageVector)
 
 private val Transformations = listOf(
-    TransformationIA(ActionIA.RÉSUMÉ, Icons.Rounded.Subject),
-    TransformationIA(ActionIA.POINTS, Icons.Rounded.FormatListBulleted),
-    TransformationIA(ActionIA.TABLEAU, Icons.Rounded.GridView),
-    TransformationIA(ActionIA.LISTE, Icons.Rounded.ShortText),
+    TransformationIA(ActionIA.RACCOURCIR, Icons.Rounded.ContentCut),
+    TransformationIA(ActionIA.DÉVELOPPER, Icons.Rounded.UnfoldMore),
+    TransformationIA(ActionIA.STRUCTURER, Icons.Rounded.FormatAlignLeft),
+    TransformationIA(ActionIA.SIMPLIFIER, Icons.Rounded.LinearScale),
 )
 
 @Composable
@@ -83,16 +91,16 @@ fun PanneauIA(
     val portée = rememberCoroutineScope()
     var consigne by remember { mutableStateOf("") }
     var ton by remember { mutableStateOf(réglages.ton) }
-    var enCours by remember { mutableStateOf<ActionIA?>(null) }
-    var dernièreAction by remember { mutableStateOf<ActionIA>(ActionIA.RÉÉCRIRE) }
+    var actionChoisie by remember { mutableStateOf(ActionIA.CORRIGER) }
+    var déplié by remember { mutableStateOf(false) }
+    var enCours by remember { mutableStateOf(false) }
     var erreur by remember { mutableStateOf<String?>(null) }
     var résultat by remember { mutableStateOf<String?>(null) }
 
     fun lancer(action: ActionIA) {
-        if (enCours != null) return
-        dernièreAction = action
+        if (enCours) return
         portée.launch {
-            enCours = action
+            enCours = true
             erreur = null
             runCatching {
                 ComposeurIA.transformer(
@@ -103,7 +111,7 @@ fun PanneauIA(
                 )
             }.onSuccess { résultat = it }
                 .onFailure { erreur = it.message ?: "Une erreur est survenue." }
-            enCours = null
+            enCours = false
         }
     }
 
@@ -116,115 +124,127 @@ fun PanneauIA(
         border = androidx.compose.foundation.BorderStroke(1.dp, RegistreTheme.colors.sage),
         shadowElevation = 6.dp,
     ) {
-        Column(modifier = Modifier.padding(12.dp)) {
-            // Le résultat prend le dessus du panneau, s'il y en a un.
+        Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp)) {
+            // La poignée : glisse vers le haut pour déplier, vers le bas pour
+            // replier (un tap marche aussi).
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .padding(bottom = 6.dp)
+                    .width(44.dp)
+                    .height(5.dp)
+                    .clip(AnnotationShape)
+                    .background(RegistreTheme.colors.chalk)
+                    .pointerInput(déplié) {
+                        detectVerticalDragGestures { _, déplacement ->
+                            if (déplacement < -6) déplié = true
+                            if (déplacement > 6) déplié = false
+                        }
+                    }
+                    .clickable { déplié = !déplié },
+            )
+
             résultat?.let { texteRésultat ->
+                RésultatIA(
+                    texteRésultat = texteRésultat,
+                    enCours = enCours,
+                    surRéessayer = { résultat = null },
+                    surRemplacer = {
+                        onRemplacer(texteRésultat)
+                        onFermer()
+                    },
+                    surAnnuler = {
+                        résultat = null
+                        onFermer()
+                    },
+                )
+            } ?: run {
+                // L'aperçu : de quel message on parle.
+                Text(
+                    text = "Message sélectionné",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = RegistreTheme.colors.chalk,
+                )
+                Text(
+                    text = "« " + texte.trim().take(90) + (if (texte.length > 90) "…" else "") + " »",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = RegistreTheme.colors.ink,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(top = 2.dp),
+                )
+
+                // Le champ d'instruction, encadré, point de départ clair.
                 Surface(
-                    shape = AnnotationShape,
-                    color = RegistreTheme.colors.sage,
-                    modifier = Modifier.fillMaxWidth(),
+                    shape = ControlShape,
+                    color = RegistreTheme.colors.paper,
+                    border = androidx.compose.foundation.BorderStroke(1.dp, RegistreTheme.colors.sage),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 10.dp),
                 ) {
-                    Text(
-                        text = texteRésultat,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = RegistreTheme.colors.ink,
+                    androidx.compose.foundation.text.BasicTextField(
+                        value = consigne,
+                        onValueChange = { consigne = it },
                         modifier = Modifier
-                            .padding(10.dp)
-                            .heightIn(max = 160.dp)
-                            .verticalScroll(rememberScrollState()),
+                            .padding(horizontal = 12.dp, vertical = 10.dp),
+                        textStyle = TextStyle(
+                            color = RegistreTheme.colors.ink,
+                            fontSize = MaterialTheme.typography.bodyMedium.fontSize,
+                        ),
+                        cursorBrush = androidx.compose.ui.graphics.SolidColor(RegistreTheme.colors.ink),
+                        decorationBox = { champInterne ->
+                            Column {
+                                Text(
+                                    text = "Que voulez-vous modifier ?",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = RegistreTheme.colors.chalk,
+                                )
+                                if (consigne.isEmpty()) {
+                                    Text(
+                                        text = "Ex. Rends ce message plus professionnel",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = RegistreTheme.colors.chalk,
+                                        maxLines = 1,
+                                    )
+                                } else {
+                                    champInterne()
+                                }
+                            }
+                        },
+                        maxLines = 2,
                     )
                 }
+
+                // Les deux actions principales.
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 10.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    ActionPuce(
+                        texte = ActionIA.CORRIGER.libellé,
+                        icône = Icons.Rounded.Spellcheck,
+                        choisi = actionChoisie == ActionIA.CORRIGER,
+                        surClic = { actionChoisie = ActionIA.CORRIGER },
+                        modifier = Modifier.weight(1f),
+                    )
+                    ActionPuce(
+                        texte = ActionIA.RÉÉCRIRE.libellé,
+                        icône = Icons.Rounded.Edit,
+                        choisi = actionChoisie == ActionIA.RÉÉCRIRE,
+                        surClic = { actionChoisie = ActionIA.RÉÉCRIRE },
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+
+                // Les tons.
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    BoutonPanneau(
-                        texte = "Remplacer",
-                        icône = Icons.Rounded.Check,
-                        surClic = {
-                            onRemplacer(texteRésultat)
-                            onFermer()
-                        },
-                    )
-                    BoutonPanneau(
-                        texte = "Réessayer",
-                        icône = Icons.Rounded.RestartAlt,
-                        surClic = {
-                            résultat = null
-                            lancer(dernièreAction)
-                        },
-                    )
-                    BoutonPanneau(
-                        texte = "Annuler",
-                        icône = Icons.Rounded.Close,
-                        surClic = {
-                            résultat = null
-                            onFermer()
-                        },
-                    )
-                }
-                // Marquage « Généré par IA » (issue #58) : le résultat vient
-                // d'un modèle, ça doit se voir.
-                BadgeGénéréIA(modifier = Modifier.padding(top = 6.dp))
-            } ?: run {
-                // Champ « Décrivez votre modification » (Writing Tools).
-                androidx.compose.foundation.text.BasicTextField(
-                    value = consigne,
-                    onValueChange = { consigne = it },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 36.dp),
-                    textStyle = TextStyle(
-                        color = RegistreTheme.colors.ink,
-                        fontSize = MaterialTheme.typography.bodyMedium.fontSize,
-                    ),
-                    cursorBrush = androidx.compose.ui.graphics.SolidColor(RegistreTheme.colors.ink),
-                    decorationBox = { champInterne ->
-                        if (consigne.isEmpty()) {
-                            Text(
-                                text = "Décrivez votre modification…",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = RegistreTheme.colors.chalk,
-                                maxLines = 1,
-                            )
-                        }
-                        champInterne()
-                    },
-                    maxLines = 2,
-                )
-
-                // Actions rapides : Relire / Réécrire.
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 10.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    BoutonPanneau(
-                        texte = ActionIA.RELIRE.libellé,
-                        icône = Icons.Rounded.AutoAwesome,
-                        surClic = { lancer(ActionIA.RELIRE) },
-                        chargement = enCours == ActionIA.RELIRE,
-                        modifier = Modifier.weight(1f),
-                    )
-                    BoutonPanneau(
-                        texte = ActionIA.RÉÉCRIRE.libellé,
-                        icône = Icons.Rounded.Edit,
-                        surClic = { lancer(ActionIA.RÉÉCRIRE) },
-                        chargement = enCours == ActionIA.RÉÉCRIRE,
-                        modifier = Modifier.weight(1f),
-                    )
-                }
-
-                // Les tons prédéfinis.
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 10.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -238,29 +258,24 @@ fun PanneauIA(
                     }
                 }
 
-                // Les transformations, une rangée d'icônes à la Apple.
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 10.dp),
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Transformations.forEach { (action, icône) ->
-                        IconButton(onClick = { lancer(action) }, enabled = enCours == null) {
-                            if (enCours == action) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(18.dp),
-                                    strokeWidth = 2.dp,
-                                    color = RegistreTheme.colors.ink,
-                                )
-                            } else {
-                                Icon(
-                                    imageVector = icône,
-                                    contentDescription = action.libellé,
-                                    tint = RegistreTheme.colors.chalk,
-                                )
-                            }
+                // Déplié : les transformations explicites, icône + libellé.
+                if (déplié) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Transformations.forEach { (action, icône) ->
+                            ActionPuce(
+                                texte = action.libellé,
+                                icône = icône,
+                                choisi = actionChoisie == action,
+                                surClic = { actionChoisie = action },
+                                compact = true,
+                                modifier = Modifier.weight(1f),
+                            )
                         }
                     }
                 }
@@ -273,7 +288,136 @@ fun PanneauIA(
                         modifier = Modifier.padding(top = 6.dp, start = 4.dp),
                     )
                 }
+
+                // L'action principale : ce qui va se passer ne fait aucun doute.
+                Surface(
+                    shape = ControlShape,
+                    color = RegistreTheme.accent.teinte,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 10.dp)
+                        .clip(ControlShape)
+                        .clickable(enabled = !enCours) { lancer(actionChoisie) },
+                ) {
+                    Row(
+                        modifier = Modifier.padding(vertical = 11.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center,
+                    ) {
+                        if (enCours) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(16.dp),
+                                strokeWidth = 2.dp,
+                                color = RegistreTheme.colors.page,
+                            )
+                        } else {
+                            Text(
+                                text = "✨ Générer",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = RegistreTheme.colors.page,
+                            )
+                        }
+                    }
+                }
             }
+        }
+    }
+}
+
+/** Le résultat, une fois généré : texte, badge « Généré par IA », actions. */
+@Composable
+private fun RésultatIA(
+    texteRésultat: String,
+    enCours: Boolean,
+    surRéessayer: () -> Unit,
+    surRemplacer: () -> Unit,
+    surAnnuler: () -> Unit,
+) {
+    Surface(
+        shape = AnnotationShape,
+        color = RegistreTheme.colors.sage,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Text(
+            text = texteRésultat,
+            style = MaterialTheme.typography.bodyMedium,
+            color = RegistreTheme.colors.ink,
+            modifier = Modifier
+                .padding(10.dp)
+                .heightIn(max = 160.dp)
+                .verticalScroll(rememberScrollState()),
+        )
+    }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        BoutonPanneau(
+            texte = "Remplacer",
+            icône = Icons.Rounded.Check,
+            surClic = surRemplacer,
+            modifier = Modifier.weight(1f),
+        )
+        BoutonPanneau(
+            texte = "Réessayer",
+            icône = Icons.Rounded.RestartAlt,
+            surClic = surRéessayer,
+            chargement = enCours,
+            modifier = Modifier.weight(1f),
+        )
+        BoutonPanneau(
+            texte = "Annuler",
+            icône = Icons.Rounded.Close,
+            surClic = surAnnuler,
+            modifier = Modifier.weight(1f),
+        )
+    }
+    // Marquage « Généré par IA » (issue #58) : le résultat vient d'un modèle,
+    // ça doit se voir.
+    BadgeGénéréIA(modifier = Modifier.padding(top = 6.dp))
+}
+
+/** Une puce d'action : sélection dans l'accent du ✨, simple sinon. */
+@Composable
+private fun ActionPuce(
+    texte: String,
+    icône: ImageVector,
+    choisi: Boolean,
+    surClic: () -> Unit,
+    modifier: Modifier = Modifier,
+    compact: Boolean = false,
+) {
+    Surface(
+        shape = ControlShape,
+        color = if (choisi) RegistreTheme.accent.conteneur else RegistreTheme.colors.sage,
+        modifier = modifier
+            .clip(ControlShape)
+            .clickable(onClick = surClic),
+    ) {
+        Row(
+            modifier = Modifier.padding(
+                horizontal = if (compact) 8.dp else 12.dp,
+                vertical = 8.dp,
+            ),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(5.dp),
+        ) {
+            Icon(
+                imageVector = icône,
+                contentDescription = null,
+                tint = if (choisi) RegistreTheme.accent.teinte else RegistreTheme.colors.chalk,
+                modifier = Modifier.size(15.dp),
+            )
+            Text(
+                text = texte,
+                style = MaterialTheme.typography.labelMedium,
+                color = RegistreTheme.colors.ink,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
     }
 }
@@ -322,7 +466,7 @@ private fun BoutonPanneau(
     }
 }
 
-/** Une puce de ton : contour, pleine quand choisie. */
+/** Une puce de ton : dans l'accent quand choisie. */
 @Composable
 private fun PuceTon(
     ton: TonIA,
@@ -332,7 +476,7 @@ private fun PuceTon(
 ) {
     Surface(
         shape = AnnotationShape,
-        color = if (choisi) RegistreTheme.colors.ink else RegistreTheme.colors.sage,
+        color = if (choisi) RegistreTheme.accent.conteneur else RegistreTheme.colors.sage,
         modifier = modifier
             .clip(AnnotationShape)
             .clickable(onClick = onChoisir),
@@ -340,7 +484,7 @@ private fun PuceTon(
         Text(
             text = ton.libellé,
             style = MaterialTheme.typography.labelMedium,
-            color = if (choisi) RegistreTheme.colors.page else RegistreTheme.colors.ink,
+            color = if (choisi) RegistreTheme.accent.teinte else RegistreTheme.colors.ink,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier

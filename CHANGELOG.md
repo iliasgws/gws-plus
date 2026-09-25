@@ -6,6 +6,17 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
 
 ## [Non publié]
 
+### Modifié
+
+- **Le panneau IA repensé après l'essai réel** : feuille basse compacte
+  (~250 dp fermée, dépliable par poignée), aperçu du message en cours,
+  champ « Que voulez-vous modifier ? » encadré, actions claires
+  (Corriger / Réécrire, puis Raccourcir / Développer / Structurer /
+  Simplifier dépliés), tons Amical / Professionnel / Neutre, bouton
+  principal « ✨ Générer », accent rose du ✨ partout dans le panneau.
+  Le clavier se masque à l'ouverture ; le réglage « IA dans le composeur »
+  porte une vraie case à cocher.
+
 ### Ajouté
 
 - **Badge « Généré par IA »** (issue #58) : composant réutilisable
