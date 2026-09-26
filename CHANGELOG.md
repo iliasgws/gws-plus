@@ -4,6 +4,49 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [0.8.4] — 2026-09-26
+
+Stable après trois bêtas : le détail des devoirs enfin complet — pièces
+jointes réellement affichées, marquage « fait » confirmé, envoi de copie
+(issue #68, PRs #69, #70, #71) — plus les corrections du correctif
+mises à jour (issue #72, PR #73).
+
+### Ajouté
+
+- **Panneau de détail d'un devoir** (issue #60, PR #69) : ouvrir un devoir
+  depuis la liste ouvre son détail — description lisible, échéance,
+  enseignant, pièces jointes. Le détail interroge sa propre réponse du
+  serveur (GET `devoirs&devoir=<id>`, comme la page officielle) : seule
+  celle-ci porte les pièces jointes et les droits.
+- **Marquage « fait » avec confirmation** (issue #68) : bouton « Marquer
+  comme fait » (quand le serveur le permet, `can_set_done`) derrière une
+  boîte de confirmation — l'action est définitive. La liste se met à jour
+  au retour (puce « Travail fait »).
+- **Envoi de copie après le fait** (issue #68) : une fois le devoir marqué
+  fait (`can_add_files`), la section « Envoyez vos devoirs faits » permet
+  de joindre un fichier (sélecteur système) puis de l'envoyer en base64,
+  le fil exact du bundle officiel. Copies envoyées listées et
+  téléchargeables ; alerte du serveur affichée.
+
+### Corrigé
+
+- **Les pièces jointes s'affichent dans le détail** (#68) : elles n'existaient
+  que dans la réponse détail du serveur, jamais dans la liste — le bouton
+  « Tout télécharger » (2+ pièces) s'affiche à nouveau.
+- **Les téléchargements vont dans « Downloads/gws-plus »** (PR #70) : le
+  dossier public de l'app, visible dans les Fichiers du téléphone — le cache
+  privé d'avant était introuvable. Délais explicites (20 s connexion / 60 s
+  lecture), lot qui se termine toujours, échecs signalés (« Terminé — x/y
+  (n échecs) »), pièce entamée supprimée en cas d'échec.
+- **Le lot « Tout télécharger » se termine à l'écran** (PR #71) : le bouton
+  restait bloqué sur « Téléchargement… (x/x) » après le dernier fichier.
+- **La case « Participer aux bêtas » reste cochée après une installation**
+  (issue #72, PR #73) : le réglage était bien sauvegardé mais n'était plus
+  affiché après une mise à jour.
+- **Le contrôle des mises à jour se fait à chaque ouverture** (issue #72,
+  PR #73) : plus de limite « une fois par 12 h » ; le bouton ↻ du Registre
+  vérifie aussi les mises à jour en silence.
+
 ## [0.8.3] — 2026-09-26
 
 Stable après huit bêtas essayées sur appareil réel : l'assistant IA du
