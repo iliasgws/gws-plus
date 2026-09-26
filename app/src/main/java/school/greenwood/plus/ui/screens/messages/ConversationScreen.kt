@@ -245,28 +245,26 @@ fun ConversationScreen(
                     }
                 }
 
-                if (état.composeurActif) {
-                    Composeur(
-                        texte = état.texte,
-                        onTexte = vm::modifierTexte,
-                        pièces = état.pièces,
-                        onAjouterPièces = vm::ajouterPièces,
-                        onRetirerPièce = vm::retirerPièce,
-                        audio = état.audio,
-                        onRetirerAudio = vm::retirerAudio,
-                        enregistre = état.enregistre,
-                        onDémarrerEnregistrement = vm::démarrerEnregistrement,
-                        // Arrêter = repasser en composeur avec le vocal prêt
-                        // (puce « Message vocal prêt ») ; l'envoi reste un
-                        // geste séparé, comme pour une pièce jointe.
-                        onArrêterEnregistrement = vm::arrêterEnregistrement,
-                        onAnnulerEnregistrement = vm::annulerEnregistrement,
-                        envoiPossible = état.erreur == null,
-                        onEnvoyer = vm::envoyer,
-                        enCours = état.envois.any { it.statut == MessageEnvoi.Statut.EnCours },
-                        ia = réglagesIA,
-                    )
-                }
+                Composeur(
+                    texte = état.texte,
+                    onTexte = vm::modifierTexte,
+                    pièces = état.pièces,
+                    onAjouterPièces = vm::ajouterPièces,
+                    onRetirerPièce = vm::retirerPièce,
+                    audio = état.audio,
+                    onRetirerAudio = vm::retirerAudio,
+                    enregistre = état.enregistre,
+                    onDémarrerEnregistrement = vm::démarrerEnregistrement,
+                    // Arrêter = repasser en composeur avec le vocal prêt
+                    // (puce « Message vocal prêt ») ; l'envoi reste un
+                    // geste séparé, comme pour une pièce jointe.
+                    onArrêterEnregistrement = vm::arrêterEnregistrement,
+                    onAnnulerEnregistrement = vm::annulerEnregistrement,
+                    envoiPossible = état.erreur == null,
+                    onEnvoyer = vm::envoyer,
+                    enCours = état.envois.any { it.statut == MessageEnvoi.Statut.EnCours },
+                    ia = réglagesIA,
+                )
             }
         }
     }

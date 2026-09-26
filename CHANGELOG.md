@@ -4,6 +4,15 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [0.8.5-beta.2] — Non publié
+
+### Modifié
+
+- **Le composeur est toujours disponible** : l'interrupteur de la barre de
+  titre de l'onglet Messages (icône « réglages ») est supprimé, avec tout
+  son état persistant — l'écriture à l'administration est désormais
+  permanente, comme l'envoi lui-même depuis sa validation.
+
 ## [0.8.4] — 2026-09-26
 
 Stable après trois bêtas : le détail des devoirs enfin complet — pièces
