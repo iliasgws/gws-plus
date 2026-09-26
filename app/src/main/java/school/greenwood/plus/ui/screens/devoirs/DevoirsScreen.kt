@@ -28,9 +28,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ChevronLeft
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Attachment
+import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.RadioButtonUnchecked
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -71,10 +74,14 @@ import school.greenwood.plus.util.htmlToPlainSingleLine
  * Issue #78 : le point de suivi des devoirs par jour. Vert (accent « registre »)
  * quand tout le travail du jour est marqué fait, rouge stylo dès qu'un devoir
  * reste à faire — pas d'état intermédiaire. Rien si le jour n'a pas de devoirs.
+ * Issue #82 : orange signet quand le jour n'est fait que « pour soi » — le
+ * marquage local couvre tout, mais l'école ne le sait pas encore.
  */
 
-/** Suivi d'un jour : [Vert] = tous les devoirs faits, [Rouge] = au moins un reste. */
-private enum class ÉtatJour { Vert, Rouge }
+/** Suivi d'un jour : [Vert] = jour passé ou tout est fait aussi pour
+ *  l'école, [Orange] = fait pour soi seulement, [Rouge] = au moins un
+ *  reste. */
+private enum class ÉtatJour { Vert, Orange, Rouge }
 
 /** Jours avec devoirs non faits qui ont défilé hors de la rangée d'onglets. */
 private data class JoursHorsÉcran(val àGauche: Boolean, val àDroite: Boolean)
@@ -130,13 +137,19 @@ fun DevoirsScreen(
                 .sorted()
         }
         // Issue #78 : état « fait » de chaque jour, pour le point sur l'onglet
-        // et la pastille hors écran.
+        // et la pastille hors écran. Le marquage local « fait pour moi »
+        // (issue #82) compte lui aussi — vert quand l'école le sait aussi,
+        // orange tant que le jour n'est fait que pour soi, rouge sinon.
+        // Un jour entièrement passé est vert sans vérifier le serveur : le
+        // travail est derrière, inutile de l'afficher comme à faire.
         val étatsJours = remember(état.tous, jours) {
             jours.associateWith { jour ->
                 val duJour = état.tous.filter { it.dateRemise == jour }
                 when {
                     duJour.isEmpty() -> null
+                    jour.isBefore(aujourdhui) -> ÉtatJour.Vert
                     duJour.all { it.fait } -> ÉtatJour.Vert
+                    duJour.all { it.fait || it.faitLocal } -> ÉtatJour.Orange
                     else -> ÉtatJour.Rouge
                 }
             }
@@ -231,6 +244,7 @@ fun DevoirsScreen(
                                     devoir = devoir,
                                     aujourdhui = aujourdhui,
                                     onOuvrir = { onOuvrirDevoir(devoir.id) },
+                                    onBasculerFaitLocal = { vm.basculerFaitLocal(devoir) },
                                 )
                             }
                         }
@@ -280,16 +294,19 @@ private fun JourChip(
     }
 }
 
-/** Le point de suivi (issue #78) : vert si tout le travail du jour est fait,
+/** Le point de suivi (issues #78 + #82) : vert si tout le travail du jour est
+ *  fait aussi pour l'école, orange signet s'il n'est fait que « pour soi »,
  *  rouge stylo dès qu'un devoir reste à faire. */
 @Composable
 private fun PointSuivi(état: ÉtatJour) {
     val couleur = when (état) {
         ÉtatJour.Vert -> RegistreTheme.colors.accents.getValue("registre").teinte
+        ÉtatJour.Orange -> RegistreTheme.colors.signetVif
         ÉtatJour.Rouge -> RegistreTheme.colors.redPen
     }
     val description = when (état) {
         ÉtatJour.Vert -> "Tous les devoirs de ce jour sont faits"
+        ÉtatJour.Orange -> "Fait pour vous ce jour-là, mais pas encore pour l'école"
         ÉtatJour.Rouge -> "Il reste des devoirs à faire ce jour-là"
     }
     Box(
@@ -361,6 +378,7 @@ private fun CarteDevoir(
     devoir: Devoir,
     aujourdhui: LocalDate,
     onOuvrir: () -> Unit,
+    onBasculerFaitLocal: () -> Unit,
 ) {
     GwsCard(
         modifier = Modifier
@@ -374,6 +392,30 @@ private fun CarteDevoir(
             ) {
                 if (devoir.matiere.isNotBlank()) Puce(devoir.matiere)
                 devoir.categorie?.takeIf { it.isNotBlank() }?.let { Puce(it) }
+                Spacer(Modifier.weight(1f))
+                // Bascule « fait pour moi » (issue #82) : local, réversible
+                // d'un clic, invisible pour l'école. Orange quand le travail
+                // est fait pour soi mais pas encore pour l'école ; vert
+                // Greenwood quand l'école le sait aussi.
+                IconButton(
+                    onClick = onBasculerFaitLocal,
+                    modifier = Modifier.size(28.dp),
+                ) {
+                    Icon(
+                        imageVector = if (devoir.faitLocal) Icons.Rounded.CheckCircle
+                        else Icons.Rounded.RadioButtonUnchecked,
+                        contentDescription = if (devoir.faitLocal)
+                            "Retirer le marquage « fait pour moi »"
+                        else "Marquer fait pour moi (local, invisible à l'école)",
+                        tint = when {
+                            devoir.faitLocal && devoir.fait ->
+                                RegistreTheme.colors.accents.getValue("registre").teinte
+                            devoir.faitLocal -> RegistreTheme.colors.signetVif
+                            else -> RegistreTheme.colors.chalk
+                        },
+                        modifier = Modifier.size(22.dp),
+                    )
+                }
             }
             Text(
                 text = devoir.title,
@@ -390,9 +432,14 @@ private fun CarteDevoir(
                 )
             }
             // Le rouge ne marque que l'action requise (docs/product/DESIGN.md §2).
+            // Le marquage local « fait pour moi » (issue #82) éteint le rouge :
+            // le travail est fait au regard de l'utilisateur, sans toucher au
+            // suivi officiel. Un devoir passé n'est plus « à faire » — l'échéance
+            // est derrière, comme le point du jour qui devient vert.
             when {
                 devoir.fait -> Puce("Travail fait")
-                devoir.dateRemise != null && !devoir.dateRemise.isAfter(aujourdhui) ->
+                devoir.faitLocal -> Puce("Fait pour moi")
+                devoir.dateRemise != null && !devoir.dateRemise.isBefore(aujourdhui) ->
                     Puce("À faire", tintRed = true)
             }
 

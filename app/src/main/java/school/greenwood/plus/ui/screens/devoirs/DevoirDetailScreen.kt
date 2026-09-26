@@ -18,8 +18,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Attachment
+import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.RadioButtonUnchecked
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -198,9 +200,14 @@ fun DevoirDetailScreen(
                         }
 
                         // Le rouge ne marque que l'action requise (docs/product/DESIGN.md §2).
+                        // Le marquage local « fait pour moi » (issue #82) éteint
+                        // le rouge sans toucher au suivi officiel. Un devoir
+                        // passé n'est plus « à faire » — l'échéance est derrière,
+                        // comme le point du jour qui devient vert.
                         when {
                             fait -> Puce("Travail fait")
-                            d.dateRemise != null && !d.dateRemise.isAfter(LocalDate.now()) ->
+                            d.faitLocal -> Puce("Fait pour moi")
+                            d.dateRemise != null && !d.dateRemise.isBefore(LocalDate.now()) ->
                                 Puce("À faire", tintRed = true)
                         }
 
@@ -213,6 +220,40 @@ fun DevoirDetailScreen(
                                 color = RegistreTheme.colors.ink,
                             )
                         }
+
+                        // Marquage « fait pour moi » (issue #82) — purement
+                        // local : jamais envoyé à l'école, réversible d'un
+                        // clic, d'où l'absence de confirmation. Orange quand
+                        // le travail est fait pour soi mais pas encore pour
+                        // l'école ; vert Greenwood quand l'école le sait aussi.
+                        TextButton(
+                            onClick = { vm.basculerFaitLocal() },
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Icon(
+                                imageVector = if (d.faitLocal) Icons.Rounded.CheckCircle
+                                else Icons.Rounded.RadioButtonUnchecked,
+                                contentDescription = null,
+                                tint = when {
+                                    d.faitLocal && fait ->
+                                        RegistreTheme.colors.accents.getValue("registre").teinte
+                                    d.faitLocal -> RegistreTheme.colors.signetVif
+                                    else -> RegistreTheme.colors.chalk
+                                },
+                                modifier = Modifier.size(18.dp),
+                            )
+                            Spacer(Modifier.size(6.dp))
+                            Text(
+                                text = if (d.faitLocal) "Retirer le « fait pour moi »"
+                                else "Marquer fait pour moi (local)",
+                            )
+                        }
+                        Text(
+                            text = "Visible uniquement dans l'app — les professeurs " +
+                                "et l'administration ne le voient pas.",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = RegistreTheme.colors.chalk,
+                        )
 
                         // Marquage « fait » — définitif, d'où la confirmation.
                         if (peutMarquerFait) {
@@ -580,6 +621,19 @@ class DevoirDetailViewModel(
                             attachments = enrichi.attachments.ifEmpty { courant.attachments },
                         ) ?: enrichi
                     }
+                }
+            }
+        }
+    }
+
+    /** Bascule « fait pour moi » (issue #82) — local uniquement, réversible,
+     *  jamais envoyé au serveur ; l'écran suit aussitôt, comme le cache. */
+    fun basculerFaitLocal() {
+        viewModelScope.launch {
+            runCatching { container.devoirs.basculerFaitLocal(devoirId) }.onSuccess { fait ->
+                _devoir.update { it?.copy(faitLocal = fait) }
+                _détail.update { infos ->
+                    infos?.copy(devoir = infos.devoir.copy(faitLocal = fait))
                 }
             }
         }
