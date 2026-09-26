@@ -4,6 +4,17 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [0.9.0-beta.2] — 2026-09-26
+
+Bêta : la rondeur « fait pour moi » passe à l'orange.
+
+### Modifié
+
+- **Rondeur « fait pour moi » en orange** (issue #82) : tant que le devoir
+  est fait pour soi mais pas encore pour l'école, la rondeur de la carte
+  (et l'icône du détail) est orange signet ; elle redevient vert Greenwood
+  quand le fait officiel du serveur le confirme.
+
 ## [0.9.0-beta.1] — 2026-09-26
 
 Bêta : le marquage « fait pour moi » des devoirs.
