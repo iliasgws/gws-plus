@@ -41,7 +41,7 @@ import java.util.concurrent.TimeUnit
  * Mises à jour de l'app, sans serveur (issue #46) : l'app interroge l'API
  * GitHub Releases du dépôt public (aucun jeton, aucune donnée personnelle
  * envoyée — l'adresse IP seule, comme tout client HTTP). Contrôle au
- * démarrage (au plus une fois par 12 h), bouton « Vérifier » dans les
+ * démarrage et à l'actualisation du Registre, bouton « Vérifier » dans les
  * Paramètres, carte « Mise à jour disponible » sur le Registre,
  * notification locale si la permission est accordée. Le téléchargement
  * passe par le lien direct de la ressource GitHub puis le lecteur
@@ -173,9 +173,6 @@ class UpdatesRepository(
          *  Paramètres depuis la ligne « Version installée ». */
         const val PAGE_RELEASES = "https://github.com/$DÉPÔT/releases"
 
-        /** Contrôle au démarrage : au plus une fois par 12 h (issue #46). */
-        private const val INTERVALLE_MILLIS = 12L * 60 * 60 * 1000
-
         private const val CANAL_ID = "mises-a-jour"
 
         private val http = OkHttpClient.Builder()
@@ -239,11 +236,16 @@ class UpdatesRepository(
     private val _état = MutableStateFlow(MiseÀJourÉtat())
     val état: StateFlow<MiseÀJourÉtat> = _état.asStateFlow()
 
-    /** Démarrage de l'app : reprend la publication connue (persistée), puis
-     *  vérifie seulement si le dernier contrôle date de plus de 12 h.
-     *  Échec silencieux — on retentera à la prochaine ouverture. */
+    /** Démarrage de l'app : reprend la publication connue (persistée) et le
+     *  canal bêta, puis vérifie à chaque ouverture — l'API Releases est
+     *  publique et bon marché, plus de throttle. Échec silencieux — on
+     *  retentera à la prochaine ouverture. */
     suspend fun vérifierAuBesoin() {
         val bêta = session.majCanalBêta.first()
+        // Le réglage regagne l'état partagé à chaque ouverture — après une
+        // installation, la publication stockée n'est plus « plus récente »
+        // que la version installée, mais le canal doit rester affiché.
+        _état.update { it.copy(canalBêta = bêta) }
         // Carte retrouvée depuis le DataStore — la comparaison à la version
         // installée décide de l'affichage (l'app peut avoir été mise à jour
         // pendant l'absence du processus).
@@ -251,11 +253,9 @@ class UpdatesRepository(
             runCatching { json.decodeFromString<PublicationStockée>(brut).enPublication() }.getOrNull()
         }?.let { pub ->
             if (versionActuelle != null && pub.version > versionActuelle) {
-                _état.update { it.copy(disponible = pub, canalBêta = bêta) }
+                _état.update { it.copy(disponible = pub) }
             }
         }
-        val dernier = session.majDernièreVérification.first()
-        if (dernier != null && System.currentTimeMillis() - dernier < INTERVALLE_MILLIS) return
         vérifier(manuel = false)
     }
 
