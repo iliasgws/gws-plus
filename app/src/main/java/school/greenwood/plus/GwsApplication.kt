@@ -17,6 +17,7 @@ import school.greenwood.plus.data.repo.RegistreRepository
 import school.greenwood.plus.data.repo.UpdatesRepository
 import school.greenwood.plus.data.session.SessionStore
 import school.greenwood.plus.data.session.VeilleSession
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 
 /*
@@ -36,6 +37,11 @@ class AppContainer(context: Context) {
     // n'est pas enregistré.
     val quizEnJeu = MutableStateFlow(false)
 
+    // Signal « un devoir vient d'être modifié » (issue #68) : émis par le
+    // détail après une soumission, collecté par DevoirsViewModel pour
+    // rafraîchir la liste — le marquage « fait » se voit au retour.
+    val devoirsModifiés = MutableSharedFlow<String>(extraBufferCapacity = 4)
+
     // Veille de l'app : au retour au premier plan après une absence plus
     // longue que la durée réglée dans les Paramètres, chaque écran chargé
     // rafraîchit en silence — le contenu connu reste affiché, jamais de
@@ -45,7 +51,7 @@ class AppContainer(context: Context) {
     val auth = AuthRepository(client, session, caches)
     val registre = RegistreRepository(client, session, caches)
     val cours = CoursRepository(client, caches)
-    val devoirs = DevoirsRepository(client, caches)
+    val devoirs = DevoirsRepository(client, caches, session)
     val nouveautes = NouveautesRepository(client, session, caches)
     val messages = MessagesRepository(client, session, caches)
     val demandes = DemandesRepository(client, caches)

@@ -33,6 +33,31 @@ data class Devoir(
     val attachments: List<Attachment> = emptyList(),
 )
 
+/** Payload détail d'un devoir (issue #68) — GET `devoirs&devoir=<id>`, la
+ *  seule réponse qui porte les pièces jointes, l'état de soumission et les
+ *  droits. Les formes viennent de la sonde du 26/09/2026 (devoirs_single_*). */
+data class DevoirDétail(
+    val devoir: Devoir,
+    /** Bouton « fait » permis par le serveur — sinon l'action est masquée. */
+    val peutMarquerFait: Boolean = false,
+    /** Envoi de copies permis après le fait (section d'envoi officielle). */
+    val peutAjouterFichiers: Boolean = false,
+    val montrerFichiers: Boolean = false,
+    /** Copies envoyées au serveur, avec leur lien de téléchargement. */
+    val copiesEnvoyées: List<Attachment> = emptyList(),
+)
+
+/** Réponse du POST `devoirs_date_v2` : soit les copies sont parties
+ *  (`file_sent` true, liens serveur en retour), soit le devoir est juste
+ *  marqué fait. `titre`/`message` portent l'alerte du serveur. */
+data class SoumissionDétail(
+    val envoyées: Boolean,
+    val fait: Boolean,
+    val copies: List<Attachment> = emptyList(),
+    val titre: String? = null,
+    val message: String? = null,
+)
+
 /** Une actualité de l'école. */
 data class Post(
     val id: String,

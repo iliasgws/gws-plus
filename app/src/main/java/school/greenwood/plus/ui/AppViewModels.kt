@@ -234,6 +234,13 @@ class DevoirsViewModel(private val container: AppContainer) : ViewModel() {
         viewModelScope.launch {
             container.veille.retoursPérimés.collect { charger(force = true) }
         }
+        // Un devoir vient d'être soumis depuis le détail (issue #68) : la liste
+        // se rafraîchit pour que la puce « Travail fait » soit à jour au retour.
+        viewModelScope.launch {
+            container.devoirsModifiés.collect { id ->
+                if (id != null) charger(force = true)
+            }
+        }
     }
 
     fun charger(force: Boolean = false) {
