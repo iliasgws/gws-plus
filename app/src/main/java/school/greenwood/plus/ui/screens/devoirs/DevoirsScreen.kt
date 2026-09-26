@@ -1,11 +1,15 @@
 package school.greenwood.plus.ui.screens.devoirs
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -18,7 +22,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.ChevronLeft
+import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Attachment
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -27,12 +35,16 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.runtime.getValue
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -54,6 +66,18 @@ import school.greenwood.plus.ui.theme.tabulaire
 import school.greenwood.plus.ui.theme.RegistreTheme
 import school.greenwood.plus.util.frenchShort
 import school.greenwood.plus.util.htmlToPlainSingleLine
+
+/*
+ * Issue #78 : le point de suivi des devoirs par jour. Vert (accent « registre »)
+ * quand tout le travail du jour est marqué fait, rouge stylo dès qu'un devoir
+ * reste à faire — pas d'état intermédiaire. Rien si le jour n'a pas de devoirs.
+ */
+
+/** Suivi d'un jour : [Vert] = tous les devoirs faits, [Rouge] = au moins un reste. */
+private enum class ÉtatJour { Vert, Rouge }
+
+/** Jours avec devoirs non faits qui ont défilé hors de la rangée d'onglets. */
+private data class JoursHorsÉcran(val àGauche: Boolean, val àDroite: Boolean)
 
 /*
  * L'onglet Devoirs (docs/product/DESIGN.md §4) : liste par jour, sélection côté client sur
@@ -105,17 +129,49 @@ fun DevoirsScreen(
                 .distinct()
                 .sorted()
         }
-        LazyRow(
-            contentPadding = PaddingValues(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            items(jours) { jour ->
-                JourChip(
-                    jour = jour,
-                    sélectionné = jour == état.jourChoisi,
-                    onClick = { vm.choisirJour(jour) },
+        // Issue #78 : état « fait » de chaque jour, pour le point sur l'onglet
+        // et la pastille hors écran.
+        val étatsJours = remember(état.tous, jours) {
+            jours.associateWith { jour ->
+                val duJour = état.tous.filter { it.dateRemise == jour }
+                when {
+                    duJour.isEmpty() -> null
+                    duJour.all { it.fait } -> ÉtatJour.Vert
+                    else -> ÉtatJour.Rouge
+                }
+            }
+        }
+        val listeJours = rememberLazyListState()
+        // Un jour rouge hors du viewport : de quel côté est-il ?
+        val horsÉcran by remember(jours, étatsJours) {
+            derivedStateOf {
+                val visibles = listeJours.layoutInfo.visibleItemsInfo
+                val premier = visibles.minOfOrNull { it.index }
+                val dernier = visibles.maxOfOrNull { it.index }
+                JoursHorsÉcran(
+                    àGauche = premier != null && premier > 0 &&
+                        (0 until premier).any { étatsJours[jours[it]] == ÉtatJour.Rouge },
+                    àDroite = dernier != null && dernier < jours.lastIndex &&
+                        ((dernier + 1)..jours.lastIndex).any { étatsJours[jours[it]] == ÉtatJour.Rouge },
                 )
             }
+        }
+        Box {
+            LazyRow(
+                state = listeJours,
+                contentPadding = PaddingValues(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                items(jours) { jour ->
+                    JourChip(
+                        jour = jour,
+                        état = étatsJours[jour],
+                        sélectionné = jour == état.jourChoisi,
+                        onClick = { vm.choisirJour(jour) },
+                    )
+                }
+            }
+            PastilleHorsÉcran(horsÉcran.àGauche, horsÉcran.àDroite)
         }
 
         when {
@@ -188,6 +244,7 @@ fun DevoirsScreen(
 @Composable
 private fun JourChip(
     jour: LocalDate,
+    état: ÉtatJour?,
     sélectionné: Boolean,
     onClick: () -> Unit,
 ) {
@@ -208,11 +265,93 @@ private fun JourChip(
             }
             .clickable(onClick = onClick),
     ) {
-        Text(
-            text = if (jour == LocalDate.now()) "Aujourd'hui" else jour.frenchShort(),
+        Row(
             modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
-            style = MaterialTheme.typography.labelMedium.tabulaire(),
-            color = if (sélectionné) accent.surConteneur else RegistreTheme.colors.chalk,
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            état?.let { PointSuivi(it) }
+            Text(
+                text = if (jour == LocalDate.now()) "Aujourd'hui" else jour.frenchShort(),
+                style = MaterialTheme.typography.labelMedium.tabulaire(),
+                color = if (sélectionné) accent.surConteneur else RegistreTheme.colors.chalk,
+            )
+        }
+    }
+}
+
+/** Le point de suivi (issue #78) : vert si tout le travail du jour est fait,
+ *  rouge stylo dès qu'un devoir reste à faire. */
+@Composable
+private fun PointSuivi(état: ÉtatJour) {
+    val couleur = when (état) {
+        ÉtatJour.Vert -> RegistreTheme.colors.accents.getValue("registre").teinte
+        ÉtatJour.Rouge -> RegistreTheme.colors.redPen
+    }
+    val description = when (état) {
+        ÉtatJour.Vert -> "Tous les devoirs de ce jour sont faits"
+        ÉtatJour.Rouge -> "Il reste des devoirs à faire ce jour-là"
+    }
+    Box(
+        modifier = Modifier
+            .size(8.dp)
+            .clip(CircleShape)
+            .background(couleur)
+            .semantics { contentDescription = description },
+    )
+}
+
+/** Issue #78 : quand un jour avec devoirs non faits a défilé hors de la rangée
+ *  d'onglets, une petite pastille rouge au bord indique de quel côté il se
+ *  trouve. */
+@Composable
+private fun BoxScope.PastilleHorsÉcran(àGauche: Boolean, àDroite: Boolean) {
+    AnimatedVisibility(
+        visible = àGauche,
+        enter = fadeIn(),
+        exit = fadeOut(),
+        modifier = Modifier.align(Alignment.CenterStart),
+    ) {
+        BadgeDirection(
+            icône = Icons.Rounded.ChevronLeft,
+            description = "Des devoirs non faits se trouvent plus tôt dans la liste des jours",
+            modifier = Modifier.padding(start = 2.dp),
+        )
+    }
+    AnimatedVisibility(
+        visible = àDroite,
+        enter = fadeIn(),
+        exit = fadeOut(),
+        modifier = Modifier.align(Alignment.CenterEnd),
+    ) {
+        BadgeDirection(
+            icône = Icons.Rounded.ChevronRight,
+            description = "Des devoirs non faits se trouvent plus loin dans la liste des jours",
+            modifier = Modifier.padding(end = 2.dp),
+        )
+    }
+}
+
+/** La pastille elle-même : rond rouge stylo, chevron vers le jour concerné. */
+@Composable
+private fun BadgeDirection(
+    icône: ImageVector,
+    description: String,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier
+            .size(22.dp)
+            .clip(CircleShape)
+            .background(RegistreTheme.colors.redPen)
+            .semantics { contentDescription = description },
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            imageVector = icône,
+            contentDescription = null,
+            tint = RegistreTheme.colors.page,
+            modifier = Modifier.size(16.dp),
         )
     }
 }

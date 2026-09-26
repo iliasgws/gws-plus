@@ -4,6 +4,19 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [0.8.6] — 2026-09-26
+
+Stable après une bêta : le suivi des devoirs d'un coup d'œil.
+
+### Ajouté
+
+- **Point de suivi des devoirs par jour** (issue #78, PR #79) : un point à
+  côté du nom du jour dans l'onglet Devoirs — vert Greenwood quand tout le
+  travail du jour est marqué fait, rouge stylo dès qu'un devoir reste à
+  faire. Si le jour se trouve hors de la rangée d'onglets, une petite
+  pastille rouge avec chevron apparaît au bord pour indiquer de quel côté
+  le trouver.
+
 ## [0.8.5] — 2026-09-26
 
 Stable après une bêta : le composeur devient permanent.
