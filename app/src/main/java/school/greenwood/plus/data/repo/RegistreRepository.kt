@@ -55,7 +55,7 @@ class RegistreRepository(
     private val session: SessionStore,
     private val caches: CachesSession,
 ) {
-    private val devoirs = DevoirsRepository(client, caches)
+    private val devoirs = DevoirsRepository(client, caches, session)
     private val nouveautes = NouveautesRepository(client, session, caches)
     private val absences = AbsencesRepository(client)
     private val messagesRepo = MessagesRepository(client, session, caches)

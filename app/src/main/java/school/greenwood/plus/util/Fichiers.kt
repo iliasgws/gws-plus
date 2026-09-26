@@ -61,6 +61,36 @@ object Fichiers {
     fun dossierEnvoi(context: Context): File =
         File(context.cacheDir, "envoi").apply { mkdirs() }
 
+    /** Fichier → data URL base64 (`data:<mime>;base64,…`) — le format que le
+     *  bundle officiel embarque dans le champ `devoir` de la soumission
+     *  (issue #68, `base64File` du FileReader.readAsDataURL d'origine). */
+    suspend fun enDataURL(fichier: File): String = withContext(Dispatchers.IO) {
+        val mime = mimeDeBase(fichier.extension)
+        val base64 = java.util.Base64.getEncoder().encodeToString(fichier.readBytes())
+        "data:$mime;base64,$base64"
+    }
+
+    /** Mime déduit de l'extension — le sous-ensemble suffisant aux copies. */
+    private fun mimeDeBase(ext: String): String = when (ext.lowercase()) {
+        "pdf" -> "application/pdf"
+        "png" -> "image/png"
+        "jpg", "jpeg" -> "image/jpeg"
+        "gif" -> "image/gif"
+        "webp" -> "image/webp"
+        "doc" -> "application/msword"
+        "docx" -> "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        "xls" -> "application/vnd.ms-excel"
+        "xlsx" -> "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        "ppt" -> "application/vnd.ms-powerpoint"
+        "pptx" -> "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+        "txt" -> "text/plain"
+        "mp3" -> "audio/mpeg"
+        "m4a", "mp4" -> "audio/mp4"
+        "wav" -> "audio/wav"
+        "ogg" -> "audio/ogg"
+        else -> "application/octet-stream"
+    }
+
     /** Copie un document choisi via le sélecteur système (SAF) dans l'espace
      *  d'attente. Retourne null si la lecture échoue. */
     suspend fun copierDepuisSaf(context: Context, uri: Uri): File? =

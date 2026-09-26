@@ -1,8 +1,6 @@
 package school.greenwood.plus.ui.screens.devoirs
 
-import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -22,24 +20,18 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Attachment
-import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -47,7 +39,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import java.time.LocalDate
 import school.greenwood.plus.AppContainer
-import school.greenwood.plus.model.Attachment
 import school.greenwood.plus.model.Devoir
 import school.greenwood.plus.ui.DevoirsViewModel
 import school.greenwood.plus.ui.components.BandeauErreur
@@ -61,8 +52,8 @@ import school.greenwood.plus.ui.theme.ControlShape
 import school.greenwood.plus.ui.theme.RessortVif
 import school.greenwood.plus.ui.theme.tabulaire
 import school.greenwood.plus.ui.theme.RegistreTheme
-import school.greenwood.plus.util.Fichiers
 import school.greenwood.plus.util.frenchShort
+import school.greenwood.plus.util.htmlToPlainSingleLine
 
 /*
  * L'onglet Devoirs (docs/product/DESIGN.md §4) : liste par jour, sélection côté client sur
@@ -74,10 +65,10 @@ import school.greenwood.plus.util.frenchShort
 fun DevoirsScreen(
     container: AppContainer,
     padding: PaddingValues,
+    onOuvrirDevoir: (String) -> Unit = {},
 ) {
     val vm: DevoirsViewModel = viewModel { DevoirsViewModel(container) }
     val état by vm.état.collectAsStateWithLifecycle()
-    val context = LocalContext.current
     val aujourdhui = LocalDate.now()
 
     Column(
@@ -183,9 +174,7 @@ fun DevoirsScreen(
                                 CarteDevoir(
                                     devoir = devoir,
                                     aujourdhui = aujourdhui,
-                                    onTélécharger = { url, nom, onFait ->
-                                        vm.téléchargerPièceJointe(devoir, url, nom, context, onFait)
-                                    },
+                                    onOuvrir = { onOuvrirDevoir(devoir.id) },
                                 )
                             }
                         }
@@ -232,22 +221,12 @@ private fun JourChip(
 private fun CarteDevoir(
     devoir: Devoir,
     aujourdhui: LocalDate,
-    onTélécharger: (url: String, nom: String, onFait: (java.io.File?) -> Unit) -> Unit,
+    onOuvrir: () -> Unit,
 ) {
-    val context = LocalContext.current
-    val téléchargements = remember { mutableStateMapOf<String, Boolean>() }
-    // Replié quand il y a un texte à dérouler ; ouvert sinon.
-    val ouverts = remember(devoir.id) { mutableStateMapOf<String, Boolean>() }
-    val déroulé = ouverts[devoir.id] ?: devoir.description.isNullOrBlank()
-    val aDuContenu = !devoir.description.isNullOrBlank() || devoir.attachments.isNotEmpty()
-
     GwsCard(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(enabled = aDuContenu) {
-                ouverts[devoir.id] = !déroulé
-            }
-            .animateContentSize(animationSpec = spring()),
+            .clickable(onClick = onOuvrir),
     ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(
@@ -278,74 +257,34 @@ private fun CarteDevoir(
                     Puce("À faire", tintRed = true)
             }
 
-            if (déroulé) {
-                devoir.description?.takeIf { it.isNotBlank() }?.let {
-                    Text(
-                        text = it,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = RegistreTheme.colors.ink,
-                    )
-                }
-                devoir.attachments.forEach { pièce ->
-                    LignePièceJointe(
-                        pièce = pièce,
-                        enCours = téléchargements[pièce.url] == true,
-                        onTélécharger = {
-                            téléchargements[pièce.url] = true
-                            onTélécharger(pièce.url, pièce.name) { fichier ->
-                                téléchargements[pièce.url] = false
-                                if (fichier != null) {
-                                    val intention = Fichiers.intentionOuvrir(context, fichier)
-                                    if (intention != null) context.startActivity(intention)
-                                }
-                            }
-                        },
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun LignePièceJointe(
-    pièce: Attachment,
-    enCours: Boolean,
-    onTélécharger: () -> Unit,
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Icon(
-            imageVector = Icons.Rounded.Attachment,
-            contentDescription = null,
-            tint = RegistreTheme.colors.chalk,
-            modifier = Modifier.size(16.dp),
-        )
-        Text(
-            text = pièce.name,
-            style = MaterialTheme.typography.bodySmall,
-            color = RegistreTheme.colors.ink,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f),
-        )
-        if (enCours) {
-            CircularProgressIndicator(
-                color = RegistreTheme.colors.ink,
-                strokeWidth = 2.dp,
-                modifier = Modifier.size(16.dp),
-            )
-        } else {
-            IconButton(onClick = onTélécharger, modifier = Modifier.size(28.dp)) {
-                Icon(
-                    imageVector = Icons.Rounded.Download,
-                    contentDescription = "Télécharger ${pièce.name}",
-                    tint = RegistreTheme.colors.ink,
-                    modifier = Modifier.size(18.dp),
+            // Aperçu d'une ligne du corps (HTML aplati) — le détail complet
+            // s'ouvre dans le panneau dédié (issue #60).
+            devoir.description?.takeIf { it.isNotBlank() }?.let {
+                Text(
+                    text = it.htmlToPlainSingleLine(),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = RegistreTheme.colors.chalk,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
+            }
+            if (devoir.attachments.isNotEmpty()) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Attachment,
+                        contentDescription = null,
+                        tint = RegistreTheme.colors.chalk,
+                        modifier = Modifier.size(14.dp),
+                    )
+                    Text(
+                        text = "${devoir.attachments.size} pièce(s) jointe(s)",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = RegistreTheme.colors.chalk,
+                    )
+                }
             }
         }
     }

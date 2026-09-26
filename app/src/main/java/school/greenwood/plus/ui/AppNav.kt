@@ -51,6 +51,7 @@ import school.greenwood.plus.ui.screens.boutique.BoutiqueItemScreen
 import school.greenwood.plus.ui.screens.boutique.BoutiqueScreen
 import school.greenwood.plus.ui.screens.boutique.RepasInviteScreen
 import school.greenwood.plus.ui.screens.devoirs.DevoirsScreen
+import school.greenwood.plus.ui.screens.devoirs.DevoirDetailScreen
 import school.greenwood.plus.ui.screens.demandes.DemandesScreen
 import school.greenwood.plus.ui.screens.documents.DocumentsScreen
 import school.greenwood.plus.ui.screens.documents.QuizScreen
@@ -312,7 +313,19 @@ fun Shell(container: AppContainer) {
                 CoursScreen(container = container, padding = padding)
             }
             composable("devoirs") {
-                DevoirsScreen(container = container, padding = padding)
+                DevoirsScreen(
+                    container = container,
+                    padding = padding,
+                    onOuvrirDevoir = { id -> navController.navigate("devoir/$id") },
+                )
+            }
+            composable("devoir/{devoirId}") { entrée ->
+                DevoirDetailScreen(
+                    container = container,
+                    padding = padding,
+                    devoirId = entrée.arguments?.getString("devoirId") ?: "",
+                    retour = { navController.popBackStack() },
+                )
             }
             composable("documents") {
                 DocumentsScreen(

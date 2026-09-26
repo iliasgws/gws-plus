@@ -19,6 +19,8 @@ import school.greenwood.plus.model.Créneau
 import school.greenwood.plus.model.Demande
 import school.greenwood.plus.model.DemandeReponse
 import school.greenwood.plus.model.Devoir
+import school.greenwood.plus.model.DevoirDétail
+import school.greenwood.plus.model.SoumissionDétail
 import school.greenwood.plus.model.FicheBibliotheque
 import school.greenwood.plus.model.FicheBibliothequeDetail
 import school.greenwood.plus.model.Eleve
@@ -104,6 +106,56 @@ object Normalizers {
             fait = bool(fait ?: JsonObject(emptyMap()), "fait") ?: false,
             filesSent = bool(fait ?: JsonObject(emptyMap()), "file_sent") ?: false,
             attachments = pieces,
+        )
+    }
+
+    /** Payload détail (issue #68, sonde devoirs_single_*) : le même devoir que
+     *  la liste, enrichi des droits et de l'état de soumission. Les pièces
+     *  jointes vivent dans `files[]` (lien direct + `filename`). */
+    fun devoirDétail(rep: JsonObject): DevoirDétail {
+        val devoir = devoir(rep) ?: Devoir(
+            id = str(rep, "id") ?: "",
+            title = str(rep, "title") ?: "",
+            matiere = str(rep, "matiere") ?: "",
+        )
+        val état = (rep["devoir_fait"] as? JsonObject)
+        return DevoirDétail(
+            devoir = devoir,
+            peutMarquerFait = bool(rep, "can_set_done") ?: false,
+            peutAjouterFichiers = bool(rep, "can_add_files") ?: false,
+            montrerFichiers = bool(rep, "show_files") ?: false,
+            copiesEnvoyées = arr(état ?: JsonObject(emptyMap()), "files").mapNotNull { f ->
+                (f as? JsonObject)?.let { o ->
+                    val url = MediaUrls.lienRéel(str(o, "link")) ?: return@mapNotNull null
+                    Attachment(
+                        name = str(o, "name") ?: str(o, "filename") ?: "copie",
+                        url = url,
+                    )
+                }
+            },
+        )
+    }
+
+    /** Réponse du POST `devoirs_date_v2` (bundle 3537.js / 154.js) :
+     *  `file_sent` true → copies parties, `files` servies en retour ;
+     *  sinon le devoir est simplement marqué fait. Dans les deux cas le
+     *  devoir est terminé (l'UI ne soumet que pour clore un devoir). */
+    fun soumission(rep: JsonObject): SoumissionDétail {
+        val envoyées = bool(rep, "file_sent") ?: false
+        return SoumissionDétail(
+            envoyées = envoyées,
+            fait = bool(rep, "fait") ?: true,
+            copies = arr(rep, "files").mapNotNull { f ->
+                (f as? JsonObject)?.let { o ->
+                    val url = MediaUrls.lienRéel(str(o, "link")) ?: return@mapNotNull null
+                    Attachment(
+                        name = str(o, "name") ?: str(o, "filename") ?: "copie",
+                        url = url,
+                    )
+                }
+            },
+            titre = str(rep, "title"),
+            message = str(rep, "message"),
         )
     }
 
