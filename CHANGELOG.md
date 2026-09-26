@@ -4,56 +4,9 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
-## [0.9.0-beta.5] — 2026-09-26
+## [0.9.0] — 2026-09-26
 
-Bêta : les devoirs passés ne sont plus « à faire ».
-
-### Modifié
-
-- **Puce rouge « À faire » retirée pour les devoirs passés** (issue #82) :
-  la puce ne s'affiche plus quand la date de remise est derrière — en liste
-  comme dans le détail — cohérent avec le point du jour passé devenu vert.
-  Aujourd'hui reste rouge : il faut encore rendre le travail.
-
-## [0.9.0-beta.4] — 2026-09-26
-
-Bêta : les jours passés sont verts, sans vérifier le serveur.
-
-### Modifié
-
-- **Point de suivi des jours passés en vert** (issue #82) : un jour
-  entièrement passé s'affiche vert même si le fait officiel du serveur
-  n'est pas coché — le travail est derrière, plus rien à faire. Les jours
-  à venir gardent leur logique : vert (école au courant), orange (fait
-  pour vous seulement), rouge (au moins un devoir reste).
-
-## [0.9.0-beta.3] — 2026-09-26
-
-Bêta : l'indicateur de jour passe à l'orange lui aussi.
-
-### Modifié
-
-- **Point de suivi du jour en orange** (issue #82) : quand tous les devoirs
-  du jour sont faits « pour vous » mais pas encore pour l'école, le point
-  à côté du jour est orange signet au lieu de rouge ; il redevient vert
-  Greenwood quand le fait officiel du serveur le confirme, rouge stylo
-  dès qu'un devoir reste à faire. La pastille hors écran ne signale que
-  les jours rouges — rien ne reste à faire un jour orange.
-
-## [0.9.0-beta.2] — 2026-09-26
-
-Bêta : la rondeur « fait pour moi » passe à l'orange.
-
-### Modifié
-
-- **Rondeur « fait pour moi » en orange** (issue #82) : tant que le devoir
-  est fait pour soi mais pas encore pour l'école, la rondeur de la carte
-  (et l'icône du détail) est orange signet ; elle redevient vert Greenwood
-  quand le fait officiel du serveur le confirme.
-
-## [0.9.0-beta.1] — 2026-09-26
-
-Bêta : le marquage « fait pour moi » des devoirs.
+Stable après cinq bêtas : le marquage « fait pour moi » des devoirs.
 
 ### Ajouté
 
@@ -61,9 +14,20 @@ Bêta : le marquage « fait pour moi » des devoirs.
   marquage, purement local — un clic sur la rondeur de la carte (ou le
   bouton du détail) marque le devoir fait **pour vous**, sans rien envoyer
   à l'école : les professeurs et l'administration ne le voient pas. Un
-  second clic retire le marquage. Il compte dans le point de suivi par jour
-  (issue #78) et éteint le rouge « À faire », sans toucher au fait
-  officiel du serveur.
+  second clic retire le marquage. Persisté localement (DataStore) :
+  fonctionne hors-ligne, survit à une purge de session.
+
+### Modifié
+
+- **Couleurs du suivi** (issues #78 + #82) : la rondeur de la carte et le
+  point de suivi du jour sont orange signet quand le travail est fait
+  pour vous mais pas encore pour l'école, vert Greenwood quand le fait
+  officiel du serveur le confirme, rouge stylo dès qu'un devoir reste à
+  faire. La pastille hors écran ne signale que les jours rouges.
+- **Jours et devoirs passés** : un jour entièrement passé s'affiche vert
+  sans vérifier le serveur, et ses devoirs perdent la puce rouge
+  « À faire » — le travail est derrière, plus rien à faire. Aujourd'hui
+  reste rouge : il faut encore rendre le travail.
 
 ## [0.8.6] — 2026-09-26
 
