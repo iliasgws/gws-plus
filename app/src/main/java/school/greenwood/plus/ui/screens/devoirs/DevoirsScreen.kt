@@ -434,11 +434,12 @@ private fun CarteDevoir(
             // Le rouge ne marque que l'action requise (docs/product/DESIGN.md §2).
             // Le marquage local « fait pour moi » (issue #82) éteint le rouge :
             // le travail est fait au regard de l'utilisateur, sans toucher au
-            // suivi officiel.
+            // suivi officiel. Un devoir passé n'est plus « à faire » — l'échéance
+            // est derrière, comme le point du jour qui devient vert.
             when {
                 devoir.fait -> Puce("Travail fait")
                 devoir.faitLocal -> Puce("Fait pour moi")
-                devoir.dateRemise != null && !devoir.dateRemise.isAfter(aujourdhui) ->
+                devoir.dateRemise != null && !devoir.dateRemise.isBefore(aujourdhui) ->
                     Puce("À faire", tintRed = true)
             }
 

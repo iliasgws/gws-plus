@@ -201,11 +201,13 @@ fun DevoirDetailScreen(
 
                         // Le rouge ne marque que l'action requise (docs/product/DESIGN.md §2).
                         // Le marquage local « fait pour moi » (issue #82) éteint
-                        // le rouge sans toucher au suivi officiel.
+                        // le rouge sans toucher au suivi officiel. Un devoir
+                        // passé n'est plus « à faire » — l'échéance est derrière,
+                        // comme le point du jour qui devient vert.
                         when {
                             fait -> Puce("Travail fait")
                             d.faitLocal -> Puce("Fait pour moi")
-                            d.dateRemise != null && !d.dateRemise.isAfter(LocalDate.now()) ->
+                            d.dateRemise != null && !d.dateRemise.isBefore(LocalDate.now()) ->
                                 Puce("À faire", tintRed = true)
                         }
 
