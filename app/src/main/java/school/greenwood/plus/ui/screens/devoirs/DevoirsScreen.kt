@@ -4,12 +4,9 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -46,9 +43,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -73,7 +67,6 @@ import school.greenwood.plus.ui.theme.ControlShape
 import school.greenwood.plus.ui.theme.RessortVif
 import school.greenwood.plus.ui.theme.tabulaire
 import school.greenwood.plus.ui.theme.RegistreTheme
-import school.greenwood.plus.util.devoirTexteÀCopier
 import school.greenwood.plus.util.frenchShort
 import school.greenwood.plus.util.htmlToPlainSingleLine
 
@@ -380,7 +373,6 @@ private fun BadgeDirection(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun CarteDevoir(
     devoir: Devoir,
@@ -388,26 +380,10 @@ private fun CarteDevoir(
     onOuvrir: () -> Unit,
     onBasculerFaitLocal: () -> Unit,
 ) {
-    val pressePapiers = LocalClipboardManager.current
-    val context = LocalContext.current
     GwsCard(
         modifier = Modifier
             .fillMaxWidth()
-            .combinedClickable(
-                onClick = onOuvrir,
-                // Issue #85 : appui long → copier toutes les infos du devoir
-                // (titre, matière, enseignant, état fait, pièces jointes, corps).
-                onLongClick = {
-                    pressePapiers.setText(
-                        AnnotatedString(devoirTexteÀCopier(devoir, aujourdhui))
-                    )
-                    Toast.makeText(
-                        context,
-                        "Informations du devoir copiées",
-                        Toast.LENGTH_SHORT,
-                    ).show()
-                },
-            ),
+            .clickable(onClick = onOuvrir),
     ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(

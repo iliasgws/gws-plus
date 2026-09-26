@@ -8,12 +8,12 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
 
 ### Ajouté
 
-- **Copie d'un devoir par appui long** (issue #85, PR #86) : un appui long
-  sur une carte de l'onglet Devoirs copie dans le presse-papiers toutes
-  les informations du devoir — titre, matière, catégorie, enseignant(e),
-  état « fait » (école, « fait pour moi » local, à faire), noms des
-  pièces jointes et corps du texte — avec un toast de confirmation.
-  Le clic simple ouvre toujours le devoir ; rien n'est envoyé à l'école.
+- **Bouton « copier » d'un devoir** (issue #85, PR #86) : en haut de la
+  page d'un devoir, un bouton copie dans le presse-papiers toutes ses
+  informations — titre, matière, catégorie, enseignant(e), état « fait »
+  (école, « fait pour moi » local, à faire), noms des pièces jointes et
+  corps du texte — avec un toast de confirmation. Rien n'est envoyé à
+  l'école.
 
 ## [0.9.0] — 2026-09-26
 

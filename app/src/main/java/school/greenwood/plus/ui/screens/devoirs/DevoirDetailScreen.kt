@@ -1,5 +1,6 @@
 package school.greenwood.plus.ui.screens.devoirs
 
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -21,6 +22,7 @@ import androidx.compose.material.icons.rounded.Attachment
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material.icons.rounded.RadioButtonUnchecked
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -39,7 +41,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -62,6 +66,7 @@ import school.greenwood.plus.ui.components.Puce
 import school.greenwood.plus.ui.components.SectionLabel
 import school.greenwood.plus.ui.theme.ControlShape
 import school.greenwood.plus.ui.theme.RegistreTheme
+import school.greenwood.plus.util.devoirTexteÀCopier
 import school.greenwood.plus.ui.theme.tabulaire
 import school.greenwood.plus.util.Fichiers
 import school.greenwood.plus.util.frenchShort
@@ -120,11 +125,43 @@ fun DevoirDetailScreen(
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             IconButton(onClick = retour) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
                     contentDescription = "Retour",
+                    tint = RegistreTheme.colors.ink,
+                )
+            }
+            // Issue #85 : bouton de copie — titre, matière, enseignant(e),
+            // état « fait », pièces jointes et corps du devoir dans le
+            // presse-papiers. Inactif tant que le devoir n'est pas chargé.
+            val pressePapiers = LocalClipboardManager.current
+            IconButton(
+                onClick = {
+                    devoir?.let { d ->
+                        pressePapiers.setText(
+                            AnnotatedString(
+                                devoirTexteÀCopier(
+                                    // L'état peut venir du détail (plus frais que le cache).
+                                    d.copy(fait = détail?.devoir?.fait ?: d.fait),
+                                    LocalDate.now(),
+                                )
+                            )
+                        )
+                        Toast.makeText(
+                            context,
+                            "Informations du devoir copiées",
+                            Toast.LENGTH_SHORT,
+                        ).show()
+                    }
+                },
+                enabled = devoir != null,
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.ContentCopy,
+                    contentDescription = "Copier les informations du devoir",
                     tint = RegistreTheme.colors.ink,
                 )
             }
