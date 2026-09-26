@@ -60,15 +60,19 @@ class DevoirsRepository(
             }.distinctBy { it.id }
         }
         // Dernière liste connue (issue #21) — une liste vide est un état valide.
-        caches.clé()?.let { clé -> caches.devoirs.écrire(clé, résultat) }
-        return résultat
+        val avecLocal = avecFaitLocal(résultat, session.devoirsFaitLocal.first())
+        caches.clé()?.let { clé -> caches.devoirs.écrire(clé, avecLocal) }
+        return avecLocal
     }
 
     /** Dernière liste connue, estampillée session — null si rien en cache ou
      *  si la session a changé depuis l'écriture. */
     suspend fun listeEnCache(): List<Devoir>? {
         val clé = caches.clé() ?: return null
-        return caches.devoirs.lire(clé)
+        val liste = caches.devoirs.lire(clé) ?: return null
+        // On réapplique le marquage local (issue #82) : les caches écrits avant
+        // cette fonctionnalité ne le portent pas encore.
+        return avecFaitLocal(liste, session.devoirsFaitLocal.first())
     }
 
     /** Filtre client sur l'échéance — le paramètre `date` du serveur est ignoré. */
@@ -80,7 +84,22 @@ class DevoirsRepository(
     suspend fun détail(id: String): DevoirDétail? {
         val rep = client.get("devoirs", mapOf("devoir" to id))
         if (Normalizers.str(rep, "id") == null) return null
-        return Normalizers.devoirDétail(rep)
+        val infos = Normalizers.devoirDétail(rep) ?: return null
+        val ids = session.devoirsFaitLocal.first()
+        return if (id in ids) infos.copy(devoir = infos.devoir.copy(faitLocal = true)) else infos
+    }
+
+    /**
+     * Marquage « fait pour moi » (issue #82) : bascule un devoir fait / pas
+     * fait **localement** — rien ne part au serveur, les professeurs et
+     * l'administration ne le voient pas. Réversible d'un clic, contrairement
+     * au fait officiel (POST définitif). Retourne le nouvel état.
+     */
+    suspend fun basculerFaitLocal(id: String): Boolean {
+        val fait = id !in session.devoirsFaitLocal.first()
+        session.marquerDevoirFaitLocal(id, fait)
+        rafraîchirCache(id) { it.copy(faitLocal = fait) }
+        return fait
     }
 
     /**
@@ -134,4 +153,12 @@ class DevoirsRepository(
             }
         }.toMap()
     }
+}
+
+/** Marquage local « fait pour moi » (issue #82) : les devoirs dont l'id est
+ *  dans [idsMarqués] portent `faitLocal = true` — purement local, le serveur
+ *  n'en sait rien. Fonction pure, testée dans `DevoirsFaitLocalTest`. */
+internal fun avecFaitLocal(liste: List<Devoir>, idsMarqués: Set<String>): List<Devoir> {
+    if (idsMarqués.isEmpty()) return liste
+    return liste.map { if (it.id in idsMarqués) it.copy(faitLocal = true) else it }
 }

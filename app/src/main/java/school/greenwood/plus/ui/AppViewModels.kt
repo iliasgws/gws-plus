@@ -294,6 +294,20 @@ class DevoirsViewModel(private val container: AppContainer) : ViewModel() {
         _état.update { it.copy(jourChoisi = date) }
     }
 
+    /** Marquage « fait pour moi » (issue #82) : purement local — jamais envoyé
+     *  à l'école, réversible d'un clic. La liste affichée suit aussitôt. */
+    fun basculerFaitLocal(devoir: Devoir) {
+        viewModelScope.launch {
+            runCatching { container.devoirs.basculerFaitLocal(devoir.id) }.onSuccess { fait ->
+                _état.update { st ->
+                    st.copy(tous = st.tous.map {
+                        if (it.id == devoir.id) it.copy(faitLocal = fait) else it
+                    })
+                }
+            }
+        }
+    }
+
     fun téléchargerPièceJointe(devoir: Devoir, url: String, nom: String, context: android.content.Context, onFait: (java.io.File?) -> Unit) {
         viewModelScope.launch {
             val fichier = try {

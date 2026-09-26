@@ -4,6 +4,18 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [Non publié]
+
+### Ajouté
+
+- **Marquage « fait pour moi » des devoirs** (issue #82) : un second
+  marquage, purement local — un clic sur la rondeur de la carte (ou le
+  bouton du détail) marque le devoir fait **pour vous**, sans rien envoyer
+  à l'école : les professeurs et l'administration ne le voient pas. Un
+  second clic retire le marquage. Il compte dans le point de suivi par jour
+  (issue #78) et éteint le rouge « À faire », sans toucher au fait
+  officiel du serveur.
+
 ## [0.8.6] — 2026-09-26
 
 Stable après une bêta : le suivi des devoirs d'un coup d'œil.

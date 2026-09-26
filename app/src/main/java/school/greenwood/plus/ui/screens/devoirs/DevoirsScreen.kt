@@ -28,9 +28,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ChevronLeft
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Attachment
+import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.RadioButtonUnchecked
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -130,13 +133,15 @@ fun DevoirsScreen(
                 .sorted()
         }
         // Issue #78 : état « fait » de chaque jour, pour le point sur l'onglet
-        // et la pastille hors écran.
+        // et la pastille hors écran. Le marquage local « fait pour moi »
+        // (issue #82) compte lui aussi — le suivi reflète ce que l'utilisateur
+        // a réellement terminé.
         val étatsJours = remember(état.tous, jours) {
             jours.associateWith { jour ->
                 val duJour = état.tous.filter { it.dateRemise == jour }
                 when {
                     duJour.isEmpty() -> null
-                    duJour.all { it.fait } -> ÉtatJour.Vert
+                    duJour.all { it.fait || it.faitLocal } -> ÉtatJour.Vert
                     else -> ÉtatJour.Rouge
                 }
             }
@@ -231,6 +236,7 @@ fun DevoirsScreen(
                                     devoir = devoir,
                                     aujourdhui = aujourdhui,
                                     onOuvrir = { onOuvrirDevoir(devoir.id) },
+                                    onBasculerFaitLocal = { vm.basculerFaitLocal(devoir) },
                                 )
                             }
                         }
@@ -361,6 +367,7 @@ private fun CarteDevoir(
     devoir: Devoir,
     aujourdhui: LocalDate,
     onOuvrir: () -> Unit,
+    onBasculerFaitLocal: () -> Unit,
 ) {
     GwsCard(
         modifier = Modifier
@@ -374,6 +381,24 @@ private fun CarteDevoir(
             ) {
                 if (devoir.matiere.isNotBlank()) Puce(devoir.matiere)
                 devoir.categorie?.takeIf { it.isNotBlank() }?.let { Puce(it) }
+                Spacer(Modifier.weight(1f))
+                // Bascule « fait pour moi » (issue #82) : local, réversible
+                // d'un clic, invisible pour l'école.
+                IconButton(
+                    onClick = onBasculerFaitLocal,
+                    modifier = Modifier.size(28.dp),
+                ) {
+                    Icon(
+                        imageVector = if (devoir.faitLocal) Icons.Rounded.CheckCircle
+                        else Icons.Rounded.RadioButtonUnchecked,
+                        contentDescription = if (devoir.faitLocal)
+                            "Retirer le marquage « fait pour moi »"
+                        else "Marquer fait pour moi (local, invisible à l'école)",
+                        tint = if (devoir.faitLocal) RegistreTheme.colors.accents.getValue("registre").teinte
+                        else RegistreTheme.colors.chalk,
+                        modifier = Modifier.size(22.dp),
+                    )
+                }
             }
             Text(
                 text = devoir.title,
@@ -390,8 +415,12 @@ private fun CarteDevoir(
                 )
             }
             // Le rouge ne marque que l'action requise (docs/product/DESIGN.md §2).
+            // Le marquage local « fait pour moi » (issue #82) éteint le rouge :
+            // le travail est fait au regard de l'utilisateur, sans toucher au
+            // suivi officiel.
             when {
                 devoir.fait -> Puce("Travail fait")
+                devoir.faitLocal -> Puce("Fait pour moi")
                 devoir.dateRemise != null && !devoir.dateRemise.isAfter(aujourdhui) ->
                     Puce("À faire", tintRed = true)
             }

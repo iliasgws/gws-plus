@@ -825,3 +825,25 @@ only source of attachments and submission rights — the list carries neither.
 - [x] On-device check (2026-09-26, betas 1–3 on the Xiaomi): detail screen,
       attachments (2), mark-done button, batch download exercised — beta 1
       surfaced the stuck « Téléchargement… » label (fixed in beta 3)
+
+## « Fait pour moi » — local homework marking (issue #82, branch `feat/issue-82-local-fait`)
+
+A second, personal done-mark on homework: purely local, never sent to the
+Boti API — teachers and administration cannot see it — and reversible with
+another click (unlike the official, definitive server-side `fait`).
+
+- [x] Storage: set of devoir ids persisted as JSON in DataStore
+      (`SessionStore.devoirsFaitLocal` / `marquerDevoirFaitLocal`), an app
+      preference that survives a session purge — toggling works offline
+- [x] Merge at the repository layer (`avecFaitLocal`, pure + unit-tested in
+      `DevoirsFaitLocalTest`): applied to the list, the last-known cache and
+      the detail payload, so every consumer (list, detail, day indicator)
+      sees it consistently; the official server `fait` is never overwritten
+- [x] List UI: a toggle circle on each devoir card (issue #78 day points and
+      the « À faire » red puce turn off when locally done — the tracking
+      reflects what the user actually completed, without touching the
+      official state)
+- [x] Detail UI: « Marquer fait pour moi (local) » toggle with the caption
+      « Visible uniquement dans l'app — les professeurs et l'administration
+      ne le voient pas. » — no confirmation dialog, since it is local and
+      reversible

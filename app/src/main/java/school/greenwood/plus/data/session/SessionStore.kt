@@ -90,6 +90,12 @@ class SessionStore(private val context: Context) {
         val iaModèle = stringPreferencesKey("ia_modele")
         val iaClé = stringPreferencesKey("ia_cle")
         val iaTon = stringPreferencesKey("ia_ton")
+
+        /** Marquage « fait pour moi » des devoirs (issue #82) : identifiants des
+         *  devoirs que l'utilisateur a marqués faits pour lui-même — jamais
+         *  envoyés à l'école (JSON, tableau d'ids). Préférence d'app : survit à
+         *  une purge de session, comme le composeur. */
+        val devoirsFaitLocal = stringPreferencesKey("devoirs_fait_local_json")
     }
 
     val events = MutableSharedFlow<SessionEvent>(extraBufferCapacity = 4)
@@ -177,6 +183,28 @@ class SessionStore(private val context: Context) {
             p[Clefs.iaModèle] = réglages.modèle
             p[Clefs.iaClé] = réglages.clé
             p[Clefs.iaTon] = réglages.ton.name
+        }
+    }
+
+    /** Ids des devoirs marqués « fait pour moi » (issue #82) — local
+     *  uniquement, jamais envoyés à l'école. */
+    val devoirsFaitLocal: Flow<Set<String>> = context.dataStore.data.map { p ->
+        p[Clefs.devoirsFaitLocal]?.let { brut ->
+            runCatching {
+                json.decodeFromString<List<String>>(brut).toSet()
+            }.getOrDefault(emptySet())
+        } ?: emptySet()
+    }
+
+    /** Marque (ou démarque) un devoir « fait pour moi » — réversible d'un
+     *  clic, contrairement au fait serveur. */
+    suspend fun marquerDevoirFaitLocal(id: String, fait: Boolean) {
+        context.dataStore.edit { p ->
+            val ids = p[Clefs.devoirsFaitLocal]?.let { brut ->
+                runCatching { json.decodeFromString<List<String>>(brut) }.getOrDefault(emptyList())
+            } ?: emptyList()
+            val nouveau = if (fait) ids + id else ids - id
+            p[Clefs.devoirsFaitLocal] = json.encodeToString(nouveau.distinct())
         }
     }
 

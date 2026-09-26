@@ -24,3 +24,4 @@ local.properties
 # Built APKs
 *.apk
 *.idsig
+.kotlin/

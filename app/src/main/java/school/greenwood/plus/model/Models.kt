@@ -31,6 +31,10 @@ data class Devoir(
     val fait: Boolean = false,
     val filesSent: Boolean = false,
     val attachments: List<Attachment> = emptyList(),
+    /** Marquage « fait pour moi » local (issue #82) : purement dans l'app,
+     *  jamais envoyé à l'école — les professeurs et l'administration ne le
+     *  voient pas. Réversible d'un clic, contrairement au fait serveur. */
+    val faitLocal: Boolean = false,
 )
 
 /** Payload détail d'un devoir (issue #68) — GET `devoirs&devoir=<id>`, la
