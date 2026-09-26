@@ -78,8 +78,9 @@ import school.greenwood.plus.util.htmlToPlainSingleLine
  * marquage local couvre tout, mais l'école ne le sait pas encore.
  */
 
-/** Suivi d'un jour : [Vert] = tout est fait aussi pour l'école,
- *  [Orange] = fait pour soi seulement, [Rouge] = au moins un reste. */
+/** Suivi d'un jour : [Vert] = jour passé ou tout est fait aussi pour
+ *  l'école, [Orange] = fait pour soi seulement, [Rouge] = au moins un
+ *  reste. */
 private enum class ÉtatJour { Vert, Orange, Rouge }
 
 /** Jours avec devoirs non faits qui ont défilé hors de la rangée d'onglets. */
@@ -139,11 +140,14 @@ fun DevoirsScreen(
         // et la pastille hors écran. Le marquage local « fait pour moi »
         // (issue #82) compte lui aussi — vert quand l'école le sait aussi,
         // orange tant que le jour n'est fait que pour soi, rouge sinon.
+        // Un jour entièrement passé est vert sans vérifier le serveur : le
+        // travail est derrière, inutile de l'afficher comme à faire.
         val étatsJours = remember(état.tous, jours) {
             jours.associateWith { jour ->
                 val duJour = état.tous.filter { it.dateRemise == jour }
                 when {
                     duJour.isEmpty() -> null
+                    jour.isBefore(aujourdhui) -> ÉtatJour.Vert
                     duJour.all { it.fait } -> ÉtatJour.Vert
                     duJour.all { it.fait || it.faitLocal } -> ÉtatJour.Orange
                     else -> ÉtatJour.Rouge
