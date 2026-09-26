@@ -4,6 +4,19 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [0.9.1] — 2026-09-26
+
+Stable après deux bêtas : le bouton « copier » d'un devoir.
+
+### Ajouté
+
+- **Bouton « copier » d'un devoir** (issue #85, PR #86) : en haut de la
+  page d'un devoir, un bouton copie dans le presse-papiers toutes ses
+  informations — titre, matière, catégorie, enseignant(e), état « fait »
+  (école, « fait pour moi » local, à faire), noms des pièces jointes et
+  corps du texte — avec un toast de confirmation. Rien n'est envoyé à
+  l'école.
+
 ## [0.9.0] — 2026-09-26
 
 Stable après cinq bêtas : le marquage « fait pour moi » des devoirs.
