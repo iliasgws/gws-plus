@@ -665,8 +665,6 @@ data class MessagesÉtat(
     val themes: List<school.greenwood.plus.model.ThemeMessage> = emptyList(),
     /** Un rafraîchissement réseau tourne pendant que le contenu connu reste affiché. */
     val rafraîchissement: Boolean = false,
-    /** Composeur actif par défaut (issue #10, envoi validé le 19/09/2026). */
-    val composeurActivé: Boolean = false,
 )
 
 class MessagesViewModel(private val container: AppContainer) : ViewModel() {
@@ -675,11 +673,6 @@ class MessagesViewModel(private val container: AppContainer) : ViewModel() {
 
     init {
         charger()
-        viewModelScope.launch {
-            container.session.composeurActivé.collect { actif ->
-                _état.update { it.copy(composeurActivé = actif) }
-            }
-        }
         // Retour après une absence longue : rafraîchir en silence (data/session/Veille.kt).
         viewModelScope.launch {
             container.veille.retoursPérimés.collect { charger(force = true) }
@@ -750,11 +743,6 @@ class MessagesViewModel(private val container: AppContainer) : ViewModel() {
         }
     }
 
-    /** Interrupteur du composeur — persistant (issue #10). */
-    fun définirComposeur(actif: Boolean) {
-        viewModelScope.launch { container.session.définirComposeur(actif) }
-    }
-
 }
 
 /** — Conversation (détail d'un fil) --------------------------------------- */
@@ -764,8 +752,6 @@ data class ConversationÉtat(
     val conversation: Conversation? = null,
     /** Un rafraîchissement réseau tourne pendant que le contenu connu reste affiché. */
     val rafraîchissement: Boolean = false,
-    /** Composeur (collecté depuis la session — actif par défaut). */
-    val composeurActif: Boolean = false,
     val texte: String = "",
     val pièces: List<java.io.File> = emptyList(),
     val audio: java.io.File? = null,
@@ -786,11 +772,6 @@ class ConversationViewModel(
 
     init {
         charger()
-        viewModelScope.launch {
-            container.session.composeurActivé.collect { actif ->
-                _état.update { it.copy(composeurActif = actif) }
-            }
-        }
         // Retour après une absence longue : rafraîchir en silence (data/session/Veille.kt).
         viewModelScope.launch {
             container.veille.retoursPérimés.collect { charger(force = true) }

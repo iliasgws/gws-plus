@@ -20,11 +20,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Send
 import androidx.compose.material.icons.rounded.Call
 import androidx.compose.material.icons.rounded.Forum
-import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -106,13 +104,6 @@ fun MessagesScreen(
                         .background(RegistreTheme.accent.conteneur),
                 )
             }
-            IconButton(onClick = { vm.définirComposeur(!état.composeurActivé) }) {
-                Icon(
-                    imageVector = Icons.Rounded.Tune,
-                    contentDescription = if (état.composeurActivé) "Désactiver le composeur" else "Activer le composeur",
-                    tint = if (état.composeurActivé) RegistreTheme.colors.ink else RegistreTheme.colors.chalk,
-                )
-            }
         }
 
         when {
@@ -170,7 +161,7 @@ fun MessagesScreen(
                         val contactRenseigné = listOfNotNull(
                             contact.texte, contact.tel, contact.facebook, contact.siteWeb,
                         ).any { it.isNotBlank() }
-                        if (contactRenseigné || état.composeurActivé) {
+                        if (contactRenseigné) {
                             item(key = "contact") {
                                 SectionLabel("Joindre l'administration")
                                 CarteContact(
@@ -178,7 +169,6 @@ fun MessagesScreen(
                                     tel = contact.tel,
                                     facebook = contact.facebook,
                                     siteWeb = contact.siteWeb,
-                                    composeurActif = état.composeurActivé,
                                     onÉcrire = onNouveauMessage,
                                     onOuvrir = { url ->
                                         runCatching {
@@ -271,7 +261,6 @@ private fun CarteContact(
     tel: String?,
     facebook: String?,
     siteWeb: String?,
-    composeurActif: Boolean,
     onÉcrire: () -> Unit,
     onOuvrir: (String) -> Unit,
     onAppeler: () -> Unit,
@@ -286,13 +275,11 @@ private fun CarteContact(
                 )
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (composeurActif) {
-                    PuceAction(
-                        label = "Écrire",
-                        icone = Icons.AutoMirrored.Rounded.Send,
-                        onClick = onÉcrire,
-                    )
-                }
+                PuceAction(
+                    label = "Écrire",
+                    icone = Icons.AutoMirrored.Rounded.Send,
+                    onClick = onÉcrire,
+                )
                 if (tel != null) {
                     PuceAction(label = "Appeler", icone = Icons.Rounded.Call, onClick = onAppeler)
                 }
