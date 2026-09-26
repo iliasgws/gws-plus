@@ -383,7 +383,9 @@ private fun CarteDevoir(
                 devoir.categorie?.takeIf { it.isNotBlank() }?.let { Puce(it) }
                 Spacer(Modifier.weight(1f))
                 // Bascule « fait pour moi » (issue #82) : local, réversible
-                // d'un clic, invisible pour l'école.
+                // d'un clic, invisible pour l'école. Orange quand le travail
+                // est fait pour soi mais pas encore pour l'école ; vert
+                // Greenwood quand l'école le sait aussi.
                 IconButton(
                     onClick = onBasculerFaitLocal,
                     modifier = Modifier.size(28.dp),
@@ -394,8 +396,12 @@ private fun CarteDevoir(
                         contentDescription = if (devoir.faitLocal)
                             "Retirer le marquage « fait pour moi »"
                         else "Marquer fait pour moi (local, invisible à l'école)",
-                        tint = if (devoir.faitLocal) RegistreTheme.colors.accents.getValue("registre").teinte
-                        else RegistreTheme.colors.chalk,
+                        tint = when {
+                            devoir.faitLocal && devoir.fait ->
+                                RegistreTheme.colors.accents.getValue("registre").teinte
+                            devoir.faitLocal -> RegistreTheme.colors.signetVif
+                            else -> RegistreTheme.colors.chalk
+                        },
                         modifier = Modifier.size(22.dp),
                     )
                 }

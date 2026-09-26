@@ -221,7 +221,9 @@ fun DevoirDetailScreen(
 
                         // Marquage « fait pour moi » (issue #82) — purement
                         // local : jamais envoyé à l'école, réversible d'un
-                        // clic, d'où l'absence de confirmation.
+                        // clic, d'où l'absence de confirmation. Orange quand
+                        // le travail est fait pour soi mais pas encore pour
+                        // l'école ; vert Greenwood quand l'école le sait aussi.
                         TextButton(
                             onClick = { vm.basculerFaitLocal() },
                             modifier = Modifier.fillMaxWidth(),
@@ -230,8 +232,12 @@ fun DevoirDetailScreen(
                                 imageVector = if (d.faitLocal) Icons.Rounded.CheckCircle
                                 else Icons.Rounded.RadioButtonUnchecked,
                                 contentDescription = null,
-                                tint = if (d.faitLocal) RegistreTheme.colors.accents.getValue("registre").teinte
-                                else RegistreTheme.colors.chalk,
+                                tint = when {
+                                    d.faitLocal && fait ->
+                                        RegistreTheme.colors.accents.getValue("registre").teinte
+                                    d.faitLocal -> RegistreTheme.colors.signetVif
+                                    else -> RegistreTheme.colors.chalk
+                                },
                                 modifier = Modifier.size(18.dp),
                             )
                             Spacer(Modifier.size(6.dp))
