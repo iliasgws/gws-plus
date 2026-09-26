@@ -58,6 +58,8 @@ compose.desktop {
         jvmArgs += "--enable-native-access=ALL-UNNAMED"
         nativeDistributions {
             targetFormats(TargetFormat.Deb, TargetFormat.Rpm)
+            // The HTTP/JSON stack accesses sun.misc.Unsafe at login.
+            modules("jdk.unsupported")
             packageName = "gws-plus"
             // jpackage accepts numeric versions; the release asset and Android
             // versionName retain the full beta suffix.

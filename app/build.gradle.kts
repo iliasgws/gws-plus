@@ -12,7 +12,7 @@ android {
         applicationId = "school.greenwood.plus"
         minSdk = 26
         targetSdk = 36
-        versionCode = 55
+        versionCode = 56
         versionName = providers.gradleProperty("gwsVersion").get()
     }
 

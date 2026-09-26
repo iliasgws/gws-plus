@@ -6,6 +6,14 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
 
 ## [Non publié]
 
+## [0.9.0-beta.2] — 2026-09-26
+
+### Corrigé
+
+- **Connexion du client bureau Linux** : le module Java `jdk.unsupported`
+  est désormais inclus dans l'application distribuée pour permettre l'accès
+  à `sun.misc.Unsafe` lors de la connexion.
+
 ## [0.9.0-beta.1] — 2026-09-26
 
 Préversion du client bureau Linux (issue #80, PR #81).
