@@ -4,6 +4,17 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [Non publié]
+
+### Ajouté
+
+- **Copie d'un devoir par appui long** (issue #85, PR #86) : un appui long
+  sur une carte de l'onglet Devoirs copie dans le presse-papiers toutes
+  les informations du devoir — titre, matière, catégorie, enseignant(e),
+  état « fait » (école, « fait pour moi » local, à faire), noms des
+  pièces jointes et corps du texte — avec un toast de confirmation.
+  Le clic simple ouvre toujours le devoir ; rien n'est envoyé à l'école.
+
 ## [0.9.0] — 2026-09-26
 
 Stable après cinq bêtas : le marquage « fait pour moi » des devoirs.
