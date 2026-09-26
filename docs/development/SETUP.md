@@ -19,7 +19,16 @@ intégré, pas de plugin `kotlin.android` séparé.
 ./gradlew :app:assembleDebug      # APK de debug → app/build/outputs/apk/debug/
 ./gradlew :app:assembleRelease    # APK minifié (R8) — non signé, à signer à la main
 ./gradlew :app:testDebugUnitTest  # tests unitaires — zéro échec exigé
+./gradlew :composeApp:run         # client bureau Linux
+./gradlew :composeApp:createDistributable  # application autonome Linux
 ```
+
+Le client bureau utilise `~/.config/gws-plus` (ou `XDG_CONFIG_HOME/gws-plus`)
+pour sa session. Ce dossier est privé à l'utilisateur. Les documents vont dans
+`~/Downloads/gws-plus`. Pour un paquet natif, lancer
+`./gradlew :composeApp:packageDeb` ou `./gradlew :composeApp:packageRpm`
+sur un Linux qui dispose de `dpkg-deb` ou `rpmbuild`, respectivement. Un JDK
+avec `jpackage` est nécessaire pour le paquetage.
 
 ## Avant toute PR
 

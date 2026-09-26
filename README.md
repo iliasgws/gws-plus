@@ -1,11 +1,11 @@
 # Greenwood School +
 
-> Un client Android natif moderne pour Greenwood School.
+> Un client Android et Linux pour Greenwood School.
 
 <!-- TODO: capture d'écran d'accueil ici (docs/images/) — sans données personnelles -->
 
 Greenwood School + reconstruit l'expérience de l'app Greenwood School en
-application native **Kotlin + Jetpack Compose** : le registre du jour, les
+application native **Kotlin + Compose** : le registre du jour, les
 devoirs, les documents, les demandes administratives et la messagerie avec
 l'administration — dans une interface « Le registre » rapide et sobre.
 
@@ -36,7 +36,7 @@ Voir la [feuille de route](docs/product/ROADMAP.md).
 
 ## Stack technique
 
-Kotlin · Jetpack Compose · Material 3 · Retrofit/OkHttp · DataStore
+Kotlin Multiplatform · Jetpack Compose (Android) · Compose Multiplatform (Linux) · Material 3 · Retrofit/OkHttp · DataStore
 
 ## Démarrage
 
@@ -48,6 +48,12 @@ cd gws-plus
 
 L'APK sort dans `app/build/outputs/apk/debug/`. Guide complet
 (JDK, SDK, `local.properties`) → [docs/development/SETUP.md](docs/development/SETUP.md).
+
+Sur Linux, `./gradlew :composeApp:run` ouvre le client bureau. La commande
+`./gradlew :composeApp:createDistributable` prépare une application autonome
+avec son environnement Java. Les paquets `.deb` et `.rpm` se construisent
+sur une machine équipée des outils de paquetage correspondants ; voir le
+[guide de démarrage](docs/development/SETUP.md).
 
 ## Documentation
 

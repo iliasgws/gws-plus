@@ -498,7 +498,7 @@ private fun RésultatQuiz(
                 when {
                     // Score confirmé par le serveur, tel que renvoyé.
                     résultat?.score != null -> {
-                        LigneScore("Score", résultat.score)
+                        LigneScore("Score", résultat.score.orEmpty())
                         résultat.temps?.let { LigneScore("Temps", it) }
                     }
                     else -> {

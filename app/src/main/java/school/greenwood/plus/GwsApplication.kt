@@ -2,6 +2,7 @@ package school.greenwood.plus
 
 import android.app.Application
 import android.content.Context
+import androidx.datastore.preferences.preferencesDataStore
 import school.greenwood.plus.data.api.BotiClient
 import school.greenwood.plus.data.api.BotiHttp
 import school.greenwood.plus.data.cache.CachesSession
@@ -21,10 +22,12 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 
 /*
- * Conteneur manuel — un module :app, pas de framework DI (docs/product/DESIGN.md §5).
+ * Conteneur manuel Android ; les dépôts viennent du module partagé :composeApp.
  */
+private val Context.sessionDataStore by preferencesDataStore(name = "gws_session")
+
 class AppContainer(context: Context) {
-    val session = SessionStore(context)
+    val session = SessionStore(context.sessionDataStore)
     private val api = BotiHttp.api()
     private val client = BotiClient(api, session)
 

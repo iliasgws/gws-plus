@@ -200,7 +200,7 @@ fun DevoirDetailScreen(
                         // Le rouge ne marque que l'action requise (docs/product/DESIGN.md §2).
                         when {
                             fait -> Puce("Travail fait")
-                            d.dateRemise != null && !d.dateRemise.isAfter(LocalDate.now()) ->
+                            d.dateRemise?.let { !it.isAfter(LocalDate.now()) } == true ->
                                 Puce("À faire", tintRed = true)
                         }
 

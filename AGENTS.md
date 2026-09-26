@@ -12,7 +12,7 @@ Greenwood School + is an application that lets parents of pupils follow their ch
 - 📝 Suivi des demandes administratives (administrative request tracking)
 - ✉️ Contacter l'administration de l'école en ligne (online contact with school administration)
 
-**Current status:** the first application milestone exists — a Kotlin/Jetpack Compose app (single `:app` module) implementing the `docs/product/DESIGN.md` foundation: « Le registre » theme, session + network layer for the Boti API, 4-tab navigation with per-tab back stacks, login/onboarding, and the Registre/Devoirs/Documents/Messages/Demandes screens, plus a dedicated Conversation screen (issue #10, PR 1) and the message composer (PR 2): reply in a thread, new thread (sujet + category from server `themes[]`), attachments (SAF, 1 MB limit on the new-thread path) and voice messages (RECORD_AUDIO at runtime, MediaRecorder m4a), optimistic send with failed-retry. The composer is **always active** since 0.8.5 (the Messages title-bar on/off switch was removed — the toggle state itself was dropped from `SessionStore`). Since issue #56 the composer can also carry an **AI panel** (Apple-Writing-Tools style: describe-your-change field, Relire/Réécrire, tones, Résumé/Points clés/Tableau/Liste) driven by a BYOK OpenAI-compatible provider configured in Paramètres — the ✨ button only appears when the feature is switched on and fully configured. The POST `nouveau-message` fields are statically verified from the official bundle and now exercised live (see `docs/product/ROADMAP.md` issue-#10 section). Creating demandes remains unwired (write-path fields unverified). The Documents tab filters by nature (Tout / Quiz / Documents) and quizzes open a play screen (issue #17): GET `quiz` live-probed read-only 2026-09-19 and the POST score submit validated live the same day (server scores and records the play itself; see `docs/product/ROADMAP.md` issue-#17 section). Since issue #43 the Documents tab also renders the **Bibliothèque** (`bibliotheque` + `ressource_details?ressource=<id>`, probed read-only 2026-09-22): teacher documents grouped by matière ahead of the exercises, downloadable through their detail's signed media URL — the list's bare filename is not a server path (see `docs/api/ENDPOINT-MAP.md`). Sections open with useful structure immediately (issue #21): first loads draw pulsing skeletons shaped like the final content, warm opens show the last known data from a session-stamped memory cache (`data/cache/`, keyed by userId/eleveId, purged on login/logout) while the network refreshes in the background without flicker, and network failures never hide — known content stays under a non-blocking « Réessayer » banner. Data also refreshes itself when the app returns to the foreground after an absence longer than the duration set in the new Paramètres panel (default 5 minutes) — the known content stays visible during the silent refresh, while the quiz in play, the composer and login stay untouched. The app ships outside any store: since issue #46 it checks its own **GitHub Releases** (public repo, unauthenticated, throttled 12 h), shows a « Mise à jour disponible » card on the Registre, offers a one-click download → system installer flow (direct asset link, `REQUEST_INSTALL_PACKAGES` + « apps inconnues » guidance), posts a local notification when the permission is granted, and has an opt-in « Participer aux bêtas » channel in Paramètres (stable-only by default; versions compared semantically, not by list order).
+**Current status:** the Android Kotlin/Jetpack Compose app implements the `docs/product/DESIGN.md` foundation with six tabs, per-tab back stacks, login/onboarding, the Registre/Devoirs/Documents/Messages/Demandes screens, and the conversation composer with attachments, voice recording, optimistic send, and optional BYOK AI panel. Issue #80 adds a Linux Compose Desktop entry point while the Boti API, repositories, models, normalizers, session, cache, and AI composer live in the shared Kotlin Multiplatform `:composeApp` module. The Android UI and back-gesture navigation remain in `:app`. Creating demandes remains unwired (write-path fields unverified). Documents include quizzes and the Bibliothèque with signed media URLs. The Android client also has foreground-return refresh, memory caches, and GitHub Releases updates; the desktop client opens Releases in the browser.
 
 **Current priority (from README):** fix Android back-gesture navigation — opening the homework section and then using the Android system back gesture must behave correctly in every section of the app. Do not regress this behaviour.
 
@@ -36,8 +36,9 @@ Current contents (update this section whenever files are added or removed):
 | `docs/development/` | `SETUP.md` (toolchain), `ARCHITECTURE.md` (layers), `NAVIGATION.md` (back-stack contract) |
 | `docs/api/` | `BOTI-API.md` (protocol), `ENDPOINT-MAP.md` (observed shapes), `ENDPOINTS.md` (100-endpoint inventory) |
 | `docs/security/` | `SECURITY-NOTES.md` |
-| `settings.gradle.kts`, `build.gradle.kts`, `gradle.properties`, `gradlew`, `gradle/wrapper/` | Gradle 9.6 build (AGP 9.4.1, Kotlin 2.4.20, built-in Kotlin — no `kotlin.android` plugin) |
-| `app/` | The Android application (`:app` module), namespace `school.greenwood.plus` |
+| `settings.gradle.kts`, `build.gradle.kts`, `gradle.properties`, `gradlew`, `gradle/wrapper/` | Gradle 9.6 build (AGP 9.4.1, Kotlin 2.4.20, built-in Kotlin — no `kotlin.android` plugin); `gwsVersion` keeps Android and Linux versions aligned |
+| `app/` | The Android application (`:app` module), namespace `school.greenwood.plus`; depends on `:composeApp` |
+| `composeApp/build.gradle.kts`, `composeApp/src/jvmCommon/`, `composeApp/src/jvmMain/` | KMP Android/JVM shared data layer and Linux Compose Desktop entry, with `.deb`/`.rpm` packaging tasks |
 | `app/src/main/java/school/greenwood/plus/` | Sources — key entries below |
 | `…/GwsApplication.kt` | Manual DI container (`AppContainer`) |
 | `…/MainActivity.kt` | Single activity, edge-to-edge, Compose |
@@ -46,15 +47,16 @@ Current contents (update this section whenever files are added or removed):
 | `…/ui/theme/` | « École vivante » tokens: colors + per-tab accents, Bricolage/Public Sans type, 24/16/10 shapes, motion springs (Mouvement.kt) |
 | `…/ui/components/` | Shared composables (Components.kt: GwsCard, Puce, EmptyState, skeletons…; CarteActualite.kt; CarteMiseAJour.kt: GitHub update card; BadgeIA.kt: « Généré par IA » icon + badge, issue #58; BarreOnglets.kt: custom accent bottom bar) |
 | `…/ui/screens/` | Login, Onboarding, registre (+ drawer menu, Post detail), actualites, plus (secondary sections menu), boutique (catalogue, product detail, order history), cours (Emploi du temps), devoirs, documents (+ Quiz play), messages (+ Conversation + composer + AI panel), demandes, parametres (settings panel, incl. AI settings) |
-| `…/data/api/` | BotiApi/BotiClient (generic GET/POST multipart + envelope), BotiEnvelope, MediaUrls (single-decode) |
-| `…/data/ai/ComposeurIA.kt` | AI composer (issue #56): OpenAI-compatible client (BYOK, provider presets), actions/tones with French labels, system-prompt builder |
-| `…/data/session/SessionStore.kt` | DataStore session (keyToken, user, eleves; never passwords) + actualisation-au-retour duration |
-| `…/data/session/Veille.kt` | VeilleSession — foreground-return refresh signal (absence ≥ duration chosen in Paramètres) |
-| `…/data/repo/` | Repositories + Normalizers (raw JSON → domain models); `UpdatesRepository.kt` — GitHub Releases update checker (issue #46) |
-| `…/data/cache/` | Last-known-data memory caches, session-stamped (`MemoireSession`, `CachesSession` — issue #21) |
-| `…/logic/CeSoir.kt` | The focal card's due-date window (Friday → Monday) |
-| `…/util/` | Dates (tolerant parsing), Html, Fichiers (download + FileProvider + SAF staging), Audio (playback), EnregistreurAudio (MediaRecorder) |
+| `composeApp/src/jvmCommon/…/data/api/` | BotiApi/BotiClient (generic GET/POST multipart + envelope), BotiEnvelope, MediaUrls (single-decode) |
+| `composeApp/src/jvmCommon/…/data/ai/` | AI composer (issue #56): OpenAI-compatible client (BYOK, provider presets), actions/tones with French labels, system-prompt builder |
+| `composeApp/src/jvmCommon/…/data/session/` | DataStore session (keyToken, user, eleves; never passwords), foreground-return signal; platform entry points create the DataStore |
+| `composeApp/src/jvmCommon/…/data/repo/` | Repositories + Normalizers (raw JSON → domain models); Android-only `UpdatesRepository.kt` stays in `app/` |
+| `composeApp/src/jvmCommon/…/data/cache/` | Last-known-data memory caches, session-stamped (`MemoireSession`, `CachesSession` — issue #21) |
+| `composeApp/src/jvmCommon/…/logic/`, `…/model/`, `…/util/` | Due-date window, domain models, tolerant dates, and attachment data URL encoder |
+| `app/src/main/…/util/` | Android Html, Fichiers (download + FileProvider + SAF staging), Audio (playback), EnregistreurAudio (MediaRecorder) |
+| `composeApp/src/jvmMain/…/desktop/Main.kt` | Linux window, login, six-section shell, details, file downloads, quiz, message composer, settings |
 | `app/src/test/` | Unit tests (dates, CeSoir, media URLs, envelope, message normalizers, composer data, quiz normalizers, post normalizers, cours normalizers, document filters, boutique, session cache, veille) |
+| `composeApp/src/jvmTest/` | JVM tests for the shared streaming news parser and desktop pupil selection |
 | `app/fonts-licenses/` | OFL texts for the bundled fonts |
 
 ## Ground rules for agents
@@ -99,7 +101,8 @@ Chrome » symptoms, layout on a real screen).
 
 ```bash
 # 1. Version bump on a feature branch + PR titled « Préparer la version X.Y.Z »
-#    (versionCode increment, versionName, CHANGELOG's « Non publié » section
+#    (versionCode increment, `gwsVersion` in gradle.properties for Android
+#    versionName + Linux packageVersion, CHANGELOG's « Non publié » section
 #    becomes the dated entry) — never commit the bump directly to main.
 
 # 2. Build, align, sign (build-tools binaries are NOT on PATH — use full paths)

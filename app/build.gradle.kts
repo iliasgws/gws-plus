@@ -13,7 +13,7 @@ android {
         minSdk = 26
         targetSdk = 36
         versionCode = 54
-        versionName = "0.8.6"
+        versionName = providers.gradleProperty("gwsVersion").get()
     }
 
     signingConfigs {
@@ -50,6 +50,7 @@ android {
 
 
 dependencies {
+    implementation(project(":composeApp"))
     val composeBom = platform("androidx.compose:compose-bom:2026.09.00")
     implementation(composeBom)
 

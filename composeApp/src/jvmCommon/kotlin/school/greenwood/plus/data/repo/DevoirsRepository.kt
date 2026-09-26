@@ -10,7 +10,7 @@ import school.greenwood.plus.data.session.SessionStore
 import school.greenwood.plus.model.Devoir
 import school.greenwood.plus.model.DevoirDétail
 import school.greenwood.plus.model.SoumissionDétail
-import school.greenwood.plus.util.Fichiers
+import school.greenwood.plus.util.enDataURL
 import school.greenwood.plus.util.extractDate
 import school.greenwood.plus.util.extractDateTime
 import java.io.File
@@ -96,7 +96,7 @@ class DevoirsRepository(
             buildMap {
                 put("name", JsonPrimitive(pièce.name))
                 put("extention", JsonPrimitive(pièce.extension))
-                put("base64File", JsonPrimitive(Fichiers.enDataURL(pièce)))
+                put("base64File", JsonPrimitive(enDataURL(pièce)))
             }
         }.map(::JsonObject)
         val rep = client.post(

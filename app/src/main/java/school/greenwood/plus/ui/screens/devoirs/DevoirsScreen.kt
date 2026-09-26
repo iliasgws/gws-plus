@@ -392,7 +392,7 @@ private fun CarteDevoir(
             // Le rouge ne marque que l'action requise (docs/product/DESIGN.md §2).
             when {
                 devoir.fait -> Puce("Travail fait")
-                devoir.dateRemise != null && !devoir.dateRemise.isAfter(aujourdhui) ->
+                devoir.dateRemise?.let { !it.isAfter(aujourdhui) } == true ->
                     Puce("À faire", tintRed = true)
             }
 

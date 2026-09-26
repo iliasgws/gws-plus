@@ -1,7 +1,9 @@
 # Architecture
 
-Un seul module `:app`, pas de framework d'injection : un conteneur manuel,
-des couches étroites, un sens de dépendance unique.
+Deux modules, sans framework d'injection : `:app` conserve l'entrée et les
+écrans Android ; `:composeApp` partage les modèles, dépôts, normaliseurs,
+client réseau et session entre Android et Linux, et porte l'entrée bureau
+dans `jvmMain`. Chaque plateforme construit son conteneur manuel.
 
 ```
 UI / Compose (écrans, composants, thème « Le registre »)
@@ -55,7 +57,7 @@ arrière-plan (`rafraîchissement`), et un échec laisse le contenu en place
 sous une bannière non bloquante. Cache mémoire seulement : un démarrage à
 froid part des squelettes, rien ne touche au disque.
 
-### BotiClient (`data/api/`)
+### BotiClient (`composeApp/src/jvmCommon/data/api/`)
 
 Une seule interface `BotiApi` (un GET à paramètres, un POST multipart) et
 `BotiClient` qui :

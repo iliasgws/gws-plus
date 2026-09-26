@@ -1,15 +1,16 @@
 package school.greenwood.plus.data.session
 
-import android.content.Context
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.datastore.preferences.preferencesDataStore
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -18,8 +19,6 @@ import school.greenwood.plus.data.ai.RéglagesIA
 import school.greenwood.plus.data.ai.TonIA
 import school.greenwood.plus.model.Eleve
 import school.greenwood.plus.model.ParentInfo
-
-private val Context.dataStore by preferencesDataStore(name = "gws_session")
 
 /** État de session persistant (hors mots de passe — jamais stockés). */
 data class SessionState(
@@ -49,7 +48,7 @@ private data class EleveStocke(
     val img: String? = null,
 )
 
-class SessionStore(private val context: Context) {
+class SessionStore(private val dataStore: DataStore<Preferences>) {
 
     private val json = Json { ignoreUnknownKeys = true }
 
@@ -94,7 +93,7 @@ class SessionStore(private val context: Context) {
 
     val events = MutableSharedFlow<SessionEvent>(extraBufferCapacity = 4)
 
-    val state: Flow<SessionState?> = context.dataStore.data.map { p ->
+    val state: Flow<SessionState?> = dataStore.data.map { p ->
         val key = p[Clefs.keyToken] ?: ""
         val user = p[Clefs.userId] ?: ""
         if (key.isBlank() || user.isBlank()) return@map null
@@ -117,49 +116,49 @@ class SessionStore(private val context: Context) {
         )
     }
 
-    val eleveIndex: Flow<Int> = context.dataStore.data.map { it[Clefs.eleveIndex] ?: 0 }
+    val eleveIndex: Flow<Int> = dataStore.data.map { it[Clefs.eleveIndex] ?: 0 }
 
-    val retenir: Flow<Boolean> = context.dataStore.data.map { it[Clefs.retenir] ?: true }
+    val retenir: Flow<Boolean> = dataStore.data.map { it[Clefs.retenir] ?: true }
 
-    val onboardingVu: Flow<Boolean> = context.dataStore.data.map { it[Clefs.onboardingVu] ?: false }
+    val onboardingVu: Flow<Boolean> = dataStore.data.map { it[Clefs.onboardingVu] ?: false }
 
-    val ecritureNouveautesActivée: Flow<Boolean> = context.dataStore.data.map { it[Clefs.ecritureNouveautes] ?: false }
+    val ecritureNouveautesActivée: Flow<Boolean> = dataStore.data.map { it[Clefs.ecritureNouveautes] ?: false }
 
     suspend fun définirEcritureNouveautes(actif: Boolean) {
-        context.dataStore.edit { it[Clefs.ecritureNouveautes] = actif }
+        dataStore.edit { it[Clefs.ecritureNouveautes] = actif }
     }
 
     /** Minutes d'absence déclenchant l'actualisation au retour (0 = jamais). */
-    val actualisationRetour: Flow<Int> = context.dataStore.data.map { it[Clefs.actualisationRetour] ?: 5 }
+    val actualisationRetour: Flow<Int> = dataStore.data.map { it[Clefs.actualisationRetour] ?: 5 }
 
     suspend fun définirActualisationRetour(minutes: Int) {
-        context.dataStore.edit { it[Clefs.actualisationRetour] = minutes }
+        dataStore.edit { it[Clefs.actualisationRetour] = minutes }
     }
 
     /** Millisecondes du dernier contrôle de mise à jour (null = jamais). */
-    val majDernièreVérification: Flow<Long?> = context.dataStore.data.map { it[Clefs.majDernièreVérification] }
+    val majDernièreVérification: Flow<Long?> = dataStore.data.map { it[Clefs.majDernièreVérification] }
 
     suspend fun définirMajDernièreVérification(millis: Long) {
-        context.dataStore.edit { it[Clefs.majDernièreVérification] = millis }
+        dataStore.edit { it[Clefs.majDernièreVérification] = millis }
     }
 
     /** Canal de mise à jour : stable par défaut, bêtas sur option (issue #46). */
-    val majCanalBêta: Flow<Boolean> = context.dataStore.data.map { it[Clefs.majCanalBêta] ?: false }
+    val majCanalBêta: Flow<Boolean> = dataStore.data.map { it[Clefs.majCanalBêta] ?: false }
 
     suspend fun définirMajCanalBêta(actif: Boolean) {
-        context.dataStore.edit { it[Clefs.majCanalBêta] = actif }
+        dataStore.edit { it[Clefs.majCanalBêta] = actif }
     }
 
     /** Dernière publication vue (JSON de PublicationStockée), pour retrouver
      *  la carte « Mise à jour disponible » après un redémarrage. */
-    val majPublicationStockée: Flow<String?> = context.dataStore.data.map { it[Clefs.majPublicationStockée] }
+    val majPublicationStockée: Flow<String?> = dataStore.data.map { it[Clefs.majPublicationStockée] }
 
     suspend fun définirMajPublicationStockée(json: String) {
-        context.dataStore.edit { it[Clefs.majPublicationStockée] = json }
+        dataStore.edit { it[Clefs.majPublicationStockée] = json }
     }
 
     /** Réglages du composeur IA (issue #56), observables d'un seul flux. */
-    val réglagesIA: Flow<RéglagesIA> = context.dataStore.data.map { p ->
+    val réglagesIA: Flow<RéglagesIA> = dataStore.data.map { p ->
         RéglagesIA(
             actif = p[Clefs.iaActivé] ?: false,
             base = p[Clefs.iaBase] ?: PresetsFournisseurs.first().base,
@@ -171,7 +170,7 @@ class SessionStore(private val context: Context) {
     }
 
     suspend fun définirRéglagesIA(réglages: RéglagesIA) {
-        context.dataStore.edit { p ->
+        dataStore.edit { p ->
             p[Clefs.iaActivé] = réglages.actif
             p[Clefs.iaBase] = réglages.base
             p[Clefs.iaModèle] = réglages.modèle
@@ -190,7 +189,7 @@ class SessionStore(private val context: Context) {
         eleves: List<Eleve>,
         retenir: Boolean,
     ) {
-        context.dataStore.edit { p ->
+        dataStore.edit { p ->
             p[Clefs.keyToken] = keyToken
             p[Clefs.userId] = userId
             p[Clefs.parentId] = parentId
@@ -208,16 +207,25 @@ class SessionStore(private val context: Context) {
     }
 
     suspend fun choisirEleve(index: Int) {
-        context.dataStore.edit { it[Clefs.eleveIndex] = index }
+        dataStore.edit { it[Clefs.eleveIndex] = index }
+    }
+
+    /** Change the pupil used by API requests in the desktop client. */
+    suspend fun sélectionnerÉlève(index: Int) {
+        val élève = state.first()?.eleves?.getOrNull(index) ?: return
+        dataStore.edit {
+            it[Clefs.eleveIndex] = index
+            it[Clefs.eleveId] = élève.id
+        }
     }
 
     suspend fun marquerOnboardingVu() {
-        context.dataStore.edit { it[Clefs.onboardingVu] = true }
+        dataStore.edit { it[Clefs.onboardingVu] = true }
     }
 
     /** Purge complète — session tuée ou déconnexion. */
     suspend fun effacer() {
-        context.dataStore.edit { p ->
+        dataStore.edit { p ->
             p.remove(Clefs.keyToken)
             p.remove(Clefs.userId)
             p.remove(Clefs.parentId)

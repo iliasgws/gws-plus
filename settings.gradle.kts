@@ -16,3 +16,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "gws-plus"
 include(":app")
+include(":composeApp")

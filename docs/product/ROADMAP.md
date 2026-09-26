@@ -4,6 +4,24 @@ Living checklist for the first application milestone. Agent-facing doc (English)
 Probe findings are distilled into `docs/api/BOTI-API.md` and `docs/api/ENDPOINT-MAP.md`;
 raw probe responses stay out of the repository (personal data).
 
+## Issue #80 — Linux desktop client
+
+- [x] Shared Kotlin Multiplatform JVM/Android source set for Boti API, models,
+      repositories, normalizers, session, cache, and AI composer.
+- [x] Android entry remains in `:app`; its navigation and back-gesture routes
+      are unchanged. DataStore now receives its platform-created store.
+- [x] Compose Desktop entry in `:composeApp` with the six sections, details,
+      text messaging, document downloads, quiz play, shop ordering, and AI
+      settings/actions. Voice recording is deferred; received audio opens
+      through the Linux file association.
+- [x] `createDistributable` builds a self-contained Linux app; `.deb` and
+      `.rpm` tasks are configured for hosts with their packaging tools.
+- [x] Android `assembleDebug` and `testDebugUnitTest` pass after extraction.
+- [x] Shared JVM tests check streaming news extraction after replacing the
+      Android JSON reader, and desktop pupil selection in DataStore.
+- [ ] Manual account-based walkthrough and native package install on a Linux
+      test machine (no test account or package tools available in CI).
+
 ## Legend
 
 `[x]` done · `[~]` in progress · `[ ]` todo · `(!)` needs a decision or a real-device check
@@ -57,7 +75,7 @@ raw probe responses stay out of the repository (personal data).
       remember, onboarding-seen)
 - [x] Normalizers: devoirs (buckets remettre/ancien), nouveautes, messages,
       demandes, absences, ressources, contact — tolerant to missing fields
-- [x] `admin_nouveautes` streamed description extractor (android.util.JsonReader,
+- [x] `admin_nouveautes` streamed description extractor (Gson JsonReader,
       bounded memory, 19 MB response) with per-session cache
 - [x] Repositories: Auth, Registre, Devoirs, Documents, Messages, Demandes
 

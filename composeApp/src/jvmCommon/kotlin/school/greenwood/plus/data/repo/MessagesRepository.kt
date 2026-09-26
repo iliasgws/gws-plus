@@ -216,7 +216,7 @@ class MessagesRepository(
 }
 
 /** Mime raisonnable pour une pièce jointe (serveur : types usuels du bureau). */
-internal fun mimeDe(ext: String): String = when (ext.lowercase()) {
+fun mimeDe(ext: String): String = when (ext.lowercase()) {
     "pdf" -> "application/pdf"
     "png" -> "image/png"
     "jpg", "jpeg" -> "image/jpeg"
@@ -380,7 +380,7 @@ class DocumentsRepository(
  * bundle avant son `JSON.stringify(questions)`. Une question sans objet
  * `answer` en reçoit un neuf ; une question non jouée part telle quelle.
  */
-internal fun questionsPourEnvoi(
+fun questionsPourEnvoi(
     brutes: JsonArray,
     jouées: Map<Int, school.greenwood.plus.model.RéponseJouée>,
 ): JsonArray = JsonArray(brutes.mapIndexed { index, question ->

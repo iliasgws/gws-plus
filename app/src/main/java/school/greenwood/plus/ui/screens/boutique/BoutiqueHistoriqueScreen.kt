@@ -257,10 +257,10 @@ private fun CarteCommande(
                 // L'état serveur : « validée » se félicite du vert du Registre,
                 // les autres états restent en annotation neutre.
                 val vert = RegistreTheme.colors.accents["registre"]
-                if (commande.étatLabel != null) {
+                commande.étatLabel?.let { étatLabel ->
                     val validée = commande.étatAlias == "validée" || commande.étatAlias == "validee"
                     Puce(
-                        label = commande.étatLabel,
+                        label = étatLabel,
                         accent = if (validée) vert else null,
                     )
                 }

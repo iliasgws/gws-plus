@@ -1,7 +1,7 @@
 package school.greenwood.plus.data.repo
 
-import android.util.JsonReader
-import android.util.JsonToken
+import com.google.gson.stream.JsonReader
+import com.google.gson.stream.JsonToken
 import kotlinx.coroutines.flow.first
 import kotlinx.serialization.json.JsonObject
 import school.greenwood.plus.data.api.BotiClient
