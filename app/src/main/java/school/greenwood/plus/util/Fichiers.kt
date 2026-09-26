@@ -1,8 +1,13 @@
 package school.greenwood.plus.util
 
+import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
+import android.os.Environment
+import android.provider.MediaStore
+import android.webkit.MimeTypeMap
 import androidx.core.content.FileProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -15,10 +20,27 @@ import java.io.File
  * Pièces jointes : téléchargement dans l'espace privé de l'app (aucune
  * permission stockage nécessaire), ouverture native via FileProvider —
  * le PDF s'ouvre dans le lecteur du système, jamais dans une webview.
+ *
+ * Les devoirs (issue #68) téléchargent autrement : dans le dossier public
+ * « Downloads/gws-plus » (MediaStore, API 29+) pour rester visibles dans
+ * les Fichiers du téléphone — l'ancien cache privé était introuvable pour
+ * l'élève, et le lot « Tout télécharger » semblait ne rien enregistrer.
  */
 object Fichiers {
 
     private val http = OkHttpClient()
+
+    /** Client des téléchargements publics : délais explicites (le défaut
+     *  d'OkHttp, 10 s de lecture, laisse un lot « sans fin » sur une pièce
+     *  lente ou muette). */
+    private val httpPublic = OkHttpClient.Builder()
+        .connectTimeout(java.time.Duration.ofSeconds(20))
+        .readTimeout(java.time.Duration.ofSeconds(60))
+        .writeTimeout(java.time.Duration.ofSeconds(60))
+        .build()
+
+    /** Dossier public de l'app dans les Fichiers du téléphone. */
+    const val DOSSIER_PUBLIC = "Download/gws-plus"
 
     fun dossierDocuments(context: Context): File =
         File(context.filesDir, "documents").apply { mkdirs() }
@@ -41,6 +63,63 @@ object Fichiers {
             }
         }
         cible
+    }
+
+    /**
+     * Télécharge dans le dossier public « Downloads/gws-plus » (MediaStore,
+     * API 29+) et retourne l'URI du fichier enregistré — null en échec, la
+     * ligne d'UI garde son état et le lot continue. En deçà d'API 29 (pas de
+     * MediaStore.Downloads) : repli sur le cache privé, URI FileProvider.
+     */
+    suspend fun téléchargerPublic(
+        context: Context,
+        url: String,
+        nomSouhaité: String,
+    ): Uri? = withContext(Dispatchers.IO) {
+        val nom = nomFichierSain(nomSouhaité, url)
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            return@withContext runCatching { télécharger(context, url, nom) }.getOrNull()?.let {
+                FileProvider.getUriForFile(context, "${context.packageName}.files", it)
+            }
+        }
+        val résolveur = context.contentResolver
+        val mime = mimeDeBase(nom.substringAfterLast('.', ""))
+        val valeurs = ContentValues().apply {
+            put(MediaStore.MediaColumns.DISPLAY_NAME, nom)
+            put(MediaStore.MediaColumns.MIME_TYPE, mime)
+            put(MediaStore.MediaColumns.RELATIVE_PATH, DOSSIER_PUBLIC)
+            put(MediaStore.MediaColumns.IS_PENDING, 1)
+        }
+        val uri = résolveur.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, valeurs)
+            ?: return@withContext null
+        try {
+            val req = Request.Builder()
+                .url(url)
+                .header("User-Agent", "GWSPlus/${BuildConfig.VERSION_NAME}")
+                .build()
+            httpPublic.newCall(req).execute().use { resp ->
+                if (!resp.isSuccessful) error("Téléchargement impossible (${resp.code})")
+                résolveur.openOutputStream(uri)?.use { sortie ->
+                    resp.body.byteStream().use { entrée -> entrée.copyTo(sortie) }
+                } ?: error("Sortie indisponible")
+            }
+            val fini = ContentValues().apply { put(MediaStore.MediaColumns.IS_PENDING, 0) }
+            résolveur.update(uri, fini, null, null)
+            uri
+        } catch (err: Exception) {
+            // Rien d'entamé ne doit traîner dans les Fichiers du téléphone.
+            runCatching { résolveur.delete(uri, null, null) }
+            null
+        }
+    }
+
+    /** Ouvre un fichier déjà enregistré (URI publique ou FileProvider). */
+    fun intentionOuvrirUri(context: Context, uri: Uri): Intent? {
+        val mime = context.contentResolver.getType(uri) ?: "application/octet-stream"
+        val intent = Intent(Intent.ACTION_VIEW)
+            .setDataAndType(uri, mime)
+            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
+        return if (intent.resolveActivity(context.packageManager) != null) intent else intent
     }
 
     /** Nom de fichier sûr : la pièce jointe peut n'avoir qu'un libellé générique. */
@@ -71,7 +150,7 @@ object Fichiers {
     }
 
     /** Mime déduit de l'extension — le sous-ensemble suffisant aux copies. */
-    private fun mimeDeBase(ext: String): String = when (ext.lowercase()) {
+    internal fun mimeDeBase(ext: String): String = when (ext.lowercase()) {
         "pdf" -> "application/pdf"
         "png" -> "image/png"
         "jpg", "jpeg" -> "image/jpeg"

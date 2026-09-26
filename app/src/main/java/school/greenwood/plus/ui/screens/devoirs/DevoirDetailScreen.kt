@@ -93,6 +93,7 @@ fun DevoirDetailScreen(
     val copiesLocales by vm.copies.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val téléchargements = remember { mutableStateMapOf<String, Boolean>() }
+    val échecsLot = remember { mutableStateMapOf<String, Boolean>() }
     val batchEnCours = remember { mutableStateOf(false) }
 
     // Confirmations — le POST est définitif, rien ne se lance sans accord.
@@ -302,15 +303,20 @@ fun DevoirDetailScreen(
                                 pointAccent = true,
                             )
 
-                            // Téléchargement groupé dès deux pièces jointes.
+                            // Téléchargement groupé dès deux pièces jointes —
+                            // enregistré dans Downloads/gws-plus (visible dans
+                            // les Fichiers du téléphone), jamais ouvert un à un.
                             if (pièces.size > 1) {
                                 val terminées = pièces.count { téléchargements[it.url] == false }
+                                val échecs = pièces.count { téléchargements[it.url] == false && échecsLot[it.url] == true }
                                 val toutFait = terminées == pièces.size
                                 Button(
                                     onClick = {
                                         batchEnCours.value = true
-                                        vm.téléchargerTout(pièces, context) { pièce, enCours, _ ->
+                                        échecsLot.clear()
+                                        vm.téléchargerTout(pièces, context) { pièce, enCours, uri ->
                                             téléchargements[pièce.url] = enCours
+                                            if (!enCours && uri == null) échecsLot[pièce.url] = true
                                         }
                                     },
                                     enabled = !batchEnCours.value && !toutFait,
@@ -324,6 +330,7 @@ fun DevoirDetailScreen(
                                     Text(
                                         text = when {
                                             batchEnCours.value -> "Téléchargement… ($terminées/${pièces.size})"
+                                            échecs > 0 -> "Terminé — ${pièces.size - échecs}/${pièces.size} ($échecs échec${if (échecs > 1) "s" else ""})"
                                             toutFait -> "Tout est téléchargé"
                                             else -> "Tout télécharger (${pièces.size})"
                                         },
@@ -337,10 +344,10 @@ fun DevoirDetailScreen(
                                     enCours = téléchargements[pièce.url] == true,
                                     onTélécharger = {
                                         téléchargements[pièce.url] = true
-                                        vm.téléchargerPièce(pièce, context) { fichier ->
+                                        vm.téléchargerPièce(pièce, context) { uri ->
                                             téléchargements[pièce.url] = false
-                                            if (fichier != null) {
-                                                val intention = Fichiers.intentionOuvrir(context, fichier)
+                                            if (uri != null) {
+                                                val intention = Fichiers.intentionOuvrirUri(context, uri)
                                                 if (intention != null) context.startActivity(intention)
                                             }
                                         }
@@ -367,10 +374,10 @@ fun DevoirDetailScreen(
                                     enCours = téléchargements[copie.url] == true,
                                     onTélécharger = {
                                         téléchargements[copie.url] = true
-                                        vm.téléchargerPièce(copie, context) { fichier ->
+                                        vm.téléchargerPièce(copie, context) { uri ->
                                             téléchargements[copie.url] = false
-                                            if (fichier != null) {
-                                                val intention = Fichiers.intentionOuvrir(context, fichier)
+                                            if (uri != null) {
+                                                val intention = Fichiers.intentionOuvrirUri(context, uri)
                                                 if (intention != null) context.startActivity(intention)
                                             }
                                         }
@@ -629,12 +636,12 @@ class DevoirDetailViewModel(
         _soumission.value = null
     }
 
-    fun téléchargerPièce(pièce: Attachment, context: android.content.Context, onFait: (java.io.File?) -> Unit) {
+    fun téléchargerPièce(pièce: Attachment, context: android.content.Context, onFait: (android.net.Uri?) -> Unit) {
         viewModelScope.launch {
-            val fichier = runCatching {
-                Fichiers.télécharger(context, pièce.url, pièce.name)
-            }.getOrNull()
-            onFait(fichier)
+            // Dossier public Downloads/gws-plus (issue #68) — visible dans
+            // les Fichiers du téléphone, ouvert une fois enregistré.
+            val uri = Fichiers.téléchargerPublic(context, pièce.url, pièce.name)
+            onFait(uri)
         }
     }
 
@@ -642,15 +649,15 @@ class DevoirDetailViewModel(
     fun téléchargerTout(
         pièces: List<Attachment>,
         context: android.content.Context,
-        onÉtat: (Attachment, Boolean, java.io.File?) -> Unit,
+        onÉtat: (Attachment, Boolean, android.net.Uri?) -> Unit,
     ) {
         viewModelScope.launch {
             pièces.forEach { pièce ->
                 onÉtat(pièce, true, null)
-                val fichier = runCatching {
-                    Fichiers.télécharger(context, pièce.url, pièce.name)
+                val uri = runCatching {
+                    Fichiers.téléchargerPublic(context, pièce.url, pièce.name)
                 }.getOrNull()
-                onÉtat(pièce, false, fichier)
+                onÉtat(pièce, false, uri)
             }
         }
     }
