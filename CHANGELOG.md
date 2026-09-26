@@ -4,6 +4,19 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [0.9.0-beta.3] — 2026-09-26
+
+Bêta : l'indicateur de jour passe à l'orange lui aussi.
+
+### Modifié
+
+- **Point de suivi du jour en orange** (issue #82) : quand tous les devoirs
+  du jour sont faits « pour vous » mais pas encore pour l'école, le point
+  à côté du jour est orange signet au lieu de rouge ; il redevient vert
+  Greenwood quand le fait officiel du serveur le confirme, rouge stylo
+  dès qu'un devoir reste à faire. La pastille hors écran ne signale que
+  les jours rouges — rien ne reste à faire un jour orange.
+
 ## [0.9.0-beta.2] — 2026-09-26
 
 Bêta : la rondeur « fait pour moi » passe à l'orange.
