@@ -11,7 +11,8 @@ raw probe responses stay out of the repository (personal data).
 - [x] Android entry remains in `:app`; its navigation and back-gesture routes
       are unchanged. DataStore now receives its platform-created store.
 - [x] Compose Desktop entry in `:composeApp` with the six sections, details,
-      text messaging, document downloads, quiz play, shop ordering, and AI
+      text messaging, document downloads, quiz play, paged news and gated
+      comments/post questionnaires, shop orders/history editing, and AI
       settings/actions. Voice recording is deferred; received audio opens
       through the Linux file association.
 - [x] `createDistributable` builds a self-contained Linux app; `.deb` and

@@ -237,6 +237,7 @@ private sealed interface Détail {
     data class QuizChoisi(val id: String) : Détail
     data class DemandeChoisie(val demande: Demande) : Détail
     data class ProduitChoisi(val id: String) : Détail
+    data class CommandeChoisie(val commande: CommandeBoutique) : Détail
 }
 
 @Composable
@@ -256,6 +257,8 @@ private fun Bureau(container: DesktopContainer, session: SessionState) {
     var thèmes by remember { mutableStateOf<List<ThemeMessage>>(emptyList()) }
     var demandes by remember { mutableStateOf<List<Demande>>(emptyList()) }
     var actualités by remember { mutableStateOf<List<Post>>(emptyList()) }
+    var suiteActualités by remember { mutableStateOf(true) }
+    var chargementSuite by remember { mutableStateOf(false) }
     var catalogue by remember { mutableStateOf<CatalogueBoutique?>(null) }
     var commandes by remember { mutableStateOf<List<CommandeBoutique>>(emptyList()) }
     var nouveauMessage by remember { mutableStateOf(false) }
@@ -282,6 +285,7 @@ private fun Bureau(container: DesktopContainer, session: SessionState) {
                 Onglet.Plus -> {
                     demandes = withContext(Dispatchers.IO) { container.demandes.liste() }
                     actualités = withContext(Dispatchers.IO) { container.actualités.liste() }
+                    suiteActualités = actualités.size == 10
                     catalogue = withContext(Dispatchers.IO) { container.boutique.catalogue() }
                     commandes = withContext(Dispatchers.IO) { container.boutique.historique() }
                 }
@@ -334,7 +338,17 @@ private fun Bureau(container: DesktopContainer, session: SessionState) {
                 Onglet.Devoirs -> Lignes(devoirs, { it.title }, { "${it.matiere} · ${it.dateRemise ?: "Sans échéance"}${if (it.fait) " · Fait" else ""}" }) { if (!quizEnJeu) détail = Détail.DevoirChoisi(it.id) }
                 Onglet.Documents -> DocumentsContenu(container, unités, ressources) { if (!quizEnJeu) détail = it }
                 Onglet.Messages -> Lignes(conversations, { it.sujet }, { "${it.messages.size} message(s)" }) { if (!quizEnJeu) détail = Détail.ConversationChoisie(it.id) }
-                Onglet.Plus -> PlusContenu(demandes, actualités, catalogue, commandes) { if (!quizEnJeu) détail = it }
+                Onglet.Plus -> PlusContenu(demandes, actualités, suiteActualités, chargementSuite, onSuite = {
+                    chargementSuite = true
+                    portée.launch {
+                        runCatching { withContext(Dispatchers.IO) { container.actualités.liste(actualités.size + 1) } }
+                            .onSuccess { page ->
+                                actualités = (actualités + page).distinctBy { it.id }
+                                suiteActualités = page.size == 10
+                            }.onFailure { erreur = it.message }
+                        chargementSuite = false
+                    }
+                }, catalogue, commandes) { if (!quizEnJeu) détail = it }
             }
         }
         if (!compact) détail?.let { choisi ->
@@ -425,16 +439,17 @@ private fun DocumentsContenu(container: DesktopContainer, unités: List<UniteBib
 }
 
 @Composable
-private fun PlusContenu(demandes: List<Demande>, actualités: List<Post>, catalogue: CatalogueBoutique?, commandes: List<CommandeBoutique>, ouvrir: (Détail) -> Unit) {
+private fun PlusContenu(demandes: List<Demande>, actualités: List<Post>, suiteActualités: Boolean, chargementSuite: Boolean, onSuite: () -> Unit, catalogue: CatalogueBoutique?, commandes: List<CommandeBoutique>, ouvrir: (Détail) -> Unit) {
     LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         item { Text("Mes demandes", style = MaterialTheme.typography.titleLarge) }
         items(demandes) { demande -> Ligne(demande.titre, demande.statut.orEmpty()) { ouvrir(Détail.DemandeChoisie(demande)) } }
         item { Text("Actualités", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(top = 16.dp)) }
         items(actualités) { post -> Ligne(post.title, post.date?.toLocalDate()?.toString().orEmpty()) { ouvrir(Détail.PostChoisi(post.id)) } }
+        if (suiteActualités) item { OutlinedButton(onClick = onSuite, enabled = !chargementSuite) { Text(if (chargementSuite) "Chargement…" else "Voir plus d’actualités") } }
         item { Text("Boutique", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(top = 16.dp)) }
         items(catalogue?.produits.orEmpty()) { produit -> Ligne(produit.label, produit.prix.orEmpty()) { ouvrir(Détail.ProduitChoisi(produit.id)) } }
         item { Text("Mes commandes", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(top = 16.dp)) }
-        items(commandes) { commande -> Ligne(commande.articles.joinToString { it.label }.ifBlank { "Commande ${commande.id}" }, commande.étatLabel.orEmpty()) {} }
+        items(commandes) { commande -> Ligne(commande.articles.joinToString { it.label }.ifBlank { "Commande ${commande.id}" }, commande.étatLabel.orEmpty()) { ouvrir(Détail.CommandeChoisie(commande)) } }
         item { TextButton(onClick = { runCatching { Desktop.getDesktop().browse(URI("https://github.com/iliasgws/gws-plus/releases")) } }) { Text("Voir les mises à jour") } }
     }
 }
@@ -463,9 +478,13 @@ private fun DétailContenu(container: DesktopContainer, détail: Détail, quizEn
     var traitement by remember { mutableStateOf(false) }
     var confirmerFait by remember { mutableStateOf(false) }
     var confirmerCommande by remember { mutableStateOf(false) }
+    var commandeÀSupprimer by remember { mutableStateOf<Pair<String, String?>?>(null) }
     var confirmerQuitterQuiz by remember { mutableStateOf(false) }
     var réponse by remember(détail) { mutableStateOf("") }
     var piècesRéponse by remember(détail) { mutableStateOf<List<File>>(emptyList()) }
+    var nouveauCommentaire by remember(détail) { mutableStateOf("") }
+    var réponseÀ by remember(détail) { mutableStateOf<String?>(null) }
+    val écritureActive by container.session.ecritureNouveautesActivée.collectAsState(initial = false)
     val portée = rememberCoroutineScope()
     LaunchedEffect(détail) {
         runCatching {
@@ -478,6 +497,7 @@ private fun DétailContenu(container: DesktopContainer, détail: Détail, quizEn
                     is Détail.QuizChoisi -> container.documents.quiz(détail.id)
                     is Détail.DemandeChoisie -> détail.demande
                     is Détail.ProduitChoisi -> container.boutique.détail(détail.id)
+                    is Détail.CommandeChoisie -> détail.commande
                 }
             }
         }.onSuccess {
@@ -559,8 +579,63 @@ private fun DétailContenu(container: DesktopContainer, détail: Détail, quizEn
             }
             is PostDetail -> {
                 Text(valeur.title, style = MaterialTheme.typography.titleMedium)
-                valeur.descriptionHtml?.let { TexteDéfilant(it) }
+                LazyColumn(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    valeur.descriptionHtml?.let { html -> item { Text(Jsoup.parse(html).body().wholeText().trim()) } }
+                    if (valeur.images.isNotEmpty()) item { Text("Images", fontWeight = FontWeight.Bold) }
+                    items(valeur.images.size) { numéro ->
+                        TextButton(onClick = { runCatching { Desktop.getDesktop().browse(URI(valeur.images[numéro])) } }) { Text("Ouvrir l’image ${numéro + 1}") }
+                    }
+                    if (valeur.questions.isNotEmpty()) item { Text("Questionnaire", fontWeight = FontWeight.Bold) }
+                    items(valeur.questions) { question ->
+                        Column {
+                            Text(question.label)
+                            question.réponses.forEach { choix ->
+                                OutlinedButton(onClick = {
+                                    traitement = true
+                                    portée.launch {
+                                        runCatching { withContext(Dispatchers.IO) {
+                                            container.actualités.répondreQuestionQuiz(valeur.id, question.alias!!, choix)
+                                            container.actualités.détail(valeur.id)
+                                        } }.onSuccess { contenu = it }.onFailure { erreur = it.message }
+                                        traitement = false
+                                    }
+                                }, enabled = écritureActive && question.alias != null && question.réponseChoisie == null && !traitement) { Text(choix) }
+                            }
+                            question.réponseChoisie?.let { Text("Réponse : $it") }
+                        }
+                    }
+                    if (valeur.commentaires.isNotEmpty()) item { Text("Commentaires", fontWeight = FontWeight.Bold) }
+                    items(valeur.commentaires) { commentaire ->
+                        Card(Modifier.fillMaxWidth()) {
+                            Column(Modifier.padding(12.dp)) {
+                                Text(commentaire.auteur, fontWeight = FontWeight.Bold)
+                                Text(commentaire.texte)
+                                commentaire.sousCommentaires.forEach { réponse ->
+                                    Text("${réponse.auteur} · ${réponse.texte}", style = MaterialTheme.typography.bodySmall)
+                                }
+                                if (valeur.peutRépondre && écritureActive) TextButton(onClick = { réponseÀ = commentaire.auteur }) { Text("Répondre") }
+                            }
+                        }
+                    }
+                }
                 valeur.files.forEach { pièce -> TextButton(onClick = { ouvrirFichier(portée, pièce.url, pièce.name) { erreur = it } }) { Text("Télécharger · ${pièce.name}") } }
+                if (valeur.peutNouveauCommentaire && écritureActive) {
+                    OutlinedTextField(nouveauCommentaire, { nouveauCommentaire = it }, label = { Text(réponseÀ?.let { "Répondre à $it" } ?: "Commentaire") }, modifier = Modifier.fillMaxWidth())
+                    Button(onClick = {
+                        traitement = true
+                        portée.launch {
+                            runCatching { withContext(Dispatchers.IO) {
+                                container.actualités.commenter(valeur.id, nouveauCommentaire, réponseÀ)
+                                container.actualités.détail(valeur.id)
+                            } }.onSuccess { nouveau ->
+                                    contenu = nouveau
+                                    nouveauCommentaire = ""
+                                    réponseÀ = null
+                                }.onFailure { erreur = it.message }
+                            traitement = false
+                        }
+                    }, enabled = nouveauCommentaire.isNotBlank() && !traitement) { Text("Publier") }
+                }
             }
             is Demande -> {
                 Text(valeur.titre, style = MaterialTheme.typography.titleMedium)
@@ -575,10 +650,13 @@ private fun DétailContenu(container: DesktopContainer, détail: Détail, quizEn
                 }
             }
             is ProduitDétail -> {
-                var variante by remember(valeur.id) { mutableStateOf(valeur.variantes.firstOrNull()) }
+                val commandeId = (détail as? Détail.CommandeChoisie)?.commande?.id
+                var variante by remember(valeur.id) {
+                    mutableStateOf(valeur.variantes.firstOrNull { it.label == valeur.prérempli?.taille } ?: valeur.variantes.firstOrNull())
+                }
                 var variantesOuvertes by remember { mutableStateOf(false) }
-                var quantité by remember { mutableStateOf("1") }
-                var commentaire by remember { mutableStateOf("") }
+                var quantité by remember(valeur.id) { mutableStateOf((valeur.prérempli?.quantité ?: 1).toString()) }
+                var commentaire by remember(valeur.id) { mutableStateOf(valeur.prérempli?.commentaire.orEmpty()) }
                 Text(valeur.label, style = MaterialTheme.typography.titleMedium)
                 valeur.description?.let { TexteDéfilant(it) }
                 Text(valeur.prixRaw ?: "")
@@ -590,17 +668,17 @@ private fun DétailContenu(container: DesktopContainer, détail: Détail, quizEn
                 }
                 OutlinedTextField(quantité, { quantité = it.filter(Char::isDigit) }, label = { Text("Quantité") })
                 OutlinedTextField(commentaire, { commentaire = it }, label = { Text("Commentaire") })
-                if (valeur.peutCommander) Button(onClick = { confirmerCommande = true }, enabled = (quantité.toIntOrNull() ?: 0) > 0) { Text("Commander") }
+                if (valeur.peutCommander) Button(onClick = { confirmerCommande = true }, enabled = (quantité.toIntOrNull() ?: 0) > 0) { Text(if (commandeId == null) "Commander" else "Enregistrer les modifications") }
                 if (confirmerCommande) AlertDialog(
                     onDismissRequest = { confirmerCommande = false },
-                    title = { Text("Passer cette commande ?") },
+                    title = { Text(if (commandeId == null) "Passer cette commande ?" else "Modifier cette commande ?") },
                     text = { Text("La commande sera enregistrée immédiatement par l’école.") },
                     confirmButton = { TextButton(onClick = {
                         confirmerCommande = false
                         traitement = true
                         portée.launch {
                             runCatching { withContext(Dispatchers.IO) {
-                                container.boutique.commander(valeur.id, variante?.id, variante?.label, quantité.toInt(), commentaire, variante?.montant ?: valeur.prixRaw)
+                                container.boutique.commander(valeur.id, variante?.id, variante?.label, quantité.toInt(), commentaire, variante?.montant ?: valeur.prixRaw, commandeId)
                             } }.onSuccess {
                                 if (it.succès) { onActualiser(); onFermer() } else erreur = it.message ?: "Commande impossible"
                             }.onFailure { erreur = it.message }
@@ -609,6 +687,45 @@ private fun DétailContenu(container: DesktopContainer, détail: Détail, quizEn
                     }, enabled = !traitement) { Text("Confirmer") } },
                     dismissButton = { TextButton(onClick = { confirmerCommande = false }) { Text("Annuler") } },
                 )
+            }
+            is CommandeBoutique -> {
+                Text("Commande ${valeur.id}", style = MaterialTheme.typography.titleMedium)
+                valeur.étatLabel?.let { Text(it) }
+                valeur.date?.let { Text(it) }
+                valeur.articles.forEach { article ->
+                    Card(Modifier.fillMaxWidth()) {
+                        Column(Modifier.padding(12.dp)) {
+                            Text(article.label, fontWeight = FontWeight.Bold)
+                            Text("${article.quantité ?: 1} · ${article.prix.orEmpty()}")
+                            if (article.modifiable && article.produitId != null) TextButton(onClick = {
+                                traitement = true
+                                portée.launch {
+                                    runCatching { withContext(Dispatchers.IO) { container.boutique.détail(article.produitId, valeur.id) } }
+                                        .onSuccess { contenu = it }.onFailure { erreur = it.message }
+                                    traitement = false
+                                }
+                            }, enabled = !traitement) { Text("Modifier") }
+                            if (article.supprimable) TextButton(onClick = { commandeÀSupprimer = valeur.id to article.id }) { Text("Supprimer l’article") }
+                        }
+                    }
+                }
+                if (valeur.supprimable) TextButton(onClick = { commandeÀSupprimer = valeur.id to null }) { Text("Supprimer la commande") }
+                commandeÀSupprimer?.let { cible -> AlertDialog(
+                    onDismissRequest = { commandeÀSupprimer = null },
+                    title = { Text(if (cible.second == null) "Supprimer cette commande ?" else "Supprimer cet article ?") },
+                    text = { Text("Cette action est définitive.") },
+                    confirmButton = { TextButton(onClick = {
+                        commandeÀSupprimer = null
+                        traitement = true
+                        portée.launch {
+                            runCatching { withContext(Dispatchers.IO) { container.boutique.supprimer(cible.first, cible.second) } }
+                                .onSuccess { if (it) { onActualiser(); onFermer() } else erreur = "Suppression impossible" }
+                                .onFailure { erreur = it.message }
+                            traitement = false
+                        }
+                    }, enabled = !traitement) { Text("Supprimer") } },
+                    dismissButton = { TextButton(onClick = { commandeÀSupprimer = null }) { Text("Annuler") } },
+                ) }
             }
             is school.greenwood.plus.data.repo.QuizChargé -> QuizContenu(container, valeur, onJeuChange = onQuizEnJeu) { erreur = it }
         }
@@ -732,7 +849,9 @@ private fun NouveauMessage(container: DesktopContainer, thèmes: List<ThemeMessa
 @Composable
 private fun ParamètresDesktop(container: DesktopContainer, onFermer: () -> Unit) {
     val actuels by container.session.réglagesIA.collectAsState(initial = RéglagesIA())
+    val écriture by container.session.ecritureNouveautesActivée.collectAsState(initial = false)
     var réglages by remember(actuels) { mutableStateOf(actuels) }
+    var autoriserÉcriture by remember(écriture) { mutableStateOf(écriture) }
     var erreur by remember { mutableStateOf<String?>(null) }
     val portée = rememberCoroutineScope()
     AlertDialog(
@@ -740,6 +859,10 @@ private fun ParamètresDesktop(container: DesktopContainer, onFermer: () -> Unit
         title = { Text("Paramètres · Assistant IA") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Checkbox(checked = autoriserÉcriture, onCheckedChange = { autoriserÉcriture = it })
+                    Text("Autoriser les commentaires et les questionnaires des actualités")
+                }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Checkbox(checked = réglages.actif, onCheckedChange = { réglages = réglages.copy(actif = it) })
                     Text("Activer l’assistant IA")
@@ -757,7 +880,10 @@ private fun ParamètresDesktop(container: DesktopContainer, onFermer: () -> Unit
         },
         confirmButton = { TextButton(onClick = {
             portée.launch {
-                runCatching { container.session.définirRéglagesIA(réglages) }
+                runCatching {
+                    container.session.définirEcritureNouveautes(autoriserÉcriture)
+                    container.session.définirRéglagesIA(réglages)
+                }
                     .onSuccess { onFermer() }.onFailure { erreur = it.message }
             }
         }) { Text("Enregistrer") } },

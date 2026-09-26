@@ -11,8 +11,9 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
 - **Client bureau Linux** (issue #80) : connexion et consultation du registre,
   des cours, des devoirs, des documents, des messages, des demandes et de la
   boutique ; réponses et nouveaux messages avec pièces jointes et assistant
-  IA, quiz, téléchargement des documents et ouverture des publications dans
-  le navigateur. Les données et la session viennent du même module Kotlin
+  IA, quiz, commentaires d'actualités, commandes et historique, téléchargement
+  des documents et ouverture des images dans le navigateur. Les données et la
+  session viennent du même module Kotlin
   Multiplatform que l'application Android.
 
 ## [0.8.6] — 2026-09-26
