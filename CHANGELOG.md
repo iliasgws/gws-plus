@@ -4,6 +4,18 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [0.9.0-beta.4] — 2026-09-26
+
+Bêta : les jours passés sont verts, sans vérifier le serveur.
+
+### Modifié
+
+- **Point de suivi des jours passés en vert** (issue #82) : un jour
+  entièrement passé s'affiche vert même si le fait officiel du serveur
+  n'est pas coché — le travail est derrière, plus rien à faire. Les jours
+  à venir gardent leur logique : vert (école au courant), orange (fait
+  pour vous seulement), rouge (au moins un devoir reste).
+
 ## [0.9.0-beta.3] — 2026-09-26
 
 Bêta : l'indicateur de jour passe à l'orange lui aussi.
