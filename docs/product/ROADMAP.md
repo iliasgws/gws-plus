@@ -20,6 +20,8 @@ raw probe responses stay out of the repository (personal data).
 - [x] Android `assembleDebug` and `testDebugUnitTest` pass after extraction.
 - [x] Shared JVM tests check streaming news extraction after replacing the
       Android JSON reader, and desktop pupil selection in DataStore.
+- [x] Version 0.9.0-beta.1 builds on the feature branch; the packaged Linux
+      app launches to the login screen with an isolated session directory.
 - [ ] Manual account-based walkthrough and native package install on a Linux
       test machine (no test account or package tools available in CI).
 

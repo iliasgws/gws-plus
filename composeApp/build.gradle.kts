@@ -59,7 +59,9 @@ compose.desktop {
         nativeDistributions {
             targetFormats(TargetFormat.Deb, TargetFormat.Rpm)
             packageName = "gws-plus"
-            packageVersion = providers.gradleProperty("gwsVersion").get()
+            // jpackage accepts numeric versions; the release asset and Android
+            // versionName retain the full beta suffix.
+            packageVersion = providers.gradleProperty("gwsVersion").get().substringBefore('-')
             description = "Greenwood School + pour Linux"
             vendor = "Greenwood School +"
         }

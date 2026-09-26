@@ -6,6 +6,10 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
 
 ## [Non publié]
 
+## [0.9.0-beta.1] — 2026-09-26
+
+Préversion du client bureau Linux (issue #80, PR #81).
+
 ### Ajouté
 
 - **Client bureau Linux** (issue #80) : connexion et consultation du registre,

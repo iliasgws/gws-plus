@@ -36,7 +36,7 @@ Current contents (update this section whenever files are added or removed):
 | `docs/development/` | `SETUP.md` (toolchain), `ARCHITECTURE.md` (layers), `NAVIGATION.md` (back-stack contract) |
 | `docs/api/` | `BOTI-API.md` (protocol), `ENDPOINT-MAP.md` (observed shapes), `ENDPOINTS.md` (100-endpoint inventory) |
 | `docs/security/` | `SECURITY-NOTES.md` |
-| `settings.gradle.kts`, `build.gradle.kts`, `gradle.properties`, `gradlew`, `gradle/wrapper/` | Gradle 9.6 build (AGP 9.4.1, Kotlin 2.4.20, built-in Kotlin — no `kotlin.android` plugin); `gwsVersion` keeps Android and Linux versions aligned |
+| `settings.gradle.kts`, `build.gradle.kts`, `gradle.properties`, `gradlew`, `gradle/wrapper/` | Gradle 9.6 build (AGP 9.4.1, Kotlin 2.4.20, built-in Kotlin — no `kotlin.android` plugin); `gwsVersion` sets the Android version and the numeric Linux package version (without a beta suffix) |
 | `app/` | The Android application (`:app` module), namespace `school.greenwood.plus`; depends on `:composeApp` |
 | `composeApp/build.gradle.kts`, `composeApp/src/jvmCommon/`, `composeApp/src/jvmMain/` | KMP Android/JVM shared data layer and Linux Compose Desktop entry, with `.deb`/`.rpm` packaging tasks |
 | `app/src/main/java/school/greenwood/plus/` | Sources — key entries below |
