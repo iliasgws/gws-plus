@@ -4,6 +4,17 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [0.9.0-beta.5] — 2026-09-26
+
+Bêta : les devoirs passés ne sont plus « à faire ».
+
+### Modifié
+
+- **Puce rouge « À faire » retirée pour les devoirs passés** (issue #82) :
+  la puce ne s'affiche plus quand la date de remise est derrière — en liste
+  comme dans le détail — cohérent avec le point du jour passé devenu vert.
+  Aujourd'hui reste rouge : il faut encore rendre le travail.
+
 ## [0.9.0-beta.4] — 2026-09-26
 
 Bêta : les jours passés sont verts, sans vérifier le serveur.
