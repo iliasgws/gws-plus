@@ -314,10 +314,12 @@ fun DevoirDetailScreen(
                                     onClick = {
                                         batchEnCours.value = true
                                         échecsLot.clear()
-                                        vm.téléchargerTout(pièces, context) { pièce, enCours, uri ->
+                                        vm.téléchargerTout(pièces, context, { pièce, enCours, uri ->
                                             téléchargements[pièce.url] = enCours
                                             if (!enCours && uri == null) échecsLot[pièce.url] = true
-                                        }
+                                        }, {
+                                            batchEnCours.value = false
+                                        })
                                     },
                                     enabled = !batchEnCours.value && !toutFait,
                                     colors = ButtonDefaults.buttonColors(
@@ -650,6 +652,7 @@ class DevoirDetailViewModel(
         pièces: List<Attachment>,
         context: android.content.Context,
         onÉtat: (Attachment, Boolean, android.net.Uri?) -> Unit,
+        onFini: () -> Unit = {},
     ) {
         viewModelScope.launch {
             pièces.forEach { pièce ->
@@ -659,6 +662,7 @@ class DevoirDetailViewModel(
                 }.getOrNull()
                 onÉtat(pièce, false, uri)
             }
+            onFini()
         }
     }
 }
