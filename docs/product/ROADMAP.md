@@ -799,3 +799,29 @@ ambiguous in places. Redesigned as a compact bottom sheet:
       collapsed sheet (what opens on tap) already shows only field + Corriger/
       Réécrire + tones + Générer; transformations live one drag away
 - [x] Tests updated for the new enum sets — all green
+
+## Devoir detail (issues #60 + #68, branch `hotfix-devoirs-detail`, 0.8.4)
+
+The devoir list panel (detail screen) shipped complete: its own server
+payload (GET `devoirs&devoir=<id>`, the official detail page's call) is the
+only source of attachments and submission rights — the list carries neither.
+
+- [x] Probe (2026-09-26, read-only GETs): single-devoir payload carries
+      `files[]` (direct + viewer links, `filename`), `devoir_fait{fait,
+      file_sent, files}`, `can_set_done` / `can_add_files` / `show_files`;
+      devoir 25981 → all three true, 2 attachments; old devoirs → false.
+      Captures: `devoirs_single_25058/25061/25981.json`
+- [x] Detail screen: cache-first instant display, then detail payload
+      merges (attachments, fait/file_sent); attachments section + batch
+      « Tout télécharger » (2+); `DevoirsDetailTest` on the probed shapes
+- [x] Mark done: POST `devoirs_date_v2` (official fields, bundle 3537.js/
+      154.js) behind a confirmation AlertDialog — irreversible server-side
+- [x] Copy submission after done: SAF picker → base64 in the `devoir` JSON
+      field (official `base64File` flow); sent copies listed/downloadable;
+      list refresh on return (cache rewrite + modification signal)
+- [x] Downloads land in public **Downloads/gws-plus** (MediaStore.Downloads,
+      API 29+, private fallback below) — explicit timeouts, batch always
+      finishes, failures reported on the button, aborted pieces deleted
+- [x] On-device check (2026-09-26, betas 1–3 on the Xiaomi): detail screen,
+      attachments (2), mark-done button, batch download exercised — beta 1
+      surfaced the stuck « Téléchargement… » label (fixed in beta 3)
