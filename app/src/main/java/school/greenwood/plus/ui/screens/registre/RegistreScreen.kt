@@ -126,9 +126,9 @@ fun RegistreScreen(
     }
     val état by vm.état.collectAsStateWithLifecycle()
 
-    // Mise à jour de l'app (issue #46) : contrôle au démarrage (au plus une
-    // fois par 12 h, échec silencieux) et carte en tête du flux quand une
-    // publication plus récente existe.
+    // Mise à jour de l'app (issue #46) : contrôle à chaque ouverture
+    // (échec silencieux) et carte en tête du flux quand une publication
+    // plus récente existe.
     val majÉtat by container.misesÀJour.état.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) { container.misesÀJour.vérifierAuBesoin() }
 
@@ -251,7 +251,12 @@ fun RegistreScreen(
                             portée.launch { tiroir.open() }
                         },
                         surOuvrirFeuille = { feuilleOuverte = true },
-                        surActualiser = vm::charger,
+                        // Actualiser : contenu du registre + contrôle des mises
+                        // à jour en silence (échec muet, jamais de blocage).
+                        surActualiser = {
+                            vm.charger()
+                            portée.launch { container.misesÀJour.vérifier(manuel = false) }
+                        },
                     )
                 }
 
