@@ -4,6 +4,18 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [0.9.2] — 2026-09-27
+
+Mise à jour de préparation : aucun changement fonctionnel, la version
+annonce simplement le chantier à venir.
+
+### Ajouté
+
+- **Préparation de l'implémentation du serveur communautaire** : simple
+  bump de version (versionCode 64) ouvrant la voie au futur serveur
+  communautaire. Aucune évolution visible dans l'application, l'interface
+  ni le protocole se comportent exactement comme en 0.9.1.
+
 ## [0.9.1] — 2026-09-26
 
 Stable après deux bêtas : le bouton « copier » d'un devoir.
