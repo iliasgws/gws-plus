@@ -10,10 +10,12 @@ import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import school.greenwood.plus.data.ai.PresetsFournisseurs
+import school.greenwood.plus.data.api.normaliserUrlServeur
 import school.greenwood.plus.data.ai.RéglagesIA
 import school.greenwood.plus.data.ai.TonIA
 import school.greenwood.plus.model.Eleve
@@ -49,7 +51,7 @@ private data class EleveStocke(
     val img: String? = null,
 )
 
-class SessionStore(private val context: Context) {
+class SessionStore(private val context: Context) : CompteCommunautaire {
 
     private val json = Json { ignoreUnknownKeys = true }
 
@@ -96,6 +98,18 @@ class SessionStore(private val context: Context) {
          *  envoyés à l'école (JSON, tableau d'ids). Préférence d'app : survit à
          *  une purge de session, comme le composeur. */
         val devoirsFaitLocal = stringPreferencesKey("devoirs_fait_local_json")
+
+        /** Serveur communautaire (issue #88) : jeton du compte local (la
+         *  clé vaut le compte — jamais envoyé ailleurs que vers ce serveur),
+         *  version de notice servie / acceptée, URL du serveur (réglable
+         *  dans les Paramètres, vide = non configuré) et votes locaux par
+         *  devoir (JSON, « id » → ±1) affichés en attendant le total serveur.
+         *  Préférences d'app : survivent à une purge de session. */
+        val commJeton = stringPreferencesKey("communautaire_jeton")
+        val commMentionsDemandée = stringPreferencesKey("communautaire_mentions_demandee")
+        val commMentionsAcceptée = stringPreferencesKey("communautaire_mentions_acceptee")
+        val commUrl = stringPreferencesKey("communautaire_url")
+        val commVotes = stringPreferencesKey("communautaire_votes_json")
     }
 
     val events = MutableSharedFlow<SessionEvent>(extraBufferCapacity = 4)
@@ -205,6 +219,87 @@ class SessionStore(private val context: Context) {
             } ?: emptyList()
             val nouveau = if (fait) ids + id else ids - id
             p[Clefs.devoirsFaitLocal] = json.encodeToString(nouveau.distinct())
+        }
+    }
+
+    // — Serveur communautaire (issue #88) ----------------------------------
+
+    /** URL du serveur communautaire (vide = non configuré — réglable dans
+     *  les Paramètres), normalisée à l'écriture. */
+    val urlCommunautaire: Flow<String> =
+        context.dataStore.data.map { it[Clefs.commUrl] ?: "" }
+
+    suspend fun définirUrlCommunautaire(brut: String) {
+        context.dataStore.edit { it[Clefs.commUrl] = normaliserUrlServeur(brut) }
+    }
+
+    /** Présence d'un compte (jeton) — observée par les Paramètres. */
+    val jetonCommunautaire: Flow<String?> =
+        context.dataStore.data.map { it[Clefs.commJeton]?.takeIf { jeton -> jeton.isNotBlank() } }
+
+    /** Votes locaux ±1 par devoir (affichage immédiat — le total définitif
+     *  revient du serveur, jamais incrémenté localement). */
+    val votesLocaux: Flow<Map<String, Int>> = context.dataStore.data.map { p ->
+        p[Clefs.commVotes]?.let { brut ->
+            runCatching { json.decodeFromString<Map<String, Int>>(brut) }.getOrDefault(emptyMap())
+        } ?: emptyMap()
+    }
+
+    suspend fun noterVoteLocal(id: Long, vote: Int) {
+        context.dataStore.edit { p ->
+            val votes = p[Clefs.commVotes]?.let { brut ->
+                runCatching { json.decodeFromString<Map<String, Int>>(brut) }.getOrDefault(emptyMap())
+            } ?: emptyMap()
+            p[Clefs.commVotes] = json.encodeToString(votes + (id.toString() to vote))
+        }
+    }
+
+    private suspend fun oublierVotesLocaux() {
+        context.dataStore.edit { it.remove(Clefs.commVotes) }
+    }
+
+    // — CompteCommunautaire (APP.md §2) ------------------------------------
+
+    override suspend fun jeton(): String? =
+        context.dataStore.data.first()[Clefs.commJeton]?.takeIf { it.isNotBlank() }
+
+    override suspend fun enregistrerJeton(jeton: String, mentionsVersion: String?) {
+        context.dataStore.edit { p ->
+            p[Clefs.commJeton] = jeton
+            p[Clefs.commMentionsDemandée] = mentionsVersion ?: ""
+            p.remove(Clefs.commMentionsAcceptée)
+            p.remove(Clefs.commVotes) // identité neuve : les anciens votes ne sont plus à nous
+        }
+    }
+
+    override suspend fun mentionsDemandée(): String? =
+        context.dataStore.data.first()[Clefs.commMentionsDemandée]?.takeIf { it.isNotBlank() }
+
+    override suspend fun mentionsAcceptée(): String? =
+        context.dataStore.data.first()[Clefs.commMentionsAcceptée]?.takeIf { it.isNotBlank() }
+
+    override suspend fun noterVersionServie(version: String) {
+        context.dataStore.edit { it[Clefs.commMentionsDemandée] = version }
+    }
+
+    override suspend fun accepterNotices(version: String) {
+        context.dataStore.edit { it[Clefs.commMentionsAcceptée] = version }
+    }
+
+    override suspend fun oublierJeton() {
+        context.dataStore.edit { p ->
+            p.remove(Clefs.commJeton)
+            p.remove(Clefs.commMentionsAcceptée)
+            p.remove(Clefs.commVotes)
+        }
+    }
+
+    override suspend fun oublierTout() {
+        context.dataStore.edit { p ->
+            p.remove(Clefs.commJeton)
+            p.remove(Clefs.commMentionsDemandée)
+            p.remove(Clefs.commMentionsAcceptée)
+            p.remove(Clefs.commVotes)
         }
     }
 

@@ -89,3 +89,9 @@ fun LocalDate.frenchNumeric(): String =
 /** Date longue relative lisible dans un choix de système. */
 fun LocalDate.mediumLocalized(): String =
     this.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(Locale.FRENCH))
+
+/** Date saisie dans un formulaire → ISO « yyyy-mm-dd » attendu par le serveur
+ *  communautaire — accepte « jj/mm/aaaa » comme « aaaa-mm-jj » ; null si
+ *  illisible ou inexistante (31/02/…). */
+fun dateSaisieVersIso(saisie: String): String? =
+    extractDate(saisie)?.toString()

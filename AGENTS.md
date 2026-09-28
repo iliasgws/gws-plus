@@ -44,17 +44,18 @@ Current contents (update this section whenever files are added or removed):
 | `…/ui/AppNav.kt` | Root state (onboarding → connexion → registre) + 6-tab shell (Registre, Cours, Devoirs, Documents, Messages, Plus — secondary sections live under Plus), back-stack contract |
 | `…/ui/AppViewModels.kt` | One ViewModel per screen |
 | `…/ui/theme/` | « École vivante » tokens: colors + per-tab accents, Bricolage/Public Sans type, 24/16/10 shapes, motion springs (Mouvement.kt) |
-| `…/ui/components/` | Shared composables (Components.kt: GwsCard, Puce, EmptyState, skeletons…; CarteActualite.kt; CarteMiseAJour.kt: GitHub update card; BadgeIA.kt: « Généré par IA » icon + badge, issue #58; BarreOnglets.kt: custom accent bottom bar) |
-| `…/ui/screens/` | Login, Onboarding, registre (+ drawer menu, Post detail), actualites, plus (secondary sections menu), boutique (catalogue, product detail, order history), cours (Emploi du temps), devoirs, documents (+ Quiz play), messages (+ Conversation + composer + AI panel), demandes, parametres (settings panel, incl. AI settings) |
-| `…/data/api/` | BotiApi/BotiClient (generic GET/POST multipart + envelope), BotiEnvelope, MediaUrls (single-decode) |
+| `…/ui/components/` | Shared composables (Components.kt: GwsCard, Puce, EmptyState, skeletons…, SqueletteCommunaute (issue #88); CarteActualite.kt; CarteMiseAJour.kt: GitHub update card; BadgeIA.kt: « Généré par IA » icon + badge, issue #58; BarreOnglets.kt: custom accent bottom bar) |
+| `…/ui/screens/` | Login, Onboarding, registre (+ drawer menu, Post detail), actualites, plus (secondary sections menu), boutique (catalogue, product detail, order history), cours (Emploi du temps), devoirs, documents (+ Quiz play), messages (+ Conversation + composer + AI panel), demandes, communaute (public lists + forms, issue #88), parametres (settings panel, incl. AI settings + community server URL/test/revoke) |
+| `…/data/api/` | BotiApi/BotiClient (generic GET/POST multipart + envelope), BotiEnvelope, MediaUrls (single-decode), CommunApi (community server client: jeton auth, rate-limit 429, plain-text errors, 10 Ko body cap, URL normalization — issue #88) |
 | `…/data/ai/ComposeurIA.kt` | AI composer (issue #56): OpenAI-compatible client (BYOK, provider presets), actions/tones with French labels, system-prompt builder |
-| `…/data/session/SessionStore.kt` | DataStore session (keyToken, user, eleves; never passwords) + actualisation-au-retour duration |
+| `…/data/session/SessionStore.kt` | DataStore session (keyToken, user, eleves; never passwords) + actualisation-au-retour duration + community account/jeton/mentions + server URL + local vote records (issue #88) |
+| `…/data/session/CompteCommunautaire.kt` | Community account contract (issue #88): jeton lifecycle, mentions-notice flags |
 | `…/data/session/Veille.kt` | VeilleSession — foreground-return refresh signal (absence ≥ duration chosen in Paramètres) |
-| `…/data/repo/` | Repositories + Normalizers (raw JSON → domain models); `UpdatesRepository.kt` — GitHub Releases update checker (issue #46) |
+| `…/data/repo/` | Repositories + Normalizers (raw JSON → domain models); `UpdatesRepository.kt` — GitHub Releases update checker (issue #46); `CommunauteRepository.kt` + `CommunauteNormalizers.kt` — community server lists/writes/notice flow (issue #88) |
 | `…/data/cache/` | Last-known-data memory caches, session-stamped (`MemoireSession`, `CachesSession` — issue #21) |
 | `…/logic/CeSoir.kt` | The focal card's due-date window (Friday → Monday) |
 | `…/util/` | Dates (tolerant parsing), Html, Fichiers (download + FileProvider + SAF staging), Audio (playback), EnregistreurAudio (MediaRecorder) |
-| `app/src/test/` | Unit tests (dates, CeSoir, media URLs, envelope, message normalizers, composer data, quiz normalizers, post normalizers, cours normalizers, document filters, boutique, session cache, veille, fait local des devoirs) |
+| `app/src/test/` | Unit tests (dates, CeSoir, media URLs, envelope, message normalizers, composer data, quiz normalizers, post normalizers, cours normalizers, document filters, boutique, session cache, veille, fait local des devoirs, community params/API/account/normalizers) |
 | `app/fonts-licenses/` | OFL texts for the bundled fonts |
 
 ## Ground rules for agents

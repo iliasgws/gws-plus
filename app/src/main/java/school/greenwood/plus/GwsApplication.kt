@@ -2,11 +2,14 @@ package school.greenwood.plus
 
 import android.app.Application
 import android.content.Context
+import kotlinx.coroutines.flow.first
 import school.greenwood.plus.data.api.BotiClient
 import school.greenwood.plus.data.api.BotiHttp
+import school.greenwood.plus.data.api.CommunApi
 import school.greenwood.plus.data.cache.CachesSession
 import school.greenwood.plus.data.repo.AuthRepository
 import school.greenwood.plus.data.repo.BoutiqueRepository
+import school.greenwood.plus.data.repo.CommunauteRepository
 import school.greenwood.plus.data.repo.CoursRepository
 import school.greenwood.plus.data.repo.DevoirsRepository
 import school.greenwood.plus.data.repo.DemandesRepository
@@ -60,6 +63,13 @@ class AppContainer(context: Context) {
 
     // Mises à jour de l'app — GitHub Releases, sans serveur (issue #46).
     val misesÀJour = UpdatesRepository(context, session)
+
+    // Serveur communautaire (issue #88) — URL réglée dans les Paramètres,
+    // relue à chaque appel ; le jeton du compte vit dans la session.
+    val communaute = CommunauteRepository(
+        CommunApi(base = { session.urlCommunautaire.first() }),
+        session,
+    )
 }
 
 class GwsApplication : Application() {

@@ -18,6 +18,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.ErrorOutline
 import androidx.compose.material3.Surface
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -176,6 +177,118 @@ fun ParametresScreen(
             SectionLabel("Assistant IA")
 
             SectionIA(vmIA = vmIA)
+
+            SectionLabel("Serveur communautaire")
+
+            Text(
+                text = "La section Communauté échange avec un serveur que tu choisis toi-même : " +
+                    "les listes publiques y sont ouvertes à tous, les écritures passent par un " +
+                    "compte anonyme créé sur cet appareil. Sans URL, la section reste fermée.",
+                style = MaterialTheme.typography.bodySmall,
+                color = RegistreTheme.colors.chalk,
+                modifier = Modifier.padding(top = 2.dp, start = 4.dp, end = 4.dp, bottom = 6.dp),
+            )
+
+            GwsCard(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(14.dp)) {
+                    ChampRéglage(
+                        valeur = état.urlCommunautaire,
+                        surChangement = vm::définirUrlCommunautaire,
+                        indicé = "URL du serveur (ex. https://communaute…)",
+                    )
+                    // Test silencieux : GET /health, sans compte ni jeton.
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(ControlShape)
+                            .clickable(enabled = !état.testEnCours) { vm.testerServeurCommunautaire() }
+                            .padding(vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        Text(
+                            text = if (état.testEnCours) "Test de connexion…" else "Tester la connexion",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = RegistreTheme.colors.ink,
+                            modifier = Modifier.weight(1f),
+                        )
+                        if (état.testEnCours) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(18.dp),
+                                strokeWidth = 2.dp,
+                                color = RegistreTheme.colors.chalk,
+                            )
+                        } else {
+                            when (état.testRéussi) {
+                                true -> Icon(
+                                    imageVector = Icons.Rounded.CheckCircle,
+                                    contentDescription = "Serveur joignable",
+                                    tint = RegistreTheme.accent.teinte,
+                                    modifier = Modifier.size(18.dp),
+                                )
+                                false -> Icon(
+                                    imageVector = Icons.Rounded.ErrorOutline,
+                                    contentDescription = "Serveur injoignable",
+                                    tint = RegistreTheme.colors.redPen,
+                                    modifier = Modifier.size(18.dp),
+                                )
+                                null -> Unit
+                            }
+                        }
+                    }
+                    // Révocation : DELETE /compte + oubli local (jamais bloqué
+                    // par le réseau — l'appareil s'en sépare quoi qu'il arrive).
+                    if (état.compteCommunautaire) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(ControlShape)
+                                .clickable(enabled = !état.révocationEnCours) { vm.révoquerCompteCommunautaire() }
+                                .padding(vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        ) {
+                            Text(
+                                text = if (état.révocationEnCours) "Révocation…" else "Révoquer le compte communautaire",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = RegistreTheme.colors.redPen,
+                                modifier = Modifier.weight(1f),
+                            )
+                            if (état.révocationEnCours) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(18.dp),
+                                    strokeWidth = 2.dp,
+                                    color = RegistreTheme.colors.chalk,
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            when (état.testRéussi) {
+                true -> Text(
+                    text = "Serveur joignable.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = RegistreTheme.colors.chalk,
+                    modifier = Modifier.padding(top = 8.dp, start = 4.dp, end = 4.dp),
+                )
+                false -> ErrorInline(
+                    message = "Serveur injoignable — vérifie l'URL.",
+                    modifier = Modifier.padding(top = 8.dp, start = 4.dp, end = 4.dp),
+                )
+                null -> Unit
+            }
+
+            Text(
+                text = "Le jeton du compte reste dans les préférences de l'app et ne sert " +
+                    "qu'à ce serveur ; aucune donnée personnelle n'y est envoyée " +
+                    "(seul un identifiant pseudonyme accompagne tes contenus). " +
+                    "La révocation supprime le compte côté serveur et tout local.",
+                style = MaterialTheme.typography.bodySmall,
+                color = RegistreTheme.colors.chalk,
+                modifier = Modifier.padding(top = 10.dp, start = 4.dp, end = 4.dp),
+            )
 
             SectionLabel("Mises à jour")
 
