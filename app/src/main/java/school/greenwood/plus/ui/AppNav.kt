@@ -50,6 +50,7 @@ import school.greenwood.plus.ui.screens.boutique.BoutiqueHistoriqueScreen
 import school.greenwood.plus.ui.screens.boutique.BoutiqueItemScreen
 import school.greenwood.plus.ui.screens.boutique.BoutiqueScreen
 import school.greenwood.plus.ui.screens.boutique.RepasInviteScreen
+import school.greenwood.plus.ui.screens.communaute.CommunauteScreen
 import school.greenwood.plus.ui.screens.devoirs.DevoirsScreen
 import school.greenwood.plus.ui.screens.devoirs.DevoirDetailScreen
 import school.greenwood.plus.ui.screens.demandes.DemandesScreen
@@ -148,6 +149,7 @@ private fun accentDe(route: String?, couleurs: school.greenwood.plus.ui.theme.Gw
         "devoirs" -> couleurs.accents.getValue("devoirs")
         "documents" -> couleurs.accents.getValue("documents")
         "messages", "demandes" -> couleurs.accents.getValue("messages")
+        "communaute" -> couleurs.accents.getValue("devoirs")
         "parametres" -> couleurs.accents.getValue("registre")
         "plus", "boutique", "boutique-historique", "repas-invite" -> couleurs.accents.getValue("plus")
         else -> when {
@@ -263,6 +265,7 @@ fun Shell(container: AppContainer) {
                     padding = padding,
                     ouvrirActualités = { navController.allerDétail("actualites") },
                     ouvrirBoutique = { navController.allerDétail("boutique") },
+                    ouvrirCommunauté = { navController.allerDétail("communaute") },
                 )
             }
             composable("boutique") {
@@ -368,6 +371,13 @@ fun Shell(container: AppContainer) {
             }
             composable("demandes") {
                 DemandesScreen(
+                    container = container,
+                    padding = padding,
+                    retour = { navController.popBackStack() },
+                )
+            }
+            composable("communaute") {
+                CommunauteScreen(
                     container = container,
                     padding = padding,
                     retour = { navController.popBackStack() },

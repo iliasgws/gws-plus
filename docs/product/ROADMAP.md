@@ -847,3 +847,49 @@ another click (unlike the official, definitive server-side `fait`).
       « Visible uniquement dans l'app — les professeurs et l'administration
       ne le voient pas. » — no confirmation dialog, since it is local and
       reversible
+
+## Community server (issue #88, branch `feat/issue-88-serveur-communautaire`)
+
+Full app-side integration of the GWS community server (APP.md, repo
+`gws-community-server`): four public lists plus writes under an anonymous
+per-device account. No deployment URL exists anywhere, so the base URL is
+configured in Paramètres — empty by default, and the section then shows
+« serveur non configuré » (cleartext is allowed only for LAN-dev hosts).
+
+- [x] Protocol pass over APP.md + server source: `POST /compte` →
+      `{jeton, mentionsVersion}` (no auth; 10/min + 100/24h per IP),
+      `GET /mentions` → `{version, sections[5]}`, public reads with
+      `X-Total-Count` and `tri`/`matiere`/`date`/`etat`/`problemeId`/
+      `depuis`/`limite` (1–500)/`offset`, JSON ≤10 Ko writes carrying
+      `Authorization: Bearer`, votes strictly ±1 that replace the previous
+      one (self-vote → 403), `POST /signalements` → 409 when already
+      reported, `DELETE .../{id}` author-only, `DELETE /compte` → 204,
+      `GET /health`; responses expose only
+      `auteurId = SHA-256(jeton).hex[:16]` (verified vector in
+      `CommunApiTest`)
+- [x] Data layer: `CommunApi` (plain OkHttp, plain-text French errors,
+      `Retry-After` on 429, 10 Ko body guard, `CommunParams` clamping,
+      URL normalization), `CompteCommunautaire` implemented by
+      `SessionStore`, `CommunauteRepository` (reads, writes, votes, notice
+      accept/refuse, exactly one 401 → re-create then retry — never a
+      loop), `CommunNormalizers` + community models in `Models.kt`
+- [x] Mentions notice: shown before the first write, « J'ai lu » records
+      the served version (re-shown only when the server bumps it),
+      « Refuser » calls `DELETE /compte` and forgets everything locally
+- [x] UI: Communaute screen under Plus — 3 tabs (Devoirs / Emploi du temps
+      [problèmes + corrections] / Abus), cards with vote, menu (modifier
+      scope: signaler/supprimer), filter chips + tri, « Voir plus »
+      pagination, creation dialogs with length limits, rate-limit banner,
+      `SqueletteCommunaute` first-load skeletons, back-gesture friendly
+- [x] Paramètres: URL field (normalized on save), « Tester la connexion »
+      via `GET /health`, « Révoquer le compte communautaire », clear
+      explanations of what leaves the phone (only a pseudonymous id)
+- [x] Cleartext confined to `10.0.2.2` / `localhost` / `127.0.0.1` /
+      `[::1]` via `res/xml/network_security_config.xml`
+- [x] Unit tests: `CommunParamsTest`, `CommunApiTest` (auteurId vector,
+      URL normalization, form-date parsing), `CompteCommunautaireTest`
+      (create → notice, refuse → revoke, version bump, single 401
+      re-create, repeated 401 → `JetonRévoqué`), `CommunauteNormalizersTest`
+      — `:app:assembleDebug` + `:app:testDebugUnitTest` green (170 tests)
+- [ ] On-device check against a running server — blocked until an instance
+      is deployed (no URL yet)

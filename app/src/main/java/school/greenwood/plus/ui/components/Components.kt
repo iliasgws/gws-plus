@@ -619,6 +619,63 @@ fun SqueletteDemandes() {
     }
 }
 
+/** Squelette de la section communautaire (issue #88) : trois cartes de
+ *  suggestion — puce de matière, texte, ligne de votes — même géométrie que
+ *  les cartes réelles pour que la substitution ne fasse pas de saut. */
+@Composable
+fun SqueletteCommunaute() {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 16.dp, vertical = 4.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        repeat(3) { index ->
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = PageShape,
+                color = RegistreTheme.colors.page,
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        BlocSquelette(modifier = Modifier.width(80.dp).height(22.dp))
+                        BlocSquelette(modifier = Modifier.width(70.dp).height(12.dp))
+                    }
+                    BlocSquelette(
+                        modifier = Modifier
+                            .fillMaxWidth(if (index == 0) 0.85f else 0.65f)
+                            .height(16.dp),
+                        forme = ControlShape,
+                    )
+                    BlocSquelette(
+                        modifier = Modifier
+                            .fillMaxWidth(if (index == 1) 0.7f else 0.5f)
+                            .height(14.dp),
+                        forme = ControlShape,
+                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        BlocSquelette(modifier = Modifier.size(36.dp), forme = ControlShape)
+                        BlocSquelette(modifier = Modifier.size(36.dp), forme = ControlShape)
+                        BlocSquelette(modifier = Modifier.width(32.dp).height(12.dp))
+                    }
+                }
+            }
+        }
+    }
+}
+
 /** Squelette d'un fil de conversation : séparateur de date, bulles en
  *  alternance — administration à gauche (sage plein), parent à droite (page
  *  bordée sage) — et le composeur posé en bas. */

@@ -4,6 +4,26 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [Non publié]
+
+### Ajouté
+
+- **Section « Communauté »** (issue #88) : un nouvel espace, accessible
+  depuis « Plus », qui rejoint un serveur communautaire choisi dans
+  Paramètres (aucune URL n'est fournie par défaut : sans réglage, la
+  section affiche « serveur non configuré »). Trois listes publiques
+  sont lisibles par tout le monde — suggestions de devoirs, problèmes
+  et corrections d'emploi du temps, signalements — avec pagination,
+  tris et filtres. Un compte anonyme créé sur l'appareil (jeton, aucune
+  donnée personnelle) permet de proposer du contenu, voter (±1, remplace
+  le vote précédent), signaler un abus et supprimer ses propres
+  publications. La notice de mentions du serveur s'affiche une fois
+  avec « J'ai lu » / « Refuser » (refuser révoque le compte et efface
+  tout). Les appels limités (429 « trop de requêtes ») sont annoncés
+  avec le délai d'attente, et un jeton refusé (401) est recréé une seule
+  fois. Le réglage d'URL propose un test de connexion et la révocation
+  du compte.
+
 ## [0.9.2] — 2026-09-27
 
 Mise à jour de préparation : aucun changement fonctionnel, la version

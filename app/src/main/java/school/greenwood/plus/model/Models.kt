@@ -489,3 +489,95 @@ data class RésultatCommande(
     val titre: String? = null,
     val message: String? = null,
 )
+
+/*
+ * Serveur communautaire (issue #88) — gws-community-server, protocole APP.md.
+ * Séparé de l'API Boti : lectures publiques, écritures à jeton. Aucun champ
+ * `auteur` n'existe dans les réponses : les contenus portent `auteurId`
+ * (empreinte pseudonyme de l'auteur) — jamais le jeton.
+ */
+
+/** Une suggestion de devoir partagée entre familles (GET/POST `devoirs`). */
+data class DevoirSuggéré(
+    val id: Long,
+    val auteurId: String,
+    val matière: String,
+    val contenu: String,
+    /** Échéance facultative — le serveur peut omettre la clé quand elle est nulle. */
+    val dateRemise: LocalDate? = null,
+    val votes: Int = 0,
+    val crééÀ: Long = 0,
+)
+
+/** Un problème d'emploi du temps signalé (GET/POST `edt/problemes`). */
+data class ProblèmeHoraire(
+    val id: Long,
+    val auteurId: String,
+    val description: String,
+    val date: LocalDate?,
+    /** « ouvert » ou « résolu » — déduit par le serveur (correction rattachée),
+     *  jamais stocké : on reprend sa valeur telle quelle. */
+    val état: String = "ouvert",
+    val crééÀ: Long = 0,
+)
+
+/** Une correction proposée pour l'emploi du temps (GET/POST `edt/corrections`). */
+data class CorrectionHoraire(
+    val id: Long,
+    val auteurId: String,
+    /** Signalement auquel la correction est rattachée — facultatif. */
+    val problèmeId: Long? = null,
+    val description: String,
+    val date: LocalDate?,
+    val crééÀ: Long = 0,
+)
+
+/** La cible d'un signalement d'abus — exactement ces trois valeurs, SANS accent. */
+enum class CibleSignalement(val param: String, val libellé: String) {
+    Devoir("devoir", "Devoir"),
+    Problème("probleme", "Signalement d'emploi du temps"),
+    Correction("correction", "Correction"),
+}
+
+/** Un abus signalé à la modération (GET/POST `signalements`). */
+data class SignalementAbus(
+    val id: Long,
+    val cible: String,
+    val cibleId: Long,
+    val raison: String,
+    val crééÀ: Long = 0,
+)
+
+/** Tri des suggestions de devoirs (`?tri=` — le serveur ignore casse/accents). */
+enum class TriDevoirs(val param: String, val libellé: String) {
+    Votes("votes", "Plus votés"),
+    Récent("recent", "Récents"),
+}
+
+/** Filtre d'état des problèmes d'emploi du temps (`?etat=`). */
+enum class FiltreHoraire(val param: String?, val libellé: String) {
+    Tous(null, "Tous"),
+    Ouverts("ouvert", "Ouverts"),
+    Résolus("résolu", "Résolus"),
+}
+
+/** Une page de liste publique : éléments + `X-Total-Count` (total APRÈS
+ *  filtres et AVANT pagination — le compteur à afficher, pas liste.size). */
+data class PageCommunautaire<T>(
+    val éléments: List<T>,
+    val total: Int?,
+)
+
+/** Une section de la notice légale (`GET /mentions`) — `id` stable, clé d'ancre. */
+data class SectionMentions(
+    val id: String,
+    val titre: String,
+    val texte: String,
+)
+
+/** La notice complète, versionnée (AAAA-MM-JJ) — affichée avant la première
+ *  écriture, réaffichée quand la version du serveur change. */
+data class Mentions(
+    val version: String,
+    val sections: List<SectionMentions>,
+)

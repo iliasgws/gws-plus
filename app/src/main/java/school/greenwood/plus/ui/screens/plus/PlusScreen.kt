@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Groups
 import androidx.compose.material.icons.rounded.Newspaper
 import androidx.compose.material.icons.rounded.ShoppingBag
 import androidx.compose.material3.Icon
@@ -51,6 +52,7 @@ fun PlusScreen(
     padding: PaddingValues,
     ouvrirActualités: () -> Unit,
     ouvrirBoutique: () -> Unit,
+    ouvrirCommunauté: () -> Unit,
 ) {
     // La cascade ne rejoue qu'à la première ouverture de l'écran.
     val cascade = rememberSaveable { mutableStateOf(false) }
@@ -108,6 +110,16 @@ fun PlusScreen(
                     icone = Icons.Rounded.ShoppingBag,
                     accentClé = "plus",
                     onClick = ouvrirBoutique,
+                )
+            }
+            Spacer(Modifier.height(12.dp))
+            EntréeCascade(déclenché = cascade.value, index = 2) {
+                CarteSection(
+                    titre = "Communauté",
+                    sousTitre = "Devoirs et emploi du temps partagés entre familles",
+                    icone = Icons.Rounded.Groups,
+                    accentClé = "devoirs",
+                    onClick = ouvrirCommunauté,
                 )
             }
         }

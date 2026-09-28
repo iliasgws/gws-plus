@@ -9,20 +9,31 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 import school.greenwood.plus.AppContainer
 import school.greenwood.plus.data.ai.RéglagesIA
 import school.greenwood.plus.data.api.BotiErreur
+import school.greenwood.plus.data.api.CommunErreur
+import school.greenwood.plus.data.api.DépassementDébit
+import school.greenwood.plus.data.api.JetonRévoqué
+import school.greenwood.plus.data.repo.NoticeRequise
 import school.greenwood.plus.data.repo.SensSemaine
 import school.greenwood.plus.data.repo.RegistreDuJour
 import school.greenwood.plus.model.BilanAbsences
 import school.greenwood.plus.model.CantineJour
+import school.greenwood.plus.model.CibleSignalement
 import school.greenwood.plus.model.CommandeBoutique
 import school.greenwood.plus.model.ContactEcole
 import school.greenwood.plus.model.Conversation
+import school.greenwood.plus.model.CorrectionHoraire
 import school.greenwood.plus.model.Demande
 import school.greenwood.plus.model.Devoir
+import school.greenwood.plus.model.DevoirSuggéré
 import school.greenwood.plus.model.Eleve
 import school.greenwood.plus.model.FicheBibliotheque
+import school.greenwood.plus.model.FiltreHoraire
+import school.greenwood.plus.model.Mentions
+import school.greenwood.plus.model.ProblèmeHoraire
 import school.greenwood.plus.model.ProduitBoutique
 import school.greenwood.plus.model.ProduitDétail
 import school.greenwood.plus.model.RésultatCommande
@@ -35,6 +46,9 @@ import school.greenwood.plus.model.QuizRésultat
 import school.greenwood.plus.model.Ressource
 import school.greenwood.plus.model.RéponseJouée
 import school.greenwood.plus.model.SemaineCours
+import school.greenwood.plus.model.SignalementAbus
+import school.greenwood.plus.model.TriDevoirs
+import school.greenwood.plus.util.dateSaisieVersIso
 import java.time.LocalDate
 
 /*
@@ -1539,6 +1553,15 @@ class CoursViewModel(private val container: AppContainer) : ViewModel() {
 data class ParamètresÉtat(
     /** Minutes d'absence déclenchant l'actualisation au retour ; 0 = « jamais ». */
     val minutesRetour: Int = 5,
+
+    /** Serveur communautaire (issue #88) : URL réglée (vide = non configuré),
+     *  compte local existant, test de disponibilité et révocation. */
+    val urlCommunautaire: String = "",
+    val compteCommunautaire: Boolean = false,
+    val testEnCours: Boolean = false,
+    /** null = pas encore testé. */
+    val testRéussi: Boolean? = null,
+    val révocationEnCours: Boolean = false,
 )
 
 class ParametresViewModel(private val container: AppContainer) : ViewModel() {
@@ -1551,11 +1574,49 @@ class ParametresViewModel(private val container: AppContainer) : ViewModel() {
                 _état.update { it.copy(minutesRetour = minutes) }
             }
         }
+        viewModelScope.launch {
+            container.session.urlCommunautaire.collect { url ->
+                _état.update { it.copy(urlCommunautaire = url, testRéussi = null) }
+            }
+        }
+        viewModelScope.launch {
+            container.session.jetonCommunautaire.collect { jeton ->
+                _état.update { it.copy(compteCommunautaire = jeton != null) }
+            }
+        }
     }
 
     fun choisirDurée(minutes: Int) {
         viewModelScope.launch {
             container.session.définirActualisationRetour(minutes)
+        }
+    }
+
+    /** Normalisée à l'écriture (schéma ajouté, « /» de fin retirés). */
+    fun définirUrlCommunautaire(url: String) {
+        viewModelScope.launch {
+            container.session.définirUrlCommunautaire(url)
+            _état.update { it.copy(testRéussi = null) }
+        }
+    }
+
+    /** `GET /health` — silencieux, sans compte ni jeton. */
+    fun testerServeurCommunautaire() {
+        if (_état.value.testEnCours) return
+        viewModelScope.launch {
+            _état.update { it.copy(testEnCours = true, testRéussi = null) }
+            val ok = runCatching { container.communaute.disponible() }.getOrDefault(false)
+            _état.update { it.copy(testEnCours = false, testRéussi = ok) }
+        }
+    }
+
+    /** `DELETE /compte` + oubli local (jamais bloqué par le réseau). */
+    fun révoquerCompteCommunautaire() {
+        if (_état.value.révocationEnCours) return
+        viewModelScope.launch {
+            _état.update { it.copy(révocationEnCours = true) }
+            container.communaute.révoquerCompte()
+            _état.update { it.copy(révocationEnCours = false) }
         }
     }
 }
@@ -1980,4 +2041,568 @@ class RepasViewModel(private val container: AppContainer) : ViewModel() {
     fun acquis() {
         _état.update { it.copy(succès = null) }
     }
+}
+
+/** — Serveur communautaire (issue #88) ------------------------------------ */
+
+/** Les onglets de la section communautaire. */
+enum class OngletCommunautaire(val libellé: String) {
+    Devoirs("Devoirs"),
+    EmploiDuTemps("Emploi du temps"),
+    Abus("Abus"),
+}
+
+/** La liste paginée qui doit charger sa page suivante. */
+enum class CiblePage { Devoirs, Problèmes, Corrections }
+
+/** La fenêtre de dialogue ouverte — null = aucune. */
+sealed interface DialogueCommunautaire {
+
+    /** Notice légale : acceptée avant la première écriture, réaffichée quand
+     *  la version du serveur change (APP.md §2) — non refermable au retour. */
+    data class Notice(val mentions: Mentions) : DialogueCommunautaire
+
+    data class CréerDevoir(
+        val matière: String = "",
+        val contenu: String = "",
+        val dateRemise: String = "",
+        val erreur: String? = null,
+    ) : DialogueCommunautaire
+
+    data class CréerProblème(
+        val description: String = "",
+        val date: String = "",
+        val erreur: String? = null,
+    ) : DialogueCommunautaire
+
+    data class CréerCorrection(
+        val description: String = "",
+        val date: String = "",
+        val problèmeId: Long? = null,
+        val erreur: String? = null,
+    ) : DialogueCommunautaire
+
+    data class Signaler(
+        val cible: CibleSignalement,
+        val cibleId: Long,
+        val raison: String = "",
+        val erreur: String? = null,
+    ) : DialogueCommunautaire
+
+    data class Supprimer(
+        val cible: CibleSignalement,
+        val cibleId: Long,
+        val intitulé: String,
+        val erreur: String? = null,
+    ) : DialogueCommunautaire
+
+    /** Message d'erreur dans le dialogue ouvert (réponse du serveur). */
+    fun avecErreur(message: String): DialogueCommunautaire = when (this) {
+        is Notice -> this
+        is CréerDevoir -> copy(erreur = message)
+        is CréerProblème -> copy(erreur = message)
+        is CréerCorrection -> copy(erreur = message)
+        is Signaler -> copy(erreur = message)
+        is Supprimer -> copy(erreur = message)
+    }
+}
+
+data class CommunauteÉtat(
+    val onglet: OngletCommunautaire = OngletCommunautaire.Devoirs,
+    /** Rien à montrer : squelette de premier chargement. */
+    val chargement: Boolean = true,
+    /** Contenu connu affiché pendant un rafraîchissement silencieux. */
+    val rafraîchissement: Boolean = false,
+    val chargementSuite: Boolean = false,
+    val envoi: Boolean = false,
+    /** Échec de LECTURE — bandeau « Réessayer » (issue #21). */
+    val erreur: String? = null,
+    /** Échec d'ÉCRITURE — bandeau sans relance (réessayer = renvoyer le formulaire). */
+    val échec: String? = null,
+    /** Information passagère (succès) — disparaît à l'action suivante. */
+    val message: String? = null,
+    val devoirs: List<DevoirSuggéré> = emptyList(),
+    val totalDevoirs: Int? = null,
+    val problèmes: List<ProblèmeHoraire> = emptyList(),
+    val totalProblèmes: Int? = null,
+    val corrections: List<CorrectionHoraire> = emptyList(),
+    val totalCorrections: Int? = null,
+    val abus: List<SignalementAbus> = emptyList(),
+    /** Votes locaux ±1 par devoir : affichage immédiat ; le total définitif
+     *  est toujours celui que renvoie le serveur (jamais incrémenté). */
+    val votes: Map<String, Int> = emptyMap(),
+    /** Notre empreinte d'auteur (null sans compte) : masque nos propres
+     *  votes et affiche « Supprimer » sur notre contenu. */
+    val monAuteurId: String? = null,
+    val tri: TriDevoirs = TriDevoirs.Votes,
+    val filtre: FiltreHoraire = FiltreHoraire.Tous,
+    /** « cible:id » déjà signalés (409 ou liste publique des signalements). */
+    val signalés: Set<String> = emptySet(),
+    val noticeChargement: Boolean = false,
+    val dialogue: DialogueCommunautaire? = null,
+    /** Secondes restantes avant reprise automatique après un 429. */
+    val attenteDébit: Int? = null,
+)
+
+/**
+ * Le VM de la section communautaire (issue #88) : trois onglets de listes
+ * publiques, écritures à jeton, et tout le cycle de vie du compte — la
+ * notice avant la première écriture, un seul recomplément sur 401, une
+ * attente automatique sur 429. Les lectures sont toujours des rafraîchissements
+ * de première page complets (APP.md §7 : `depuis` ne voit ni votes ni
+ * suppressions).
+ */
+class CommunauteViewModel(private val container: AppContainer) : ViewModel() {
+    private val _état = MutableStateFlow(CommunauteÉtat())
+    val état: StateFlow<CommunauteÉtat> = _état.asStateFlow()
+
+    /** L'écriture en attente : relue après acceptation de la notice ou la fin
+     *  du temps de débit — jamais deux écritures en parallèle. */
+    private var enAttente: (suspend () -> Unit)? = null
+
+    init {
+        viewModelScope.launch {
+            container.session.votesLocaux.collect { votes -> _état.update { it.copy(votes = votes) } }
+        }
+        charger()
+        viewModelScope.launch {
+            container.veille.retoursPérimés.collect { charger(force = true) }
+        }
+    }
+
+    // — Lectures -----------------------------------------------------------
+
+    /** Rafraîchissement complet de l'onglet courant (première page). */
+    fun charger(force: Boolean = false) {
+        viewModelScope.launch {
+            _état.update { st ->
+                st.copy(
+                    chargement = !force && st.vide(st.onglet),
+                    rafraîchissement = force && !st.vide(st.onglet),
+                    erreur = if (force) null else st.erreur,
+                )
+            }
+            try {
+                val monId = container.communaute.monAuteurId()
+                when (_état.value.onglet) {
+                    OngletCommunautaire.Devoirs -> {
+                        val page = container.communaute.devoirs(tri = _état.value.tri)
+                        _état.update {
+                            it.copy(devoirs = page.éléments, totalDevoirs = page.total, monAuteurId = monId)
+                        }
+                    }
+                    OngletCommunautaire.EmploiDuTemps -> {
+                        val problèmes = container.communaute.problèmes(filtre = _état.value.filtre)
+                        val corrections = container.communaute.corrections()
+                        _état.update {
+                            it.copy(
+                                problèmes = problèmes.éléments,
+                                totalProblèmes = problèmes.total,
+                                corrections = corrections.éléments,
+                                totalCorrections = corrections.total,
+                                monAuteurId = monId,
+                            )
+                        }
+                    }
+                    OngletCommunautaire.Abus -> {
+                        val abus = container.communaute.signalements()
+                        _état.update { st ->
+                            st.copy(
+                                abus = abus,
+                                monAuteurId = monId,
+                                signalés = st.signalés + abus.map { s -> "${s.cible}:${s.cibleId}" },
+                            )
+                        }
+                    }
+                }
+                _état.update { it.copy(chargement = false, rafraîchissement = false, erreur = null) }
+            } catch (err: Exception) {
+                _état.update {
+                    it.copy(chargement = false, rafraîchissement = false, erreur = messageDe(err))
+                }
+            }
+        }
+    }
+
+    /** Page suivante d'une liste paginée — `offset = taille affichée`. */
+    fun chargerSuite(cible: CiblePage) {
+        val st = _état.value
+        val offset = when (cible) {
+            CiblePage.Devoirs -> st.devoirs.size
+            CiblePage.Problèmes -> st.problèmes.size
+            CiblePage.Corrections -> st.corrections.size
+        }
+        val total = st.total(cible) ?: return
+        if (st.chargementSuite || st.envoi || offset >= total) return
+
+        viewModelScope.launch {
+            _état.update { it.copy(chargementSuite = true) }
+            try {
+                when (cible) {
+                    CiblePage.Devoirs -> {
+                        val page = container.communaute.devoirs(tri = st.tri, offset = offset)
+                        _état.update { it.copy(devoirs = it.devoirs + page.éléments, totalDevoirs = page.total) }
+                    }
+                    CiblePage.Problèmes -> {
+                        val page = container.communaute.problèmes(filtre = st.filtre, offset = offset)
+                        _état.update { it.copy(problèmes = it.problèmes + page.éléments, totalProblèmes = page.total) }
+                    }
+                    CiblePage.Corrections -> {
+                        val page = container.communaute.corrections(offset = offset)
+                        _état.update { it.copy(corrections = it.corrections + page.éléments, totalCorrections = page.total) }
+                    }
+                }
+                _état.update { it.copy(chargementSuite = false, erreur = null) }
+            } catch (err: Exception) {
+                _état.update { it.copy(chargementSuite = false, échec = messageDe(err)) }
+            }
+        }
+    }
+
+    fun choisirOnglet(onglet: OngletCommunautaire) {
+        if (onglet == _état.value.onglet) return
+        _état.update { it.copy(onglet = onglet, erreur = null, échec = null, message = null) }
+        charger(force = true)
+    }
+
+    fun choisirTri(tri: TriDevoirs) {
+        if (tri == _état.value.tri) return
+        _état.update { it.copy(tri = tri) }
+        charger(force = true)
+    }
+
+    fun choisirFiltre(filtre: FiltreHoraire) {
+        if (filtre == _état.value.filtre) return
+        _état.update { it.copy(filtre = filtre) }
+        charger(force = true)
+    }
+
+    /** Bandeaux cliquables : acquittés d'un geste. */
+    fun acquitter() {
+        _état.update { it.copy(message = null, échec = null) }
+    }
+
+    // — Écritures ----------------------------------------------------------
+
+    /** Vote ±1 : un second vote REMPLACE le premier (le serveur refuse 0).
+     *  Rejouer le même vote = pas d'écriture du tout. */
+    fun voter(id: Long, sens: Int) {
+        if (sens != 1 && sens != -1) return
+        val st = _état.value
+        if (st.votes[id.toString()] == sens) return
+        lancer {
+            val misAJour = container.communaute.voter(id, sens)
+            container.session.noterVoteLocal(id, sens)
+            _état.update { état ->
+                état.copy(devoirs = état.devoirs.map { d -> if (d.id == id) misAJour else d })
+            }
+        }
+    }
+
+    fun ouvrirCréationDevoir() {
+        _état.update { it.copy(dialogue = DialogueCommunautaire.CréerDevoir()) }
+    }
+
+    fun ouvrirCréationProblème() {
+        _état.update { it.copy(dialogue = DialogueCommunautaire.CréerProblème()) }
+    }
+
+    /** Correction rattachée éventuellement à un problème (date pré-remplie). */
+    fun ouvrirCréationCorrection(problèmeId: Long? = null, date: String = "") {
+        _état.update { it.copy(dialogue = DialogueCommunautaire.CréerCorrection(problèmeId = problèmeId, date = date)) }
+    }
+
+    fun ouvrirSignalement(cible: CibleSignalement, cibleId: Long) {
+        _état.update { it.copy(dialogue = DialogueCommunautaire.Signaler(cible, cibleId)) }
+    }
+
+    fun ouvrirSuppression(cible: CibleSignalement, cibleId: Long, intitulé: String) {
+        _état.update { it.copy(dialogue = DialogueCommunautaire.Supprimer(cible, cibleId, intitulé)) }
+    }
+
+    fun fermerDialogue() {
+        if (_état.value.envoi) return
+        _état.update { it.copy(dialogue = null) }
+    }
+
+    fun saisirDevoir(matière: String, contenu: String, dateRemise: String) {
+        _état.update { st ->
+            val d = st.dialogue as? DialogueCommunautaire.CréerDevoir ?: return@update st
+            st.copy(dialogue = d.copy(matière = matière, contenu = contenu, dateRemise = dateRemise, erreur = null))
+        }
+    }
+
+    fun saisirProblème(description: String, date: String) {
+        _état.update { st ->
+            val d = st.dialogue as? DialogueCommunautaire.CréerProblème ?: return@update st
+            st.copy(dialogue = d.copy(description = description, date = date, erreur = null))
+        }
+    }
+
+    fun saisirCorrection(description: String, date: String) {
+        _état.update { st ->
+            val d = st.dialogue as? DialogueCommunautaire.CréerCorrection ?: return@update st
+            st.copy(dialogue = d.copy(description = description, date = date, erreur = null))
+        }
+    }
+
+    fun saisirSignalement(raison: String) {
+        _état.update { st ->
+            val d = st.dialogue as? DialogueCommunautaire.Signaler ?: return@update st
+            st.copy(dialogue = d.copy(raison = raison, erreur = null))
+        }
+    }
+
+    /** Valide et envoie le contenu du dialogue ouvert (Notice gérée à part). */
+    fun envoyer() {
+        when (val d = _état.value.dialogue) {
+            is DialogueCommunautaire.CréerDevoir -> {
+                if (d.matière.isBlank() || d.contenu.isBlank()) {
+                    marquerErreurDialogue("Renseigne la matière et le contenu.")
+                    return
+                }
+                val date = d.dateRemise.trim().takeIf { it.isNotBlank() }?.let {
+                    dateSaisieVersIso(it) ?: run {
+                        marquerErreurDialogue("Date invalide — JJ/MM/AAAA ou AAAA-MM-JJ.")
+                        return
+                    }
+                }
+                val créateur = container.communaute
+                lancer {
+                    val créé = créateur.créerDevoir(d.matière, d.contenu, date)
+                    _état.update { st ->
+                        st.copy(
+                            devoirs = listOf(créé) + st.devoirs,
+                            totalDevoirs = (st.totalDevoirs ?: 0) + 1,
+                            message = "Devoir proposé aux familles",
+                        )
+                    }
+                }
+            }
+            is DialogueCommunautaire.CréerProblème -> {
+                if (d.description.isBlank() || d.date.isBlank()) {
+                    marquerErreurDialogue("Décris le problème et indique la date.")
+                    return
+                }
+                val date = dateSaisieVersIso(d.date) ?: run {
+                    marquerErreurDialogue("Date invalide — JJ/MM/AAAA ou AAAA-MM-JJ.")
+                    return
+                }
+                val créateur = container.communaute
+                lancer {
+                    val créé = créateur.créerProblème(d.description, date)
+                    _état.update { st ->
+                        st.copy(
+                            problèmes = listOf(créé) + st.problèmes,
+                            totalProblèmes = (st.totalProblèmes ?: 0) + 1,
+                            message = "Problème signalé",
+                        )
+                    }
+                }
+            }
+            is DialogueCommunautaire.CréerCorrection -> {
+                if (d.description.isBlank() || d.date.isBlank()) {
+                    marquerErreurDialogue("Décris la correction et indique la date.")
+                    return
+                }
+                val date = dateSaisieVersIso(d.date) ?: run {
+                    marquerErreurDialogue("Date invalide — JJ/MM/AAAA ou AAAA-MM-JJ.")
+                    return
+                }
+                val créateur = container.communaute
+                lancer {
+                    val créé = créateur.créerCorrection(d.problèmeId, d.description, date)
+                    _état.update { st ->
+                        st.copy(
+                            corrections = listOf(créé) + st.corrections,
+                            totalCorrections = (st.totalCorrections ?: 0) + 1,
+                            message = "Correction proposée",
+                        )
+                    }
+                }
+            }
+            is DialogueCommunautaire.Signaler -> {
+                if (d.raison.isBlank()) {
+                    marquerErreurDialogue("Explique le motif du signalement.")
+                    return
+                }
+                val dépôt = container.communaute
+                lancer {
+                    dépôt.signaler(d.cible, d.cibleId, d.raison)
+                    _état.update { st ->
+                        st.copy(
+                            signalés = st.signalés + "${d.cible.param}:${d.cibleId}",
+                            message = "Signalement envoyé à la modération",
+                        )
+                    }
+                }
+            }
+            else -> Unit // Notice et Supprimer ont leur propre geste.
+        }
+    }
+
+    /** Confirmation de suppression (dialogue de confirmation). */
+    fun confirmerSuppression() {
+        val d = _état.value.dialogue as? DialogueCommunautaire.Supprimer ?: return
+        val dépôt = container.communaute
+        lancer {
+            when (d.cible) {
+                CibleSignalement.Devoir -> {
+                    dépôt.supprimerDevoir(d.cibleId)
+                    _état.update { st ->
+                        st.copy(
+                            devoirs = st.devoirs.filterNot { it.id == d.cibleId },
+                            totalDevoirs = st.totalDevoirs?.minus(1)?.coerceAtLeast(0),
+                            message = "Devoir supprimé",
+                        )
+                    }
+                }
+                CibleSignalement.Problème -> {
+                    dépôt.supprimerProblème(d.cibleId)
+                    _état.update { st ->
+                        st.copy(
+                            problèmes = st.problèmes.filterNot { it.id == d.cibleId },
+                            totalProblèmes = st.totalProblèmes?.minus(1)?.coerceAtLeast(0),
+                            message = "Signalement supprimé",
+                        )
+                    }
+                }
+                CibleSignalement.Correction -> {
+                    dépôt.supprimerCorrection(d.cibleId)
+                    _état.update { st ->
+                        st.copy(
+                            corrections = st.corrections.filterNot { it.id == d.cibleId },
+                            totalCorrections = st.totalCorrections?.minus(1)?.coerceAtLeast(0),
+                            message = "Correction supprimée",
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    // — Notice et cycle de vie du compte -----------------------------------
+
+    fun accepterNotice() {
+        viewModelScope.launch {
+            container.communaute.accepterNotice()
+            _état.update { it.copy(dialogue = null) }
+            reprendre()
+        }
+    }
+
+    /** Refus : le compte est révoqué côté serveur et oublié localement —
+     *  la prochaine écriture en recrée un, avec une nouvelle notice. */
+    fun refuserNotice() {
+        viewModelScope.launch {
+            enAttente = null
+            container.communaute.révoquerCompte()
+            _état.update { it.copy(dialogue = null, message = "Compte communautaire supprimé") }
+        }
+    }
+
+    // — Machine d'état des écritures ---------------------------------------
+
+    /** Mémorise l'écriture et la lance : `exécuter` s'occupe de tout. */
+    private fun lancer(action: suspend () -> Unit) {
+        if (_état.value.envoi || _état.value.attenteDébit != null) return
+        enAttente = action
+        viewModelScope.launch { exécuter() }
+    }
+
+    /** Relance l'écriture mémorisée (après notice acceptée ou débit écoulé). */
+    private fun reprendre() {
+        if (enAttente == null || _état.value.envoi) return
+        viewModelScope.launch { exécuter() }
+    }
+
+    private suspend fun exécuter() {
+        val action = enAttente ?: return
+        _état.update { it.copy(envoi = true, erreur = null, échec = null, message = null) }
+        try {
+            action()
+            enAttente = null
+            // Le dialogue se ferme au succès ; un message de confirmation
+            // posé par l'action lui-même survit (copie non destructive).
+            _état.update { it.copy(envoi = false, dialogue = null) }
+        } catch (err: NoticeRequise) {
+            // Pas encore acceptée : on la lit et on garde l'action en veille.
+            _état.update { it.copy(envoi = false) }
+            afficherNotice()
+        } catch (err: DépassementDébit) {
+            _état.update { it.copy(envoi = false) }
+            partirEnAttenteDébit(err.attenteSecondes)
+        } catch (err: JetonRévoqué) {
+            // Deuxième 401 d'affilée (le dépôt en a déjà recréé un) : on jette
+            // la session et on invite à réessayer — jamais de boucle.
+            enAttente = null
+            container.session.oublierJeton()
+            _état.update {
+                it.copy(envoi = false, dialogue = null, échec = "Session expirée — réessaie dans un instant")
+            }
+        } catch (err: Exception) {
+            enAttente = null
+            val message = messageDe(err)
+            _état.update { st ->
+                st.copy(
+                    envoi = false,
+                    dialogue = st.dialogue?.avecErreur(message),
+                    échec = if (st.dialogue == null) message else null,
+                )
+            }
+        }
+    }
+
+    private suspend fun afficherNotice() {
+        _état.update { it.copy(noticeChargement = true) }
+        try {
+            val mentions = container.communaute.mentions()
+            _état.update {
+                it.copy(noticeChargement = false, dialogue = DialogueCommunautaire.Notice(mentions))
+            }
+        } catch (err: Exception) {
+            enAttente = null
+            _état.update { it.copy(noticeChargement = false, échec = messageDe(err)) }
+        }
+    }
+
+    /** Compte à rebours du 429 puis reprise automatique de l'écriture. */
+    private fun partirEnAttenteDébit(secondes: Long?) {
+        var reste = secondes ?: 30L
+        reste = reste.coerceIn(1, 120)
+        _état.update { it.copy(attenteDébit = reste.toInt()) }
+        viewModelScope.launch {
+            while (reste > 0) {
+                delay(1_000)
+                reste--
+                _état.update { it.copy(attenteDébit = reste.toInt()) }
+            }
+            _état.update { it.copy(attenteDébit = null) }
+            reprendre()
+        }
+    }
+
+    private fun marquerErreurDialogue(message: String) {
+        _état.update { st -> st.copy(dialogue = st.dialogue?.avecErreur(message)) }
+    }
+
+    /** Message lisible selon le type d'échec — le texte du serveur prime
+     *  (il est déjà en français et déjà explicite). */
+    private fun messageDe(err: Exception): String = when (err) {
+        is CommunErreur -> err.message
+        is java.io.IOException -> "Connexion impossible — vérifie le réseau"
+        else -> "Le serveur communautaire ne répond pas"
+    }
+}
+
+private fun CommunauteÉtat.vide(onglet: OngletCommunautaire): Boolean = when (onglet) {
+    OngletCommunautaire.Devoirs -> devoirs.isEmpty()
+    OngletCommunautaire.EmploiDuTemps -> problèmes.isEmpty() && corrections.isEmpty()
+    OngletCommunautaire.Abus -> abus.isEmpty()
+}
+
+private fun CommunauteÉtat.total(cible: CiblePage): Int? = when (cible) {
+    CiblePage.Devoirs -> totalDevoirs
+    CiblePage.Problèmes -> totalProblèmes
+    CiblePage.Corrections -> totalCorrections
 }
