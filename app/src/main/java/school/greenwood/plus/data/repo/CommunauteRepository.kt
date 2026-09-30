@@ -11,6 +11,8 @@ import school.greenwood.plus.data.session.CompteCommunautaire
 import school.greenwood.plus.model.CibleSignalement
 import school.greenwood.plus.model.CorrectionHoraire
 import school.greenwood.plus.model.DevoirSuggéré
+import school.greenwood.plus.model.PièceJointeCommunautaire
+import java.io.File
 import school.greenwood.plus.model.FiltreHoraire
 import school.greenwood.plus.model.Mentions
 import school.greenwood.plus.model.PageCommunautaire
@@ -128,7 +130,8 @@ class CommunauteRepository(
             CommunParams.listes(tri = tri.param, matière = matière, offset = offset, limite = limite),
         )
         return PageCommunautaire(
-            éléments = CommunNormalizers.liste(réponse.corps, CommunNormalizers::devoirSuggéré),
+            éléments = CommunNormalizers.liste(réponse.corps, CommunNormalizers::devoirSuggéré)
+                .map { devoir -> devoir.copy(piècesJointes = urlsComplètes(devoir.piècesJointes)) },
             total = réponse.total,
         )
     }
@@ -184,7 +187,12 @@ class CommunauteRepository(
             ?: throw CommunErreur(500, "Réponse incompréhensible")
     }
 
-    suspend fun créerDevoir(matière: String, contenu: String, dateRemise: String?): DevoirSuggéré =
+    suspend fun créerDevoir(
+        matière: String,
+        contenu: String,
+        dateRemise: String?,
+        fichiers: List<File> = emptyList(),
+    ): DevoirSuggéré =
         écrire { jeton ->
             val réponse = api.écriture(
                 méthode = "POST",
@@ -196,9 +204,28 @@ class CommunauteRepository(
                 },
                 jeton = jeton,
             )
-            (objetRéponse(réponse)).let(CommunNormalizers::devoirSuggéré)
+            val créé = (objetRéponse(réponse)).let(CommunNormalizers::devoirSuggéré)
                 ?: throw CommunErreur(500, "Réponse incompréhensible")
+            val pièces = try {
+                fichiers.map { fichier ->
+                    val résultat = api.téléverser("devoirs/${créé.id}/pieces-jointes", fichier, jeton) as? JsonObject
+                        ?: throw CommunErreur(500, "Réponse de pièce jointe incompréhensible")
+                    CommunNormalizers.pièceJointe(résultat)
+                        ?: throw CommunErreur(500, "Réponse de pièce jointe incompréhensible")
+                }
+            } catch (erreur: Exception) {
+                // Une proposition sans tous ses fichiers serait trompeuse :
+                // la suppression serveur retire aussi les uploads déjà reçus.
+                runCatching { api.écriture("DELETE", "devoirs/${créé.id}", corps = null, jeton = jeton) }
+                throw erreur
+            }
+            créé.copy(piècesJointes = urlsComplètes(pièces))
         }
+
+    private suspend fun urlsComplètes(pièces: List<PièceJointeCommunautaire>) = pièces.map { pièce ->
+        if (pièce.url.startsWith("http://") || pièce.url.startsWith("https://")) pièce
+        else pièce.copy(url = api.urlPublique(pièce.url))
+    }
 
     suspend fun supprimerDevoir(id: Long) {
         écrire { jeton -> api.écriture("DELETE", "devoirs/$id", corps = null, jeton = jeton) }

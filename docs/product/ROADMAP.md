@@ -883,6 +883,13 @@ configured in Paramètres — empty by default, and the section then shows
       `SqueletteCommunaute` first-load skeletons, back-gesture friendly
 - [x] Add a « Proposer un devoir manquant » shortcut to the main Devoirs tab;
       it opens the community-server proposal form and returns to Devoirs
+- [x] Show dated community homework proposals on their due date in the regular
+      Devoirs tab, and undated proposals in today's list, with a visible
+      « Communauté » label; refresh the list after a proposal is submitted.
+- [x] Choose a proposal due date with the native calendar date picker.
+- [x] Attach files up to 5 MiB each to community proposals; uploads use the
+      server's authenticated multipart route and download links appear on the
+      proposal card in the regular Devoirs tab.
 - [x] Paramètres: URL field (normalized on save), « Tester la connexion »
       via `GET /health`, « Révoquer le compte communautaire », clear
       explanations of what leaves the phone (only a pseudonymous id)

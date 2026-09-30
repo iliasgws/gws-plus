@@ -11,7 +11,10 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
 import java.io.IOException
+import java.io.File
 import java.security.MessageDigest
 import java.util.HexFormat
 import java.util.concurrent.TimeUnit
@@ -197,6 +200,22 @@ open class CommunApi(
         if (réponse.corps.isBlank()) return null
         return runCatching { json.parseToJsonElement(réponse.corps) }.getOrNull()
     }
+
+    /** Upload multipart d'une pièce jointe, authentifié, borné à 5 Mio. */
+    open suspend fun téléverser(chemin: String, fichier: File, jeton: String): JsonElement? {
+        if (fichier.length() > 5L * 1024 * 1024) throw CommunErreur(413, "Fichier trop volumineux — 5 Mo maximum")
+        val corps = MultipartBody.Builder().setType(MultipartBody.FORM)
+            .addFormDataPart("file", fichier.name, fichier.asRequestBody("application/octet-stream".toMediaType()))
+            .build()
+        val requête = Request.Builder().url(urlBase(chemin)).header("Accept", "application/json")
+            .header("Authorization", "Bearer $jeton").post(corps).build()
+        val réponse = appeler(requête)
+        if (réponse.corps.isBlank()) return null
+        return runCatching { json.parseToJsonElement(réponse.corps) }.getOrNull()
+    }
+
+    /** Transforme un chemin relatif renvoyé par l'API en URL absolue. */
+    open suspend fun urlPublique(chemin: String): String = urlBase(chemin).toString()
 
     /** `GET /health` — test de disponibilité silencieux (true = joignable). */
     open suspend fun santé(): Boolean = try {

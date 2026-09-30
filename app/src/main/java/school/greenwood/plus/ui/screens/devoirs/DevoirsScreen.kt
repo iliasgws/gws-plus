@@ -50,12 +50,14 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import java.time.LocalDate
 import school.greenwood.plus.AppContainer
 import school.greenwood.plus.model.Devoir
+import school.greenwood.plus.model.DevoirSuggéré
 import school.greenwood.plus.ui.DevoirsViewModel
 import school.greenwood.plus.ui.components.BandeauErreur
 import school.greenwood.plus.ui.components.EmptyState
@@ -150,7 +152,7 @@ fun DevoirsScreen(
 
         // Sélecteur de jour : les échéances présentes, plus aujourd'hui et demain.
         val jours = remember(état.tous, aujourdhui) {
-            (état.tous.mapNotNull { it.dateRemise } + aujourdhui + aujourdhui.plusDays(1))
+            (état.tous.mapNotNull { it.dateRemise } + état.propositionsCommunautaires.mapNotNull { it.dateRemise } + aujourdhui + aujourdhui.plusDays(1))
                 .distinct()
                 .sorted()
         }
@@ -229,6 +231,9 @@ fun DevoirsScreen(
                 // Bandeau discret au-dessus de la liste quand un échec réseau
                 // laisse le contenu connu affiché (issue #21).
                 val duJour = état.tous.filter { it.dateRemise == état.jourChoisi }
+                val propositions = état.propositionsCommunautaires.filter {
+                    it.dateRemise == état.jourChoisi || (it.dateRemise == null && état.jourChoisi == aujourdhui)
+                }
                 Column(Modifier.fillMaxSize()) {
                     état.erreur?.let { message ->
                         BandeauErreur(
@@ -237,7 +242,7 @@ fun DevoirsScreen(
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                         )
                     }
-                    if (duJour.isEmpty()) {
+                    if (duJour.isEmpty() && propositions.isEmpty()) {
                         Box(
                             Modifier
                                 .fillMaxWidth()
@@ -257,6 +262,10 @@ fun DevoirsScreen(
                             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
                             verticalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
+                            if (propositions.isNotEmpty()) {
+                                item { Text("Propositions des familles", style = MaterialTheme.typography.titleMedium, color = RegistreTheme.colors.ink) }
+                                items(propositions, key = { "communaute-${it.id}" }) { proposition -> CarteProposition(proposition) }
+                            }
                             items(duJour, key = { it.id }) { devoir ->
                                 CarteDevoir(
                                     devoir = devoir,
@@ -268,6 +277,28 @@ fun DevoirsScreen(
                         }
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CarteProposition(devoir: DevoirSuggéré) {
+    val uriHandler = LocalUriHandler.current
+    GwsCard {
+        Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(devoir.matière, style = MaterialTheme.typography.titleSmall, color = RegistreTheme.colors.ink)
+                Puce("Communauté")
+            }
+            Text(devoir.contenu, style = MaterialTheme.typography.bodyMedium, color = RegistreTheme.colors.ink)
+            devoir.piècesJointes.forEach { pièce ->
+                Text(
+                    text = "📎 ${pièce.nom}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = RegistreTheme.colors.accents.getValue("registre").teinte,
+                    modifier = Modifier.clickable { runCatching { uriHandler.openUri(pièce.url) } },
+                )
             }
         }
     }

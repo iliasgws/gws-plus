@@ -39,14 +39,14 @@ Current contents (update this section whenever files are added or removed):
 | `settings.gradle.kts`, `build.gradle.kts`, `gradle.properties`, `gradlew`, `gradle/wrapper/` | Gradle 9.6 build (AGP 9.4.1, Kotlin 2.4.20, built-in Kotlin — no `kotlin.android` plugin) |
 | `app/` | The Android application (`:app` module), namespace `school.greenwood.plus` |
 | `app/src/main/java/school/greenwood/plus/` | Sources — key entries below |
-| `…/GwsApplication.kt` | Manual DI container (`AppContainer`) |
+| `…/GwsApplication.kt` | Manual DI container (`AppContainer`), including homework refresh signals |
 | `…/MainActivity.kt` | Single activity, edge-to-edge, Compose |
 | `…/ui/AppNav.kt` | Root state (onboarding → connexion → registre) + 6-tab shell (Registre, Cours, Devoirs, Documents, Messages, Plus — secondary sections live under Plus), back-stack contract |
 | `…/ui/AppViewModels.kt` | One ViewModel per screen |
 | `…/ui/theme/` | « École vivante » tokens: colors + per-tab accents, Bricolage/Public Sans type, 24/16/10 shapes, motion springs (Mouvement.kt) |
 | `…/ui/components/` | Shared composables (Components.kt: GwsCard, Puce, EmptyState, skeletons…, SqueletteCommunaute (issue #88); CarteActualite.kt; CarteMiseAJour.kt: GitHub update card; BadgeIA.kt: « Généré par IA » icon + badge, issue #58; BarreOnglets.kt: custom accent bottom bar) |
-| `…/ui/screens/` | Login, Onboarding, registre (+ drawer menu, Post detail), actualites, plus (secondary sections menu), boutique (catalogue, product detail, order history), cours (Emploi du temps), devoirs (incl. shortcut to propose missing homework to the community server), documents (+ Quiz play), messages (+ Conversation + composer + AI panel), demandes, communaute (public lists + forms, issue #88), parametres (settings panel, incl. AI settings + community server URL/test/revoke) |
-| `…/data/api/` | BotiApi/BotiClient (generic GET/POST multipart + envelope), BotiEnvelope, MediaUrls (single-decode), CommunApi (community server client: jeton auth, rate-limit 429, plain-text errors, 10 Ko body cap, URL normalization — issue #88) |
+| `…/ui/screens/` | Login, Onboarding, registre (+ drawer menu, Post detail), actualites, plus (secondary sections menu), boutique (catalogue, product detail, order history), cours (Emploi du temps), devoirs (incl. community shortcut and community-proposal cards), documents (+ Quiz play), messages (+ Conversation + composer + AI panel), demandes, communaute (public lists + forms, issue #88), parametres (settings panel, incl. AI settings + community server URL/test/revoke) |
+| `…/data/api/` | BotiApi/BotiClient (generic GET/POST multipart + envelope), BotiEnvelope, MediaUrls (single-decode), CommunApi (community server client: jeton auth, rate-limit 429, plain-text errors, 10 Ko JSON body cap, multipart homework attachments up to 5 MiB, URL normalization — issues #88/#16 server) |
 | `app/src/main/res/xml/network_security_config.xml` and `app/src/debug/res/xml/network_security_config.xml` | HTTPS-only release network policy and debug-only cleartext access for LAN-hosted community servers (issue #94) |
 | `…/data/ai/ComposeurIA.kt` | AI composer (issue #56): OpenAI-compatible client (BYOK, provider presets), actions/tones with French labels, system-prompt builder |
 | `…/data/session/SessionStore.kt` | DataStore session (keyToken, user, eleves; never passwords) + actualisation-au-retour duration + community account/jeton/mentions + server URL + local vote records (issue #88) |

@@ -44,6 +44,7 @@ class AppContainer(context: Context) {
     // détail après une soumission, collecté par DevoirsViewModel pour
     // rafraîchir la liste — le marquage « fait » se voit au retour.
     val devoirsModifiés = MutableSharedFlow<String>(extraBufferCapacity = 4)
+    val devoirsCommunautairesModifiés = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
 
     // Veille de l'app : au retour au premier plan après une absence plus
     // longue que la durée réglée dans les Paramètres, chaque écran chargé
