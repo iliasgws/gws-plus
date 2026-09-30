@@ -320,6 +320,7 @@ fun Shell(container: AppContainer) {
                     container = container,
                     padding = padding,
                     onOuvrirDevoir = { id -> navController.navigate("devoir/$id") },
+                    onProposerDevoirManquant = { navController.allerDétail("communaute/proposer-devoir") },
                 )
             }
             composable("devoir/{devoirId}") { entrée ->
@@ -381,6 +382,14 @@ fun Shell(container: AppContainer) {
                     container = container,
                     padding = padding,
                     retour = { navController.popBackStack() },
+                )
+            }
+            composable("communaute/proposer-devoir") {
+                CommunauteScreen(
+                    container = container,
+                    padding = padding,
+                    retour = { navController.popBackStack() },
+                    ouvrirCréationDevoir = true,
                 )
             }
             composable("post/{postId}") { entrée ->

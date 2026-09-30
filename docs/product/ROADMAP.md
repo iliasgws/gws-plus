@@ -881,6 +881,8 @@ configured in Paramètres — empty by default, and the section then shows
       scope: signaler/supprimer), filter chips + tri, « Voir plus »
       pagination, creation dialogs with length limits, rate-limit banner,
       `SqueletteCommunaute` first-load skeletons, back-gesture friendly
+- [x] Add a « Proposer un devoir manquant » shortcut to the main Devoirs tab;
+      it opens the community-server proposal form and returns to Devoirs
 - [x] Paramètres: URL field (normalized on save), « Tester la connexion »
       via `GET /health`, « Révoquer le compte communautaire », clear
       explanations of what leaves the phone (only a pseudonymous id)

@@ -28,6 +28,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ChevronLeft
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Attachment
+import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.RadioButtonUnchecked
 import androidx.compose.material3.Button
@@ -97,6 +98,7 @@ fun DevoirsScreen(
     container: AppContainer,
     padding: PaddingValues,
     onOuvrirDevoir: (String) -> Unit = {},
+    onProposerDevoirManquant: () -> Unit = {},
 ) {
     val vm: DevoirsViewModel = viewModel { DevoirsViewModel(container) }
     val état by vm.état.collectAsStateWithLifecycle()
@@ -128,6 +130,22 @@ fun DevoirsScreen(
                 style = MaterialTheme.typography.bodySmall,
                 color = RegistreTheme.colors.chalk,
             )
+        }
+
+        Button(
+            onClick = onProposerDevoirManquant,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 4.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = RegistreTheme.colors.ink,
+                contentColor = RegistreTheme.colors.page,
+            ),
+            shape = ControlShape,
+        ) {
+            Icon(imageVector = Icons.Rounded.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+            Spacer(Modifier.size(6.dp))
+            Text("Proposer un devoir manquant")
         }
 
         // Sélecteur de jour : les échéances présentes, plus aujourd'hui et demain.
