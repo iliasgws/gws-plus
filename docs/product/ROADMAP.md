@@ -894,6 +894,13 @@ configured in Paramètres — empty by default, and the section then shows
 - [ ] On-device check against a running server — blocked until an instance
       is deployed (no URL yet)
 
+## LAN-hosted community server on Android (issue #94)
+
+- [x] Permit HTTP for LAN community-server testing in debug builds only;
+      release builds retain the HTTPS-only network policy.
+- [x] Document that LAN server URLs must start with `http://` explicitly.
+- [ ] Verify `/health` from a physical Android device on the same Wi-Fi.
+
 ## Message card timestamp contrast (issue #91, branch `fix/issue-91-contraste-date-message`)
 
 Reported from a real-device screenshot of the Registre: the message card
@@ -916,4 +923,3 @@ the end of the truncated message.
 - [ ] Same pattern still present in the Messages tab list
       (`MessagesScreen`, preview + date both `bodySmall`/`chalk`) — out of
       scope here, candidate for a follow-up issue
-

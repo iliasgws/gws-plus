@@ -4,6 +4,15 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [Non publié]
+
+### Corrigé
+
+- **Serveur communautaire sur le réseau local** (issue #94) : les variantes
+  debug autorisent le HTTP pour tester un serveur hébergé sur le même Wi-Fi.
+  Les variantes release restent limitées au HTTPS. L'URL LAN doit inclure
+  explicitement `http://`.
+
 ## [0.9.3] — 2026-09-30
 
 Stable après trois bêtas : la section « Communauté » de l'école et la date
