@@ -901,14 +901,14 @@ rendered the preview and `conversation.dernierDate` with identical tokens
 (`bodySmall` + `chalk`, 2 dp apart), so « le 30/09/2026 à 09:28 » read as
 the end of the truncated message.
 
-- [x] Date restyled as metadata in `RegistreScreen.CarteMessage`:
-      `labelMedium.tabulaire()` in full `ink` with a 6 dp gap above it;
-      the preview keeps `bodySmall` + `chalk`, its 2-line truncation and
-      its 2 dp gap under the subject
+- [x] Timestamp moved above the preview in `RegistreScreen.CarteMessage`
+      and labelled « Reçu {frenchFull} »: `labelMedium.tabulaire()` in full
+      `ink` (2 dp under the subject), preview keeps `bodySmall` + `chalk`,
+      its 2-line truncation and a 4 dp gap under the label
 - [x] Contrast checked by hand on both themes: `ink` on the `page` card is
       far above AA (`#1F3324` on `#FFFFFF`, `#E9F0E6` on `#1D271E`), and
-      the date now differs in colour, weight and spacing from the `chalk`
-      preview
+      the timestamp now differs in wording, colour, weight, spacing **and
+      position** from the `chalk` preview
 - [x] Version bump to `0.9.3-beta.2` (versionCode 66) for the beta build
 - [x] `:app:assembleDebug` + `:app:testDebugUnitTest` green (170 tests)
 - [ ] On-device check in the 0.9.3-beta.2 build

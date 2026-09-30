@@ -26,15 +26,16 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
 
 ### Corrigé
 
-- **Registre : la date d'un message se lisait comme la fin du message**
+- **Registre : la date d'un message se lit comme une métadonnée**
   (issue #91) : dans la carte « Message », l'horodatage du dernier message
-  était affiché dans le même style et la même couleur que l'aperçu du texte
-  (13 sp en craie, à 2 dp d'écart) et se raccrochait visuellement à la
-  phrase tronquée. Il passe en encre pleine, en annotation tabulaire
-  (13 sp, graisse 500) avec un espace franc au-dessus : la date se
-  détache d'un coup d'œil dans les deux thèmes, tout en restant lisible
-  (contraste ≥ 4,5:1 sur la carte). L'aperçu du message et sa troncature
-  sur deux lignes sont inchangés.
+  s'affichait dans le même style et la même couleur que l'aperçu du texte
+  (13 sp en craie, à 2 dp d'écart) et se rattachait à la phrase tronquée,
+  comme si la date en faisait partie. L'horodatage remonte au-dessus de
+  l'aperçu avec le libellé « Reçu le 30/09/2026 à 09:28 », en encre pleine
+  et en annotation tabulaire (13 sp, graisse 500) : il se détache d'un coup
+  d'œil dans les deux thèmes tout en restant lisible (contraste ≥ 4,5:1 sur
+  la carte). L'aperçu du message et sa troncature sur deux lignes sont
+  inchangés.
 
 ## [0.9.2] — 2026-09-27
 
