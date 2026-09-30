@@ -4,17 +4,25 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
-## Non publié
+## [0.9.4-beta.4] — 2026-09-30
+
+### Préversion (bêta)
+
+### Ajouté
+
+- Le formulaire communautaire accepte plusieurs pièces jointes de 5 Mo
+  maximum chacune, consultables depuis les propositions dans « Devoirs ».
+- Les propositions communautaires apparaissent dans l'onglet « Devoirs » à
+  leur date de remise ; le formulaire utilise un calendrier pour choisir
+  l'échéance.
+
+### Corrigé
 
 - Le formulaire « Proposer un devoir manquant » ne se rouvre plus après une
   rotation de l'écran ou un changement d'onglet ; après l'envoi, la liste
   « Devoirs » se met à jour sans relancer une requête complète.
-- Le formulaire communautaire permet de joindre plusieurs fichiers de 5 Mo
-  maximum chacun ; les pièces jointes sont téléversées sur le serveur puis
-  consultables depuis les propositions affichées dans « Devoirs ».
-- Les propositions communautaires apparaissent dans l'onglet « Devoirs » à
-  leur date de remise, avec une étiquette « Communauté » ; le formulaire de
-  proposition permet de choisir l'échéance dans un calendrier.
+
+## Non publié
 
 ## [0.9.4-beta.2] — 2026-09-30
 
