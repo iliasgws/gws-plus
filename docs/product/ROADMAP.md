@@ -912,7 +912,7 @@ the end of the truncated message.
 - [x] Version bump to `0.9.3-beta.3` (versionCode 67) for the beta build
       (`0.9.3-beta.2` shipped the first take, date below the preview)
 - [x] `:app:assembleDebug` + `:app:testDebugUnitTest` green (170 tests)
-- [ ] On-device check in the 0.9.3-beta.3 build
+- [x] On-device check in the 0.9.3-beta.3 build (2026-09-30)
 - [ ] Same pattern still present in the Messages tab list
       (`MessagesScreen`, preview + date both `bodySmall`/`chalk`) — out of
       scope here, candidate for a follow-up issue
