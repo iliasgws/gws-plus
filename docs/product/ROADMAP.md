@@ -893,3 +893,27 @@ configured in Paramètres — empty by default, and the section then shows
       — `:app:assembleDebug` + `:app:testDebugUnitTest` green (170 tests)
 - [ ] On-device check against a running server — blocked until an instance
       is deployed (no URL yet)
+
+## Message card timestamp contrast (issue #91, branch `fix/issue-91-contraste-date-message`)
+
+Reported from a real-device screenshot of the Registre: the message card
+rendered the preview and `conversation.dernierDate` with identical tokens
+(`bodySmall` + `chalk`, 2 dp apart), so « le 30/09/2026 à 09:28 » read as
+the end of the truncated message.
+
+- [x] Timestamp moved above the preview in `RegistreScreen.CarteMessage`
+      and labelled « Reçu {frenchFull} »: `labelMedium.tabulaire()` in full
+      `ink` (2 dp under the subject), preview keeps `bodySmall` + `chalk`,
+      its 2-line truncation and a 4 dp gap under the label
+- [x] Contrast checked by hand on both themes: `ink` on the `page` card is
+      far above AA (`#1F3324` on `#FFFFFF`, `#E9F0E6` on `#1D271E`), and
+      the timestamp now differs in wording, colour, weight, spacing **and
+      position** from the `chalk` preview
+- [x] Version bump to `0.9.3-beta.3` (versionCode 67) for the beta build
+      (`0.9.3-beta.2` shipped the first take, date below the preview)
+- [x] `:app:assembleDebug` + `:app:testDebugUnitTest` green (170 tests)
+- [ ] On-device check in the 0.9.3-beta.3 build
+- [ ] Same pattern still present in the Messages tab list
+      (`MessagesScreen`, preview + date both `bodySmall`/`chalk`) — out of
+      scope here, candidate for a follow-up issue
+

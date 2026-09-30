@@ -722,7 +722,7 @@ private fun CarteMessage(conversation: Conversation) {
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Puce(label = "Message")
-            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = conversation.sujet,
                     style = MaterialTheme.typography.bodyMedium,
@@ -730,6 +730,14 @@ private fun CarteMessage(conversation: Conversation) {
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
+                conversation.dernierDate?.let { date ->
+                    Text(
+                        text = "Reçu ${date.frenchFull()}",
+                        style = MaterialTheme.typography.labelMedium.tabulaire(),
+                        color = RegistreTheme.colors.ink,
+                        modifier = Modifier.padding(top = 2.dp),
+                    )
+                }
                 conversation.messages.lastOrNull()?.let { dernier ->
                     Text(
                         text = dernier.texte.htmlToPlainSingleLine(),
@@ -737,13 +745,7 @@ private fun CarteMessage(conversation: Conversation) {
                         color = RegistreTheme.colors.chalk,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
-                    )
-                }
-                conversation.dernierDate?.let { date ->
-                    Text(
-                        text = date.frenchFull(),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = RegistreTheme.colors.chalk,
+                        modifier = Modifier.padding(top = 4.dp),
                     )
                 }
             }
