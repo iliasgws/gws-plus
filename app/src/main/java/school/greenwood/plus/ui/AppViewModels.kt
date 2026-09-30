@@ -257,7 +257,12 @@ class DevoirsViewModel(private val container: AppContainer) : ViewModel() {
             }
         }
         viewModelScope.launch {
-            container.devoirsCommunautairesModifiés.collect { chargerPropositions() }
+            container.devoirsCommunautairesModifiés.collect { proposition ->
+                _état.update { st ->
+                    st.copy(propositionsCommunautaires =
+                        listOf(proposition) + st.propositionsCommunautaires.filterNot { it.id == proposition.id })
+                }
+            }
         }
     }
 
@@ -2408,7 +2413,7 @@ class CommunauteViewModel(private val container: AppContainer) : ViewModel() {
                 lancer {
                     val créé = créateur.créerDevoir(d.matière, d.contenu, date, d.fichiers)
                     d.fichiers.forEach { it.delete() }
-                    container.devoirsCommunautairesModifiés.tryEmit(Unit)
+                    container.devoirsCommunautairesModifiés.tryEmit(créé)
                     _état.update { st ->
                         st.copy(
                             devoirs = listOf(créé) + st.devoirs,

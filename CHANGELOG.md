@@ -6,6 +6,9 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
 
 ## Non publié
 
+- Le formulaire « Proposer un devoir manquant » ne se rouvre plus après une
+  rotation de l'écran ou un changement d'onglet ; après l'envoi, la liste
+  « Devoirs » se met à jour sans relancer une requête complète.
 - Le formulaire communautaire permet de joindre plusieurs fichiers de 5 Mo
   maximum chacun ; les pièces jointes sont téléversées sur le serveur puis
   consultables depuis les propositions affichées dans « Devoirs ».
