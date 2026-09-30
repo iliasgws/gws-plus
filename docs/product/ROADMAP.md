@@ -909,9 +909,10 @@ the end of the truncated message.
       far above AA (`#1F3324` on `#FFFFFF`, `#E9F0E6` on `#1D271E`), and
       the timestamp now differs in wording, colour, weight, spacing **and
       position** from the `chalk` preview
-- [x] Version bump to `0.9.3-beta.2` (versionCode 66) for the beta build
+- [x] Version bump to `0.9.3-beta.3` (versionCode 67) for the beta build
+      (`0.9.3-beta.2` shipped the first take, date below the preview)
 - [x] `:app:assembleDebug` + `:app:testDebugUnitTest` green (170 tests)
-- [ ] On-device check in the 0.9.3-beta.2 build
+- [ ] On-device check in the 0.9.3-beta.3 build
 - [ ] Same pattern still present in the Messages tab list
       (`MessagesScreen`, preview + date both `bodySmall`/`chalk`) — out of
       scope here, candidate for a follow-up issue
