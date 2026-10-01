@@ -4,6 +4,54 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [0.9.4-beta.4] — 2026-09-30
+
+### Préversion (bêta)
+
+### Ajouté
+
+- Le formulaire communautaire accepte plusieurs pièces jointes de 5 Mo
+  maximum chacune, consultables depuis les propositions dans « Devoirs ».
+- Les propositions communautaires apparaissent dans l'onglet « Devoirs » à
+  leur date de remise ; le formulaire utilise un calendrier pour choisir
+  l'échéance.
+
+### Corrigé
+
+- Le formulaire « Proposer un devoir manquant » ne se rouvre plus après une
+  rotation de l'écran ou un changement d'onglet ; après l'envoi, la liste
+  « Devoirs » se met à jour sans relancer une requête complète.
+
+## Non publié
+
+## [0.9.4-beta.2] — 2026-09-30
+
+### Préversion (bêta)
+
+### Ajouté
+
+- **Proposer un devoir manquant** depuis l'onglet « Devoirs » : le bouton
+  ouvre directement le formulaire de la communauté, qui partage la proposition
+  avec les familles via le serveur communautaire.
+
+### Corrigé
+
+- **Serveur communautaire sur le réseau local** (issue #94) : les variantes
+  debug autorisent le HTTP pour tester un serveur hébergé sur le même Wi-Fi.
+  Les variantes release restent limitées au HTTPS. L'URL LAN doit inclure
+  explicitement `http://`.
+
+## [0.9.4-beta.1] — 2026-09-30
+
+### Préversion (bêta)
+
+### Corrigé
+
+- **Serveur communautaire sur le réseau local** (issue #94) : les variantes
+  debug autorisent le HTTP pour tester un serveur hébergé sur le même Wi-Fi.
+  Les variantes release restent limitées au HTTPS. L'URL LAN doit inclure
+  explicitement `http://`.
+
 ## [0.9.3] — 2026-09-30
 
 Stable après trois bêtas : la section « Communauté » de l'école et la date

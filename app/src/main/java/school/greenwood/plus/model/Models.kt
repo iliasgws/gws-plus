@@ -507,6 +507,15 @@ data class DevoirSuggéré(
     val dateRemise: LocalDate? = null,
     val votes: Int = 0,
     val crééÀ: Long = 0,
+    val piècesJointes: List<PièceJointeCommunautaire> = emptyList(),
+)
+
+data class PièceJointeCommunautaire(
+    val id: String,
+    val nom: String,
+    val type: String,
+    val taille: Long,
+    val url: String,
 )
 
 /** Un problème d'emploi du temps signalé (GET/POST `edt/problemes`). */

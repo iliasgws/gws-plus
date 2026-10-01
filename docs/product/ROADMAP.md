@@ -881,6 +881,18 @@ configured in Paramètres — empty by default, and the section then shows
       scope: signaler/supprimer), filter chips + tri, « Voir plus »
       pagination, creation dialogs with length limits, rate-limit banner,
       `SqueletteCommunaute` first-load skeletons, back-gesture friendly
+- [x] Add a « Proposer un devoir manquant » shortcut to the main Devoirs tab;
+      it opens the community-server proposal form and returns to Devoirs
+- [x] Show dated community homework proposals on their due date in the regular
+      Devoirs tab, and undated proposals in today's list, with a visible
+      « Communauté » label; refresh the list after a proposal is submitted.
+- [x] Choose a proposal due date with the native calendar date picker.
+- [x] Attach files up to 5 MiB each to community proposals; uploads use the
+      server's authenticated multipart route and download links appear on the
+      proposal card in the regular Devoirs tab.
+- [x] Treat the shortcut as a one-time navigation request so rotation and
+      switching tabs do not reopen the proposal form; add submitted proposals
+      to the Devoirs list in memory without a second network fetch.
 - [x] Paramètres: URL field (normalized on save), « Tester la connexion »
       via `GET /health`, « Révoquer le compte communautaire », clear
       explanations of what leaves the phone (only a pseudonymous id)
@@ -893,6 +905,13 @@ configured in Paramètres — empty by default, and the section then shows
       — `:app:assembleDebug` + `:app:testDebugUnitTest` green (170 tests)
 - [ ] On-device check against a running server — blocked until an instance
       is deployed (no URL yet)
+
+## LAN-hosted community server on Android (issue #94)
+
+- [x] Permit HTTP for LAN community-server testing in debug builds only;
+      release builds retain the HTTPS-only network policy.
+- [x] Document that LAN server URLs must start with `http://` explicitly.
+- [ ] Verify `/health` from a physical Android device on the same Wi-Fi.
 
 ## Message card timestamp contrast (issue #91, branch `fix/issue-91-contraste-date-message`)
 
@@ -916,4 +935,3 @@ the end of the truncated message.
 - [ ] Same pattern still present in the Messages tab list
       (`MessagesScreen`, preview + date both `bodySmall`/`chalk`) — out of
       scope here, candidate for a follow-up issue
-

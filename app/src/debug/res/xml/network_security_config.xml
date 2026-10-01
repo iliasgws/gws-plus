@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Développement uniquement (issue #94) : autorise un serveur communautaire
+  HTTP hébergé sur le réseau local. Cette ressource remplace celle de main
+  uniquement dans les variantes debug ; la variante release conserve la
+  politique HTTPS stricte de src/main/res/xml/network_security_config.xml.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

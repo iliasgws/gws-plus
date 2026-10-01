@@ -21,6 +21,19 @@ intégré, pas de plugin `kotlin.android` séparé.
 ./gradlew :app:testDebugUnitTest  # tests unitaires — zéro échec exigé
 ```
 
+## Serveur communautaire sur le réseau local
+
+Une variante **debug** peut joindre un serveur communautaire HTTP depuis un
+téléphone connecté au même Wi-Fi. Dans Paramètres → Serveur communautaire,
+saisissez explicitement `http://<adresse-LAN>:<port>` (par exemple
+`http://192.168.1.20:8080`) ; sans schéma, l'application choisit HTTPS pour
+les adresses qui ne sont pas locales à l'appareil. Vérifiez que le pare-feu
+de la machine autorise les connexions depuis le réseau local.
+
+Cette autorisation HTTP est réservée aux variantes debug. Les variantes
+release gardent la configuration réseau HTTPS de `src/main` et ne peuvent
+pas joindre un serveur HTTP sur le LAN.
+
 ## Avant toute PR
 
 1. `assembleDebug` vert et `testDebugUnitTest` vert (zéro échec).

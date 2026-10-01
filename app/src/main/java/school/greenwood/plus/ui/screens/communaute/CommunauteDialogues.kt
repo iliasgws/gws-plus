@@ -1,5 +1,8 @@
 package school.greenwood.plus.ui.screens.communaute
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -11,11 +14,20 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -42,6 +54,10 @@ fun VueDialogue(
     vm: CommunauteViewModel,
     envoi: Boolean,
 ) {
+    val context = LocalContext.current
+    val sélecteurFichiers = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenMultipleDocuments(),
+    ) { uris: List<Uri> -> vm.ajouterFichiersDevoir(context, uris) }
     when (dialogue) {
         is DialogueCommunautaire.Notice -> DialogueNotice(
             mentions = dialogue.mentions,
@@ -72,14 +88,16 @@ fun VueDialogue(
                     placeholder = "Ex. Exercices 12 à 18 p. 45",
                     max = LIMITE_TEXTE,
                 )
-                ChampTexte(
-                    label = "Date de remise (facultative)",
-                    valeur = dialogue.dateRemise,
-                    surChangement = { vm.saisirDevoir(dialogue.matière, dialogue.contenu, it) },
-                    placeholder = "JJ/MM/AAAA ou AAAA-MM-JJ",
-                    max = 10,
-                    monoLigne = true,
-                )
+                SélecteurDateRemise(dialogue.dateRemise) { vm.saisirDevoir(dialogue.matière, dialogue.contenu, it) }
+                OutlinedButton(onClick = { sélecteurFichiers.launch(arrayOf("*/*")) }, enabled = !envoi) {
+                    Text("Ajouter des pièces jointes (5 Mo maximum chacune)")
+                }
+                dialogue.fichiers.forEach { fichier ->
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                        Text("${fichier.name} · ${"%.1f".format(fichier.length() / 1_048_576.0)} Mo", modifier = Modifier.weight(1f))
+                        TextButton(onClick = { vm.retirerFichierDevoir(fichier) }, enabled = !envoi) { Text("Retirer") }
+                    }
+                }
             },
         )
         is DialogueCommunautaire.CréerProblème -> FormulaireDialogue(
@@ -191,6 +209,33 @@ fun VueDialogue(
             },
         )
     }
+}
+
+@Composable
+private fun SélecteurDateRemise(date: String, choisir: (String) -> Unit) {
+    var ouvert by remember { mutableStateOf(false) }
+    val picker = rememberDatePickerState()
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text("Date de remise (facultative)", style = MaterialTheme.typography.labelMedium)
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            TextButton(onClick = { ouvert = true }) {
+                Text(if (date.isBlank()) "Choisir une date" else date)
+            }
+            if (date.isNotBlank()) TextButton(onClick = { choisir("") }) { Text("Effacer") }
+        }
+    }
+    if (ouvert) DatePickerDialog(
+        onDismissRequest = { ouvert = false },
+        confirmButton = {
+            TextButton(onClick = {
+                picker.selectedDateMillis?.let { millis ->
+                    choisir(java.time.Instant.ofEpochMilli(millis).atZone(java.time.ZoneOffset.UTC).toLocalDate().toString())
+                }
+                ouvert = false
+            }) { Text("Valider") }
+        },
+        dismissButton = { TextButton(onClick = { ouvert = false }) { Text("Annuler") } },
+    ) { DatePicker(state = picker) }
 }
 
 /** La notice légale (APP.md §2) : ni refermable au retour ni contournable —

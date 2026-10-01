@@ -7,6 +7,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
 import school.greenwood.plus.model.CorrectionHoraire
 import school.greenwood.plus.model.DevoirSuggéré
+import school.greenwood.plus.model.PièceJointeCommunautaire
 import school.greenwood.plus.model.Mentions
 import school.greenwood.plus.model.ProblèmeHoraire
 import school.greenwood.plus.model.SectionMentions
@@ -43,6 +44,31 @@ object CommunNormalizers {
             dateRemise = extractDate(str(obj, "dateRemise")),
             votes = entier(obj, "votes") ?: 0,
             crééÀ = long(obj, "crééÀ") ?: 0,
+            piècesJointes = (obj["piecesJointes"] as? JsonArray).orEmpty().mapNotNull { item ->
+                val file = item as? JsonObject ?: return@mapNotNull null
+                val fileId = str(file, "id") ?: return@mapNotNull null
+                val name = str(file, "nom") ?: "Pièce jointe"
+                val path = str(file, "url") ?: return@mapNotNull null
+                PièceJointeCommunautaire(
+                    id = fileId,
+                    nom = name,
+                    type = str(file, "type") ?: "application/octet-stream",
+                    taille = long(file, "taille") ?: 0L,
+                    url = path,
+                )
+            },
+        )
+    }
+
+    fun pièceJointe(obj: JsonObject): PièceJointeCommunautaire? {
+        val id = str(obj, "id") ?: return null
+        val url = str(obj, "url") ?: return null
+        return PièceJointeCommunautaire(
+            id = id,
+            nom = str(obj, "nom") ?: "Pièce jointe",
+            type = str(obj, "type") ?: "application/octet-stream",
+            taille = long(obj, "taille") ?: 0L,
+            url = url,
         )
     }
 

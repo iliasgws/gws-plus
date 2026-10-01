@@ -233,6 +233,7 @@ data class DevoirsÉtat(
     val chargement: Boolean = true,
     val erreur: String? = null,
     val tous: List<Devoir> = emptyList(),
+    val propositionsCommunautaires: List<DevoirSuggéré> = emptyList(),
     val jourChoisi: LocalDate = LocalDate.now(),
     /** Un rafraîchissement réseau tourne pendant que le contenu connu reste affiché. */
     val rafraîchissement: Boolean = false,
@@ -255,10 +256,19 @@ class DevoirsViewModel(private val container: AppContainer) : ViewModel() {
                 if (id != null) charger(force = true)
             }
         }
+        viewModelScope.launch {
+            container.devoirsCommunautairesModifiés.collect { proposition ->
+                _état.update { st ->
+                    st.copy(propositionsCommunautaires =
+                        listOf(proposition) + st.propositionsCommunautaires.filterNot { it.id == proposition.id })
+                }
+            }
+        }
     }
 
     fun charger(force: Boolean = false) {
         viewModelScope.launch {
+            chargerPropositions()
             // issue #21 : préremplissage depuis le cache (lecture silencieuse),
             // puis rafraîchissement réseau en fond — le contenu connu reste
             // affiché et les listes ne sont jamais vidées entre deux états.
@@ -301,6 +311,13 @@ class DevoirsViewModel(private val container: AppContainer) : ViewModel() {
                     )
                 }
             }
+        }
+    }
+
+    private fun chargerPropositions() {
+        viewModelScope.launch {
+            runCatching { container.communaute.devoirs(limite = 100).éléments }
+                .onSuccess { propositions -> _état.update { it.copy(propositionsCommunautaires = propositions) } }
         }
     }
 
@@ -2066,6 +2083,7 @@ sealed interface DialogueCommunautaire {
         val matière: String = "",
         val contenu: String = "",
         val dateRemise: String = "",
+        val fichiers: List<java.io.File> = emptyList(),
         val erreur: String? = null,
     ) : DialogueCommunautaire
 
@@ -2322,6 +2340,7 @@ class CommunauteViewModel(private val container: AppContainer) : ViewModel() {
 
     fun fermerDialogue() {
         if (_état.value.envoi) return
+        (_état.value.dialogue as? DialogueCommunautaire.CréerDevoir)?.fichiers?.forEach { it.delete() }
         _état.update { it.copy(dialogue = null) }
     }
 
@@ -2329,6 +2348,29 @@ class CommunauteViewModel(private val container: AppContainer) : ViewModel() {
         _état.update { st ->
             val d = st.dialogue as? DialogueCommunautaire.CréerDevoir ?: return@update st
             st.copy(dialogue = d.copy(matière = matière, contenu = contenu, dateRemise = dateRemise, erreur = null))
+        }
+    }
+
+    fun ajouterFichiersDevoir(context: android.content.Context, uris: List<android.net.Uri>) {
+        viewModelScope.launch {
+            val fichiers = uris.mapNotNull { uri -> school.greenwood.plus.util.Fichiers.copierDepuisSaf(context, uri) }
+            _état.update { st ->
+                val d = st.dialogue as? DialogueCommunautaire.CréerDevoir ?: return@update st
+                val acceptés = fichiers.filter { it.length() <= 5L * 1024 * 1024 }
+                val refusés = fichiers.size - acceptés.size
+                st.copy(dialogue = d.copy(
+                    fichiers = d.fichiers + acceptés,
+                    erreur = if (refusés > 0) "Chaque fichier doit peser 5 Mo maximum." else null,
+                ))
+            }
+        }
+    }
+
+    fun retirerFichierDevoir(fichier: java.io.File) {
+        fichier.delete()
+        _état.update { st ->
+            val d = st.dialogue as? DialogueCommunautaire.CréerDevoir ?: return@update st
+            st.copy(dialogue = d.copy(fichiers = d.fichiers - fichier))
         }
     }
 
@@ -2369,7 +2411,9 @@ class CommunauteViewModel(private val container: AppContainer) : ViewModel() {
                 }
                 val créateur = container.communaute
                 lancer {
-                    val créé = créateur.créerDevoir(d.matière, d.contenu, date)
+                    val créé = créateur.créerDevoir(d.matière, d.contenu, date, d.fichiers)
+                    d.fichiers.forEach { it.delete() }
+                    container.devoirsCommunautairesModifiés.tryEmit(créé)
                     _état.update { st ->
                         st.copy(
                             devoirs = listOf(créé) + st.devoirs,
