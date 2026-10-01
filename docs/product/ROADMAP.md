@@ -890,6 +890,9 @@ configured in Paramètres — empty by default, and the section then shows
 - [x] Attach files up to 5 MiB each to community proposals; uploads use the
       server's authenticated multipart route and download links appear on the
       proposal card in the regular Devoirs tab.
+- [x] Treat the shortcut as a one-time navigation request so rotation and
+      switching tabs do not reopen the proposal form; add submitted proposals
+      to the Devoirs list in memory without a second network fetch.
 - [x] Paramètres: URL field (normalized on save), « Tester la connexion »
       via `GET /health`, « Révoquer le compte communautaire », clear
       explanations of what leaves the phone (only a pseudonymous id)

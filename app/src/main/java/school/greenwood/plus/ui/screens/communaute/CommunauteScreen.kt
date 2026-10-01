@@ -34,10 +34,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -94,8 +95,17 @@ fun CommunauteScreen(
     val vm: CommunauteViewModel = viewModel { CommunauteViewModel(container) }
     val état by vm.état.collectAsStateWithLifecycle()
 
-    LaunchedEffect(ouvrirCréationDevoir) {
-        if (ouvrirCréationDevoir) vm.ouvrirCréationDevoir()
+    // Cette route est restaurée quand on revient à l'onglet Devoirs et après
+    // rotation. Consommer la demande une seule fois empêche de rouvrir le
+    // formulaire après sa fermeture ou son envoi.
+    var demandeCréationÀTraiter by rememberSaveable(ouvrirCréationDevoir) {
+        mutableStateOf(ouvrirCréationDevoir)
+    }
+    LaunchedEffect(demandeCréationÀTraiter) {
+        if (demandeCréationÀTraiter) {
+            vm.ouvrirCréationDevoir()
+            demandeCréationÀTraiter = false
+        }
     }
 
     Column(
