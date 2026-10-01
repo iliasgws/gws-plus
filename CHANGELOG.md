@@ -4,7 +4,9 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
-## Non publié
+## [0.9.4-beta.3] — 2026-09-30
+
+### Préversion (bêta)
 
 - Le formulaire « Proposer un devoir manquant » ne se rouvre plus après une
   rotation de l'écran ou un changement d'onglet ; après l'envoi, la liste
@@ -15,6 +17,8 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
 - Les propositions communautaires apparaissent dans l'onglet « Devoirs » à
   leur date de remise, avec une étiquette « Communauté » ; le formulaire de
   proposition permet de choisir l'échéance dans un calendrier.
+
+## Non publié
 
 ## [0.9.4-beta.2] — 2026-09-30
 
