@@ -1047,7 +1047,7 @@ UI-only, the reference mock-up is never published: it carries a pupil photo).
       dialog, guard and repository call
 - [ ] On-device flow: login → profile → sign out → login, on a small screen,
       in dark mode and with TalkBack; sign-out with the network cut (local
-      purge must still happen)
+      purge must still happen) — in the 0.9.4-beta.8 build
 - [ ] Anonymised before/after captures on a small and a standard screen
       (the mock-up itself stays private; captures deferred — the user asked
       to ship the beta first)

@@ -69,7 +69,9 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
   espacements de l'accueil passent à 12 dp pour faire remonter « Accès
   rapides » sur les écrans compacts.
 
-## Non publié
+## [0.9.4-beta.8] — 2026-10-02
+
+### Préversion (bêta)
 
 ### Ajouté
 
@@ -82,6 +84,8 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
   caches et la session **même si le réseau échoue**, ce qui ramène à l'écran
   de connexion sans laisser de donnée du compte à l'écran. Le même raccourci
   se trouve dans les Paramètres, section « Compte ».
+
+## Non publié
 
 ## [0.9.4-beta.2] — 2026-09-30
 
