@@ -22,6 +22,69 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
   rotation de l'écran ou un changement d'onglet ; après l'envoi, la liste
   « Devoirs » se met à jour sans relancer une requête complète.
 
+## [0.9.4-beta.5] — 2026-10-02
+
+### Préversion (bêta)
+
+### Corrigé
+
+- **Catégories de message** (issue #99) : le composeur propose les genres
+  de message sur les **deux chemins d'envoi**. Au nouveau message, la
+  catégorie est toujours visible (un échec du serveur affiche « Réessayer »
+  au lieu de masquer le bloc) et le choix devient obligatoire. Dans une
+  conversation, la catégorie du fil s'affiche au-dessus du composeur et peut
+  être changée : une réponse ne part plus jamais sans catégorie.
+
+## [0.9.4-beta.6] — 2026-10-02
+
+### Préversion (bêta)
+
+### Modifié
+
+- **Registre (accueil)** (issue #101) : refonte premium de l'écran. La date
+  occupe sa propre ligne sous la barre de commandes (menu, actualisation en
+  cours, élève consulté), la carte « Ce soir » affiche l'échéance complète
+  (« à rendre pour lundi 5 octobre »), le titre entier et l'enseignant, se
+  dispose en colonne sur les petits écrans et ouvre l'onglet « Devoirs » d'un
+  geste ; « Dernière actualité » gagne un « Voir tout » et une vignette à
+  ratio fixe avec repli si l'image manque ; « Emploi du temps » et « Repas
+  invité » sont regroupés sous « Accès rapides » ; la barre du bas garde ses
+  six destinations et resserre sa typographie sur les écrans de 320 dp.
+
+## [0.9.4-beta.7] — 2026-10-02
+
+### Préversion (bêta)
+
+### Modifié
+
+- **Registre (accueil)** (issue #101) : passe de finition et de densité.
+  « Dernière actualité » adopte une carte horizontale compacte (vignette de
+  104 dp à gauche, titre entier sur quatre lignes, date et « Vu » toujours
+  lisibles) ; la variante verticale ne survient que sous 300 dp utiles ou à
+  grosse police et borne son image à 152 dp. La carte « Ce soir » gagne un
+  dégradé très discret et un liseré de 1 dp, et chaque devoir affiche son
+  statut en bas, étiqueté (« À faire » annoncé comme action requise, « Fait »
+  ou « Marqué fait pour moi »). La pilule profil se resserre, le surligneur
+  de la date disparaît quand la pilule du jour porte déjà la couleur, et les
+  espacements de l'accueil passent à 12 dp pour faire remonter « Accès
+  rapides » sur les écrans compacts.
+
+## [0.9.4-beta.8] — 2026-10-02
+
+### Préversion (bêta)
+
+### Ajouté
+
+- **Se déconnecter** (issue #101) : la pilule profil ouvre la feuille
+  « Mon compte » — l'élève consulté, le basculement d'enfant, l'accès aux
+  Paramètres, puis « Se déconnecter » en bas, après un séparateur. Un
+  dialogue de confirmation (« Se déconnecter ? ») protège des appuis
+  accidentels et bloque les boutons pendant l'appel ; la confirmation
+  réutilise la déconnexion existante (`logout` en best effort) et purge les
+  caches et la session **même si le réseau échoue**, ce qui ramène à l'écran
+  de connexion sans laisser de donnée du compte à l'écran. Le même raccourci
+  se trouve dans les Paramètres, section « Compte ».
+
 ## Non publié
 
 ## [0.9.4-beta.2] — 2026-09-30

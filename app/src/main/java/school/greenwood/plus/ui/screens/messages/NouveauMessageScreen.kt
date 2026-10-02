@@ -1,12 +1,8 @@
 package school.greenwood.plus.ui.screens.messages
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -28,14 +24,12 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import school.greenwood.plus.AppContainer
 import school.greenwood.plus.ui.NouveauMessageViewModel
 import school.greenwood.plus.ui.components.ErrorInline
-import school.greenwood.plus.ui.theme.AnnotationShape
 import school.greenwood.plus.ui.theme.ControlShape
 import school.greenwood.plus.ui.theme.RegistreTheme
 
@@ -47,7 +41,6 @@ import school.greenwood.plus.ui.theme.RegistreTheme
  * d'origine (navigate back du bundle).
  */
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun NouveauMessageScreen(
     container: AppContainer,
@@ -59,6 +52,15 @@ fun NouveauMessageScreen(
     val état by vm.état.collectAsStateWithLifecycle()
     // Réglages du composeur IA (issue #56) — null tant que non configuré.
     val réglagesIA by container.session.réglagesIA.collectAsStateWithLifecycle(initialValue = null)
+
+    // Issue #99 : la catégorie est toujours affichée (jamais masquée en
+    // silence) et devient obligatoire dès que le serveur en propose.
+    val refusCatégorie = refusCatégorieNouveau(
+        themeChoisi = état.themeChoisi?.id,
+        themes = état.themes,
+        themesEnÉchec = état.themesErreur,
+        chargement = état.themesChargement,
+    )
 
     Column(
         modifier = Modifier
@@ -119,28 +121,17 @@ fun NouveauMessageScreen(
                     )
                 }
 
-                if (état.themes.isNotEmpty()) {
-                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Text(
-                            text = "Catégorie",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = RegistreTheme.colors.chalk,
-                        )
-                        FlowRow(
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
-                            verticalArrangement = Arrangement.spacedBy(6.dp),
-                        ) {
-                            état.themes.forEach { theme ->
-                                val choisi = état.themeChoisi?.id == theme.id
-                                PuceThème(
-                                    label = theme.label,
-                                    choisi = choisi,
-                                    onChoisir = { vm.choisirTheme(if (choisi) null else theme) },
-                                )
-                            }
-                        }
-                    }
-                }
+                ChoixCatégorie(
+                    themes = état.themes,
+                    choisi = état.themeChoisi?.id,
+                    onChoisir = { theme ->
+                        vm.choisirTheme(if (état.themeChoisi?.id == theme.id) null else theme)
+                    },
+                    chargement = état.themesChargement,
+                    erreur = état.themesErreur,
+                    réessayer = vm::chargerThemes,
+                    hint = refusCatégorie,
+                )
 
                 état.erreur?.let {
                     ErrorInline(message = it)
@@ -160,7 +151,7 @@ fun NouveauMessageScreen(
             onDémarrerEnregistrement = vm::démarrerEnregistrement,
             onArrêterEnregistrement = vm::arrêterEnregistrement,
             onAnnulerEnregistrement = vm::annulerEnregistrement,
-            envoiPossible = état.sujet.isNotBlank() && état.texte.isNotBlank(),
+            envoiPossible = état.sujet.isNotBlank() && état.texte.isNotBlank() && refusCatégorie == null,
             onEnvoyer = vm::envoyer,
             enCours = état.envoi,
             limitePièces = true,
@@ -171,22 +162,5 @@ fun NouveauMessageScreen(
         LaunchedEffect(état.envoyé) {
             if (état.envoyé) onEnvoyé()
         }
-    }
-}
-
-@Composable
-private fun PuceThème(label: String, choisi: Boolean, onChoisir: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .clip(AnnotationShape)
-            .background(if (choisi) RegistreTheme.colors.ink else RegistreTheme.colors.sage)
-            .clickable(onClick = onChoisir)
-            .padding(horizontal = 10.dp, vertical = 5.dp),
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
-            color = if (choisi) RegistreTheme.colors.page else RegistreTheme.colors.ink,
-        )
     }
 }

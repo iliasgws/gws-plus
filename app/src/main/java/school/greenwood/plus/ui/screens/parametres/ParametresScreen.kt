@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -19,6 +20,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.ErrorOutline
+import androidx.compose.material.icons.rounded.Logout
 import androidx.compose.material3.Surface
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -48,6 +50,7 @@ import school.greenwood.plus.ui.MiseÀJourViewModel
 import school.greenwood.plus.ui.ParametresViewModel
 import school.greenwood.plus.ui.RéglagesIAViewModel
 import school.greenwood.plus.ui.components.CarteMiseÀJour
+import school.greenwood.plus.ui.components.DialogueDéconnexion
 import school.greenwood.plus.ui.components.ErrorInline
 import school.greenwood.plus.ui.components.GwsCard
 import school.greenwood.plus.ui.components.SectionLabel
@@ -89,6 +92,9 @@ fun ParametresScreen(
     val canalBêta by majVm.canalBêta.collectAsStateWithLifecycle()
     val contexte = LocalContext.current
     var notificationsAccordées by remember { mutableStateOf(container.misesÀJour.notificationsAccordées()) }
+    // Déconnexion (issue #101) : second accès, pour la découvrabilité — le
+    // chemin principal reste la pilule profil.
+    var déconnexionDemandée by remember { mutableStateOf(false) }
     val demandeurNotification = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission(),
     ) { accordé -> notificationsAccordées = accordé }
@@ -442,6 +448,59 @@ fun ParametresScreen(
                 color = RegistreTheme.colors.chalk,
                 modifier = Modifier.padding(top = 10.dp, start = 4.dp, end = 4.dp),
             )
+
+            SectionLabel("Compte")
+
+            GwsCard(modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 48.dp)
+                        .clip(ControlShape)
+                        .clickable(enabled = !état.déconnexionEnCours) { déconnexionDemandée = true }
+                        .padding(horizontal = 14.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Logout,
+                        contentDescription = null,
+                        tint = if (état.déconnexionEnCours) {
+                            RegistreTheme.colors.chalk
+                        } else {
+                            RegistreTheme.colors.ink
+                        },
+                        modifier = Modifier.size(20.dp),
+                    )
+                    Text(
+                        text = if (état.déconnexionEnCours) "Déconnexion…" else "Se déconnecter",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = if (état.déconnexionEnCours) {
+                            RegistreTheme.colors.chalk
+                        } else {
+                            RegistreTheme.colors.ink
+                        },
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+            }
+
+            Text(
+                text = "La déconnexion purge la session de l'école et les dernières données " +
+                    "affichées ; les réglages de l'app (actualisation, IA, canal bêta) et le " +
+                    "compte communautaire sont conservés.",
+                style = MaterialTheme.typography.bodySmall,
+                color = RegistreTheme.colors.chalk,
+                modifier = Modifier.padding(top = 10.dp, start = 4.dp, end = 4.dp),
+            )
+
+            if (déconnexionDemandée) {
+                DialogueDéconnexion(
+                    enCours = état.déconnexionEnCours,
+                    onConfirmer = { vm.déconnexion() },
+                    onAnnuler = { déconnexionDemandée = false },
+                )
+            }
         }
     }
 }

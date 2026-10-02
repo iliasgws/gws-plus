@@ -2,6 +2,7 @@ package school.greenwood.plus.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -10,6 +11,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import school.greenwood.plus.AppContainer
 import school.greenwood.plus.data.ai.RéglagesIA
 import school.greenwood.plus.data.api.BotiErreur
@@ -19,6 +21,7 @@ import school.greenwood.plus.data.api.JetonRévoqué
 import school.greenwood.plus.data.repo.NoticeRequise
 import school.greenwood.plus.data.repo.SensSemaine
 import school.greenwood.plus.data.repo.RegistreDuJour
+import school.greenwood.plus.data.session.SessionState
 import school.greenwood.plus.model.BilanAbsences
 import school.greenwood.plus.model.CantineJour
 import school.greenwood.plus.model.CibleSignalement
@@ -39,6 +42,9 @@ import school.greenwood.plus.model.ProduitDétail
 import school.greenwood.plus.model.RésultatCommande
 import school.greenwood.plus.model.RubriqueBoutique
 import school.greenwood.plus.data.repo.Normalizers
+import school.greenwood.plus.ui.screens.messages.refusCatégorieNouveau
+import school.greenwood.plus.ui.screens.messages.refusCatégorieRéponse
+import school.greenwood.plus.ui.screens.messages.themeDeRéponse
 import school.greenwood.plus.model.Post
 import school.greenwood.plus.model.PostDetail
 import school.greenwood.plus.model.QuizDetail
@@ -134,6 +140,9 @@ data class RegistreÉtat(
     val derniereActualite: Post? = null,
     /** Un rafraîchissement réseau tourne pendant que le contenu connu reste affiché. */
     val rafraîchissement: Boolean = false,
+    /** Déconnexion en cours (issue #101) : l'action reste désactivée jusqu'à
+     *  la purge de session — jamais deux appels de suite. */
+    val déconnexionEnCours: Boolean = false,
 )
 
 class RegistreViewModel(private val container: AppContainer) : ViewModel() {
@@ -142,12 +151,27 @@ class RegistreViewModel(private val container: AppContainer) : ViewModel() {
 
     init {
         viewModelScope.launch {
-            val s = container.session.state.first()
-            _état.value = _état.value.copy(
-                eleve = s?.eleves?.firstOrNull { it.id == s.eleveId } ?: s?.eleves?.firstOrNull(),
-                eleves = s?.eleves ?: emptyList(),
-            )
+            appliquerSession(container.session.state.first())
             charger()
+        }
+        // La session pilote l'écran (issue #101) : la purge — déconnexion ou
+        // expiration — vide l'état, aucune donnée du compte précédent ne
+        // survit à la bascule vers la connexion ; une reconnexion relance le
+        // chargement (ce VM, porté par l'activité, survit à la racine).
+        viewModelScope.launch {
+            var purgée = false
+            container.session.state.collect { s ->
+                if (s == null) {
+                    if (!purgée) {
+                        purgée = true
+                        _état.value = RegistreÉtat(chargement = true)
+                    }
+                } else if (purgée) {
+                    purgée = false
+                    appliquerSession(s)
+                    charger()
+                }
+            }
         }
         // Retour après une absence longue : rafraîchir en silence (data/session/Veille.kt).
         viewModelScope.launch {
@@ -155,8 +179,25 @@ class RegistreViewModel(private val container: AppContainer) : ViewModel() {
         }
     }
 
+    /** Adopte la session courante — ou rien du tout si elle a été purgée. */
+    private fun appliquerSession(s: SessionState?) {
+        if (s == null) {
+            _état.value = RegistreÉtat(chargement = true)
+            return
+        }
+        _état.update { st ->
+            st.copy(
+                eleve = s.eleves.firstOrNull { it.id == s.eleveId } ?: s.eleves.firstOrNull(),
+                eleves = s.eleves,
+            )
+        }
+    }
+
     fun charger(force: Boolean = false) {
         viewModelScope.launch {
+            // Hors session (issue #101) : rien à charger, pas d'erreur à
+            // projeter sur un écran qui n'est plus le sien.
+            if (container.session.state.first() == null) return@launch
             // issue #21 : préremplissage depuis le cache (lecture silencieuse,
             // jamais d'erreur projetée dans l'UI) — le squelette cède la place
             // aux dernières données connues, puis le réseau rafraîchit en fond.
@@ -223,6 +264,22 @@ class RegistreViewModel(private val container: AppContainer) : ViewModel() {
     fun corpsPost(id: String, onCorps: (String?) -> Unit) {
         viewModelScope.launch {
             onCorps(container.nouveautes.corps(id))
+        }
+    }
+
+    /**
+     * Déconnexion (issue #101) : `AuthRepository.déconnexion()` — POST
+     * `logout` en best effort, purge des caches et de la session, même si
+     * le réseau échoue. Portée ViewModel (activité) : l'appel va au bout
+     * même si la feuille quitte l'écran en chemin ; la purge fait basculer
+     * la racine sur la connexion. Un seul appel à la fois.
+     */
+    fun déconnexion() {
+        if (_état.value.déconnexionEnCours) return
+        _état.update { it.copy(déconnexionEnCours = true) }
+        viewModelScope.launch {
+            runCatching { container.auth.déconnexion() }
+            _état.update { it.copy(déconnexionEnCours = false) }
         }
     }
 
@@ -804,6 +861,13 @@ data class ConversationÉtat(
     /** Envois optimistes : affichés au bas du fil jusqu'à confirmation serveur,
      *  marqués Échec (relance manuelle) si le POST rate. */
     val envois: List<school.greenwood.plus.model.MessageEnvoi> = emptyList(),
+    /** Catégories du composeur (serveur themes[]) — issue #99 : la réponse
+     *  affiche et permet de changer la catégorie du fil. */
+    val themes: List<school.greenwood.plus.model.ThemeMessage> = emptyList(),
+    val themesChargement: Boolean = true,
+    val themesErreur: Boolean = false,
+    /** Catégorie choisie dans le composeur (id) — null = garder celle du fil. */
+    val themeChoisi: String? = null,
 )
 
 class ConversationViewModel(
@@ -817,9 +881,34 @@ class ConversationViewModel(
 
     init {
         charger()
+        chargerThemes()
         // Retour après une absence longue : rafraîchir en silence (data/session/Veille.kt).
         viewModelScope.launch {
             container.veille.retoursPérimés.collect { charger(force = true) }
+        }
+    }
+
+    /** Catégories du serveur pour le composeur de réponse (issue #99) —
+     *  échec → dernier lot en cache, sinon état d'erreur + « Réessayer ». */
+    fun chargerThemes() {
+        viewModelScope.launch {
+            _état.update { it.copy(themesChargement = true, themesErreur = false) }
+            try {
+                val page = container.messages.conversations()
+                _état.update {
+                    it.copy(themesChargement = false, themes = page.themes, themesErreur = false)
+                }
+            } catch (err: Exception) {
+                val enCache = runCatching { container.messages.conversationsEnCache() }.getOrNull()
+                val enCacheÉchec = enCache?.themes.orEmpty()
+                _état.update {
+                    it.copy(
+                        themesChargement = false,
+                        themes = if (enCacheÉchec.isNotEmpty()) enCacheÉchec else it.themes,
+                        themesErreur = enCacheÉchec.isEmpty(),
+                    )
+                }
+            }
         }
     }
 
@@ -874,6 +963,10 @@ class ConversationViewModel(
 
     fun modifierTexte(valeur: String) = _état.update { it.copy(texte = valeur) }
 
+    /** Catégorie choisie dans le composeur de réponse (issue #99) — null
+     *  rebascule sur celle du fil. */
+    fun choisirTheme(id: String?) = _état.update { it.copy(themeChoisi = id) }
+
     fun retirerPièce(fichier: java.io.File) =
         _état.update { it.copy(pièces = it.pièces - fichier) }
 
@@ -911,6 +1004,17 @@ class ConversationViewModel(
         if (e.envois.any { it.statut == school.greenwood.plus.model.MessageEnvoi.Statut.EnCours }) return
         val texte = e.texte.trim()
         if (texte.isEmpty() && e.pièces.isEmpty() && e.audio == null) return
+        // Issue #99 : un fil sans catégorie doit en recevoir une au composeur
+        // — jamais de `theme = ""` envoyé à l'aveugle.
+        val fil = e.conversation ?: return
+        if (refusCatégorieRéponse(
+                choisi = e.themeChoisi,
+                fil = fil.theme,
+                themes = e.themes,
+                themesEnÉchec = e.themesErreur,
+                chargement = e.themesChargement,
+            ) != null
+        ) return
         val envoi = school.greenwood.plus.model.MessageEnvoi(
             texte = texte,
             pièces = e.pièces,
@@ -938,6 +1042,9 @@ class ConversationViewModel(
                 val servi = container.messages.envoyerRéponse(
                     conversation = conversation,
                     texte = envoi.texte,
+                    // Issue #99 : catégorie choisie dans le composeur, sinon
+                    // celle du fil — lue au moment d'envoyer (relance comprise).
+                    theme = themeDeRéponse(_état.value.themeChoisi, conversation.theme),
                     pièces = envoi.pièces,
                     audio = envoi.audio,
                 )
@@ -991,6 +1098,10 @@ data class NouveauMessageÉtat(
     val texte: String = "",
     val themeChoisi: school.greenwood.plus.model.ThemeMessage? = null,
     val themes: List<school.greenwood.plus.model.ThemeMessage> = emptyList(),
+    /** Lecture des catégories en cours / en échec (issue #99) : l'état du
+     *  bloc « Catégorie » en découle — jamais masqué en silence. */
+    val themesChargement: Boolean = true,
+    val themesErreur: Boolean = false,
     val pièces: List<java.io.File> = emptyList(),
     val audio: java.io.File? = null,
     val enregistre: Boolean = false,
@@ -1006,13 +1117,30 @@ class NouveauMessageViewModel(private val container: AppContainer) : ViewModel()
     private var enregistreur: school.greenwood.plus.util.EnregistreurAudio? = null
 
     init {
+        chargerThemes()
+    }
+
+    /** Catégories du serveur (`themes[]` du GET `messages`) — issue #99 :
+     *  échec → dernier lot en cache s'il existe, sinon l'état d'erreur
+     *  affiche « Réessayer » au lieu d'un bloc qui disparaît. */
+    fun chargerThemes() {
         viewModelScope.launch {
+            _état.update { it.copy(themesChargement = true, themesErreur = false) }
             try {
                 val page = container.messages.conversations()
-                _état.update { it.copy(themes = page.themes) }
+                _état.update {
+                    it.copy(themesChargement = false, themes = page.themes, themesErreur = false)
+                }
             } catch (err: Exception) {
-                // Les catégories manquantes ne bloquent pas l'envoi : champ
-                // libre. Le fil s'ouvre quand même.
+                val enCache = runCatching { container.messages.conversationsEnCache() }.getOrNull()
+                val enCacheÉchec = enCache?.themes.orEmpty()
+                _état.update {
+                    it.copy(
+                        themesChargement = false,
+                        themes = if (enCacheÉchec.isNotEmpty()) enCacheÉchec else it.themes,
+                        themesErreur = enCacheÉchec.isEmpty(),
+                    )
+                }
             }
         }
     }
@@ -1074,6 +1202,17 @@ class NouveauMessageViewModel(private val container: AppContainer) : ViewModel()
         if (e.envoi) return
         if (e.sujet.isBlank() || e.texte.isBlank()) {
             _état.update { it.copy(erreur = "Sujet et message requis") }
+            return
+        }
+        // Issue #99 : sans catégorie choisie, rien ne part — même si le
+        // bouton d'envoi est déjà inactif (filet de sécurité testé).
+        refusCatégorieNouveau(
+            themeChoisi = e.themeChoisi?.id,
+            themes = e.themes,
+            themesEnÉchec = e.themesErreur,
+            chargement = e.themesChargement,
+        )?.let { refus ->
+            _état.update { it.copy(erreur = refus) }
             return
         }
         _état.update { it.copy(envoi = true, erreur = null) }
@@ -1579,6 +1718,9 @@ data class ParamètresÉtat(
     /** null = pas encore testé. */
     val testRéussi: Boolean? = null,
     val révocationEnCours: Boolean = false,
+
+    /** Déconnexion (issue #101) : second accès, depuis les Paramètres. */
+    val déconnexionEnCours: Boolean = false,
 )
 
 class ParametresViewModel(private val container: AppContainer) : ViewModel() {
@@ -1634,6 +1776,21 @@ class ParametresViewModel(private val container: AppContainer) : ViewModel() {
             _état.update { it.copy(révocationEnCours = true) }
             container.communaute.révoquerCompte()
             _état.update { it.copy(révocationEnCours = false) }
+        }
+    }
+
+    /**
+     * Déconnexion (issue #101) — le même chemin que depuis la pilule
+     * profil : `AuthRepository.déconnexion()`, une seule fois. Portée de
+     * l'écran : les Paramètres peuvent être refermés pendant l'appel
+     * réseau, d'où `NonCancellable` — la purge va au bout.
+     */
+    fun déconnexion() {
+        if (_état.value.déconnexionEnCours) return
+        _état.update { it.copy(déconnexionEnCours = true) }
+        viewModelScope.launch {
+            withContext(NonCancellable) { runCatching { container.auth.déconnexion() } }
+            _état.update { it.copy(déconnexionEnCours = false) }
         }
     }
 }

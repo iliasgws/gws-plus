@@ -103,10 +103,13 @@ class MessagesRepository(
     }
 
     /** Réponse dans un fil existant. Retourne le message tel que le serveur
-     *  l'a enregistré (normalisé), ou null si la réponse n'en porte pas. */
+     *  l'a enregistré (normalisé), ou null si la réponse n'en porte pas.
+     *  `theme` : catégorie choisie dans le composeur (issue #99) — sinon
+     *  celle du fil, reprise telle quelle (bundle : `theme: this.result.theme`). */
     suspend fun envoyerRéponse(
         conversation: Conversation,
         texte: String,
+        theme: String? = null,
         pièces: List<File> = emptyList(),
         audio: File? = null,
     ): Message? {
@@ -121,7 +124,7 @@ class MessagesRepository(
                 "ref" to conversation.id,
                 "sujet" to conversation.sujet,
                 "message" to texte,
-                "theme" to (conversation.theme ?: ""),
+                "theme" to (theme ?: conversation.theme ?: ""),
                 "index" to conversation.messages.size.toString(),
                 "eleve_id" to s.eleveId,
                 "parent_id" to s.parentId,
