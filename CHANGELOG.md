@@ -71,6 +71,18 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
 
 ## Non publié
 
+### Ajouté
+
+- **Se déconnecter** (issue #101) : la pilule profil ouvre la feuille
+  « Mon compte » — l'élève consulté, le basculement d'enfant, l'accès aux
+  Paramètres, puis « Se déconnecter » en bas, après un séparateur. Un
+  dialogue de confirmation (« Se déconnecter ? ») protège des appuis
+  accidentels et bloque les boutons pendant l'appel ; la confirmation
+  réutilise la déconnexion existante (`logout` en best effort) et purge les
+  caches et la session **même si le réseau échoue**, ce qui ramène à l'écran
+  de connexion sans laisser de donnée du compte à l'écran. Le même raccourci
+  se trouve dans les Paramètres, section « Compte ».
+
 ## [0.9.4-beta.2] — 2026-09-30
 
 ### Préversion (bêta)

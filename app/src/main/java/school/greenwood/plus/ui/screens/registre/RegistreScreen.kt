@@ -16,19 +16,24 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Description
+import androidx.compose.material.icons.rounded.Logout
 import androidx.compose.material.icons.rounded.Menu
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -67,6 +72,7 @@ import school.greenwood.plus.ui.RegistreViewModel
 import school.greenwood.plus.ui.components.BandeauErreur
 import school.greenwood.plus.ui.components.CarteActualité
 import school.greenwood.plus.ui.components.CarteMiseÀJour
+import school.greenwood.plus.ui.components.DialogueDéconnexion
 import school.greenwood.plus.ui.components.EmptyState
 import school.greenwood.plus.ui.components.ErrorInline
 import school.greenwood.plus.ui.components.GwsAvatar
@@ -120,6 +126,9 @@ fun RegistreScreen(
     LaunchedEffect(Unit) { container.misesÀJour.vérifierAuBesoin() }
 
     var feuilleOuverte by remember { mutableStateOf(false) }
+    // Déconnexion (issue #101) : la demande n'agit qu'après confirmation —
+    // un appui accidentel sur la feuille ne quitte jamais la session.
+    var déconnexionDemandée by remember { mutableStateOf(false) }
 
     // Le menu du haut : les gestes « hors flux du jour » (demandes,
     // paramètres) vivent dans le tiroir, la liste du registre ne porte plus
@@ -320,11 +329,25 @@ fun RegistreScreen(
     }
 
     if (feuilleOuverte) {
-        FeuilleEleves(
+        FeuilleCompte(
             eleves = état.eleves,
             sélection = état.eleve,
+            déconnexionEnCours = état.déconnexionEnCours,
             surChoix = vm::choisirEleve,
+            surOuvrirParamètres = {
+                feuilleOuverte = false
+                ouvrirParamètres()
+            },
+            surDemanderDéconnexion = { déconnexionDemandée = true },
             surFermer = { feuilleOuverte = false },
+        )
+    }
+
+    if (déconnexionDemandée) {
+        DialogueDéconnexion(
+            enCours = état.déconnexionEnCours,
+            onConfirmer = { vm.déconnexion() },
+            onAnnuler = { déconnexionDemandée = false },
         )
     }
     }
@@ -498,13 +521,21 @@ private fun LigneTiroir(
     }
 }
 
-/** Bascule d'enfant : la liste des élèves du compte parent. */
+/**
+ * « Mon compte » (issue #101) : l'élève consulté, le basculement d'enfant,
+ * l'accès aux paramètres — puis, après un séparateur et toujours en bas,
+ * la déconnexion. La feuille n'embarque aucune navigation par elle-même :
+ * ouvrir les paramètres ferme la feuille avant de pousser l'écran.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun FeuilleEleves(
+private fun FeuilleCompte(
     eleves: List<Eleve>,
     sélection: Eleve?,
+    déconnexionEnCours: Boolean,
     surChoix: (Eleve) -> Unit,
+    surOuvrirParamètres: () -> Unit,
+    surDemanderDéconnexion: () -> Unit,
     surFermer: () -> Unit,
 ) {
     val feuille = rememberModalBottomSheetState()
@@ -515,21 +546,63 @@ private fun FeuilleEleves(
         containerColor = RegistreTheme.colors.page,
         shape = PageShape,
     ) {
+        // Défilable : sur petit écran ou à grosse police, « Se déconnecter »
+        // reste atteignable sous le bas de la feuille (jamais masqué).
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
                 .padding(bottom = 24.dp),
         ) {
             Text(
-                text = "Changer d'enfant",
+                text = "Mon compte",
                 style = MaterialTheme.typography.titleMedium,
                 color = RegistreTheme.colors.ink,
                 modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
+            )
+
+            // L'en-tête : l'élève courant, tel qu'il est déjà montré en haut
+            // de l'écran (avatar, nom complet, classe) — jamais d'une autre
+            // source que la session.
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                GwsAvatar(
+                    initiales = sélection?.initiales ?: "·",
+                    imageUrl = sélection?.image,
+                    size = 44,
+                )
+                Column {
+                    Text(
+                        text = sélection?.nomComplet ?: "Enfant",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = RegistreTheme.colors.ink,
+                    )
+                    sélection?.niveau?.let { niveau ->
+                        Text(
+                            text = niveau,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = RegistreTheme.colors.chalk,
+                        )
+                    }
+                }
+            }
+
+            Text(
+                text = "Changer d'enfant",
+                style = MaterialTheme.typography.labelMedium,
+                color = RegistreTheme.colors.chalk,
+                modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 4.dp),
             )
             eleves.forEach { eleve ->
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .heightIn(min = 48.dp)
                         .clip(ControlShape)
                         .clickable {
                             surChoix(eleve)
@@ -563,6 +636,58 @@ private fun FeuilleEleves(
                     }
                 }
             }
+
+            LigneCompte(
+                label = "Paramètres",
+                icone = Icons.Rounded.Settings,
+                onClick = surOuvrirParamètres,
+            )
+
+            HorizontalDivider(
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
+                color = RegistreTheme.colors.sage,
+            )
+
+            // En bas, seul après le séparateur : désactivé pendant l'appel en
+            // cours (aucun double envoi), encre et non rouge stylo.
+            LigneCompte(
+                label = if (déconnexionEnCours) "Déconnexion…" else "Se déconnecter",
+                icone = Icons.Rounded.Logout,
+                activé = !déconnexionEnCours,
+                onClick = surDemanderDéconnexion,
+            )
         }
+    }
+}
+
+/** Une ligne de compte : icône + libellé, cible tactile d'au moins 48 dp. */
+@Composable
+private fun LigneCompte(
+    label: String,
+    icone: ImageVector,
+    activé: Boolean = true,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 48.dp)
+            .clip(ControlShape)
+            .clickable(enabled = activé, onClick = onClick)
+            .padding(horizontal = 20.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Icon(
+            imageVector = icone,
+            contentDescription = null,
+            tint = if (activé) RegistreTheme.colors.ink else RegistreTheme.colors.chalk,
+            modifier = Modifier.size(20.dp),
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = if (activé) RegistreTheme.colors.ink else RegistreTheme.colors.chalk,
+        )
     }
 }

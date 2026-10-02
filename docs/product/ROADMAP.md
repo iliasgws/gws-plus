@@ -1022,6 +1022,32 @@ UI-only, the reference mock-up is never published: it carries a pupil photo).
       (Friday-only pill, full French due date, both responsive thresholds,
       font-scale threshold); `:app:assembleDebug` + `:app:testDebugUnitTest`
       green
+- [x] Account sheet (follow-up review of 2026-10-02, 21:18 — no visible way
+      to sign out): the profile pill opens « Mon compte » instead of a bare
+      child switcher — header with the current pupil (avatar, full name,
+      class), the « Changer d'enfant » list (same route, no navigation for a
+      single child), « Paramètres », a 1 dp separator, then « Se déconnecter »
+      at the bottom (logout glyph, ink text — never red pen, 48 dp target,
+      sheet content scrollable so the row is never cut off on a small screen
+      or at 200 % font scale)
+- [x] `DialogueDéconnexion` (shared component): « Se déconnecter ? » +
+      « Vous devrez vous reconnecter pour accéder à votre espace. » +
+      « Annuler » / « Se déconnecter » — both buttons disabled while the call
+      runs, cancel/back dismisses without touching the session
+- [x] `RegistreViewModel.déconnexion()` calls `AuthRepository.déconnexion()`
+      (POST `logout` best effort → caches cleared → session erased, even when
+      the network fails) from the activity-scoped VM, so the call finishes
+      even if the sheet leaves composition; one call per confirmation
+      (`déconnexionEnCours` guard + disabled buttons)
+- [x] A purged session empties `RegistreÉtat` (no previous-account data
+      visible during the crossfade to Connexion) and a re-login restarts
+      `charger()` — the activity-scoped VM survives the root switch;
+      `charger()` is a no-op outside a session
+- [x] Secondary entry in Paramètres (section « Compte ») reusing the same
+      dialog, guard and repository call
+- [ ] On-device flow: login → profile → sign out → login, on a small screen,
+      in dark mode and with TalkBack; sign-out with the network cut (local
+      purge must still happen)
 - [ ] Anonymised before/after captures on a small and a standard screen
       (the mock-up itself stays private; captures deferred — the user asked
       to ship the beta first)
