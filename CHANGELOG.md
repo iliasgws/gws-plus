@@ -4,6 +4,17 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [0.9.4] — 2026-10-02
+
+Stable après huit bêtas : le Registre refondu (en-tête et date éditoriale,
+carte « Ce soir » avec échéance complète, dernière actualité compacte,
+accès rapides), les **catégories de message** au composeur — toujours
+visibles, obligatoires sur les deux chemins d'envoi — et la **déconnexion**
+depuis le profil (« Mon compte »). Le détail de chaque étape figure dans
+les sections de bêta ci-dessous.
+
+## Non publié
+
 ## [0.9.4-beta.4] — 2026-09-30
 
 ### Préversion (bêta)
@@ -84,8 +95,6 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
   caches et la session **même si le réseau échoue**, ce qui ramène à l'écran
   de connexion sans laisser de donnée du compte à l'écran. Le même raccourci
   se trouve dans les Paramètres, section « Compte ».
-
-## Non publié
 
 ## [0.9.4-beta.2] — 2026-09-30
 
