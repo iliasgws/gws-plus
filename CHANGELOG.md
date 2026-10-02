@@ -22,7 +22,9 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
   rotation de l'écran ou un changement d'onglet ; après l'envoi, la liste
   « Devoirs » se met à jour sans relancer une requête complète.
 
-## Non publié
+## [0.9.4-beta.5] — 2026-10-02
+
+### Préversion (bêta)
 
 ### Corrigé
 
@@ -32,6 +34,8 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
   au lieu de masquer le bloc) et le choix devient obligatoire. Dans une
   conversation, la catégorie du fil s'affiche au-dessus du composeur et peut
   être changée : une réponse ne part plus jamais sans catégorie.
+
+## Non publié
 
 ## [0.9.4-beta.2] — 2026-09-30
 
