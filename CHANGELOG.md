@@ -35,6 +35,22 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
   conversation, la catégorie du fil s'affiche au-dessus du composeur et peut
   être changée : une réponse ne part plus jamais sans catégorie.
 
+## [0.9.4-beta.6] — 2026-10-02
+
+### Préversion (bêta)
+
+### Modifié
+
+- **Registre (accueil)** (issue #101) : refonte premium de l'écran. La date
+  occupe sa propre ligne sous la barre de commandes (menu, actualisation en
+  cours, élève consulté), la carte « Ce soir » affiche l'échéance complète
+  (« à rendre pour lundi 5 octobre »), le titre entier et l'enseignant, se
+  dispose en colonne sur les petits écrans et ouvre l'onglet « Devoirs » d'un
+  geste ; « Dernière actualité » gagne un « Voir tout » et une vignette à
+  ratio fixe avec repli si l'image manque ; « Emploi du temps » et « Repas
+  invité » sont regroupés sous « Accès rapides » ; la barre du bas garde ses
+  six destinations et resserre sa typographie sur les écrans de 320 dp.
+
 ## Non publié
 
 ## [0.9.4-beta.2] — 2026-09-30
