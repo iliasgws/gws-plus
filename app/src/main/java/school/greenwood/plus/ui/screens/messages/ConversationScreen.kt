@@ -245,6 +245,26 @@ fun ConversationScreen(
                     }
                 }
 
+                // Issue #99 : la catégorie du fil est visible et modifiable
+                // au composeur de réponse — jamais de `theme = ""` à l'aveugle.
+                val refusCatégorie = refusCatégorieRéponse(
+                    choisi = état.themeChoisi,
+                    fil = conversation?.theme,
+                    themes = état.themes,
+                    themesEnÉchec = état.themesErreur,
+                    chargement = état.themesChargement,
+                )
+                ChoixCatégorie(
+                    themes = état.themes,
+                    choisi = état.themeChoisi ?: conversation?.theme,
+                    onChoisir = { theme -> vm.choisirTheme(theme.id) },
+                    chargement = état.themesChargement,
+                    erreur = état.themesErreur,
+                    réessayer = vm::chargerThemes,
+                    hint = refusCatégorie,
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                )
+
                 Composeur(
                     texte = état.texte,
                     onTexte = vm::modifierTexte,
@@ -260,7 +280,7 @@ fun ConversationScreen(
                     // geste séparé, comme pour une pièce jointe.
                     onArrêterEnregistrement = vm::arrêterEnregistrement,
                     onAnnulerEnregistrement = vm::annulerEnregistrement,
-                    envoiPossible = état.erreur == null,
+                    envoiPossible = état.erreur == null && refusCatégorie == null,
                     onEnvoyer = vm::envoyer,
                     enCours = état.envois.any { it.statut == MessageEnvoi.Statut.EnCours },
                     ia = réglagesIA,

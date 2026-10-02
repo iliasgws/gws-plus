@@ -39,6 +39,9 @@ import school.greenwood.plus.model.ProduitDétail
 import school.greenwood.plus.model.RésultatCommande
 import school.greenwood.plus.model.RubriqueBoutique
 import school.greenwood.plus.data.repo.Normalizers
+import school.greenwood.plus.ui.screens.messages.refusCatégorieNouveau
+import school.greenwood.plus.ui.screens.messages.refusCatégorieRéponse
+import school.greenwood.plus.ui.screens.messages.themeDeRéponse
 import school.greenwood.plus.model.Post
 import school.greenwood.plus.model.PostDetail
 import school.greenwood.plus.model.QuizDetail
@@ -804,6 +807,13 @@ data class ConversationÉtat(
     /** Envois optimistes : affichés au bas du fil jusqu'à confirmation serveur,
      *  marqués Échec (relance manuelle) si le POST rate. */
     val envois: List<school.greenwood.plus.model.MessageEnvoi> = emptyList(),
+    /** Catégories du composeur (serveur themes[]) — issue #99 : la réponse
+     *  affiche et permet de changer la catégorie du fil. */
+    val themes: List<school.greenwood.plus.model.ThemeMessage> = emptyList(),
+    val themesChargement: Boolean = true,
+    val themesErreur: Boolean = false,
+    /** Catégorie choisie dans le composeur (id) — null = garder celle du fil. */
+    val themeChoisi: String? = null,
 )
 
 class ConversationViewModel(
@@ -817,9 +827,34 @@ class ConversationViewModel(
 
     init {
         charger()
+        chargerThemes()
         // Retour après une absence longue : rafraîchir en silence (data/session/Veille.kt).
         viewModelScope.launch {
             container.veille.retoursPérimés.collect { charger(force = true) }
+        }
+    }
+
+    /** Catégories du serveur pour le composeur de réponse (issue #99) —
+     *  échec → dernier lot en cache, sinon état d'erreur + « Réessayer ». */
+    fun chargerThemes() {
+        viewModelScope.launch {
+            _état.update { it.copy(themesChargement = true, themesErreur = false) }
+            try {
+                val page = container.messages.conversations()
+                _état.update {
+                    it.copy(themesChargement = false, themes = page.themes, themesErreur = false)
+                }
+            } catch (err: Exception) {
+                val enCache = runCatching { container.messages.conversationsEnCache() }.getOrNull()
+                val enCacheÉchec = enCache?.themes.orEmpty()
+                _état.update {
+                    it.copy(
+                        themesChargement = false,
+                        themes = if (enCacheÉchec.isNotEmpty()) enCacheÉchec else it.themes,
+                        themesErreur = enCacheÉchec.isEmpty(),
+                    )
+                }
+            }
         }
     }
 
@@ -874,6 +909,10 @@ class ConversationViewModel(
 
     fun modifierTexte(valeur: String) = _état.update { it.copy(texte = valeur) }
 
+    /** Catégorie choisie dans le composeur de réponse (issue #99) — null
+     *  rebascule sur celle du fil. */
+    fun choisirTheme(id: String?) = _état.update { it.copy(themeChoisi = id) }
+
     fun retirerPièce(fichier: java.io.File) =
         _état.update { it.copy(pièces = it.pièces - fichier) }
 
@@ -911,6 +950,17 @@ class ConversationViewModel(
         if (e.envois.any { it.statut == school.greenwood.plus.model.MessageEnvoi.Statut.EnCours }) return
         val texte = e.texte.trim()
         if (texte.isEmpty() && e.pièces.isEmpty() && e.audio == null) return
+        // Issue #99 : un fil sans catégorie doit en recevoir une au composeur
+        // — jamais de `theme = ""` envoyé à l'aveugle.
+        val fil = e.conversation ?: return
+        if (refusCatégorieRéponse(
+                choisi = e.themeChoisi,
+                fil = fil.theme,
+                themes = e.themes,
+                themesEnÉchec = e.themesErreur,
+                chargement = e.themesChargement,
+            ) != null
+        ) return
         val envoi = school.greenwood.plus.model.MessageEnvoi(
             texte = texte,
             pièces = e.pièces,
@@ -938,6 +988,9 @@ class ConversationViewModel(
                 val servi = container.messages.envoyerRéponse(
                     conversation = conversation,
                     texte = envoi.texte,
+                    // Issue #99 : catégorie choisie dans le composeur, sinon
+                    // celle du fil — lue au moment d'envoyer (relance comprise).
+                    theme = themeDeRéponse(_état.value.themeChoisi, conversation.theme),
                     pièces = envoi.pièces,
                     audio = envoi.audio,
                 )
@@ -991,6 +1044,10 @@ data class NouveauMessageÉtat(
     val texte: String = "",
     val themeChoisi: school.greenwood.plus.model.ThemeMessage? = null,
     val themes: List<school.greenwood.plus.model.ThemeMessage> = emptyList(),
+    /** Lecture des catégories en cours / en échec (issue #99) : l'état du
+     *  bloc « Catégorie » en découle — jamais masqué en silence. */
+    val themesChargement: Boolean = true,
+    val themesErreur: Boolean = false,
     val pièces: List<java.io.File> = emptyList(),
     val audio: java.io.File? = null,
     val enregistre: Boolean = false,
@@ -1006,13 +1063,30 @@ class NouveauMessageViewModel(private val container: AppContainer) : ViewModel()
     private var enregistreur: school.greenwood.plus.util.EnregistreurAudio? = null
 
     init {
+        chargerThemes()
+    }
+
+    /** Catégories du serveur (`themes[]` du GET `messages`) — issue #99 :
+     *  échec → dernier lot en cache s'il existe, sinon l'état d'erreur
+     *  affiche « Réessayer » au lieu d'un bloc qui disparaît. */
+    fun chargerThemes() {
         viewModelScope.launch {
+            _état.update { it.copy(themesChargement = true, themesErreur = false) }
             try {
                 val page = container.messages.conversations()
-                _état.update { it.copy(themes = page.themes) }
+                _état.update {
+                    it.copy(themesChargement = false, themes = page.themes, themesErreur = false)
+                }
             } catch (err: Exception) {
-                // Les catégories manquantes ne bloquent pas l'envoi : champ
-                // libre. Le fil s'ouvre quand même.
+                val enCache = runCatching { container.messages.conversationsEnCache() }.getOrNull()
+                val enCacheÉchec = enCache?.themes.orEmpty()
+                _état.update {
+                    it.copy(
+                        themesChargement = false,
+                        themes = if (enCacheÉchec.isNotEmpty()) enCacheÉchec else it.themes,
+                        themesErreur = enCacheÉchec.isEmpty(),
+                    )
+                }
             }
         }
     }
@@ -1074,6 +1148,17 @@ class NouveauMessageViewModel(private val container: AppContainer) : ViewModel()
         if (e.envoi) return
         if (e.sujet.isBlank() || e.texte.isBlank()) {
             _état.update { it.copy(erreur = "Sujet et message requis") }
+            return
+        }
+        // Issue #99 : sans catégorie choisie, rien ne part — même si le
+        // bouton d'envoi est déjà inactif (filet de sécurité testé).
+        refusCatégorieNouveau(
+            themeChoisi = e.themeChoisi?.id,
+            themes = e.themes,
+            themesEnÉchec = e.themesErreur,
+            chargement = e.themesChargement,
+        )?.let { refus ->
+            _état.update { it.copy(erreur = refus) }
             return
         }
         _état.update { it.copy(envoi = true, erreur = null) }

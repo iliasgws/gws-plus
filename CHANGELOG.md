@@ -24,6 +24,15 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
 
 ## Non publié
 
+### Corrigé
+
+- **Catégories de message** (issue #99) : le composeur propose les genres
+  de message sur les **deux chemins d'envoi**. Au nouveau message, la
+  catégorie est toujours visible (un échec du serveur affiche « Réessayer »
+  au lieu de masquer le bloc) et le choix devient obligatoire. Dans une
+  conversation, la catégorie du fil s'affiche au-dessus du composeur et peut
+  être changée : une réponse ne part plus jamais sans catégorie.
+
 ## [0.9.4-beta.2] — 2026-09-30
 
 ### Préversion (bêta)

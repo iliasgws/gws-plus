@@ -935,3 +935,37 @@ the end of the truncated message.
 - [ ] Same pattern still present in the Messages tab list
       (`MessagesScreen`, preview + date both `bodySmall`/`chalk`) — out of
       scope here, candidate for a follow-up issue
+
+## Message categories on both send paths (issue #99, branch `fix/issue-99-genres-messages`)
+
+The composer offered the server categories (`themes[]` of `GET messages`,
+ids 8/9/10/11/13) only on the new-thread screen, only while the fetch
+succeeded (the block vanished silently on failure, the `catch` in
+`NouveauMessageViewModel.init` was deliberately mute), and never made the
+choice mandatory (`theme = ""` went out). The reply path had no control at
+all: `envoyerRéponse` blindly reused `conversation.theme ?: ""`.
+
+- [x] Shared module `ui/screens/messages/Catégories.kt`: the rules
+      (`refusCatégorieNouveau`, `refusCatégorieRéponse`, `themeDeRéponse`)
+      plus the shared « Catégorie » block — chips, « Chargement des
+      catégories… », « Aucune catégorie proposée pour le moment. » and the
+      error state with a « Réessayer » button instead of a block that hides
+- [x] New message: the category block is always rendered, a choice is
+      mandatory as soon as the server offers any (send button inactive +
+      « Choisis une catégorie » hint), and `envoyer()` re-checks the same
+      rule (filet de sécurité)
+- [x] Reply: the category row sits above the composer in
+      `ConversationScreen`, shows the thread's category (a « Catégorie du
+      fil » chip when the id is not in the current `themes[]`), lets the
+      user change it (`ConversationViewModel.choisirTheme`), and the POST
+      sends `themeDeRéponse(choice, thread theme)` — never an accidental `""`
+- [x] `MessagesRepository.envoyerRéponse` takes an optional `theme`
+      (defaults to the thread's own theme, unchanged for older callers)
+- [x] `themes[]` failure handling on both paths: last known batch from the
+      session-stamped cache first, error state + « Réessayer » otherwise
+- [x] Tests: `CatégoriesMessageTest` — 10 new, both paths (mandatory choice,
+      server-silent fallback, failure and loading blocking, reply
+      precedence) — `:app:assembleDebug` + `:app:testDebugUnitTest` green
+      (180 tests)
+- [ ] On-device check of the chips, the disabled send and the retry state
+      in the 0.9.4-beta.5 build
