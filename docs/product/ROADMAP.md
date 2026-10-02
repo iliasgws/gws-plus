@@ -969,3 +969,52 @@ all: `envoyerRéponse` blindly reused `conversation.theme ?: ""`.
       (180 tests)
 - [ ] On-device check of the chips, the disabled send and the retry state
       in the 0.9.4-beta.5 build
+
+## Premium Registre home redesign (issue #101, branch `feat/issue-101-refonte-registre`)
+
+The home screen kept its data, ViewModels, routes and six tabs — only the
+presentation was rebuilt, on the existing « École vivante » tokens (issue is
+UI-only, the reference mock-up is never published: it carries a pupil photo).
+
+- [x] New module `ui/screens/registre/RegistreAccueil.kt` holding the top of
+      the home: `EnTêteRegistre` (command bar — menu, refresh with a live
+      spin, pupil chip with a 48 dp target — then the editorial date on its
+      own line, highlighter, and a contextual pill that exists only for a
+      real condition: « Bonne fin de semaine ! » on Fridays)
+- [x] `CarteCeSoir`: single focal card, mint container, 1 dp liseré +
+      1 dp ambient elevation instead of the thick green outline; full due
+      date (`échéanceCeSoir` → « à rendre pour lundi 5 octobre »), full
+      homework title (never truncated), subject chip, teacher when supplied,
+      whole card opens Devoirs (new `ouvrirDevoirs` callback), 0 / 1 / N
+      states, red pen dot only for a homework actually to do (« À faire » /
+      « Fait » / « Marqué fait pour moi » semantics), vertical composition
+      under 344 dp of available width
+- [x] `SectionActualitéUne`: section header with an actionable « Voir tout »
+      (new `ouvrirActualités` callback → `actualites` detail), white floating
+      card, fixed-ratio thumbnail (16:9 above the text under 344 dp or at
+      130 % font scale, 96×72 dp to its left otherwise) with an elegant
+      fallback while loading / when absent / when broken, « Vu le … » line
+      left untouched, chevron in its own column (no collision)
+- [x] `SectionAccèsRapides`: one label, two floating white cards with the
+      same anatomy (pastel circle + label + subtitle + chevron) — Emploi du
+      temps and Repas invité keep their routes, height driven by content
+- [x] Screen order per acceptance: date + pupil, « Ce soir », « Dernière
+      actualité », « Accès rapides », « Aujourd'hui »; 16 dp between items
+      (24 dp between sections once the labels are counted), 8 dp grid, 20 dp
+      margins; feed cards re-padded to 16 dp
+- [x] `GwsCard` gains `relief` / `bordure` (1 dp hairline, very low
+      elevation); `SqueletteRegistre` re-cut to the new geometry so the
+      substitution does not jump
+- [x] `BarreOnglets`: white surface on a 1 dp outlineVariant hairline, 2 dp
+      elevation, active pill unchanged (per-tab accent semantics kept), and
+      a compact variant under 60 dp per entry (320 dp screens: 10 sp labels,
+      40×28 pill, 22 dp icon) — six destinations never drop
+- [x] Tests: `RegistreAccueilTest` — 9 unit tests on the pure rules
+      (Friday-only pill, full French due date, both responsive thresholds,
+      font-scale threshold); `:app:assembleDebug` + `:app:testDebugUnitTest`
+      green
+- [ ] Anonymised before/after captures on a small and a standard screen
+      (the mock-up itself stays private; captures deferred — the user asked
+      to ship the beta first)
+- [ ] On-device check of the header, the focal card and the six-tab bar in
+      the 0.9.4-beta.6 build
