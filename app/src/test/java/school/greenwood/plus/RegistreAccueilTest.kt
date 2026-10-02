@@ -61,13 +61,15 @@ class RegistreAccueilTest {
     }
 
     @Test
-    fun `actualité à la une - vignette au-dessus sur écran étroit`() {
-        assertTrue(actualiteUneVerticale(280f, échellePolice = 1f))
-        assertTrue(actualiteUneVerticale(320f, échellePolice = 1f))
+    fun `actualité à la une - vignette au-dessus seulement sous 300 dp utiles`() {
+        assertTrue(actualiteUneVerticale(280f, échellePolice = 1f))   // 320 dp de large
+        assertTrue(actualiteUneVerticale(299.9f, échellePolice = 1f))
+        assertFalse(actualiteUneVerticale(300f, échellePolice = 1f))
     }
 
     @Test
     fun `actualité à la une - vignette à gauche sur écran standard`() {
+        assertFalse(actualiteUneVerticale(320f, échellePolice = 1f))  // 360 dp de large
         assertFalse(actualiteUneVerticale(353f, échellePolice = 1f))
         assertFalse(actualiteUneVerticale(353f, échellePolice = 1.3f))
     }

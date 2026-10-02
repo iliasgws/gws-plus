@@ -228,7 +228,7 @@ fun RegistreScreen(
                     top = padding.calculateTopPadding(),
                     bottom = padding.calculateBottomPadding() + 16.dp,
                 ),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 item(key = "entete") {
                     EnTêteRegistre(

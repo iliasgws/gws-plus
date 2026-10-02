@@ -978,30 +978,39 @@ UI-only, the reference mock-up is never published: it carries a pupil photo).
 
 - [x] New module `ui/screens/registre/RegistreAccueil.kt` holding the top of
       the home: `EnTêteRegistre` (command bar — menu, refresh with a live
-      spin, pupil chip with a 48 dp target — then the editorial date on its
-      own line, highlighter, and a contextual pill that exists only for a
-      real condition: « Bonne fin de semaine ! » on Fridays)
+      spin, pupil pill — avatar + first name / class, page-white, 48 dp
+      target — then the editorial date on its own line (one line when it
+      fits, two when the font scale grows, never truncated), highlighter and
+      contextual pill mutually exclusive: the pill only exists for a real
+      condition (« Bonne fin de semaine ! » on Fridays)
 - [x] `CarteCeSoir`: single focal card, mint container, 1 dp liseré +
       1 dp ambient elevation instead of the thick green outline; full due
       date (`échéanceCeSoir` → « à rendre pour lundi 5 octobre »), full
       homework title (never truncated), subject chip, teacher when supplied,
       whole card opens Devoirs (new `ouvrirDevoirs` callback), 0 / 1 / N
-      states, red pen dot only for a homework actually to do (« À faire » /
+      states, discreet container gradient + 1 dp liseré instead of the thick
+      outline, status line at the bottom of every homework — red pen only for
+      an action actually required (« À faire » + « Action requise » state /
       « Fait » / « Marqué fait pour moi » semantics), vertical composition
       under 344 dp of available width
+- [x] Density pass (review of 2026-10-02): 12 dp between feed items, 12 dp
+      between the accès-rapides cards, 10 dp inside « Ce soir » — « Accès
+      rapides » climbs into view on a compact screen
 - [x] `SectionActualitéUne`: section header with an actionable « Voir tout »
       (new `ouvrirActualités` callback → `actualites` detail), white floating
-      card, fixed-ratio thumbnail (16:9 above the text under 344 dp or at
-      130 % font scale, 96×72 dp to its left otherwise) with an elegant
-      fallback while loading / when absent / when broken, « Vu le … » line
-      left untouched, chevron in its own column (no collision)
+      card, horizontal anatomy — 104×104 dp thumbnail on the left, title on
+      up to 4 lines, category / date / « Vu le … » untouched, chevron in its
+      own column (no collision); the vertical variant only under 300 dp of
+      available width or at 130 % font scale, image capped at 152 dp so the
+      tasks stay on the first screen; elegant fallback while loading / when
+      absent / when broken
 - [x] `SectionAccèsRapides`: one label, two floating white cards with the
-      same anatomy (pastel circle + label + subtitle + chevron) — Emploi du
-      temps and Repas invité keep their routes, height driven by content
+      same anatomy (pastel circle + label + subtitle + chevron), 12 dp apart —
+      Emploi du temps and Repas invité keep their routes, height driven by
+      content
 - [x] Screen order per acceptance: date + pupil, « Ce soir », « Dernière
-      actualité », « Accès rapides », « Aujourd'hui »; 16 dp between items
-      (24 dp between sections once the labels are counted), 8 dp grid, 20 dp
-      margins; feed cards re-padded to 16 dp
+      actualité », « Accès rapides », « Aujourd'hui »; 12 dp between items,
+      8 dp grid, 20 dp margins; feed cards re-padded to 16 dp
 - [x] `GwsCard` gains `relief` / `bordure` (1 dp hairline, very low
       elevation); `SqueletteRegistre` re-cut to the new geometry so the
       substitution does not jump
@@ -1016,5 +1025,5 @@ UI-only, the reference mock-up is never published: it carries a pupil photo).
 - [ ] Anonymised before/after captures on a small and a standard screen
       (the mock-up itself stays private; captures deferred — the user asked
       to ship the beta first)
-- [ ] On-device check of the header, the focal card and the six-tab bar in
-      the 0.9.4-beta.6 build
+- [ ] On-device check of the header, the focal card, the news card and the
+      six-tab bar in the 0.9.4-beta.7 build
