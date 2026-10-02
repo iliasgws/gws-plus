@@ -251,6 +251,10 @@ fun Shell(container: AppContainer) {
                     ouvrirRepas = { navController.allerDétail("repas-invite") },
                     ouvrirPost = { id -> navController.allerDétail("post/$id") },
                     ouvrirEmploi = { navController.allerÀLOnglet("cours") },
+                    ouvrirDevoirs = { navController.allerÀLOnglet("devoirs") },
+                    // « Voir tout » ouvre le flux des actualités en détail :
+                    // retour Android = de retour sur le Registre (pile inchangée).
+                    ouvrirActualités = { navController.allerDétail("actualites") },
                 )
             }
             composable("actualites") {

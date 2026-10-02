@@ -2,6 +2,7 @@ package school.greenwood.plus.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -10,6 +11,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import school.greenwood.plus.AppContainer
 import school.greenwood.plus.data.ai.RéglagesIA
 import school.greenwood.plus.data.api.BotiErreur
@@ -19,6 +21,7 @@ import school.greenwood.plus.data.api.JetonRévoqué
 import school.greenwood.plus.data.repo.NoticeRequise
 import school.greenwood.plus.data.repo.SensSemaine
 import school.greenwood.plus.data.repo.RegistreDuJour
+import school.greenwood.plus.data.session.SessionState
 import school.greenwood.plus.model.BilanAbsences
 import school.greenwood.plus.model.CantineJour
 import school.greenwood.plus.model.CibleSignalement
@@ -137,6 +140,9 @@ data class RegistreÉtat(
     val derniereActualite: Post? = null,
     /** Un rafraîchissement réseau tourne pendant que le contenu connu reste affiché. */
     val rafraîchissement: Boolean = false,
+    /** Déconnexion en cours (issue #101) : l'action reste désactivée jusqu'à
+     *  la purge de session — jamais deux appels de suite. */
+    val déconnexionEnCours: Boolean = false,
 )
 
 class RegistreViewModel(private val container: AppContainer) : ViewModel() {
@@ -145,12 +151,27 @@ class RegistreViewModel(private val container: AppContainer) : ViewModel() {
 
     init {
         viewModelScope.launch {
-            val s = container.session.state.first()
-            _état.value = _état.value.copy(
-                eleve = s?.eleves?.firstOrNull { it.id == s.eleveId } ?: s?.eleves?.firstOrNull(),
-                eleves = s?.eleves ?: emptyList(),
-            )
+            appliquerSession(container.session.state.first())
             charger()
+        }
+        // La session pilote l'écran (issue #101) : la purge — déconnexion ou
+        // expiration — vide l'état, aucune donnée du compte précédent ne
+        // survit à la bascule vers la connexion ; une reconnexion relance le
+        // chargement (ce VM, porté par l'activité, survit à la racine).
+        viewModelScope.launch {
+            var purgée = false
+            container.session.state.collect { s ->
+                if (s == null) {
+                    if (!purgée) {
+                        purgée = true
+                        _état.value = RegistreÉtat(chargement = true)
+                    }
+                } else if (purgée) {
+                    purgée = false
+                    appliquerSession(s)
+                    charger()
+                }
+            }
         }
         // Retour après une absence longue : rafraîchir en silence (data/session/Veille.kt).
         viewModelScope.launch {
@@ -158,8 +179,25 @@ class RegistreViewModel(private val container: AppContainer) : ViewModel() {
         }
     }
 
+    /** Adopte la session courante — ou rien du tout si elle a été purgée. */
+    private fun appliquerSession(s: SessionState?) {
+        if (s == null) {
+            _état.value = RegistreÉtat(chargement = true)
+            return
+        }
+        _état.update { st ->
+            st.copy(
+                eleve = s.eleves.firstOrNull { it.id == s.eleveId } ?: s.eleves.firstOrNull(),
+                eleves = s.eleves,
+            )
+        }
+    }
+
     fun charger(force: Boolean = false) {
         viewModelScope.launch {
+            // Hors session (issue #101) : rien à charger, pas d'erreur à
+            // projeter sur un écran qui n'est plus le sien.
+            if (container.session.state.first() == null) return@launch
             // issue #21 : préremplissage depuis le cache (lecture silencieuse,
             // jamais d'erreur projetée dans l'UI) — le squelette cède la place
             // aux dernières données connues, puis le réseau rafraîchit en fond.
@@ -226,6 +264,22 @@ class RegistreViewModel(private val container: AppContainer) : ViewModel() {
     fun corpsPost(id: String, onCorps: (String?) -> Unit) {
         viewModelScope.launch {
             onCorps(container.nouveautes.corps(id))
+        }
+    }
+
+    /**
+     * Déconnexion (issue #101) : `AuthRepository.déconnexion()` — POST
+     * `logout` en best effort, purge des caches et de la session, même si
+     * le réseau échoue. Portée ViewModel (activité) : l'appel va au bout
+     * même si la feuille quitte l'écran en chemin ; la purge fait basculer
+     * la racine sur la connexion. Un seul appel à la fois.
+     */
+    fun déconnexion() {
+        if (_état.value.déconnexionEnCours) return
+        _état.update { it.copy(déconnexionEnCours = true) }
+        viewModelScope.launch {
+            runCatching { container.auth.déconnexion() }
+            _état.update { it.copy(déconnexionEnCours = false) }
         }
     }
 
@@ -1664,6 +1718,9 @@ data class ParamètresÉtat(
     /** null = pas encore testé. */
     val testRéussi: Boolean? = null,
     val révocationEnCours: Boolean = false,
+
+    /** Déconnexion (issue #101) : second accès, depuis les Paramètres. */
+    val déconnexionEnCours: Boolean = false,
 )
 
 class ParametresViewModel(private val container: AppContainer) : ViewModel() {
@@ -1719,6 +1776,21 @@ class ParametresViewModel(private val container: AppContainer) : ViewModel() {
             _état.update { it.copy(révocationEnCours = true) }
             container.communaute.révoquerCompte()
             _état.update { it.copy(révocationEnCours = false) }
+        }
+    }
+
+    /**
+     * Déconnexion (issue #101) — le même chemin que depuis la pilule
+     * profil : `AuthRepository.déconnexion()`, une seule fois. Portée de
+     * l'écran : les Paramètres peuvent être refermés pendant l'appel
+     * réseau, d'où `NonCancellable` — la purge va au bout.
+     */
+    fun déconnexion() {
+        if (_état.value.déconnexionEnCours) return
+        _état.update { it.copy(déconnexionEnCours = true) }
+        viewModelScope.launch {
+            withContext(NonCancellable) { runCatching { container.auth.déconnexion() } }
+            _état.update { it.copy(déconnexionEnCours = false) }
         }
     }
 }

@@ -969,3 +969,87 @@ all: `envoyerRéponse` blindly reused `conversation.theme ?: ""`.
       (180 tests)
 - [ ] On-device check of the chips, the disabled send and the retry state
       in the 0.9.4-beta.5 build
+
+## Premium Registre home redesign (issue #101, branch `feat/issue-101-refonte-registre`)
+
+The home screen kept its data, ViewModels, routes and six tabs — only the
+presentation was rebuilt, on the existing « École vivante » tokens (issue is
+UI-only, the reference mock-up is never published: it carries a pupil photo).
+
+- [x] New module `ui/screens/registre/RegistreAccueil.kt` holding the top of
+      the home: `EnTêteRegistre` (command bar — menu, refresh with a live
+      spin, pupil pill — avatar + first name / class, page-white, 48 dp
+      target — then the editorial date on its own line (one line when it
+      fits, two when the font scale grows, never truncated), highlighter and
+      contextual pill mutually exclusive: the pill only exists for a real
+      condition (« Bonne fin de semaine ! » on Fridays)
+- [x] `CarteCeSoir`: single focal card, mint container, 1 dp liseré +
+      1 dp ambient elevation instead of the thick green outline; full due
+      date (`échéanceCeSoir` → « à rendre pour lundi 5 octobre »), full
+      homework title (never truncated), subject chip, teacher when supplied,
+      whole card opens Devoirs (new `ouvrirDevoirs` callback), 0 / 1 / N
+      states, discreet container gradient + 1 dp liseré instead of the thick
+      outline, status line at the bottom of every homework — red pen only for
+      an action actually required (« À faire » + « Action requise » state /
+      « Fait » / « Marqué fait pour moi » semantics), vertical composition
+      under 344 dp of available width
+- [x] Density pass (review of 2026-10-02): 12 dp between feed items, 12 dp
+      between the accès-rapides cards, 10 dp inside « Ce soir » — « Accès
+      rapides » climbs into view on a compact screen
+- [x] `SectionActualitéUne`: section header with an actionable « Voir tout »
+      (new `ouvrirActualités` callback → `actualites` detail), white floating
+      card, horizontal anatomy — 104×104 dp thumbnail on the left, title on
+      up to 4 lines, category / date / « Vu le … » untouched, chevron in its
+      own column (no collision); the vertical variant only under 300 dp of
+      available width or at 130 % font scale, image capped at 152 dp so the
+      tasks stay on the first screen; elegant fallback while loading / when
+      absent / when broken
+- [x] `SectionAccèsRapides`: one label, two floating white cards with the
+      same anatomy (pastel circle + label + subtitle + chevron), 12 dp apart —
+      Emploi du temps and Repas invité keep their routes, height driven by
+      content
+- [x] Screen order per acceptance: date + pupil, « Ce soir », « Dernière
+      actualité », « Accès rapides », « Aujourd'hui »; 12 dp between items,
+      8 dp grid, 20 dp margins; feed cards re-padded to 16 dp
+- [x] `GwsCard` gains `relief` / `bordure` (1 dp hairline, very low
+      elevation); `SqueletteRegistre` re-cut to the new geometry so the
+      substitution does not jump
+- [x] `BarreOnglets`: white surface on a 1 dp outlineVariant hairline, 2 dp
+      elevation, active pill unchanged (per-tab accent semantics kept), and
+      a compact variant under 60 dp per entry (320 dp screens: 10 sp labels,
+      40×28 pill, 22 dp icon) — six destinations never drop
+- [x] Tests: `RegistreAccueilTest` — 9 unit tests on the pure rules
+      (Friday-only pill, full French due date, both responsive thresholds,
+      font-scale threshold); `:app:assembleDebug` + `:app:testDebugUnitTest`
+      green
+- [x] Account sheet (follow-up review of 2026-10-02, 21:18 — no visible way
+      to sign out): the profile pill opens « Mon compte » instead of a bare
+      child switcher — header with the current pupil (avatar, full name,
+      class), the « Changer d'enfant » list (same route, no navigation for a
+      single child), « Paramètres », a 1 dp separator, then « Se déconnecter »
+      at the bottom (logout glyph, ink text — never red pen, 48 dp target,
+      sheet content scrollable so the row is never cut off on a small screen
+      or at 200 % font scale)
+- [x] `DialogueDéconnexion` (shared component): « Se déconnecter ? » +
+      « Vous devrez vous reconnecter pour accéder à votre espace. » +
+      « Annuler » / « Se déconnecter » — both buttons disabled while the call
+      runs, cancel/back dismisses without touching the session
+- [x] `RegistreViewModel.déconnexion()` calls `AuthRepository.déconnexion()`
+      (POST `logout` best effort → caches cleared → session erased, even when
+      the network fails) from the activity-scoped VM, so the call finishes
+      even if the sheet leaves composition; one call per confirmation
+      (`déconnexionEnCours` guard + disabled buttons)
+- [x] A purged session empties `RegistreÉtat` (no previous-account data
+      visible during the crossfade to Connexion) and a re-login restarts
+      `charger()` — the activity-scoped VM survives the root switch;
+      `charger()` is a no-op outside a session
+- [x] Secondary entry in Paramètres (section « Compte ») reusing the same
+      dialog, guard and repository call
+- [ ] On-device flow: login → profile → sign out → login, on a small screen,
+      in dark mode and with TalkBack; sign-out with the network cut (local
+      purge must still happen) — in the 0.9.4-beta.8 build
+- [ ] Anonymised before/after captures on a small and a standard screen
+      (the mock-up itself stays private; captures deferred — the user asked
+      to ship the beta first)
+- [ ] On-device check of the header, the focal card, the news card and the
+      six-tab bar in the 0.9.4-beta.7 build
