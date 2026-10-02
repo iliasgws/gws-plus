@@ -51,6 +51,24 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
   invité » sont regroupés sous « Accès rapides » ; la barre du bas garde ses
   six destinations et resserre sa typographie sur les écrans de 320 dp.
 
+## [0.9.4-beta.7] — 2026-10-02
+
+### Préversion (bêta)
+
+### Modifié
+
+- **Registre (accueil)** (issue #101) : passe de finition et de densité.
+  « Dernière actualité » adopte une carte horizontale compacte (vignette de
+  104 dp à gauche, titre entier sur quatre lignes, date et « Vu » toujours
+  lisibles) ; la variante verticale ne survient que sous 300 dp utiles ou à
+  grosse police et borne son image à 152 dp. La carte « Ce soir » gagne un
+  dégradé très discret et un liseré de 1 dp, et chaque devoir affiche son
+  statut en bas, étiqueté (« À faire » annoncé comme action requise, « Fait »
+  ou « Marqué fait pour moi »). La pilule profil se resserre, le surligneur
+  de la date disparaît quand la pilule du jour porte déjà la couleur, et les
+  espacements de l'accueil passent à 12 dp pour faire remonter « Accès
+  rapides » sur les écrans compacts.
+
 ## Non publié
 
 ## [0.9.4-beta.2] — 2026-09-30
