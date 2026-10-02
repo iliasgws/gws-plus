@@ -1,14 +1,10 @@
 package school.greenwood.plus.ui.screens.registre
 
 import androidx.activity.ComponentActivity
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -24,26 +20,20 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.CalendarMonth
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Description
 import androidx.compose.material.icons.rounded.Menu
-import androidx.compose.material.icons.rounded.Refresh
-import androidx.compose.material.icons.rounded.Restaurant
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -59,24 +49,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import coil3.compose.AsyncImage
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import school.greenwood.plus.AppContainer
 import school.greenwood.plus.data.repo.EntreeRegistre
-import school.greenwood.plus.data.repo.RegistreDuJour
 import school.greenwood.plus.data.repo.TéléchargementMaj
 import school.greenwood.plus.model.Absence
 import school.greenwood.plus.model.Conversation
 import school.greenwood.plus.model.Devoir
 import school.greenwood.plus.model.Eleve
-import school.greenwood.plus.model.Post
 import school.greenwood.plus.ui.RegistreViewModel
 import school.greenwood.plus.ui.components.BandeauErreur
 import school.greenwood.plus.ui.components.CarteActualité
@@ -95,7 +81,6 @@ import school.greenwood.plus.ui.theme.PageShape
 import school.greenwood.plus.ui.theme.RegistreTheme
 import school.greenwood.plus.ui.theme.tabulaire
 import school.greenwood.plus.util.frenchFull
-import school.greenwood.plus.util.frenchLongDay
 import school.greenwood.plus.util.frenchNumeric
 import school.greenwood.plus.util.frenchTime
 import school.greenwood.plus.util.htmlToPlainSingleLine
@@ -115,6 +100,8 @@ fun RegistreScreen(
     ouvrirRepas: () -> Unit,
     ouvrirPost: (String) -> Unit,
     ouvrirEmploi: () -> Unit,
+    ouvrirDevoirs: () -> Unit,
+    ouvrirActualités: () -> Unit,
 ) {
     // Une seule instance de VM partagée entre le registre et le détail d'un
     // post (portée activité) : le détail hérite du registre déjà chargé.
@@ -241,12 +228,13 @@ fun RegistreScreen(
                     top = padding.calculateTopPadding(),
                     bottom = padding.calculateBottomPadding() + 16.dp,
                 ),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 item(key = "entete") {
-                    EnTête(
+                    EnTêteRegistre(
                         date = LocalDate.now(),
                         eleve = état.eleve,
+                        rafraîchissement = état.rafraîchissement,
                         surOuvrirTiroir = {
                             portée.launch { tiroir.open() }
                         },
@@ -287,32 +275,22 @@ fun RegistreScreen(
                     }
                 }
 
-                item(key = "ce-soir") { CarteCeSoir(registre) }
+                item(key = "ce-soir") {
+                    CarteCeSoir(registre = registre, ouvrirDevoirs = ouvrirDevoirs)
+                }
 
                 if (derniereActu != null) {
                     item(key = "derniere-actu") {
-                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            SectionLabel(text = "Dernière actualité")
-                            CarteActualité(
-                                post = derniereActu,
-                                onClick = { ouvrirPost(derniereActu.id) },
-                            )
-                        }
+                        SectionActualitéUne(
+                            post = derniereActu,
+                            ouvrirPost = ouvrirPost,
+                            ouvrirActualités = ouvrirActualités,
+                        )
                     }
                 }
 
-                item(key = "lien-emploi") {
-                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        SectionLabel(text = "Emploi du temps")
-                        CarteLienEmploi(ouvrirEmploi)
-                    }
-                }
-
-                item(key = "lien-repas") {
-                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        SectionLabel(text = "Cantine")
-                        CarteLienRepas(ouvrirRepas)
-                    }
+                item(key = "acces-rapides") {
+                    SectionAccèsRapides(ouvrirEmploi = ouvrirEmploi, ouvrirRepas = ouvrirRepas)
                 }
 
                 item(key = "label-jour") { SectionLabel(text = "Aujourd'hui") }
@@ -352,286 +330,6 @@ fun RegistreScreen(
     }
 }
 
-/** En-tête : le menu, la date en Bricolage, l'enfant consulté à droite, actualiser. */
-@Composable
-private fun EnTête(
-    date: LocalDate,
-    eleve: Eleve?,
-    surOuvrirTiroir: () -> Unit,
-    surOuvrirFeuille: () -> Unit,
-    surActualiser: () -> Unit,
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        IconButton(onClick = surOuvrirTiroir) {
-            Icon(
-                imageVector = Icons.Rounded.Menu,
-                contentDescription = "Menu",
-                tint = RegistreTheme.colors.ink,
-            )
-        }
-        Column(modifier = Modifier.weight(1f)) {
-            // La date doit rester lisible en entier (« jeudi 18 septembre ») :
-            // elle passe sur deux lignes plutôt que de se couper (issue #21) —
-            // la coupure n'arrive qu'en toute dernière extrémité.
-            Text(
-                text = date.frenchLongDay(),
-                style = MaterialTheme.typography.displayLarge,
-                color = RegistreTheme.colors.ink,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
-            // Le surligneur : le trait de l'onglet, sous le titre.
-            Box(
-                modifier = Modifier
-                    .padding(top = 6.dp)
-                    .size(width = 56.dp, height = 5.dp)
-                    .clip(AnnotationShape)
-                    .background(RegistreTheme.accent.conteneur),
-            )
-        }
-        IconButton(onClick = surActualiser) {
-            Icon(
-                imageVector = Icons.Rounded.Refresh,
-                contentDescription = "Actualiser",
-                tint = RegistreTheme.colors.chalk,
-            )
-        }
-        // Bascule d'enfant : fondu (docs/product/DESIGN.md §4).
-        AnimatedContent(
-            targetState = eleve,
-            transitionSpec = { fadeIn(tween(300)) togetherWith fadeOut(tween(300)) },
-            label = "élève consulté",
-        ) { enfant ->
-            Row(
-                modifier = Modifier
-                    .clip(ControlShape)
-                    .clickable { surOuvrirFeuille() }
-                    .padding(6.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                GwsAvatar(
-                    initiales = enfant?.initiales ?: "·",
-                    imageUrl = enfant?.image,
-                    size = 32,
-                )
-                Column {
-                    Text(
-                        text = enfant?.prenom ?: enfant?.nomComplet ?: "Enfant",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = RegistreTheme.colors.ink,
-                        maxLines = 1,
-                    )
-                    enfant?.niveau?.let { niveau ->
-                        Text(
-                            text = niveau,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = RegistreTheme.colors.chalk,
-                            maxLines = 1,
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-/** Lien discret vers l'onglet Emploi du temps, depuis l'accueil — habillé
- *  de l'accent bleu de l'onglet Cours. */
-@Composable
-private fun CarteLienEmploi(ouvrirEmploi: () -> Unit) {
-    val accentCours = RegistreTheme.colors.accents["cours"]
-    GwsCard(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = ouvrirEmploi),
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 14.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(36.dp)
-                    .clip(ControlShape)
-                    .background(accentCours?.conteneur ?: RegistreTheme.colors.sage),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.CalendarMonth,
-                    contentDescription = null,
-                    tint = accentCours?.teinte ?: RegistreTheme.colors.ink,
-                    modifier = Modifier.size(20.dp),
-                )
-            }
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = "Emploi du temps",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = RegistreTheme.colors.ink,
-                )
-                Text(
-                    text = "La semaine de l'école, jour par jour",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = RegistreTheme.colors.chalk,
-                )
-            }
-        }
-    }
-}
-
-/** Lien discret vers la réservation du repas invité, depuis l'accueil —
- *  habillé de l'accent sarcelle de la Boutique dont il dépend. */
-@Composable
-private fun CarteLienRepas(ouvrirRepas: () -> Unit) {
-    val accentPlus = RegistreTheme.colors.accents["plus"]
-    GwsCard(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = ouvrirRepas),
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 14.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(36.dp)
-                    .clip(ControlShape)
-                    .background(accentPlus?.conteneur ?: RegistreTheme.colors.sage),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.Restaurant,
-                    contentDescription = null,
-                    tint = accentPlus?.teinte ?: RegistreTheme.colors.ink,
-                    modifier = Modifier.size(20.dp),
-                )
-            }
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = "Repas invité",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = RegistreTheme.colors.ink,
-                )
-                Text(
-                    text = "Réserver le repas d'un jour de la cantine",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = RegistreTheme.colors.chalk,
-                )
-            }
-        }
-    }
-}
-
-/**
- * La carte focale (docs/product/DESIGN.md §2) : fond de l'accent vert du
- * Registre, liseré assorti. Le rouge n'y apparaît que sur les devoirs pas
- * encore faits — l'action requise.
- */
-@Composable
-private fun CarteCeSoir(registre: RegistreDuJour) {
-    val accent = RegistreTheme.accent
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = PageShape,
-        color = accent.conteneur,
-        border = BorderStroke(1.5.dp, accent.teinte),
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Column {
-                Text(
-                    text = "Ce soir",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = accent.surConteneur,
-                )
-                val demain = registre.date.plusDays(1)
-                val sousTitre = if (registre.horizonCeSoir == demain) {
-                    "à rendre pour demain"
-                } else {
-                    "à rendre pour ${registre.horizonCeSoir.frenchLongDay()}"
-                }
-                Text(
-                    text = sousTitre,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = RegistreTheme.colors.chalk,
-                )
-            }
-
-            if (registre.ceSoir.isEmpty()) {
-                // Le vide est une bonne nouvelle, pas un manque.
-                Text(
-                    text = "Rien pour demain",
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = accent.surConteneur,
-                )
-                Text(
-                    text = "La rentrée prochaine est tranquille.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = RegistreTheme.colors.chalk,
-                )
-            } else {
-                registre.ceSoir.forEach { devoir ->
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    ) {
-                        Puce(label = devoir.matiere.ifBlank { "Devoir" })
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = devoir.title,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = RegistreTheme.colors.ink,
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                            devoir.enseignant?.let { enseignant ->
-                                Text(
-                                    text = enseignant,
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = RegistreTheme.colors.chalk,
-                                    maxLines = 1,
-                                )
-                            }
-                        }
-                        if (devoir.fait) {
-                            Icon(
-                                imageVector = Icons.Rounded.Check,
-                                contentDescription = "Fait",
-                                tint = accent.teinte,
-                                modifier = Modifier.size(18.dp),
-                            )
-                        } else {
-                            Box(
-                                modifier = Modifier
-                                    .size(6.dp)
-                                    .clip(CircleShape)
-                                    .background(RegistreTheme.colors.redPen),
-                            )
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
 @Composable
 private fun CarteEntrée(entrée: EntreeRegistre, ouvrirPost: (String) -> Unit) {
     when (entrée) {
@@ -648,7 +346,7 @@ private fun CarteDevoirDonné(devoir: Devoir) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(14.dp),
+                .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
@@ -684,7 +382,7 @@ private fun CarteAbsence(absence: Absence) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(14.dp),
+                .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
@@ -718,7 +416,7 @@ private fun CarteMessage(conversation: Conversation) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(14.dp),
+                .padding(16.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Puce(label = "Message")

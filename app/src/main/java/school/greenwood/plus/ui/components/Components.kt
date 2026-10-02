@@ -60,16 +60,26 @@ import school.greenwood.plus.ui.theme.RegistreTheme
  * matière, le sage parchemin porte les annotations, les pages portent le contenu.
  */
 
-/** Surface « page » — la carte de contenu standard, rayon 24 dp. */
+/**
+ * Surface « page » — la carte de contenu standard, rayon 24 dp.
+ *
+ * [relief] pose une ombre très basse (1 dp suffisent) pour les cartes
+ * flottantes de l'accueil ; [bordure] un liseré de 1 dp quand la séparation
+ * doit rester explicite. Jamais d'ombre épaisse : le relief reste ambient.
+ */
 @Composable
 fun GwsCard(
     modifier: Modifier = Modifier,
+    relief: Dp = 0.dp,
+    bordure: BorderStroke? = null,
     content: @Composable () -> Unit,
 ) {
     Surface(
         modifier = modifier,
         shape = PageShape,
         color = RegistreTheme.colors.page,
+        border = bordure,
+        shadowElevation = relief,
         content = { content() },
     )
 }
@@ -343,8 +353,9 @@ fun BlocSquelette(
     )
 }
 
-/** Squelette du registre : en-tête (date, avatar), carte focale « Ce soir »,
- *  label de section puis trois entrées du jour en pages blanches. */
+/** Squelette du registre : barre de commandes + date, carte focale « Ce soir »,
+ *  dernière actualité, accès rapides puis deux entrées du jour en pages
+ *  blanches — la même géométrie que l'écran réel (issue #101). */
 @Composable
 fun SqueletteRegistre() {
     Column(
@@ -352,35 +363,40 @@ fun SqueletteRegistre() {
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(start = 20.dp, end = 20.dp, bottom = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        // En-tête : la date en grosse écriture (souvent sur deux lignes sur
-        // téléphone) et l'avatar de l'élève consulté.
+        // Barre de commandes : menu, actualiser, puis l'élève consulté.
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 8.dp),
+                .padding(top = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
+            BlocSquelette(modifier = Modifier.size(40.dp), forme = CircleShape)
+            Spacer(Modifier.weight(1f))
+            BlocSquelette(modifier = Modifier.size(40.dp), forme = CircleShape)
             BlocSquelette(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(64.dp),
+                modifier = Modifier.size(140.dp, 40.dp),
                 forme = ControlShape,
-            )
-            BlocSquelette(
-                modifier = Modifier.size(40.dp),
-                forme = CircleShape,
             )
         }
 
-        // La carte focale : fond sage, liseré encre, comme la vraie « Ce soir ».
+        // La date en grosse écriture (souvent deux lignes) et son surligneur.
+        BlocSquelette(
+            modifier = Modifier
+                .width(210.dp)
+                .height(34.dp),
+            forme = ControlShape,
+        )
+        BlocSquelette(modifier = Modifier.size(width = 56.dp, height = 5.dp))
+
+        // La carte focale : fond sage, liseré encre discret, comme la vraie « Ce soir ».
         Surface(
             modifier = Modifier.fillMaxWidth(),
             shape = PageShape,
             color = RegistreTheme.colors.sage,
-            border = BorderStroke(1.5.dp, RegistreTheme.colors.ink),
+            border = BorderStroke(1.dp, RegistreTheme.colors.ink.copy(alpha = 0.30f)),
         ) {
             Column(
                 modifier = Modifier
@@ -388,29 +404,81 @@ fun SqueletteRegistre() {
                     .padding(20.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                BlocSquelette(modifier = Modifier.width(90.dp).height(20.dp))
-                BlocSquelette(modifier = Modifier.width(150.dp).height(13.dp))
+                BlocSquelette(modifier = Modifier.width(90.dp).height(24.dp))
+                BlocSquelette(modifier = Modifier.width(170.dp).height(13.dp))
                 BlocSquelette(modifier = Modifier.fillMaxWidth().height(16.dp))
                 BlocSquelette(modifier = Modifier.fillMaxWidth(0.7f).height(16.dp))
             }
         }
 
-        // Label de section « Aujourd'hui ».
+        // Dernière actualité : vignette + deux lignes de texte.
+        BlocSquelette(modifier = Modifier.width(140.dp).height(13.dp))
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = PageShape,
+            color = RegistreTheme.colors.page,
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(14.dp),
+            ) {
+                BlocSquelette(modifier = Modifier.size(96.dp, 72.dp), forme = ControlShape)
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    BlocSquelette(modifier = Modifier.fillMaxWidth(0.85f).height(16.dp))
+                    BlocSquelette(modifier = Modifier.width(130.dp).height(12.dp))
+                    BlocSquelette(modifier = Modifier.fillMaxWidth(0.6f).height(12.dp))
+                }
+            }
+        }
+
+        // Accès rapides : deux cartes flottantes à cercle pastel.
+        BlocSquelette(modifier = Modifier.width(110.dp).height(13.dp))
+        repeat(2) {
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = PageShape,
+                color = RegistreTheme.colors.page,
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(14.dp),
+                ) {
+                    BlocSquelette(modifier = Modifier.size(44.dp), forme = CircleShape)
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        BlocSquelette(modifier = Modifier.width(120.dp).height(16.dp))
+                        BlocSquelette(modifier = Modifier.fillMaxWidth(0.7f).height(12.dp))
+                    }
+                }
+            }
+        }
+
+        // Label « Aujourd'hui ».
         BlocSquelette(modifier = Modifier.width(90.dp).height(13.dp))
 
-        // Trois entrées du jour — pages blanches comme les cartes réelles.
-        repeat(3) { index ->
+        // Deux entrées du jour — pages blanches comme les cartes réelles.
+        repeat(2) { index ->
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(88.dp),
+                    .height(84.dp),
                 shape = PageShape,
                 color = RegistreTheme.colors.page,
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(14.dp),
+                        .padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
@@ -426,13 +494,9 @@ fun SqueletteRegistre() {
                         BlocSquelette(modifier = Modifier.fillMaxWidth(0.45f).height(12.dp))
                     }
                     if (index == 0) {
-                        // Vignette d'image de la première actualité.
-                        BlocSquelette(
-                            modifier = Modifier.size(64.dp, 40.dp),
-                            forme = ControlShape,
-                        )
-                    } else {
                         BlocSquelette(modifier = Modifier.width(44.dp).height(12.dp))
+                    } else {
+                        BlocSquelette(modifier = Modifier.width(64.dp).height(20.dp), forme = ControlShape)
                     }
                 }
             }
