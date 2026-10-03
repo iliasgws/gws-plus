@@ -45,6 +45,7 @@ Current contents (update this section whenever files are added or removed):
 | `…/MainActivity.kt` | Single activity, edge-to-edge, Compose |
 | `…/ui/AppNav.kt` | Root state (onboarding → connexion → registre) + 6-tab shell (Registre, Cours, Devoirs, Documents, Messages, Plus — secondary sections live under Plus), back-stack contract |
 | `…/ui/screens/LoginScreen.kt` | Login form with the existing app icon beside the GWS+ title |
+| `app/src/main/res/drawable-nodpi/login_background.png` | Supplied school illustration used as the login background, cropped to fill the screen |
 | `…/ui/AppViewModels.kt` | One ViewModel per screen; Registre loads refresh signed profile-photo URLs through `acces_check` |
 | `…/ui/theme/` | « École vivante » tokens: colors + per-tab accents, Bricolage/Public Sans type, 24/16/10 shapes, motion springs (Mouvement.kt) |
 | `…/ui/components/` | Shared composables (Components.kt: GwsCard, Puce, EmptyState, skeletons…, SqueletteCommunaute (issue #88); CarteActualite.kt (optional long-press for the quick preview, issue #107, plus optional image tap/long-press callbacks, issue #109); VisualiseurImages.kt: fullscreen image viewer + long-press quick preview, issue #109; CarteMiseAJour.kt: GitHub update card; BadgeIA.kt: « Généré par IA » icon + badge, issue #58; BarreOnglets.kt: custom accent bottom bar; DialogueDéconnexion.kt: sign-out confirmation, issue #101) |

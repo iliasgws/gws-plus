@@ -36,6 +36,16 @@ Correctif de la photo de profil après la version 0.9.5.
 
 ## Non publié
 
+## [0.9.7-beta.2] — 2026-10-03
+
+### Préversion (bêta)
+
+### Changé
+
+- L'écran de connexion utilise l'illustration de l'école en arrière-plan plein
+  écran. Le titre et le formulaire restent lisibles sur leurs panneaux ; le
+  fond reste fixe à l'ouverture du clavier.
+
 ## [0.9.5] — 2026-10-03
 
 Stable après deux bêtas : le Registre s'actualise en tirant vers le bas —

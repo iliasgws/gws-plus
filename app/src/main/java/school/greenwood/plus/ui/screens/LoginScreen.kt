@@ -33,6 +33,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -66,46 +67,60 @@ fun LoginScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(RegistreTheme.colors.paper)
-            .imePadding(),
+            .background(RegistreTheme.colors.paper),
     ) {
+        Image(
+            painter = painterResource(R.drawable.login_background),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.matchParentSize(),
+        )
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .imePadding()
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            Column(
+                modifier = Modifier
+                    .clip(ControlShape)
+                    .background(RegistreTheme.colors.page.copy(alpha = 0.94f))
+                    .padding(horizontal = 20.dp, vertical = 12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Image(
-                    painter = painterResource(R.mipmap.ic_launcher_foreground),
-                    contentDescription = null,
-                    modifier = Modifier.size(80.dp),
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Image(
+                        painter = painterResource(R.mipmap.ic_launcher_foreground),
+                        contentDescription = null,
+                        modifier = Modifier.size(80.dp),
+                    )
+                    Text(
+                        text = "GWS+",
+                        style = MaterialTheme.typography.displayLarge,
+                        color = RegistreTheme.colors.ink,
+                    )
+                }
+                // Le surligneur : le trait de l'accueil, sous le titre.
+                Box(
+                    modifier = Modifier
+                        .padding(top = 6.dp)
+                        .size(width = 56.dp, height = 5.dp)
+                        .clip(AnnotationShape)
+                        .background(RegistreTheme.accent.conteneur),
                 )
+                Spacer(Modifier.height(4.dp))
                 Text(
-                    text = "GWS+",
-                    style = MaterialTheme.typography.displayLarge,
-                    color = RegistreTheme.colors.ink,
+                    text = "Connexion à l'espace famille.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = RegistreTheme.colors.chalk,
                 )
             }
-            // Le surligneur : le trait de l'accueil, sous le titre.
-            Box(
-                modifier = Modifier
-                    .padding(top = 6.dp)
-                    .size(width = 56.dp, height = 5.dp)
-                    .clip(AnnotationShape)
-                    .background(RegistreTheme.accent.conteneur),
-            )
-            Spacer(Modifier.height(4.dp))
-            Text(
-                text = "Connexion à l'espace famille.",
-                style = MaterialTheme.typography.bodySmall,
-                color = RegistreTheme.colors.chalk,
-            )
 
             GwsCard(modifier = Modifier
                 .widthIn(max = 420.dp)
