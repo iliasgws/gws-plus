@@ -29,6 +29,23 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
   sur une image affiche d'abord un aperçu rapide avec « Agrandir ». Le reste
   de la carte continue d'ouvrir l'article, et le Registre reste inchangé.
 
+### Corrigé
+
+- **Médias** (issue #108) : les images, les pièces jointes et les messages
+  vocaux sont enfin mis en cache comme il se doit. Une même actualité
+  affichée sur le Registre, dans Actualités puis dans son détail ne se
+  re-télécharge plus : les clés de cache portent sur la ressource (URL sans
+  sa signature, qui change à chaque réponse du serveur) et non sur l'URL
+  brute. Une pièce jointe déjà téléchargée s'ouvre localement au lieu de
+  relancer un GET, les écritures sont atomiques (plus de fichier tronqué),
+  et « Downloads/gws-plus » ne reçoit plus de copies en double — un bouton
+  « Re-télécharger » reste disponible sur le détail d'un devoir pour
+  forcer une nouvelle copie. Les messages vocaux se conservent en cache
+  local (48 Mo au plus, effacement des plus anciens) pour se relancer même
+  après expiration des URL signées. Tous ces caches sont purgés à la
+  connexion et à la déconnexion : un compte ne retrouve jamais les médias du
+  précédent.
+
 ## [0.9.5-beta.1] — 2026-10-03
 
 ### Préversion (bêta)

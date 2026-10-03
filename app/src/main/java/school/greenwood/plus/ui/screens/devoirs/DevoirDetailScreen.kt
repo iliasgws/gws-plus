@@ -24,6 +24,7 @@ import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material.icons.rounded.RadioButtonUnchecked
+import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -100,6 +101,9 @@ fun DevoirDetailScreen(
     val copiesLocales by vm.copies.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val téléchargements = remember { mutableStateMapOf<String, Boolean>() }
+    // Pièces déjà arrivées (succès ou réemploi local) : la ligne propose le
+    // re-téléchargement explicite (issue #108).
+    val téléchargés = remember { mutableStateMapOf<String, Boolean>() }
     val échecsLot = remember { mutableStateMapOf<String, Boolean>() }
     val batchEnCours = remember { mutableStateOf(false) }
 
@@ -394,6 +398,7 @@ fun DevoirDetailScreen(
                                         échecsLot.clear()
                                         vm.téléchargerTout(pièces, context, { pièce, enCours, uri ->
                                             téléchargements[pièce.url] = enCours
+                                            if (!enCours && uri != null) téléchargés[pièce.url] = true
                                             if (!enCours && uri == null) échecsLot[pièce.url] = true
                                         }, {
                                             batchEnCours.value = false
@@ -422,14 +427,23 @@ fun DevoirDetailScreen(
                                 LignePièceJointeDétail(
                                     pièce = pièce,
                                     enCours = téléchargements[pièce.url] == true,
+                                    déjàTéléchargé = téléchargés[pièce.url] == true,
                                     onTélécharger = {
                                         téléchargements[pièce.url] = true
                                         vm.téléchargerPièce(pièce, context) { uri ->
                                             téléchargements[pièce.url] = false
                                             if (uri != null) {
+                                                téléchargés[pièce.url] = true
                                                 val intention = Fichiers.intentionOuvrirUri(context, uri)
                                                 if (intention != null) context.startActivity(intention)
                                             }
+                                        }
+                                    },
+                                    onReTélécharger = {
+                                        téléchargements[pièce.url] = true
+                                        vm.téléchargerPièce(pièce, context, forcer = true) { uri ->
+                                            téléchargements[pièce.url] = false
+                                            if (uri != null) téléchargés[pièce.url] = true
                                         }
                                     },
                                 )
@@ -452,14 +466,23 @@ fun DevoirDetailScreen(
                                 LignePièceJointeDétail(
                                     pièce = copie,
                                     enCours = téléchargements[copie.url] == true,
+                                    déjàTéléchargé = téléchargés[copie.url] == true,
                                     onTélécharger = {
                                         téléchargements[copie.url] = true
                                         vm.téléchargerPièce(copie, context) { uri ->
                                             téléchargements[copie.url] = false
                                             if (uri != null) {
+                                                téléchargés[copie.url] = true
                                                 val intention = Fichiers.intentionOuvrirUri(context, uri)
                                                 if (intention != null) context.startActivity(intention)
                                             }
+                                        }
+                                    },
+                                    onReTélécharger = {
+                                        téléchargements[copie.url] = true
+                                        vm.téléchargerPièce(copie, context, forcer = true) { uri ->
+                                            téléchargements[copie.url] = false
+                                            if (uri != null) téléchargés[copie.url] = true
                                         }
                                     },
                                 )
@@ -542,7 +565,9 @@ fun DevoirDetailScreen(
 private fun LignePièceJointeDétail(
     pièce: Attachment,
     enCours: Boolean,
+    déjàTéléchargé: Boolean,
     onTélécharger: () -> Unit,
+    onReTélécharger: () -> Unit,
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -576,6 +601,18 @@ private fun LignePièceJointeDétail(
                     tint = RegistreTheme.colors.ink,
                     modifier = Modifier.size(18.dp),
                 )
+            }
+            // Déjà en place (issue #108) : le clic classique ouvre le fichier
+            // local — on offre donc un geste explicite pour le refaire venir.
+            if (déjàTéléchargé) {
+                IconButton(onClick = onReTélécharger, modifier = Modifier.size(28.dp)) {
+                    Icon(
+                        imageVector = Icons.Rounded.Refresh,
+                        contentDescription = "Re-télécharger",
+                        tint = RegistreTheme.colors.ink,
+                        modifier = Modifier.size(18.dp),
+                    )
+                }
             }
         }
     }
@@ -729,11 +766,19 @@ class DevoirDetailViewModel(
         _soumission.value = null
     }
 
-    fun téléchargerPièce(pièce: Attachment, context: android.content.Context, onFait: (android.net.Uri?) -> Unit) {
+    /** Télécharge la pièce dans Downloads/gws-plus (ou réemploie la copie
+     *  locale, sans réseau) ; `forcer = true` la refait venir du serveur
+     *  (issue #108). */
+    fun téléchargerPièce(
+        pièce: Attachment,
+        context: android.content.Context,
+        forcer: Boolean = false,
+        onFait: (android.net.Uri?) -> Unit,
+    ) {
         viewModelScope.launch {
             // Dossier public Downloads/gws-plus (issue #68) — visible dans
             // les Fichiers du téléphone, ouvert une fois enregistré.
-            val uri = Fichiers.téléchargerPublic(context, pièce.url, pièce.name)
+            val uri = Fichiers.téléchargerPublic(context, pièce.url, pièce.name, forcer)
             onFait(uri)
         }
     }

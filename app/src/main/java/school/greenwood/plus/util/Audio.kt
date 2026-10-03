@@ -4,16 +4,19 @@ import android.media.AudioAttributes
 import android.media.MediaPlayer
 
 /*
- * Lecteur des messages vocaux. L'URL signée du serveur est jouée en flux :
- * elle expire après 15–20 minutes, mais elle est toujours fraîche au moment
- * du GET `messages` qui l'a apportée (docs/api/BOTI-API.md). La forme du champ
- * `audio` n'a jamais été observée non-nulle en production — tout échec de
- * préparation reste silencieux (état Fini), le lecteur ne s'affiche que
- * quand une pièce audio existe.
+ * Lecteur des messages vocaux (issue #108). La source est déjà résolue par
+ * l'appelant : le fichier de `CacheAudio` quand le cache le rend — rejeu
+ * local, sans réseau, l'URL signée expire après 15–20 minutes — sinon l'URL
+ * signée du serveur, jouée en flux : c'est le repli quand le cache n'a rien
+ * rendu (téléchargement impossible). La forme du champ `audio` n'a jamais
+ * été observée non-nulle en production — tout échec de préparation reste
+ * silencieux (état Fini), le lecteur ne s'affiche que quand une pièce audio
+ * existe. Le rejeu sur un lecteur déjà préparé (Fini → début, retour au
+ * début) est inchangé, qu'il lise un fichier local ou un flux.
  */
 
 class LecteurAudio(
-    private val url: String,
+    private val source: String,
     private val onChanged: () -> Unit = {},
 ) {
 
@@ -50,7 +53,7 @@ class LecteurAudio(
             true
         }
         runCatching {
-            p.setDataSource(url)
+            p.setDataSource(source)
             p.prepareAsync()
         }.onFailure {
             état = État.Fini
