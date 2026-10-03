@@ -28,6 +28,10 @@ Correctif de la photo de profil après la version 0.9.5.
 
 ## Non publié
 
+### Changé
+
+- L'écran de connexion affiche l'icône de l'application à côté du titre « GWS+ ».
+
 ## [0.9.5] — 2026-10-03
 
 Stable après deux bêtas : le Registre s'actualise en tirant vers le bas —

@@ -72,6 +72,7 @@ raw probe responses stay out of the repository (personal data).
 
 - [x] Onboarding: 3 sober pages, first launch only
 - [x] Login: phone + password + « retenir », forgot-password, inline red-pen errors
+- [x] Login branding: existing app icon beside the « GWS+ » title.
 - [x] Registre: date header (Fraunces), child avatar + switcher, « Ce soir » focal card,
       chronological feed (nouveautes / devoirs donnés / absences / messages), empty states
 - [x] « Ce soir » window: échéance ∈ (today, next school day], Friday→Monday
