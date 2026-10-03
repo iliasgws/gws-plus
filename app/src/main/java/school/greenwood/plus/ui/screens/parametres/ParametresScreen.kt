@@ -4,6 +4,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,6 +28,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.Switch
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -36,6 +38,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
@@ -75,6 +78,27 @@ private val OptionsActualisation = listOf(
     OptionActualisation(5, "5 minutes"),
     OptionActualisation(10, "10 minutes"),
 )
+
+@Composable
+private fun RéglageBannière(titre: String, actif: Boolean, surChangement: (Boolean) -> Unit) {
+    GwsCard(modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth()
+                .toggleable(value = actif, role = Role.Switch, onValueChange = surChangement)
+                .padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Text(
+                text = titre,
+                style = MaterialTheme.typography.bodyMedium,
+                color = RegistreTheme.colors.ink,
+                modifier = Modifier.weight(1f),
+            )
+            Switch(checked = actif, onCheckedChange = null)
+        }
+    }
+}
 
 @Composable
 fun ParametresScreen(
@@ -138,6 +162,65 @@ fun ParametresScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp),
         ) {
+            SectionLabel("Apparence")
+            GwsCard(modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .toggleable(
+                            value = état.bannièreRegistreActivée,
+                            role = Role.Switch,
+                            onValueChange = vm::définirBannièreRegistre,
+                        )
+                        .padding(horizontal = 14.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            text = "Bannière du Registre",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = RegistreTheme.colors.ink,
+                        )
+                        Text(
+                            text = "Afficher l'illustration de l'école en haut de l'accueil.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = RegistreTheme.colors.chalk,
+                        )
+                    }
+                    Switch(checked = état.bannièreRegistreActivée, onCheckedChange = null)
+                }
+            }
+            GwsCard(modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth()
+                        .toggleable(
+                            value = état.bannièreCoursActivée,
+                            role = Role.Switch,
+                            onValueChange = vm::définirBannièreCours,
+                        )
+                        .padding(horizontal = 14.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            text = "Bannière des Cours",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = RegistreTheme.colors.ink,
+                        )
+                        Text(
+                            text = "Afficher l'illustration en haut de l'emploi du temps.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = RegistreTheme.colors.chalk,
+                        )
+                    }
+                    Switch(checked = état.bannièreCoursActivée, onCheckedChange = null)
+                }
+            }
+            RéglageBannière("Bannière des Devoirs", état.bannièreDevoirsActivée, vm::définirBannièreDevoirs)
+            RéglageBannière("Bannière des Documents", état.bannièreDocumentsActivée, vm::définirBannièreDocuments)
+            RéglageBannière("Bannière des Actualités", état.bannièreActualitésActivée, vm::définirBannièreActualités)
             SectionLabel("Actualisation des données")
 
             GwsCard(modifier = Modifier.fillMaxWidth()) {

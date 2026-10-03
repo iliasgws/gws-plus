@@ -35,7 +35,7 @@ Current contents (update this section whenever files are added or removed):
 | `AGENTS.md` | This file — rules for AI agents |
 | `docs/README.md` | Documentation index — start any doc dive here |
 | `docs/product/` | `OVERVIEW.md` (what & why), `DESIGN.md` (« Le registre » design system), `ROADMAP.md` (living milestone + roadmap checklist) |
-| `docs/development/` | `SETUP.md` (toolchain), `ARCHITECTURE.md` (layers), `NAVIGATION.md` (back-stack contract) |
+| `docs/development/` | `SETUP.md` (toolchain), `ARCHITECTURE.md` (layers), `NAVIGATION.md` (back-stack contract), `REGISTRE-BANNER.md` (banner scroll/pin threshold, fade, layering, status bar) |
 | `docs/api/` | `BOTI-API.md` (protocol), `ENDPOINT-MAP.md` (observed shapes), `ENDPOINTS.md` (100-endpoint inventory) |
 | `docs/security/` | `SECURITY-NOTES.md` |
 | `settings.gradle.kts`, `build.gradle.kts`, `gradle.properties`, `gradlew`, `gradle/wrapper/` | Gradle 9.6 build (AGP 9.4.1, Kotlin 2.4.20, built-in Kotlin — no `kotlin.android` plugin) |
@@ -46,6 +46,12 @@ Current contents (update this section whenever files are added or removed):
 | `…/ui/AppNav.kt` | Root state (onboarding → connexion → registre) + 6-tab shell (Registre, Cours, Devoirs, Documents, Messages, Plus — secondary sections live under Plus), back-stack contract |
 | `…/ui/screens/LoginScreen.kt` | Login form with the existing app icon beside the GWS+ title; header and form use 78%-opaque theme surfaces over the supplied illustration |
 | `app/src/main/res/drawable-nodpi/login_background.png` | Supplied school illustration used as the login background, cropped to fill the screen |
+| `app/src/main/res/drawable-nodpi/registre_banner.png` | Supplied school entrance illustration for the Registre banner |
+| `app/src/main/res/drawable-nodpi/cours_banner.png` | Supplied timetable-desk illustration for the independently configurable Cours banner |
+| `app/src/main/res/drawable-nodpi/{devoirs,documents,actualites}_banner.png` | Supplied illustrations for the independently configurable Devoirs, Documents, and Actualités banners |
+| `…/ui/components/BanniereOnglet.kt` | Shared banner artwork, 140/40 dp dimensions and 64 dp fade for Registre, Cours, Devoirs, Documents, and Actualités |
+| `…/ui/components/EcranBanniere.kt` | Shared collapsing-banner list viewport for Devoirs, Documents, and Actualités; optional pull-to-refresh and status-bar appearance lifecycle |
+| `…/ui/screens/registre/BanniereRegistre.kt` | Full school banner that scrolls up, then pins at its reduced lower strip; 64 dp bottom paper fade and content scrolling behind it, no fullscreen viewer action; persisted on/off switch under Settings → Appearance |
 | `…/ui/AppViewModels.kt` | One ViewModel per screen; Registre loads refresh signed profile-photo URLs through `acces_check` |
 | `…/ui/theme/` | « École vivante » tokens: colors + per-tab accents, Bricolage/Public Sans type, 24/16/10 shapes, motion springs (Mouvement.kt) |
 | `…/ui/components/` | Shared composables (Components.kt: GwsCard, Puce, EmptyState, skeletons…, SqueletteCommunaute (issue #88); CarteActualite.kt (optional long-press for the quick preview, issue #107, plus optional image tap/long-press callbacks, issue #109); VisualiseurImages.kt: fullscreen image viewer + long-press quick preview, issue #109; CarteMiseAJour.kt: GitHub update card; BadgeIA.kt: « Généré par IA » icon + badge, issue #58; BarreOnglets.kt: custom accent bottom bar; DialogueDéconnexion.kt: sign-out confirmation, issue #101) |

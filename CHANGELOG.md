@@ -4,6 +4,48 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [0.9.8-beta.9] — 2026-10-03
+
+### Préversion (bêta)
+
+### Ajouté
+
+- Devoirs, Documents et Actualités affichent chacun l'illustration fournie,
+  avec le même défilement puis épinglage et le fondu de 64 dp.
+- Chaque bannière dispose de son propre interrupteur mémorisé dans
+  Paramètres → Apparence, indépendamment du Registre et des Cours.
+- Les en-têtes, filtres et contenus partagent le défilement ; les actions
+  des devoirs, les téléchargements, les quiz et la pagination des actualités
+  restent disponibles.
+
+## [0.9.8-beta.8] — 2026-10-03
+
+### Préversion (bêta)
+
+### Ajouté
+
+- L'onglet Cours affiche l'illustration de l'emploi du temps avec le même
+  défilement, épinglage et fondu que le Registre. Le contenu passe derrière
+  la bande réduite et la barre d'état reste visible.
+- « Bannière des Cours » dans Paramètres → Apparence est un interrupteur
+  indépendant de « Bannière du Registre ». Les deux choix sont mémorisés.
+
+## [0.9.8-beta.7] — 2026-10-03
+
+### Préversion (bêta)
+
+### Ajouté
+
+- Une bannière illustrée en haut du Registre, derrière la barre d'état
+  visible : elle défile d'abord avec le contenu, puis sa courte bande
+  inférieure reste épinglée pendant que le flux passe derrière.
+- Un fondu inférieur de 64 dp adoucit la transition vers la page.
+- Le guide `docs/development/REGISTRE-BANNER.md` détaille le défilement,
+  le seuil d'épinglage, les couches, le fondu et la gestion de la barre d'état.
+- Un interrupteur « Bannière du Registre » dans Paramètres → Apparence
+  permet de masquer l'illustration. Le choix est mémorisé, y compris après
+  une déconnexion ; la bannière est activée par défaut.
+
 ## [0.9.7] — 2026-10-03
 
 Version stable après trois bêtas, avec le rendu de la dernière bêta confirmé
@@ -48,6 +90,67 @@ Correctif de la photo de profil après la version 0.9.5.
 - L'écran de connexion affiche l'icône de l'application à côté du titre « GWS+ ».
 
 ## Non publié
+
+## [0.9.8-beta.6] — 2026-10-03
+
+### Préversion (bêta)
+
+### Changé
+
+- Le fondu inférieur de la bannière est élargi de 32 à 64 dp pour une
+  transition plus douce vers la page. Le défilement puis l'épinglage sont
+  conservés.
+
+## [0.9.8-beta.5] — 2026-10-03
+
+### Préversion (bêta)
+
+### Corrigé
+
+- La bannière démarre entièrement visible, défile avec le Registre, puis
+  se fixe lorsqu'il ne reste que sa courte bande inférieure. Le fondu est
+  conservé et le contenu continue de défiler derrière cette bande.
+
+## [0.9.8-beta.4] — 2026-10-03
+
+### Préversion (bêta)
+
+### Changé
+
+- La bannière démarre réduite à une courte bande de sa partie inférieure,
+  fixée en haut de l'écran. Son bord inférieur reste fondu dans la page et
+  le contenu du Registre défile derrière elle, comme dans l'aperçu fourni.
+
+## [0.9.8-beta.3] — 2026-10-03
+
+### Préversion (bêta)
+
+### Corrigé
+
+- La bannière défile avec le Registre et disparaît en remontant le contenu.
+  Le fondu inférieur est conservé et les icônes de la barre d'état s'adaptent
+  au fond lorsque l'image disparaît.
+
+## [0.9.8-beta.2] — 2026-10-03
+
+### Préversion (bêta)
+
+### Changé
+
+- La bannière reste fixée en arrière-plan du Registre et se fond dans la
+  couleur de la page à son bord inférieur. Le contenu peut défiler vers le
+  haut devant l'image, sans être bloqué sous la bannière ; la barre d'état
+  reste visible et dégagée.
+
+## [0.9.8-beta.1] — 2026-10-03
+
+### Préversion (bêta)
+
+### Ajouté
+
+- Une bannière illustrée de l'école apparaît en haut du Registre et se
+  prolonge derrière la barre d'état. L'heure et les icônes système restent
+  visibles ; la bannière n'ouvre pas le visualiseur plein écran.
 
 ## [0.9.7-beta.3] — 2026-10-03
 

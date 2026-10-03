@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Download
@@ -45,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import school.greenwood.plus.AppContainer
+import school.greenwood.plus.R
 import school.greenwood.plus.model.FicheBibliotheque
 import school.greenwood.plus.model.Ressource
 import school.greenwood.plus.ui.DocumentsViewModel
@@ -56,6 +58,7 @@ import school.greenwood.plus.ui.components.BandeauErreur
 import school.greenwood.plus.ui.components.EmptyState
 import school.greenwood.plus.ui.components.ErrorInline
 import school.greenwood.plus.ui.components.GwsCard
+import school.greenwood.plus.ui.components.EcranBanniere
 import school.greenwood.plus.ui.components.Puce
 import school.greenwood.plus.ui.components.SectionLabel
 import school.greenwood.plus.ui.components.SqueletteDocuments
@@ -86,14 +89,12 @@ fun DocumentsScreen(
 ) {
     val vm: DocumentsViewModel = viewModel { DocumentsViewModel(container) }
     val état by vm.état.collectAsStateWithLifecycle()
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(RegistreTheme.colors.paper)
-            .padding(padding),
-    ) {
-        Column(Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
+    val bannièreActivée by container.session.bannièreDocumentsActivée.collectAsStateWithLifecycle(initialValue = true)
+    val liste = rememberLazyListState()
+    val context = LocalContext.current
+    EcranBanniere(R.drawable.documents_banner, bannièreActivée, padding, liste) {
+        item(key = "entete") {
+        Column {
             Text(
                 text = "Documents",
                 style = MaterialTheme.typography.displayLarge,
@@ -118,10 +119,11 @@ fun DocumentsScreen(
                 onChange = vm::choisirFiltre,
             )
         }
+        }
 
         when {
-            état.chargement -> SqueletteDocuments()
-            état.erreur != null && état.ressources.isEmpty() && état.bibliotheque.isEmpty() -> Column(
+            état.chargement -> item(key = "chargement") { SqueletteDocuments(défilable = false) }
+            état.erreur != null && état.ressources.isEmpty() && état.bibliotheque.isEmpty() -> item(key = "erreur-initiale") { Column(
                 Modifier
                     .fillMaxWidth()
                     .padding(16.dp),
@@ -139,25 +141,24 @@ fun DocumentsScreen(
                     Text("Réessayer")
                 }
             }
+            }
             else -> {
                 // Bandeau discret sous la recherche et les filtres quand un
                 // échec réseau laisse le contenu connu affiché (issue #21).
                 val filtrées = filtrerRessources(état.ressources, état.recherche, état.filtre)
                 val fiches = filtrerFiches(état.bibliotheque, état.recherche, état.filtre)
-                val context = LocalContext.current
-                Column(Modifier.fillMaxSize()) {
                     état.erreur?.let { message ->
+                        item(key = "erreur") {
                         BandeauErreur(
                             message = message,
                             réessayer = { vm.charger(force = true) },
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                            modifier = Modifier.padding(vertical = 8.dp),
                         )
+                        }
                     }
                     if (état.ressources.isEmpty() && état.bibliotheque.isEmpty()) {
-                        Box(
-                            Modifier
-                                .fillMaxWidth()
-                                .weight(1f),
+                        item(key = "vide") { Box(
+                            Modifier.fillMaxWidth().padding(vertical = 40.dp),
                             contentAlignment = Alignment.Center,
                         ) {
                             EmptyState(
@@ -166,11 +167,10 @@ fun DocumentsScreen(
                                 icone = Icons.Rounded.Folder,
                             )
                         }
+                        }
                     } else if (filtrées.isEmpty() && fiches.isEmpty()) {
-                        Box(
-                            Modifier
-                                .fillMaxWidth()
-                                .weight(1f),
+                        item(key = "aucun-resultat") { Box(
+                            Modifier.fillMaxWidth().padding(vertical = 40.dp),
                             contentAlignment = Alignment.Center,
                         ) {
                             EmptyState(
@@ -183,6 +183,7 @@ fun DocumentsScreen(
                                 icone = Icons.Rounded.SearchOff,
                             )
                         }
+                        }
                     } else {
                         // Groupement par matière, ordre du serveur préservé.
                         // Les fiches de la Bibliothèque passent d'abord dans
@@ -192,13 +193,6 @@ fun DocumentsScreen(
                         val groupesRessources = filtrées.groupBy { it.matiere.ifBlank { "Général" } }
                         val matières = groupesFiches.keys.toList() +
                             groupesRessources.keys.filter { it !in groupesFiches }
-                        LazyColumn(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .weight(1f),
-                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
-                            verticalArrangement = Arrangement.spacedBy(12.dp),
-                        ) {
                             matières.forEach { matiere ->
                                 item(key = "section-$matiere") {
                                     SectionLabel(matiere)
@@ -234,9 +228,7 @@ fun DocumentsScreen(
                                     )
                                 }
                             }
-                        }
                     }
-                }
             }
         }
     }

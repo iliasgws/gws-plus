@@ -18,6 +18,7 @@ la racine reste la porte d'entrée ; tout le reste vit ici.
 | [`development/SETUP.md`](development/SETUP.md) | Toolchain, build, tests, structure du dépôt |
 | [`development/ARCHITECTURE.md`](development/ARCHITECTURE.md) | Couches (UI → ViewModel → Repository → BotiClient), session, médias signés |
 | [`development/NAVIGATION.md`](development/NAVIGATION.md) | Le contrat de navigation : onglets, piles, retour prédictif |
+| [`development/REGISTRE-BANNER.md`](development/REGISTRE-BANNER.md) | Fonctionnement de la bannière : défilement, seuil d'épinglage, fondu et barre d'état |
 
 ## Boti API research — le protocole reconstitué
 
