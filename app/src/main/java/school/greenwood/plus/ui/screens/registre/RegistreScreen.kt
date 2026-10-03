@@ -40,6 +40,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -97,6 +98,7 @@ import java.time.LocalDate
  * en bas, avec une seule chose en avant — la carte « Ce soir ». Le reste est
  * plus discret. L'encre écrit ; le stylo rouge signale l'action requise.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegistreScreen(
     container: AppContainer,
@@ -173,6 +175,18 @@ fun RegistreScreen(
             }
         },
     ) {
+        // L'actualisation se fait au geste (issue #104) : plus de bouton dans
+        // l'en-tête. Le geste reprend exactement les deux effets de l'ancien
+        // bouton — le registre, puis le contrôle silencieux des mises à jour
+        // (échec muet, jamais de blocage).
+        PullToRefreshBox(
+            isRefreshing = état.rafraîchissement,
+            onRefresh = {
+                vm.rafraîchir()
+                portée.launch { container.misesÀJour.vérifier(manuel = false) }
+            },
+            modifier = Modifier.fillMaxSize(),
+        ) {
         when {
         état.registre == null && état.erreur != null -> {
             Box(
@@ -243,17 +257,10 @@ fun RegistreScreen(
                     EnTêteRegistre(
                         date = LocalDate.now(),
                         eleve = état.eleve,
-                        rafraîchissement = état.rafraîchissement,
                         surOuvrirTiroir = {
                             portée.launch { tiroir.open() }
                         },
                         surOuvrirFeuille = { feuilleOuverte = true },
-                        // Actualiser : contenu du registre + contrôle des mises
-                        // à jour en silence (échec muet, jamais de blocage).
-                        surActualiser = {
-                            vm.charger()
-                            portée.launch { container.misesÀJour.vérifier(manuel = false) }
-                        },
                     )
                 }
 
@@ -327,6 +334,7 @@ fun RegistreScreen(
         }
     }
     }
+        }
 
     if (feuilleOuverte) {
         FeuilleCompte(

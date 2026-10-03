@@ -1,11 +1,5 @@
 package school.greenwood.plus.ui.screens.registre
 
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -30,7 +24,6 @@ import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material.icons.rounded.Image
 import androidx.compose.material.icons.rounded.Menu
-import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Restaurant
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -41,7 +34,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.lerp
@@ -111,19 +103,18 @@ internal fun piluleAccueil(date: LocalDate): String? =
 internal fun échéanceCeSoir(horizon: LocalDate): String = "à rendre pour ${horizon.frenchLongDay()}"
 
 /**
- * L'en-tête : la barre de commandes (menu, actualiser, pilule profil) puis la
- * date éditoriale sur sa propre ligne — jamais en concurrence avec le bloc
- * profil, sur 320 dp comme sur 430 dp. Une ligne quand elle tient, deux
- * quand la police grandit : jamais coupée.
+ * L'en-tête : la barre de commandes (menu, pilule profil) puis la date
+ * éditoriale sur sa propre ligne — jamais en concurrence avec le bloc profil,
+ * sur 320 dp comme sur 430 dp. Une ligne quand elle tient, deux quand la
+ * police grandit : jamais coupée. Rien d'autre : l'actualisation se fait au
+ * geste, en tirant vers le bas (issue #104).
  */
 @Composable
 internal fun EnTêteRegistre(
     date: LocalDate,
     eleve: Eleve?,
-    rafraîchissement: Boolean,
     surOuvrirTiroir: () -> Unit,
     surOuvrirFeuille: () -> Unit,
-    surActualiser: () -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -143,7 +134,6 @@ internal fun EnTêteRegistre(
                 )
             }
             Spacer(Modifier.weight(1f))
-            Actualiser(rafraîchissement = rafraîchissement, onClick = surActualiser)
             // La pilule profil : discrète, jamais dominante, cible 48 dp.
             élèveBloc(
                 eleve = eleve,
@@ -188,35 +178,6 @@ internal fun EnTêteRegistre(
                 )
             }
         }
-    }
-}
-
-/** Le bouton d'actualisation : icône immobile au repos, en rotation lente
- *  pendant que le réseau rafraîchit en arrière-plan. */
-@Composable
-private fun Actualiser(rafraîchissement: Boolean, onClick: () -> Unit) {
-    var angle = 0f
-    if (rafraîchissement) {
-        val rotation = rememberInfiniteTransition(label = "rafraîchissement")
-        angle = rotation.animateFloat(
-            initialValue = 0f,
-            targetValue = 360f,
-            animationSpec = infiniteRepeatable(
-                animation = tween(durationMillis = 1100, easing = LinearEasing),
-                repeatMode = RepeatMode.Restart,
-            ),
-            label = "angle",
-        ).value
-    }
-    IconButton(onClick = onClick) {
-        Icon(
-            imageVector = Icons.Rounded.Refresh,
-            contentDescription = "Actualiser",
-            tint = if (rafraîchissement) RegistreTheme.accent.teinte else RegistreTheme.colors.chalk,
-            modifier = Modifier
-                .size(22.dp)
-                .rotate(angle),
-        )
     }
 }
 

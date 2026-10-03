@@ -15,6 +15,15 @@ les sections de bêta ci-dessous.
 
 ## Non publié
 
+### Changé
+
+- L'accueil (Registre) s'actualise en tirant vers le bas : le bouton
+  « Actualiser » de l'en-tête a disparu, comme sur les autres écrans de
+  l'app. Le geste rafraîchit le registre et contrôle en silence les mises à
+  jour de l'application ; le contenu affiché ne bouge pas pendant
+  l'opération, et un échec laisse le flux en place sous le bandeau
+  « Réessayer ».
+
 ## [0.9.4-beta.4] — 2026-09-30
 
 ### Préversion (bêta)
