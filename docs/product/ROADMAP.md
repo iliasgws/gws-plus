@@ -541,6 +541,21 @@ detail screen belongs to the tab it was opened from.
 
 # TASKS — Foreground-return refresh (absence ≥ duration chosen in Paramètres)
 
+## Profile-photo recovery (2026-10-03)
+
+Hotfix target: `0.9.6-beta.1` (versionCode 81), published from
+`fix/profile-picture-preview` before preparing any stable `0.9.6`.
+
+- [x] Registre loads renew signed profile-photo URLs through the documented
+      `acces_check` call, including pull-to-refresh and foreground-return refresh.
+      Offline failures keep the stored session; late responses do not restore
+      a logged-out session or override a child switch. Refresh preserves the
+      selected child and the remember-session preference.
+- [x] Shared avatars show initials while loading or on image failure, with
+      center-cropped photos on success.
+- [ ] On-device check: reopen with an expired avatar URL, then pull to refresh;
+      verify the profile pill and account sheet show the renewed photo.
+
 Small feature, no milestone: the app is opened several times a day; coming
 back after minutes away should show fresh data without anyone thinking
 about it. Same stale-while-revalidate semantics as issue #21 — known

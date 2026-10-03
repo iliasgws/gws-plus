@@ -91,15 +91,21 @@ class AuthRepository(
     suspend fun validerSession(): SessionState? {
         val courant = session.state.firstOrNull() ?: return null
         val rep = runCatching { client.get("acces_check") }.getOrElse { return null }
+        // Une déconnexion ou un changement d'élève pendant la requête ne
+        // doit jamais être annulé par une réponse arrivée en retard.
+        val maintenant = session.state.firstOrNull()
+        if (maintenant != courant) return maintenant
         val key = Normalizers.str(rep, "keyToken") ?: courant.keyToken
         val user = Normalizers.str(rep, "userId") ?: courant.userId
         val parentId = Normalizers.str(rep, "parentId").takeUnless { it.isNullOrBlank() } ?: courant.parentId
-        val eleveId = Normalizers.str(rep, "eleveId").takeUnless { it.isNullOrBlank() } ?: courant.eleveId
         val role = Normalizers.str(rep, "role") ?: courant.role
         val parent = Normalizers.parent(rep["parent"] as? kotlinx.serialization.json.JsonObject) ?: courant.parent
         val eleves = (rep["eleves"] as? JsonArray)
             ?.mapNotNull { (it as? kotlinx.serialization.json.JsonObject)?.let(Normalizers::eleve) }
             ?.takeIf { it.isNotEmpty() } ?: courant.eleves
+        val eleveId = courant.eleveId.takeIf { id -> eleves.any { it.id == id } }
+            ?: Normalizers.str(rep, "eleveId").takeUnless { it.isNullOrBlank() }
+            ?: eleves.firstOrNull()?.id.orEmpty()
 
         val rafraîchi = SessionState(key, user, parentId, eleveId, role, parent, eleves)
         if (rafraîchi != courant) {
@@ -111,7 +117,7 @@ class AuthRepository(
                 role = role,
                 parent = parent,
                 eleves = eleves,
-                retenir = true,
+                retenir = session.retenir.firstOrNull() ?: true,
             )
         }
         return rafraîchi
