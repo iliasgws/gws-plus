@@ -1,6 +1,7 @@
 package school.greenwood.plus.ui.components
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -33,17 +34,28 @@ import school.greenwood.plus.util.htmlToPlainSingleLine
  * publication, le badge de lecture (« Vu le … » issu de `intro`), l'auteur si
  * présent, et la vignette d'image. La puce et le signet se mettent à l'accent
  * de l'endroit d'où la carte est ouverte (vert au Registre, ambre dans le flux).
+ *
+ * Appui long facultatif [onLongClick] : quand il est fourni, TalkBack annonce
+ * aussi l'alternative « Afficher l'aperçu rapide » (issue #107).
  */
 @Composable
 fun CarteActualité(
     post: Post,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    onLongClick: (() -> Unit)? = null,
 ) {
+    val base = modifier.fillMaxWidth()
     GwsCard(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
+        modifier = if (onLongClick == null) {
+            base.clickable(onClick = onClick)
+        } else {
+            base.combinedClickable(
+                onClick = onClick,
+                onLongClickLabel = "Afficher l'aperçu rapide",
+                onLongClick = onLongClick,
+            )
+        },
     ) {
         Row(
             modifier = Modifier

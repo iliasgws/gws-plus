@@ -7,6 +7,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -49,13 +50,19 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.semantics.onLongClick
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -110,6 +117,8 @@ fun RegistreScreen(
     ouvrirEmploi: () -> Unit,
     ouvrirDevoirs: () -> Unit,
     ouvrirActualités: () -> Unit,
+    ouvrirDevoir: (String) -> Unit,
+    ouvrirConversation: (String) -> Unit,
 ) {
     // Une seule instance de VM partagée entre le registre et le détail d'un
     // post (portée activité) : le détail hérite du registre déjà chargé.
@@ -128,6 +137,7 @@ fun RegistreScreen(
     LaunchedEffect(Unit) { container.misesÀJour.vérifierAuBesoin() }
 
     var feuilleOuverte by remember { mutableStateOf(false) }
+    var apercu by remember { mutableStateOf<ApercuOuverte?>(null) }
     // Déconnexion (issue #101) : la demande n'agit qu'après confirmation —
     // un appui accidentel sur la feuille ne quitte jamais la session.
     var déconnexionDemandée by remember { mutableStateOf(false) }
@@ -301,6 +311,14 @@ fun RegistreScreen(
                             post = derniereActu,
                             ouvrirPost = ouvrirPost,
                             ouvrirActualités = ouvrirActualités,
+                            surApercu = {
+                                apercu = ApercuOuverte(
+                                    contenu = apercuDe(derniereActu),
+                                    action = ActionComplète("Lire l'actualité") {
+                                        ouvrirPost(derniereActu.id)
+                                    },
+                                )
+                            },
                         )
                     }
                 }
@@ -327,7 +345,13 @@ fun RegistreScreen(
                         enter = fadeIn(tween(240, delayMillis = délai)) +
                             slideInVertically(tween(280, delayMillis = délai)) { it / 6 },
                     ) {
-                        CarteEntrée(entrée, ouvrirPost)
+                        CarteEntrée(
+                            entrée = entrée,
+                            ouvrirPost = ouvrirPost,
+                            ouvrirDevoir = ouvrirDevoir,
+                            ouvrirConversation = ouvrirConversation,
+                            afficherApercu = { apercu = it },
+                        )
                     }
                 }
             }
@@ -351,6 +375,13 @@ fun RegistreScreen(
         )
     }
 
+    apercu?.let { demande ->
+        FeuilleApercu(
+            demande = demande,
+            surFermer = { apercu = null },
+        )
+    }
+
     if (déconnexionDemandée) {
         DialogueDéconnexion(
             enCours = état.déconnexionEnCours,
@@ -362,18 +393,87 @@ fun RegistreScreen(
 }
 
 @Composable
-private fun CarteEntrée(entrée: EntreeRegistre, ouvrirPost: (String) -> Unit) {
+private fun CarteEntrée(
+    entrée: EntreeRegistre,
+    ouvrirPost: (String) -> Unit,
+    ouvrirDevoir: (String) -> Unit,
+    ouvrirConversation: (String) -> Unit,
+    afficherApercu: (ApercuOuverte) -> Unit,
+) {
     when (entrée) {
-        is EntreeRegistre.Actualite -> CarteActualité(entrée.post, onClick = { ouvrirPost(entrée.post.id) })
-        is EntreeRegistre.DevoirDonné -> CarteDevoirDonné(entrée.devoir)
-        is EntreeRegistre.AbsenceNotée -> CarteAbsence(entrée.absence)
-        is EntreeRegistre.MessageReçu -> CarteMessage(entrée.conversation)
+        is EntreeRegistre.Actualite -> CarteActualité(
+            entrée.post,
+            onClick = { ouvrirPost(entrée.post.id) },
+            onLongClick = {
+                afficherApercu(
+                    ApercuOuverte(
+                        contenu = apercuDe(entrée.post),
+                        action = ActionComplète("Lire l'actualité") { ouvrirPost(entrée.post.id) },
+                    ),
+                )
+            },
+        )
+        is EntreeRegistre.DevoirDonné -> CarteDevoirDonné(
+            entrée.devoir,
+            onLongPress = {
+                afficherApercu(
+                    ApercuOuverte(
+                        contenu = apercuDe(entrée),
+                        action = ActionComplète("Ouvrir le devoir") { ouvrirDevoir(entrée.devoir.id) },
+                    ),
+                )
+            },
+        )
+        is EntreeRegistre.AbsenceNotée -> CarteAbsence(
+            entrée.absence,
+            onLongPress = { afficherApercu(ApercuOuverte(apercuDe(entrée))) },
+        )
+        is EntreeRegistre.MessageReçu -> CarteMessage(
+            entrée.conversation,
+            onLongPress = {
+                afficherApercu(
+                    ApercuOuverte(
+                        contenu = apercuDe(entrée),
+                        action = ActionComplète("Ouvrir la conversation") {
+                            ouvrirConversation(entrée.conversation.id)
+                        },
+                    ),
+                )
+            },
+        )
     }
 }
 
 @Composable
-private fun CarteDevoirDonné(devoir: Devoir) {
-    GwsCard(modifier = Modifier.fillMaxWidth()) {
+private fun Modifier.appuiLong(onLongPress: (() -> Unit)?): Modifier {
+    if (onLongPress == null) return this
+    val haptique = LocalHapticFeedback.current
+    val action by rememberUpdatedState(onLongPress)
+    return this
+        .pointerInput(Unit) {
+            detectTapGestures(
+                onLongPress = {
+                    haptique.performHapticFeedback(HapticFeedbackType.LongPress)
+                    action()
+                },
+            )
+        }
+        .semantics(mergeDescendants = true) {
+            onLongClick("Afficher l'aperçu rapide") {
+                haptique.performHapticFeedback(HapticFeedbackType.LongPress)
+                action()
+                true
+            }
+        }
+}
+
+@Composable
+private fun CarteDevoirDonné(devoir: Devoir, onLongPress: (() -> Unit)? = null) {
+    GwsCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .appuiLong(onLongPress),
+    ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -408,8 +508,12 @@ private fun CarteDevoirDonné(devoir: Devoir) {
 }
 
 @Composable
-private fun CarteAbsence(absence: Absence) {
-    GwsCard(modifier = Modifier.fillMaxWidth()) {
+private fun CarteAbsence(absence: Absence, onLongPress: (() -> Unit)? = null) {
+    GwsCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .appuiLong(onLongPress),
+    ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -442,8 +546,12 @@ private fun CarteAbsence(absence: Absence) {
 }
 
 @Composable
-private fun CarteMessage(conversation: Conversation) {
-    GwsCard(modifier = Modifier.fillMaxWidth()) {
+private fun CarteMessage(conversation: Conversation, onLongPress: (() -> Unit)? = null) {
+    GwsCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .appuiLong(onLongPress),
+    ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
