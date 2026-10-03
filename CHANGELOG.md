@@ -15,6 +15,15 @@ les sections de bêta ci-dessous.
 
 ## Non publié
 
+### Ajouté
+
+- **Images des actualités en plein écran** (issue #109) : un appui simple
+  sur la couverture ou une vignette ouvre un visualiseur plein écran —
+  pincement pour zoomer, glissement d'une image à l'autre avec indicateur
+  « 2 / 5 », fermeture par le bouton ou par le retour système. Un appui long
+  sur une image affiche d'abord un aperçu rapide avec « Agrandir ». Le reste
+  de la carte continue d'ouvrir l'article, et le Registre reste inchangé.
+
 ### Changé
 
 - L'accueil (Registre) s'actualise en tirant vers le bas : le bouton
