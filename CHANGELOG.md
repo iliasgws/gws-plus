@@ -4,10 +4,9 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
-## [0.9.8] — 2026-10-03
+## [0.9.8-beta.7] — 2026-10-03
 
-Version stable après six bêtas, conservant le comportement et le fondu de
-la dernière bêta.
+### Préversion (bêta)
 
 ### Ajouté
 
@@ -17,6 +16,9 @@ la dernière bêta.
 - Un fondu inférieur de 64 dp adoucit la transition vers la page.
 - Le guide `docs/development/REGISTRE-BANNER.md` détaille le défilement,
   le seuil d'épinglage, les couches, le fondu et la gestion de la barre d'état.
+- Un interrupteur « Bannière du Registre » dans Paramètres → Apparence
+  permet de masquer l'illustration. Le choix est mémorisé, y compris après
+  une déconnexion ; la bannière est activée par défaut.
 
 ## [0.9.7] — 2026-10-03
 

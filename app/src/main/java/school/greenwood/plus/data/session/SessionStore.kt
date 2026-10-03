@@ -74,6 +74,7 @@ class SessionStore(private val context: Context) : CompteCommunautaire {
          *  écrans se rafraîchissent au retour au premier plan ; 0 = « jamais ».
          *  Survit à une purge de session (préférence d'app, comme le composeur). */
         val actualisationRetour = intPreferencesKey("actualisation_retour_minutes")
+        val banniereRegistre = booleanPreferencesKey("banniere_registre_activee")
 
         /** Mises à jour (issue #46) : millisecondes du dernier contrôle GitHub,
          *  canal choisi — stable par défaut, bêtas sur option — et dernière
@@ -154,6 +155,14 @@ class SessionStore(private val context: Context) : CompteCommunautaire {
 
     suspend fun définirActualisationRetour(minutes: Int) {
         context.dataStore.edit { it[Clefs.actualisationRetour] = minutes }
+    }
+
+    /** Préférence d'apparence de l'app, conservée à la déconnexion. */
+    val bannièreRegistreActivée: Flow<Boolean> =
+        context.dataStore.data.map { it[Clefs.banniereRegistre] ?: true }
+
+    suspend fun définirBannièreRegistre(actif: Boolean) {
+        context.dataStore.edit { it[Clefs.banniereRegistre] = actif }
     }
 
     /** Millisecondes du dernier contrôle de mise à jour (null = jamais). */

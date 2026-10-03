@@ -1,7 +1,7 @@
 # Registre banner: scroll, collapse, and pin
 
-This document describes the banner shipped in **0.9.8**, after the six
-0.9.8 betas. The final behavior is: **start fully visible, scroll upward
+This document describes the banner prepared for **0.9.8**, including the
+setting introduced in **0.9.8-beta.7**. The behavior is: **start fully visible, scroll upward
 with the feed, then stop moving when only a short faded strip remains**.
 The feed continues scrolling behind that strip.
 
@@ -16,6 +16,28 @@ The feed continues scrolling behind that strip.
   `enableEdgeToEdge()` setup.
 - `app/src/main/java/school/greenwood/plus/ui/AppNav.kt`: the shell's
   `Scaffold` supplies the screen padding.
+
+## Settings toggle and persistence
+
+Under **Paramètres → Apparence**, the **Bannière du Registre** switch
+controls a device-wide app preference. It is enabled by default.
+
+- `SessionStore.Clefs.banniereRegistre` uses the boolean DataStore key
+  `banniere_registre_activee` in the existing `gws_session` store.
+- `SessionStore.bannièreRegistreActivée` exposes a `Flow<Boolean>`;
+  `définirBannièreRegistre()` saves changes with `dataStore.edit`.
+- `ParametresViewModel` collects the preference into `ParamètresÉtat` and
+  forwards switch changes to the store. The whole settings row is toggleable
+  with `Role.Switch`; its visual `Switch` has no duplicate click handler.
+- `RegistreScreen` observes the same flow with lifecycle-aware collection.
+  Disabled means no banner is composed, no 140 dp banner gap is reserved,
+  and status-icon appearance follows the plain page and current theme.
+- Turning it back on restores the collapse-and-pin behavior. The list keeps
+  its current scroll state, so a scrolled feed may return with the strip
+  already collapsed.
+- The choice survives app restarts and logout: `SessionStore.effacer()`
+  removes authentication fields, not this app preference. It is local and
+  is never sent to the school API.
 
 ## Dimensions and threshold
 
@@ -169,6 +191,8 @@ For manual visual verification, install the beta APK and check:
 - Pull-to-refresh, drawer, profile sheet, tab switches, and Android back
   retain their existing behavior.
 - Light and dark themes, landscape, and a device with a display cutout.
+- Disable the banner in Settings: no illustration or reserved gap remains.
+  Re-enable it, restart the app, and verify the saved preference.
 
 The static Compose preview covers the banner artwork and gradients only;
 the collapse interaction requires the `RegistreScreen` list. Gradle checks

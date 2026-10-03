@@ -137,6 +137,8 @@ fun RegistreScreen(
         viewModel { RegistreViewModel(container) }
     }
     val état by vm.état.collectAsStateWithLifecycle()
+    val bannièreActivée by container.session.bannièreRegistreActivée.collectAsStateWithLifecycle(initialValue = true)
+    val hauteurBannière = if (bannièreActivée) HauteurBannièreComplète else 0.dp
 
     // Mise à jour de l'app (issue #46) : contrôle à chaque ouverture
     // (échec silencieux) et carte en tête du flux quand une publication
@@ -160,17 +162,18 @@ fun RegistreScreen(
         (HauteurBannièreComplète - HauteurBannièreRéduite).roundToPx()
     }
     val pageClaire = RegistreTheme.colors.page.luminance() > 0.5f
-    DisposableEffect(activité, tiroir.currentValue, pageClaire) {
+    DisposableEffect(activité, tiroir.currentValue, pageClaire, bannièreActivée) {
         val contrôleur = activité?.let { WindowCompat.getInsetsController(it.window, it.window.decorView) }
         val apparencePrécédente = contrôleur?.isAppearanceLightStatusBars
-        contrôleur?.isAppearanceLightStatusBars = tiroir.currentValue == DrawerValue.Open && pageClaire
+        contrôleur?.isAppearanceLightStatusBars =
+            (!bannièreActivée || tiroir.currentValue == DrawerValue.Open) && pageClaire
         onDispose {
             if (apparencePrécédente != null) {
                 contrôleur.isAppearanceLightStatusBars = apparencePrécédente
             }
         }
     }
-    val paddingContenu = PaddingValues(top = HauteurBannièreComplète, bottom = padding.calculateBottomPadding())
+    val paddingContenu = PaddingValues(top = hauteurBannière, bottom = padding.calculateBottomPadding())
     val actionDepuisTiroir: (() -> Unit) -> Unit = { action ->
         portée.launch { tiroir.close() }
         action()
@@ -210,6 +213,7 @@ fun RegistreScreen(
         },
     ) {
         Box(Modifier.fillMaxSize().clipToBounds().background(RegistreTheme.colors.paper)) {
+        if (bannièreActivée) {
         BanniereRegistre(
             hauteurBarreÉtat = padding.calculateTopPadding(),
             modifier = Modifier
@@ -223,6 +227,7 @@ fun RegistreScreen(
                     IntOffset(0, -défilement)
                 },
         )
+        }
         // L'actualisation se fait au geste (issue #104) : plus de bouton dans
         // l'en-tête. Le geste reprend exactement les deux effets de l'ancien
         // bouton — le registre, puis le contrôle silencieux des mises à jour
@@ -293,7 +298,7 @@ fun RegistreScreen(
                 contentPadding = PaddingValues(
                     start = 20.dp,
                     end = 20.dp,
-                    top = HauteurBannièreComplète + 12.dp,
+                    top = hauteurBannière + 12.dp,
                     bottom = padding.calculateBottomPadding() + 16.dp,
                 ),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
