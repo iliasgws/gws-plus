@@ -75,6 +75,7 @@ raw probe responses stay out of the repository (personal data).
 - [x] Login branding: existing app icon beside the « GWS+ » title.
 - [x] Login background: supplied school illustration fills the screen; theme-aware header and form surfaces keep text readable, and the background stays fixed when the keyboard opens.
 - [x] Login header and form panels share 78% background opacity; text and controls remain fully opaque.
+- [x] Login visual update approved by the user after 0.9.7-beta.3; stable 0.9.7 prepared with the same UI.
 - [x] Registre: date header (Fraunces), child avatar + switcher, « Ce soir » focal card,
       chronological feed (nouveautes / devoirs donnés / absences / messages), empty states
 - [x] « Ce soir » window: échéance ∈ (today, next school day], Friday→Monday

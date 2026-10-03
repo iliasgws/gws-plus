@@ -4,6 +4,19 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [0.9.7] — 2026-10-03
+
+Version stable après trois bêtas, avec le rendu de la dernière bêta confirmé
+par l'utilisateur.
+
+### Changé
+
+- L'écran de connexion affiche l'icône à côté du titre « GWS+ » sur une
+  illustration de l'école en plein écran.
+- Les panneaux du titre et du formulaire sont à 78 % d'opacité : le fond
+  reste visible, tandis que les textes et les contrôles restent opaques.
+- Le fond reste fixe à l'ouverture du clavier et le formulaire reste défilable.
+
 ## [0.9.6] — 2026-10-03
 
 Correctif stable après la bêta 0.9.6-beta.1, confirmé sur appareil : la
