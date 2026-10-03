@@ -44,7 +44,7 @@ Current contents (update this section whenever files are added or removed):
 | `…/GwsApplication.kt` | Manual DI container (`AppContainer`), including homework refresh signals |
 | `…/MainActivity.kt` | Single activity, edge-to-edge, Compose |
 | `…/ui/AppNav.kt` | Root state (onboarding → connexion → registre) + 6-tab shell (Registre, Cours, Devoirs, Documents, Messages, Plus — secondary sections live under Plus), back-stack contract |
-| `…/ui/screens/LoginScreen.kt` | Login form with the existing app icon beside the GWS+ title |
+| `…/ui/screens/LoginScreen.kt` | Login form with the existing app icon beside the GWS+ title; header and form use 78%-opaque theme surfaces over the supplied illustration |
 | `app/src/main/res/drawable-nodpi/login_background.png` | Supplied school illustration used as the login background, cropped to fill the screen |
 | `…/ui/AppViewModels.kt` | One ViewModel per screen; Registre loads refresh signed profile-photo URLs through `acces_check` |
 | `…/ui/theme/` | « École vivante » tokens: colors + per-tab accents, Bricolage/Public Sans type, 24/16/10 shapes, motion springs (Mouvement.kt) |

@@ -26,6 +26,7 @@ import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -45,9 +46,9 @@ import school.greenwood.plus.AppContainer
 import school.greenwood.plus.R
 import school.greenwood.plus.ui.ConnexionViewModel
 import school.greenwood.plus.ui.components.ErrorInline
-import school.greenwood.plus.ui.components.GwsCard
 import school.greenwood.plus.ui.theme.AnnotationShape
 import school.greenwood.plus.ui.theme.ControlShape
+import school.greenwood.plus.ui.theme.PageShape
 import school.greenwood.plus.ui.theme.RegistreTheme
 
 /*
@@ -62,6 +63,7 @@ fun LoginScreen(
 ) {
     val vm: ConnexionViewModel = viewModel { ConnexionViewModel(container) }
     val état by vm.état.collectAsStateWithLifecycle()
+    val fondPanneaux = RegistreTheme.colors.page.copy(alpha = 0.78f)
 
 
     Box(
@@ -87,7 +89,7 @@ fun LoginScreen(
             Column(
                 modifier = Modifier
                     .clip(ControlShape)
-                    .background(RegistreTheme.colors.page.copy(alpha = 0.94f))
+                    .background(fondPanneaux)
                     .padding(horizontal = 20.dp, vertical = 12.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
@@ -122,9 +124,13 @@ fun LoginScreen(
                 )
             }
 
-            GwsCard(modifier = Modifier
-                .widthIn(max = 420.dp)
-                .padding(top = 24.dp)) {
+            Surface(
+                modifier = Modifier
+                    .widthIn(max = 420.dp)
+                    .padding(top = 24.dp),
+                shape = PageShape,
+                color = fondPanneaux,
+            ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()

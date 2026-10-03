@@ -36,6 +36,16 @@ Correctif de la photo de profil après la version 0.9.5.
 
 ## Non publié
 
+## [0.9.7-beta.3] — 2026-10-03
+
+### Préversion (bêta)
+
+### Changé
+
+- Les panneaux du titre et du formulaire de connexion passent à 78 %
+  d'opacité pour laisser davantage apparaître l'illustration, sans atténuer
+  les textes ni les contrôles.
+
 ## [0.9.7-beta.2] — 2026-10-03
 
 ### Préversion (bêta)
