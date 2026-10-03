@@ -15,6 +15,16 @@ les sections de bêta ci-dessous.
 
 ## Non publié
 
+### Ajouté
+
+- Sur l'accueil (Registre), un **appui long sur une carte** ouvre un
+  aperçu immédiat de son contenu — type, titre, date, détails, corps, et
+  vignette pour les actualités — sans quitter le fil : la feuille se
+  referme au toucher extérieur ou au retour Android.
+- Quand l'entrée le permet, l'aperçu propose une action — « Lire
+  l'actualité », « Ouvrir le devoir » ou « Ouvrir la conversation » — qui
+  referme la feuille avant d'ouvrir l'écran demandé.
+
 ### Changé
 
 - L'accueil (Registre) s'actualise en tirant vers le bas : le bouton

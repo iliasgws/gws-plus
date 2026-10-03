@@ -3,6 +3,7 @@ package school.greenwood.plus.ui.screens.registre
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -427,12 +428,16 @@ private fun LigneStatut(devoir: Devoir) {
  * date et « Vu » lisibles sans chevauchement, chevron dégagé. La variante
  * verticale (seulement sous 300 dp utiles ou à grosse police) borne son
  * image à 152 dp pour ne jamais repousser les tâches hors du premier écran.
+ *
+ * [surApercu] est l'appui long facultatif de la carte, annoncé à TalkBack
+ * comme « Afficher l'aperçu rapide » (issue #107).
  */
 @Composable
 internal fun SectionActualitéUne(
     post: Post,
     ouvrirPost: (String) -> Unit,
     ouvrirActualités: () -> Unit,
+    surApercu: (() -> Unit)? = null,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Row(
@@ -454,17 +459,33 @@ internal fun SectionActualitéUne(
                 )
             }
         }
-        CarteActualitéUne(post = post, onClick = { ouvrirPost(post.id) })
+        CarteActualitéUne(
+            post = post,
+            onClick = { ouvrirPost(post.id) },
+            onLongClick = surApercu,
+        )
     }
 }
 
-/** La carte à la une d'une actualité (issues #101 §3 + revue P0). */
+/** La carte à la une d'une actualité (issues #101 §3 + revue P0) ; appui long
+ *  facultatif [onLongClick], annoncé « Afficher l'aperçu rapide » (issue #107). */
 @Composable
-private fun CarteActualitéUne(post: Post, onClick: () -> Unit) {
+private fun CarteActualitéUne(
+    post: Post,
+    onClick: () -> Unit,
+    onLongClick: (() -> Unit)? = null,
+) {
+    val base = Modifier.fillMaxWidth()
     GwsCard(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
+        modifier = if (onLongClick == null) {
+            base.clickable(onClick = onClick)
+        } else {
+            base.combinedClickable(
+                onClick = onClick,
+                onLongClickLabel = "Afficher l'aperçu rapide",
+                onLongClick = onLongClick,
+            )
+        },
         relief = 1.dp,
     ) {
         BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
