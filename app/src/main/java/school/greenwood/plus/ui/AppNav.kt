@@ -255,6 +255,8 @@ fun Shell(container: AppContainer) {
                     // « Voir tout » ouvre le flux des actualités en détail :
                     // retour Android = de retour sur le Registre (pile inchangée).
                     ouvrirActualités = { navController.allerDétail("actualites") },
+                    ouvrirDevoir = { id -> navController.allerDétail("devoir/$id") },
+                    ouvrirConversation = { id -> navController.allerDétail("conversation/$id") },
                 )
             }
             composable("actualites") {

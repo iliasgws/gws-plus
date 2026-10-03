@@ -1083,6 +1083,56 @@ header keeps the menu and the pupil pill alone.
       the drawer edge-swipe + the Android back gesture on the home screen
       still behave)
 
+## Long-press preview on the Registre cards (issue #107, branch `t3code/fix-issue-107`)
+
+Reading a card meant navigating to it: the homework, absence and message
+cards were tap-inert, and a news card always left the feed. A long press
+now opens the card's real content in a bottom sheet instead — no
+navigation, the Registre stays where it is.
+
+- [x] New `ui/screens/registre/Apercu.kt`: pure mapping `apercuDe` for the
+      four entry types (actualité, devoir, absence, message) plus
+      `apercuDe(Post)` for the latest news — real fields only, a missing
+      field is null, never invented; HTML stays raw in the model and is
+      flattened only at display time (`htmlToPlainMultiline`)
+- [x] `FeuilleApercu` ModalBottomSheet: type puce, title, French date,
+      detail rows (matière, enseignant, échéance, état, pièces jointes…),
+      160 dp vignette on a sage fallback, scrolling body; outside touch or
+      the Android back gesture dismisses it, it never navigates by itself
+- [x] Optional action button at the bottom of the sheet: it closes the
+      sheet first, then navigates — « Lire l'actualité » (post detail),
+      « Ouvrir le devoir » (devoir detail), « Ouvrir la conversation »;
+      the absence sheet has no action (no detail screen exists for it)
+- [x] Optional `onLongClick` / `surApercu` parameters on `CarteActualité`
+      and on `SectionActualitéUne` / `CarteActualitéUne`, through
+      `combinedClickable(onLongClickLabel = "Afficher l'aperçu rapide")`;
+      a null callback keeps the modifier chain and behaviour unchanged
+- [x] The three tap-inert cards (devoir, absence, message) gain the same
+      long press via `Modifier.appuiLong`: `pointerInput(Unit)` +
+      `detectTapGestures(onLongPress)` over a `rememberUpdatedState`
+      action (the detector is created once, so an in-progress press
+      survives a recomposition of the feed), a merged-semantics long-click
+      action (TalkBack alternative « Afficher l'aperçu rapide », same
+      merged node a `clickable` card would give) and an explicit
+      `HapticFeedbackType.LongPress`; the two already-clickable cards rely
+      on foundation's built-in long-press haptic — one buzz per trigger
+- [x] Scope: « Ce soir » and the quick-access cards stay out on purpose —
+      the focal card already lists every homework it holds, and the quick
+      access cards are pure navigation with nothing to preview
+- [x] `AppNav.kt` wiring: two new `RegistreScreen` callbacks,
+      `allerDétail("devoir/$id")` and `allerDétail("conversation/$id")` —
+      both push on the Registre tab's stack, so Android back returns to
+      the Registre (NAVIGATION.md contract)
+- [x] Tests: `ApercuTest` — 12 unit tests on the pure mapping (real fields
+      only, raw HTML kept, nulls over guesses, post preview ≡ entry
+      preview)
+- [ ] On-device check: TalkBack announces and activates the long-press
+      action on every card, and exactly one haptic buzz fires per trigger
+      (no double buzz on the already-clickable cards)
+- [ ] On-device check: a slow scroll never opens the sheet by accident,
+      and closing the sheet leaves the feed at the same scroll offset
+- [ ] Regression pass on the Android back gesture, in every section of the
+      app, after a preview has been opened (project's #1 priority)
 ## Full-screen news images (issue #109, branch `feat/issue-109-visuel-actualites`)
 
 News images finally have a real viewer: a tap opens the photo full screen, a

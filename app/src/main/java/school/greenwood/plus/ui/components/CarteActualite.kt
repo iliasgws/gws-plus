@@ -1,6 +1,7 @@
 package school.greenwood.plus.ui.components
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -38,30 +39,42 @@ import school.greenwood.plus.util.htmlToPlainSingleLine
  *
  * Interactions :
  * - appui court sur la vignette → visualiseur plein écran (`ouvrirImage`) ;
- * - appui long sur la vignette → aperçu rapide (`aperçuImage`) ;
+ * - appui long sur la vignette → aperçu rapide d'image (`aperçuImage`) ;
  * - appui court sur le reste de la carte → ouvre l'article (`onClick`),
  *   inchangé ;
- * - sans ces deux callbacks, la carte est strictement identique à avant :
- *   la vignette reste décorative et son appui ouvre l'article (cas du
- *   Registre).
+ * - sans ces deux callbacks d'image, la vignette reste décorative et son
+ *   appui ouvre l'article (cas du Registre).
+ *
+ * Appui long facultatif [onLongClick] sur toute la carte : quand il est
+ * fourni, TalkBack annonce aussi l'alternative « Afficher l'aperçu rapide »
+ * (issue #107). Les deux appuis longs cohabitent : l'enfant consomme avant
+ * le parent, le geste sur la vignette n'atteint jamais la carte.
  *
  * @param ouvrirImage ouvre la vignette dans le visualiseur plein écran ;
  *   `null` (par défaut) désactive les gestes sur l'image.
- * @param aperçuImage ouvre la vignette dans l'aperçu rapide ; `null`
- *   (par défaut) désactive l'appui long.
+ * @param aperçuImage ouvre la vignette dans l'aperçu rapide d'image ; `null`
+ *   (par défaut) désactive l'appui long sur la vignette.
  */
 @Composable
 fun CarteActualité(
     post: Post,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    onLongClick: (() -> Unit)? = null,
     ouvrirImage: ((String) -> Unit)? = null,
     aperçuImage: ((String) -> Unit)? = null,
 ) {
+    val base = modifier.fillMaxWidth()
     GwsCard(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
+        modifier = if (onLongClick == null) {
+            base.clickable(onClick = onClick)
+        } else {
+            base.combinedClickable(
+                onClick = onClick,
+                onLongClickLabel = "Afficher l'aperçu rapide",
+                onLongClick = onLongClick,
+            )
+        },
     ) {
         Row(
             modifier = Modifier

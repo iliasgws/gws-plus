@@ -4,14 +4,19 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
-## [0.9.4] — 2026-10-02
+## [0.9.5-beta.2] — 2026-10-03
 
-Stable après huit bêtas : le Registre refondu (en-tête et date éditoriale,
-carte « Ce soir » avec échéance complète, dernière actualité compacte,
-accès rapides), les **catégories de message** au composeur — toujours
-visibles, obligatoires sur les deux chemins d'envoi — et la **déconnexion**
-depuis le profil (« Mon compte »). Le détail de chaque étape figure dans
-les sections de bêta ci-dessous.
+### Préversion (bêta)
+
+### Ajouté
+
+- Sur l'accueil (Registre), un **appui long sur une carte** ouvre un
+  aperçu immédiat de son contenu — type, titre, date, détails, corps, et
+  vignette pour les actualités — sans quitter le fil : la feuille se
+  referme au toucher extérieur ou au retour Android.
+- Quand l'entrée le permet, l'aperçu propose une action — « Lire
+  l'actualité », « Ouvrir le devoir » ou « Ouvrir la conversation » — qui
+  referme la feuille avant d'ouvrir l'écran demandé.
 
 ## Non publié
 
@@ -24,6 +29,10 @@ les sections de bêta ci-dessous.
   sur une image affiche d'abord un aperçu rapide avec « Agrandir ». Le reste
   de la carte continue d'ouvrir l'article, et le Registre reste inchangé.
 
+## [0.9.5-beta.1] — 2026-10-03
+
+### Préversion (bêta)
+
 ### Changé
 
 - L'accueil (Registre) s'actualise en tirant vers le bas : le bouton
@@ -32,6 +41,15 @@ les sections de bêta ci-dessous.
   jour de l'application ; le contenu affiché ne bouge pas pendant
   l'opération, et un échec laisse le flux en place sous le bandeau
   « Réessayer ».
+
+## [0.9.4] — 2026-10-02
+
+Stable après huit bêtas : le Registre refondu (en-tête et date éditoriale,
+carte « Ce soir » avec échéance complète, dernière actualité compacte,
+accès rapides), les **catégories de message** au composeur — toujours
+visibles, obligatoires sur les deux chemins d'envoi — et la **déconnexion**
+depuis le profil (« Mon compte »). Le détail de chaque étape figure dans
+les sections de bêta ci-dessous.
 
 ## [0.9.4-beta.4] — 2026-09-30
 
