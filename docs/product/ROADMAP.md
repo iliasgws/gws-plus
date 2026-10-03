@@ -1133,3 +1133,43 @@ navigation, the Registre stays where it is.
       and closing the sheet leaves the feed at the same scroll offset
 - [ ] Regression pass on the Android back gesture, in every section of the
       app, after a preview has been opened (project's #1 priority)
+## Full-screen news images (issue #109, branch `feat/issue-109-visuel-actualites`)
+
+News images finally have a real viewer: a tap opens the photo full screen, a
+long press previews it first, and the article underneath keeps its own
+navigation. Both surfaces are dialogs drawn above the screen — no new route,
+so the back-stack contract (`docs/development/NAVIGATION.md`) is untouched.
+
+- [x] `logic/GalerieImages.kt`: the pure rules — cover first then the
+      server's gallery (trimmed, blanks and duplicates dropped, source order
+      kept), start index of the touched image, « 2 / 5 » label and TalkBack
+      description (« Image 2 sur 5 — Titre »), zoom clamped to 1..8,
+      letterboxed displayed size and offset clamped to the image's own edges
+      (back to scale 1 ⇒ framing reset)
+- [x] `ui/components/VisualiseurImages.kt`: `VisualiseurImages` — fullscreen
+      `Dialog` (black, edge-to-edge, white system-bar icons in both themes,
+      Android 11+ controller with the androidx fallback) with
+      `HorizontalPager` starting on the touched image, a hand-written
+      pinch/pan gesture (one-finger pan only when zoomed, nothing consumed
+      at scale 1 so the pager keeps swiping, `userScrollEnabled` off during
+      a two-finger gesture), close button + system back (no `BackHandler` —
+      the back contract stays the system's), loading spinner and
+      broken-image fallback, position pill « 2 / 5 »;
+      `AperçuImageRapide` — the long-press preview, tap anywhere closes,
+      « Agrandir » upgrades to the viewer on the same image
+- [x] `CarteActualité`: optional `ouvrirImage` / `aperçuImage` callbacks on
+      the 64 dp thumbnail (tap → viewer, long press → preview,
+      `contentDescription` « Afficher l'image en plein écran »); the Registre
+      call site passes none and behaves exactly as before — the Registre
+      card long-press belongs to issue #107
+- [x] Actualités list wires both callbacks (a list post has one image);
+      post detail wires the cover and every gallery thumbnail, opening at
+      the touched image via `GalerieImages.indexDépart`; taps on the text
+      still open the article (the child gesture consumes before the card's
+      `clickable` — the Main pointer pass runs leaf → root)
+- [x] Tests: `GalerieImagesTest` (21 tests: liste/index/label/description/
+      zoom/fit/offset rules) — `:app:assembleDebug` +
+      `:app:testDebugUnitTest` green (210 tests)
+- [ ] On-device check: tap → viewer → pinch → swipe → close, long-press
+      preview → « Agrandir », 1 image / several images / missing image /
+      slow network, and the Android back gesture from the viewer
