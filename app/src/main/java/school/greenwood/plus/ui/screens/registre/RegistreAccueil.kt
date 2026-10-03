@@ -40,6 +40,7 @@ import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextOverflow
@@ -137,7 +138,6 @@ internal fun EnTêteRegistre(
             // La pilule profil : discrète, jamais dominante, cible 48 dp.
             élèveBloc(
                 eleve = eleve,
-                modifier = Modifier.weight(1f),
                 onClick = surOuvrirFeuille,
             )
         }
@@ -181,20 +181,28 @@ internal fun EnTêteRegistre(
     }
 }
 
-/** La pilule profil : avatar + prénom/classe + affordance, sur page blanche,
- *  cible tactile de 48 dp, sans dominer la ligne de commandes. */
+/** La pilule profil : l'initiale seule, plus le prénom (issue #105) — la
+ *  barre de commandes de l'accueil ne porte que ce qu'il faut pour agir, et le
+ *  prénom revit dans la feuille « Mon compte ». Le prénom reste annoncé aux
+ *  lecteurs d'écran, et la cible tactile reste de 48 dp. */
 @Composable
 private fun élèveBloc(
     eleve: Eleve?,
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
+    val identité = eleve
+        ?.let { listOfNotNull(it.prenom ?: it.nomComplet, it.niveau).joinToString(", ") }
+        ?.takeIf { it.isNotBlank() }
     Row(
         modifier = modifier
             .heightIn(min = 48.dp)
             .clip(PiluleShape)
             .background(RegistreTheme.colors.page)
             .clickable(onClick = onClick)
+            .semantics {
+                contentDescription = identité?.let { "Compte de $it" } ?: "Compte"
+            }
             .padding(start = 6.dp, end = 8.dp, top = 5.dp, bottom = 5.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -204,24 +212,6 @@ private fun élèveBloc(
             imageUrl = eleve?.image,
             size = 32,
         )
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = eleve?.prenom ?: eleve?.nomComplet ?: "Enfant",
-                style = MaterialTheme.typography.labelLarge,
-                color = RegistreTheme.colors.ink,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            eleve?.niveau?.let { niveau ->
-                Text(
-                    text = niveau,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = RegistreTheme.colors.chalk,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-        }
         Icon(
             imageVector = Icons.Rounded.ExpandMore,
             contentDescription = null,

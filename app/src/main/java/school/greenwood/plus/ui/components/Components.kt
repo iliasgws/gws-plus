@@ -376,8 +376,9 @@ fun SqueletteRegistre() {
         ) {
             BlocSquelette(modifier = Modifier.size(40.dp), forme = CircleShape)
             Spacer(Modifier.weight(1f))
+            // La pilule de l'élève sans son nom (issue #105) : avatar + chevron.
             BlocSquelette(
-                modifier = Modifier.size(140.dp, 40.dp),
+                modifier = Modifier.size(76.dp, 40.dp),
                 forme = ControlShape,
             )
         }
