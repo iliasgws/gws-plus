@@ -49,6 +49,16 @@ Correctif de la photo de profil après la version 0.9.5.
 
 ## Non publié
 
+## [0.9.8-beta.6] — 2026-10-03
+
+### Préversion (bêta)
+
+### Changé
+
+- Le fondu inférieur de la bannière est élargi de 32 à 64 dp pour une
+  transition plus douce vers la page. Le défilement puis l'épinglage sont
+  conservés.
+
 ## [0.9.8-beta.5] — 2026-10-03
 
 ### Préversion (bêta)

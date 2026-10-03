@@ -39,7 +39,7 @@ internal fun BanniereRegistre(
             Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
-                .height(32.dp)
+                .height(64.dp)
                 .background(
                     Brush.verticalGradient(
                         listOf(Color.Transparent, RegistreTheme.colors.paper),
