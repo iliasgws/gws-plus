@@ -4,6 +4,19 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [0.9.7] — 2026-10-03
+
+Version stable après trois bêtas, avec le rendu de la dernière bêta confirmé
+par l'utilisateur.
+
+### Changé
+
+- L'écran de connexion affiche l'icône à côté du titre « GWS+ » sur une
+  illustration de l'école en plein écran.
+- Les panneaux du titre et du formulaire sont à 78 % d'opacité : le fond
+  reste visible, tandis que les textes et les contrôles restent opaques.
+- Le fond reste fixe à l'ouverture du clavier et le formulaire reste défilable.
+
 ## [0.9.6] — 2026-10-03
 
 Correctif stable après la bêta 0.9.6-beta.1, confirmé sur appareil : la
@@ -26,7 +39,35 @@ Correctif de la photo de profil après la version 0.9.5.
   de la connexion ; les initiales restent visibles pendant le chargement ou
   si l'image échoue.
 
+## [0.9.7-beta.1] — 2026-10-03
+
+### Préversion (bêta)
+
+### Changé
+
+- L'écran de connexion affiche l'icône de l'application à côté du titre « GWS+ ».
+
 ## Non publié
+
+## [0.9.7-beta.3] — 2026-10-03
+
+### Préversion (bêta)
+
+### Changé
+
+- Les panneaux du titre et du formulaire de connexion passent à 78 %
+  d'opacité pour laisser davantage apparaître l'illustration, sans atténuer
+  les textes ni les contrôles.
+
+## [0.9.7-beta.2] — 2026-10-03
+
+### Préversion (bêta)
+
+### Changé
+
+- L'écran de connexion utilise l'illustration de l'école en arrière-plan plein
+  écran. Le titre et le formulaire restent lisibles sur leurs panneaux ; le
+  fond reste fixe à l'ouverture du clavier.
 
 ## [0.9.5] — 2026-10-03
 
