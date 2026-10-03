@@ -251,6 +251,11 @@ class RegistreViewModel(private val container: AppContainer) : ViewModel() {
         }
     }
 
+    /** Geste « tirer vers le bas » de l'accueil (issue #104) : toujours un
+     *  chargement réseau — la lecture mémoire ne peut pas répondre à la place
+     *  de l'utilisateur. Le contenu connu reste affiché pendant l'opération. */
+    fun rafraîchir() = charger(force = true)
+
     fun choisirEleve(eleve: Eleve) {
         viewModelScope.launch {
             val s = container.session.state.first() ?: return@launch

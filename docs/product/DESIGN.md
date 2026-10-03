@@ -144,6 +144,10 @@ rappel). Premier lancement : un écran d'accueil sobre de trois pages, pas de
 carrousel infini.
 
 ### Registre (accueil)
+L'actualisation se fait au geste — **tirer vers le bas** (`PullToRefreshBox`),
+comme sur les autres écrans de listes ; aucun bouton d'actualisation nulle
+part dans l'app, l'en-tête ne porte que le menu et la pilule de l'élève.
+
 Flux chronologique du jour : entrées d'actualité (GET `nouveautes`, détail
 `post_view`, épinglés `pinned_posts`), devoirs donnés aujourd'hui (GET
 `devoirs`), absences (GET `absences`), messages récents (GET `messages`).

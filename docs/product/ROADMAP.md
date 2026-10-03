@@ -1053,3 +1053,32 @@ UI-only, the reference mock-up is never published: it carries a pupil photo).
       to ship the beta first)
 - [ ] On-device check of the header, the focal card, the news card and the
       six-tab bar in the 0.9.4-beta.7 build
+
+## Pull to refresh on the Registre (issue #104, branch `feat/issue-104-tirer-pour-rafraichir`)
+
+The home screen was the last list screen of the app still carrying a manual
+refresh button. Pull to refresh is now the only gesture, everywhere — the
+header keeps the menu and the pupil pill alone.
+
+- [x] `Actualiser()` deleted from `RegistreAccueil.kt` (the whole app has no
+      `Icons.Rounded.Refresh` left), along with the `rafraîchissement` /
+      `surActualiser` parameters of `EnTêteRegistre` — the command bar is
+      menu + pupil pill again, the pill keeps `weight(1f)` so it stays right
+      aligned
+- [x] `PullToRefreshBox` wraps the whole content of the drawer (the
+      `when` on the three states, not only the "known content" branch), so the
+      gesture works on the pulsing skeleton of the first load as well —
+      `SqueletteRegistre` already scrolls vertically
+- [x] Same two effects as the removed button: `vm.rafraîchir()` (new method,
+      `charger(force = true)` — a gesture is never answered from the memory
+      cache) then the silent app-update check
+      `container.misesÀJour.vérifier(manuel = false)`
+- [x] `SqueletteRegistre` command bar re-cut: the refresh placeholder is gone,
+      the pupil block shrinks with the real pill
+- [x] Known content stays on screen while the gesture runs, a failed refresh
+      still lands on the non-blocking « Réessayer » banner (issue #21), and the
+      foreground-return refresh (veille) keeps driving the same indicator
+- [x] `:app:assembleDebug` + `:app:testDebugUnitTest` green
+- [ ] On-device check of the gesture (swipe down → indicator → refresh, and
+      the drawer edge-swipe + the Android back gesture on the home screen
+      still behave)

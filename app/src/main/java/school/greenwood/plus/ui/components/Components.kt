@@ -365,7 +365,8 @@ fun SqueletteRegistre() {
             .padding(start = 20.dp, end = 20.dp, bottom = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        // Barre de commandes : menu, actualiser, puis l'élève consulté.
+        // Barre de commandes : menu, puis l'élève consulté (issue #104 —
+        // plus d'icône d'actualisation, le geste remplace le bouton).
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -375,9 +376,9 @@ fun SqueletteRegistre() {
         ) {
             BlocSquelette(modifier = Modifier.size(40.dp), forme = CircleShape)
             Spacer(Modifier.weight(1f))
-            BlocSquelette(modifier = Modifier.size(40.dp), forme = CircleShape)
+            // La pilule de l'élève sans son nom (issue #105) : avatar + chevron.
             BlocSquelette(
-                modifier = Modifier.size(140.dp, 40.dp),
+                modifier = Modifier.size(76.dp, 40.dp),
                 forme = ControlShape,
             )
         }
