@@ -35,7 +35,7 @@ Current contents (update this section whenever files are added or removed):
 | `AGENTS.md` | This file — rules for AI agents |
 | `docs/README.md` | Documentation index — start any doc dive here |
 | `docs/product/` | `OVERVIEW.md` (what & why), `DESIGN.md` (« Le registre » design system), `ROADMAP.md` (living milestone + roadmap checklist) |
-| `docs/development/` | `SETUP.md` (toolchain), `ARCHITECTURE.md` (layers), `NAVIGATION.md` (back-stack contract) |
+| `docs/development/` | `SETUP.md` (toolchain), `ARCHITECTURE.md` (layers), `NAVIGATION.md` (back-stack contract), `REGISTRE-BANNER.md` (banner scroll/pin threshold, fade, layering, status bar) |
 | `docs/api/` | `BOTI-API.md` (protocol), `ENDPOINT-MAP.md` (observed shapes), `ENDPOINTS.md` (100-endpoint inventory) |
 | `docs/security/` | `SECURITY-NOTES.md` |
 | `settings.gradle.kts`, `build.gradle.kts`, `gradle.properties`, `gradlew`, `gradle/wrapper/` | Gradle 9.6 build (AGP 9.4.1, Kotlin 2.4.20, built-in Kotlin — no `kotlin.android` plugin) |
