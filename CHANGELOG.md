@@ -49,6 +49,17 @@ Correctif de la photo de profil après la version 0.9.5.
 
 ## Non publié
 
+## [0.9.8-beta.2] — 2026-10-03
+
+### Préversion (bêta)
+
+### Changé
+
+- La bannière reste fixée en arrière-plan du Registre et se fond dans la
+  couleur de la page à son bord inférieur. Le contenu peut défiler vers le
+  haut devant l'image, sans être bloqué sous la bannière ; la barre d'état
+  reste visible et dégagée.
+
 ## [0.9.8-beta.1] — 2026-10-03
 
 ### Préversion (bêta)

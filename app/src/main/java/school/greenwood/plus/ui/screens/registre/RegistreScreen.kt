@@ -160,7 +160,7 @@ fun RegistreScreen(
             }
         }
     }
-    val paddingContenu = PaddingValues(bottom = padding.calculateBottomPadding())
+    val paddingContenu = PaddingValues(top = 140.dp, bottom = padding.calculateBottomPadding())
     val actionDepuisTiroir: (() -> Unit) -> Unit = { action ->
         portée.launch { tiroir.close() }
         action()
@@ -199,7 +199,7 @@ fun RegistreScreen(
             }
         },
     ) {
-        Column(Modifier.fillMaxSize()) {
+        Box(Modifier.fillMaxSize().background(RegistreTheme.colors.paper)) {
         BanniereRegistre(hauteurBarreÉtat = padding.calculateTopPadding())
         // L'actualisation se fait au geste (issue #104) : plus de bouton dans
         // l'en-tête. Le geste reprend exactement les deux effets de l'ancien
@@ -211,14 +211,13 @@ fun RegistreScreen(
                 vm.rafraîchir()
                 portée.launch { container.misesÀJour.vérifier(manuel = false) }
             },
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.fillMaxSize().padding(top = padding.calculateTopPadding()),
         ) {
         when {
         état.registre == null && état.erreur != null -> {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(RegistreTheme.colors.paper)
                     .padding(paddingContenu),
                 contentAlignment = Alignment.Center,
             ) {
@@ -244,7 +243,6 @@ fun RegistreScreen(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(RegistreTheme.colors.paper)
                     .padding(paddingContenu),
             ) {
                 SqueletteRegistre()
@@ -268,13 +266,11 @@ fun RegistreScreen(
             val derniereActu = état.derniereActualite?.takeIf { it.id !in idPostsAujourdhui }
 
             LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(RegistreTheme.colors.paper),
+                modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(
                     start = 20.dp,
                     end = 20.dp,
-                    top = 12.dp,
+                    top = 140.dp + 12.dp,
                     bottom = padding.calculateBottomPadding() + 16.dp,
                 ),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
