@@ -49,6 +49,16 @@ Correctif de la photo de profil après la version 0.9.5.
 
 ## Non publié
 
+## [0.9.8-beta.4] — 2026-10-03
+
+### Préversion (bêta)
+
+### Changé
+
+- La bannière démarre réduite à une courte bande de sa partie inférieure,
+  fixée en haut de l'écran. Son bord inférieur reste fondu dans la page et
+  le contenu du Registre défile derrière elle, comme dans l'aperçu fourni.
+
 ## [0.9.8-beta.3] — 2026-10-03
 
 ### Préversion (bêta)

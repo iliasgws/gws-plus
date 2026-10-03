@@ -18,11 +18,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -63,13 +61,12 @@ import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.onLongClick
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.core.view.WindowCompat
@@ -153,23 +150,18 @@ fun RegistreScreen(
     // que du contenu (docs/product/DESIGN.md §4).
     val portée = rememberCoroutineScope()
     val tiroir = rememberDrawerState(DrawerValue.Closed)
-    val liste = rememberLazyListState()
-    val hauteurBannièrePx = with(LocalDensity.current) { 140.dp.roundToPx() }
-    val bannièreVisible = liste.firstVisibleItemIndex == 0 &&
-        liste.firstVisibleItemScrollOffset < hauteurBannièrePx
     val pageClaire = RegistreTheme.colors.page.luminance() > 0.5f
-    DisposableEffect(activité, tiroir.currentValue, pageClaire, bannièreVisible) {
+    DisposableEffect(activité, tiroir.currentValue, pageClaire) {
         val contrôleur = activité?.let { WindowCompat.getInsetsController(it.window, it.window.decorView) }
         val apparencePrécédente = contrôleur?.isAppearanceLightStatusBars
-        contrôleur?.isAppearanceLightStatusBars =
-            (tiroir.currentValue == DrawerValue.Open || !bannièreVisible) && pageClaire
+        contrôleur?.isAppearanceLightStatusBars = tiroir.currentValue == DrawerValue.Open && pageClaire
         onDispose {
             if (apparencePrécédente != null) {
                 contrôleur.isAppearanceLightStatusBars = apparencePrécédente
             }
         }
     }
-    val paddingContenu = PaddingValues(top = 140.dp, bottom = padding.calculateBottomPadding())
+    val paddingContenu = PaddingValues(top = HauteurBannièreRéduite, bottom = padding.calculateBottomPadding())
     val actionDepuisTiroir: (() -> Unit) -> Unit = { action ->
         portée.launch { tiroir.close() }
         action()
@@ -209,12 +201,10 @@ fun RegistreScreen(
         },
     ) {
         Box(Modifier.fillMaxSize().background(RegistreTheme.colors.paper)) {
-        if (bannièreVisible) {
-            BanniereRegistre(
-                hauteurBarreÉtat = padding.calculateTopPadding(),
-                modifier = Modifier.offset { IntOffset(0, -liste.firstVisibleItemScrollOffset) },
-            )
-        }
+        BanniereRegistre(
+            hauteurBarreÉtat = padding.calculateTopPadding(),
+            modifier = Modifier.zIndex(1f),
+        )
         // L'actualisation se fait au geste (issue #104) : plus de bouton dans
         // l'en-tête. Le geste reprend exactement les deux effets de l'ancien
         // bouton — le registre, puis le contrôle silencieux des mises à jour
@@ -280,12 +270,11 @@ fun RegistreScreen(
             val derniereActu = état.derniereActualite?.takeIf { it.id !in idPostsAujourdhui }
 
             LazyColumn(
-                state = liste,
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(
                     start = 20.dp,
                     end = 20.dp,
-                    top = 140.dp + 12.dp,
+                    top = HauteurBannièreRéduite + 12.dp,
                     bottom = padding.calculateBottomPadding() + 16.dp,
                 ),
                 verticalArrangement = Arrangement.spacedBy(12.dp),

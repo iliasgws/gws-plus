@@ -70,7 +70,7 @@ raw probe responses stay out of the repository (personal data).
 
 ## 6. Screens
 
-- [x] Registre school banner: full-width image behind the visible status bar, with top contrast and bottom paper fade. Its offset follows the feed's scroll state so it scrolls away rather than staying sticky; status icons adapt when it disappears. No viewer action or immersive mode; status-icon appearance restored on leaving the screen.
+- [x] Registre school banner starts collapsed: a pinned lower-image slice (40 dp plus the status-bar inset) with top contrast and bottom paper fade. The feed scrolls behind the elevated banner; its initial spacing scrolls away. No viewer action or immersive mode; status-icon appearance restored on leaving the screen.
 - [x] Onboarding: 3 sober pages, first launch only
 - [x] Login: phone + password + « retenir », forgot-password, inline red-pen errors
 - [x] Login branding: existing app icon beside the « GWS+ » title.
