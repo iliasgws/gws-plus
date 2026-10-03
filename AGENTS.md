@@ -44,7 +44,7 @@ Current contents (update this section whenever files are added or removed):
 | `…/GwsApplication.kt` | Manual DI container (`AppContainer`), including homework refresh signals |
 | `…/MainActivity.kt` | Single activity, edge-to-edge, Compose |
 | `…/ui/AppNav.kt` | Root state (onboarding → connexion → registre) + 6-tab shell (Registre, Cours, Devoirs, Documents, Messages, Plus — secondary sections live under Plus), back-stack contract |
-| `…/ui/AppViewModels.kt` | One ViewModel per screen |
+| `…/ui/AppViewModels.kt` | One ViewModel per screen; Registre loads refresh signed profile-photo URLs through `acces_check` |
 | `…/ui/theme/` | « École vivante » tokens: colors + per-tab accents, Bricolage/Public Sans type, 24/16/10 shapes, motion springs (Mouvement.kt) |
 | `…/ui/components/` | Shared composables (Components.kt: GwsCard, Puce, EmptyState, skeletons…, SqueletteCommunaute (issue #88); CarteActualite.kt (optional long-press for the quick preview, issue #107, plus optional image tap/long-press callbacks, issue #109); VisualiseurImages.kt: fullscreen image viewer + long-press quick preview, issue #109; CarteMiseAJour.kt: GitHub update card; BadgeIA.kt: « Généré par IA » icon + badge, issue #58; BarreOnglets.kt: custom accent bottom bar; DialogueDéconnexion.kt: sign-out confirmation, issue #101) |
 | `…/ui/screens/` | Login, Onboarding, registre (+ drawer menu, Post detail — cover/gallery open the image viewer, issue #109, `RegistreAccueil.kt` — header, « Ce soir », dernière actualité, accès rapides, issue #101; `PullToRefreshBox` for the pull-to-refresh gesture, issue #104 — no refresh button anywhere in the app; `Apercu.kt` — long-press preview model + bottom sheet, issue #107; « Mon compte » sheet — child switch, settings, sign-out, issue #101), actualites (+ viewer/preview wiring, issue #109), plus (secondary sections menu), boutique (catalogue, product detail, order history), cours (Emploi du temps), devoirs (incl. community shortcut and community-proposal cards), documents (+ Quiz play), messages (+ Conversation + composer + AI panel; shared category module `Catégories.kt`, issue #99), demandes, communaute (public lists + forms, issue #88; one-shot proposal shortcut survives neither rotation nor tab restoration), parametres (settings panel, incl. AI settings + community server URL/test/revoke + sign-out) |
@@ -100,6 +100,13 @@ feature branch (or `main` if the work is already merged), released with
 before the stable is built and published. This is not optional: the
 on-device check catches what the Gradle build cannot (crashes, « opens
 Chrome » symptoms, layout on a real screen).
+
+**Standing user preference (2026-10-03): always publish as beta first,
+including hotfixes.** Every change intended for a stable release must be
+included in a published beta of that version. If new changes land after the
+latest beta, publish another beta before preparing the stable. A hotfix
+request starts with `X.Y.Z-beta.1`; publishing the beta does not authorize
+publishing the stable or merging its PR.
 
 ```bash
 # 1. Version bump on a feature branch + PR titled « Préparer la version X.Y.Z »

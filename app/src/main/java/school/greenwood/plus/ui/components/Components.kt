@@ -44,6 +44,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -295,27 +296,27 @@ fun GwsAvatar(
     modifier: Modifier = Modifier,
     size: Int = 36,
 ) {
-    if (imageUrl != null) {
-        coil3.compose.AsyncImage(
-            model = imageUrl,
-            contentDescription = null,
-            modifier = modifier
-                .size(size.dp)
-                .clip(CircleShape),
+    Box(
+        modifier = modifier
+            .size(size.dp)
+            .clip(CircleShape)
+            .background(RegistreTheme.colors.sage),
+        contentAlignment = Alignment.Center,
+    ) {
+        // Les initiales restent visibles pendant le chargement et en cas
+        // d'échec réseau ; une URL présente ne garantit pas une photo valide.
+        Text(
+            text = initiales,
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight(600),
+            color = RegistreTheme.colors.ink,
         )
-    } else {
-        Box(
-            modifier = modifier
-                .size(size.dp)
-                .clip(CircleShape)
-                .background(RegistreTheme.colors.sage),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                text = initiales,
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight(600),
-                color = RegistreTheme.colors.ink,
+        if (!imageUrl.isNullOrBlank()) {
+            coil3.compose.AsyncImage(
+                model = imageUrl,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.matchParentSize(),
             )
         }
     }

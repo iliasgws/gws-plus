@@ -180,14 +180,14 @@ class RegistreViewModel(private val container: AppContainer) : ViewModel() {
     }
 
     /** Adopte la session courante — ou rien du tout si elle a été purgée. */
-    private fun appliquerSession(s: SessionState?) {
+    private fun appliquerSession(s: SessionState?, eleveChoisi: String? = s?.eleveId) {
         if (s == null) {
             _état.value = RegistreÉtat(chargement = true)
             return
         }
         _état.update { st ->
             st.copy(
-                eleve = s.eleves.firstOrNull { it.id == s.eleveId } ?: s.eleves.firstOrNull(),
+                eleve = s.eleves.firstOrNull { it.id == eleveChoisi } ?: s.eleves.firstOrNull(),
                 eleves = s.eleves,
             )
         }
@@ -222,6 +222,13 @@ class RegistreViewModel(private val container: AppContainer) : ViewModel() {
                 )
             }
             try {
+                // Les photos de profil stockées à la connexion sont signées
+                // et expirent. Renouveler les liens sans masquer le contenu
+                // connu ; hors réseau, garder la session et ses caches.
+                container.auth.validerSession()?.let { s ->
+                    appliquerSession(s, _état.value.eleve?.id ?: s.eleveId)
+                }
+                if (container.session.state.first() == null) return@launch
                 val registre = container.registre.charger()
                 val derniere = runCatching { container.nouveautes.dernière() }.getOrNull()
                 _état.update {

@@ -4,6 +4,22 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [0.9.6-beta.1] — 2026-10-03
+
+### Préversion (bêta)
+
+Correctif de la photo de profil après la version 0.9.5.
+
+### Corrigé
+
+- **Photo de profil** : les liens signés des avatars sont renouvelés au
+  chargement du Registre, au retour après une absence prolongée et en tirant
+  pour actualiser. La photo ne reste plus liée à l'URL expirée conservée lors
+  de la connexion ; les initiales restent visibles pendant le chargement ou
+  si l'image échoue.
+
+## Non publié
+
 ## [0.9.5] — 2026-10-03
 
 Stable après deux bêtas : le Registre s'actualise en tirant vers le bas —
@@ -37,8 +53,6 @@ images d'actualités en plein écran et la cohérence des caches de médias.
   après expiration des URL signées. Tous ces caches sont purgés à la
   connexion et à la déconnexion : un compte ne retrouve jamais les médias du
   précédent.
-
-## Non publié
 
 ## [0.9.5-beta.2] — 2026-10-03
 
