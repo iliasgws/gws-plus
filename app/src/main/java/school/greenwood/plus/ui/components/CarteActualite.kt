@@ -1,6 +1,7 @@
 package school.greenwood.plus.ui.components
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -16,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -33,12 +35,28 @@ import school.greenwood.plus.util.htmlToPlainSingleLine
  * publication, le badge de lecture (« Vu le … » issu de `intro`), l'auteur si
  * présent, et la vignette d'image. La puce et le signet se mettent à l'accent
  * de l'endroit d'où la carte est ouverte (vert au Registre, ambre dans le flux).
+ *
+ * Interactions :
+ * - appui court sur la vignette → visualiseur plein écran (`ouvrirImage`) ;
+ * - appui long sur la vignette → aperçu rapide (`aperçuImage`) ;
+ * - appui court sur le reste de la carte → ouvre l'article (`onClick`),
+ *   inchangé ;
+ * - sans ces deux callbacks, la carte est strictement identique à avant :
+ *   la vignette reste décorative et son appui ouvre l'article (cas du
+ *   Registre).
+ *
+ * @param ouvrirImage ouvre la vignette dans le visualiseur plein écran ;
+ *   `null` (par défaut) désactive les gestes sur l'image.
+ * @param aperçuImage ouvre la vignette dans l'aperçu rapide ; `null`
+ *   (par défaut) désactive l'appui long.
  */
 @Composable
 fun CarteActualité(
     post: Post,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    ouvrirImage: ((String) -> Unit)? = null,
+    aperçuImage: ((String) -> Unit)? = null,
 ) {
     GwsCard(
         modifier = modifier
@@ -105,12 +123,29 @@ fun CarteActualité(
                 }
             }
             post.image?.let { url ->
+                // Gestes propres à la vignette : ils consomment l'appui avant
+                // la carte, qui continue de s'ouvrir sur le reste de son aire.
+                val gestesVignette = if (ouvrirImage != null) {
+                    Modifier.pointerInput(ouvrirImage, aperçuImage, url) {
+                        detectTapGestures(
+                            onTap = { ouvrirImage.invoke(url) },
+                            onLongPress = { aperçuImage?.invoke(url) },
+                        )
+                    }
+                } else {
+                    Modifier
+                }
                 AsyncImage(
                     model = url,
-                    contentDescription = null,
+                    contentDescription = if (ouvrirImage != null) {
+                        "Afficher l'image en plein écran"
+                    } else {
+                        null
+                    },
                     modifier = Modifier
                         .size(64.dp)
-                        .clip(ControlShape),
+                        .clip(ControlShape)
+                        .then(gestesVignette),
                     contentScale = ContentScale.Crop,
                 )
             }
