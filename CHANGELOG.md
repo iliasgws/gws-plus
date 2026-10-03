@@ -49,6 +49,10 @@ Correctif de la photo de profil après la version 0.9.5.
 
 ## Non publié
 
+## [0.9.8-beta.1] — 2026-10-03
+
+### Préversion (bêta)
+
 ### Ajouté
 
 - Une bannière illustrée de l'école apparaît en haut du Registre et se
