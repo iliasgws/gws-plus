@@ -26,11 +26,15 @@ Correctif de la photo de profil après la version 0.9.5.
   de la connexion ; les initiales restent visibles pendant le chargement ou
   si l'image échoue.
 
-## Non publié
+## [0.9.7-beta.1] — 2026-10-03
+
+### Préversion (bêta)
 
 ### Changé
 
 - L'écran de connexion affiche l'icône de l'application à côté du titre « GWS+ ».
+
+## Non publié
 
 ## [0.9.5] — 2026-10-03
 
