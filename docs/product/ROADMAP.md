@@ -1082,3 +1082,60 @@ header keeps the menu and the pupil pill alone.
 - [ ] On-device check of the gesture (swipe down → indicator → refresh, and
       the drawer edge-swipe + the Android back gesture on the home screen
       still behave)
+
+## Media cache coherence — images, documents, audio (issue #108, branch `t3code/fix-issue-108`)
+
+Signed `media.boti.education` URLs are re-signed on every server response
+(`…/view/<jeton>.<timestamp>/<taille>/<chemin>`, ~15–20 min expiry), so any
+cache keyed on the raw URL misses from screen to screen, downloads re-GET,
+and `Download/gws-plus` collects duplicate copies. Binary media caches are
+now keyed on a stable resource identity (the URL minus its disposable
+signature) and purged with the session — distinct from the data caches of
+issue #21.
+
+- [x] `util/IdentiteMedias.kt` — stable identity (unknown URL shapes pass
+      through untouched, conservative), 8-hex fingerprint for local
+      filenames, unit-tested (10 tests): same resource under two signatures
+      → same key, two resources → two keys, no token in any key
+- [x] **Images (Coil 3)**: `data/cache/ConfigImages.kt` — a custom
+      `ImageLoader` installed via `SingletonImageLoader.setSafe` whose
+      application interceptor rewrites both cache keys (memory + disk) onto
+      the stable identity; the Registre ↔ Actualités ↔ detail journey now
+      shares one entry per resource without touching the 11 `AsyncImage`
+      call sites; debug builds journal `dataSource` + stable key under the
+      « Médias » tag — never a raw signed URL
+- [x] **Documents/attachments** (`Fichiers.télécharger`): a valid local file
+      is reused instead of a new GET; targets are fingerprint-named (two
+      homonym resources never share a file); writes are atomic (unique
+      `.part` temp per attempt → rename), so no partial file is ever served
+- [x] **Public downloads** (`Fichiers.téléchargerPublic`): the whole flow is
+      serialized behind a Mutex over a
+      `filesDir/telechargements-publics.json` registry (identity → display
+      name) plus a MediaStore lookup — a second access returns the existing
+      row with no insert and no GET; interrupted `IS_PENDING` rows are
+      cleaned instead of forcing renamed duplicates; forced re-download
+      (« Re-télécharger » button on the devoir-detail attachment row) fills
+      the replacement before deleting the old copy; the registry writes
+      atomically (`.tmp` → rename) and the pre-29 fallback keeps its
+      private-storage path
+- [x] **Voice messages** (`util/CacheAudio.kt`): the first tap also caches
+      the clip in `cacheDir/audio` (fingerprint name, 48 MiB LRU bound,
+      stale `.part` sweep, per-chunk cooperative cancellation); a revisit is
+      born local, direct streaming stays the fallback for an expired URL;
+      the row's player lifecycle and polling are unchanged
+- [x] **Session purge** (`data/cache/PurgeMedias.kt`): Coil memory + disk
+      caches, private documents, outgoing staging, the audio cache and the
+      public registry are purged on login and logout — the same moments as
+      `CachesSession.vider()` (AuthRepository); `Downloads/gws-plus` itself
+      belongs to the user and is never touched
+- [x] Updater defensive against the purge: `relancerInstallation()` checks
+      the APK still exists and resets its state when it does not
+- [x] `:app:assembleDebug` + `:app:testDebugUnitTest` green — 213 tests,
+      0 failures (25 new: identity 10, public registry 8, audio cache 7)
+- [ ] On-device: Registre → open the illustrated actualité → back shows no
+      perceptible reload (« Médias » journal: `MEMORY_CACHE`/`DISK`, not
+      `NETWORK`, on the second display); re-tap an attachment → instant
+      local open; « Tout télécharger » twice → still exactly one copy per
+      file in `Download/gws-plus`; voice replay after leaving and reopening
+      the conversation; logout → login as another account → no image,
+      document or voice of the previous one remains

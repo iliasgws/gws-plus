@@ -342,10 +342,16 @@ class UpdatesRepository(
     }
 
     /** Relance l'installateur sur un APK déjà téléchargé (bouton « Installer »
-     *  après un retour depuis l'installateur). */
+     *  après un retour depuis l'installateur). Retourne false quand l'APK a
+     *  disparu (purge des médias de session, issue #108) — l'état retombe à
+     *  « télécharger », un nouveau téléchargement le remettra à jour. */
     fun relancerInstallation(): Boolean {
         val fichier = (_état.value.téléchargement as? TéléchargementMaj.Réussi)?.fichier
             ?: return false
+        if (!fichier.exists()) {
+            remettreÀZéroTéléchargement()
+            return false
+        }
         return lancerInstallation(fichier)
     }
 

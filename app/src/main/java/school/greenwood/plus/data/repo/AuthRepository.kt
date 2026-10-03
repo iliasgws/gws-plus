@@ -18,6 +18,9 @@ class AuthRepository(
     private val client: BotiClient,
     private val session: SessionStore,
     private val caches: CachesSession,
+    // Médias binaires de la session : mêmes moments de purge que les caches de
+    // données (issue #108).
+    private val purgeMedias: suspend () -> Unit = {},
 ) {
 
     suspend fun connexion(
@@ -49,8 +52,10 @@ class AuthRepository(
         val eleveChoisi = eleveId.ifBlank { eleves.firstOrNull()?.id ?: "" }
 
         // Les caches de dernière donnée connue appartiennent à la session
-        // précédente (issue #21) — purgés avant d'écrire la nouvelle.
+        // précédente (issue #21) — purgés avant d'écrire la nouvelle. Idem
+        // pour les médias binaires (issue #108).
         caches.vider()
+        purgeMedias()
         session.enregistrer(
             keyToken = keyToken,
             userId = userId,
@@ -75,6 +80,7 @@ class AuthRepository(
     suspend fun déconnexion() {
         runCatching { client.post("logout") }
         caches.vider()
+        purgeMedias()
         session.effacer()
     }
 

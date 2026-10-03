@@ -2,11 +2,14 @@ package school.greenwood.plus
 
 import android.app.Application
 import android.content.Context
+import coil3.SingletonImageLoader
 import kotlinx.coroutines.flow.first
 import school.greenwood.plus.data.api.BotiClient
 import school.greenwood.plus.data.api.BotiHttp
 import school.greenwood.plus.data.api.CommunApi
 import school.greenwood.plus.data.cache.CachesSession
+import school.greenwood.plus.data.cache.PurgeMedias
+import school.greenwood.plus.data.cache.fabriquerChargeur
 import school.greenwood.plus.data.repo.AuthRepository
 import school.greenwood.plus.data.repo.BoutiqueRepository
 import school.greenwood.plus.data.repo.CommunauteRepository
@@ -52,7 +55,7 @@ class AppContainer(context: Context) {
     // remise à zéro.
     val veille = VeilleSession()
 
-    val auth = AuthRepository(client, session, caches)
+    val auth = AuthRepository(client, session, caches) { PurgeMedias(context).purger() }
     val registre = RegistreRepository(client, session, caches)
     val cours = CoursRepository(client, caches)
     val devoirs = DevoirsRepository(client, caches, session)
@@ -79,6 +82,8 @@ class GwsApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        // Chargeur d'images aux clés de cache stables hors URL signée (issue #108).
+        SingletonImageLoader.setSafe { context -> fabriquerChargeur(context) }
         container = AppContainer(this)
     }
 }

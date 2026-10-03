@@ -35,7 +35,9 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,6 +48,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import school.greenwood.plus.AppContainer
 import school.greenwood.plus.model.Attachment
 import school.greenwood.plus.model.Message
@@ -58,6 +61,7 @@ import school.greenwood.plus.ui.components.SqueletteConversation
 import school.greenwood.plus.ui.theme.ControlShape
 import school.greenwood.plus.ui.theme.tabulaire
 import school.greenwood.plus.ui.theme.RegistreTheme
+import school.greenwood.plus.util.CacheAudio
 import school.greenwood.plus.util.Fichiers
 import school.greenwood.plus.util.LecteurAudio
 import school.greenwood.plus.util.frenchFull
@@ -70,7 +74,8 @@ import java.util.Locale
  * Fil de conversation avec l'administration (issue #10). Bulles — fond sage =
  * administration, page bordée sage = parent ; séparateurs de date, horodatages
  * et accusés de lecture (`vu_le`) sur les messages du parent. Pièces jointes
- * et messages vocaux joués en ligne.
+ * téléchargées à la demande ; messages vocaux joués depuis le cache local
+ * quand il répond, en flux sur l'URL signée sinon (issue #108).
  *
  * Composeur (seconde partie) — actif par défaut (envoi réel validé le
  * 19/09/2026), interrupteur dans l'onglet Messages. Envoi optimiste :
@@ -504,7 +509,22 @@ private fun LignePièceJointe(
 @Composable
 private fun LigneAudio(pièce: Attachment) {
     var version by remember { mutableIntStateOf(0) }
-    val lecteur = remember(pièce.url) { LecteurAudio(pièce.url) { version++ } }
+    val context = LocalContext.current
+    val portée = rememberCoroutineScope()
+    // Issue #108 : une voix déjà en cache naît sur son fichier local (l'URL
+    // signée expire en 15–20 minutes) ; sinon la ligne démarre sur le flux —
+    // réponse immédiate, exactement comme jusqu'ici, jamais d'appui mort.
+    // Le premier appui lance en arrière-plan le téléchargement qui rendra la
+    // visite suivante locale : le lecteur en place ne change jamais de
+    // source (un échange pendant la lecture ne le ferait pas redémarrer) et
+    // la lecture démarre tout de suite sur la source en cours.
+    val source = remember(pièce.url) {
+        CacheAudio.enCache(context, pièce.url)?.absolutePath ?: pièce.url
+    }
+    // Une seule préparation par ligne : le prochain tour d'appui n'a plus
+    // rien à télécharger (le fichier est déjà là).
+    var préparé by remember(pièce.url) { mutableStateOf(false) }
+    val lecteur = remember(source) { LecteurAudio(source) { version++ } }
     DisposableEffect(lecteur) {
         onDispose { lecteur.libérer() }
     }
@@ -518,7 +538,15 @@ private fun LigneAudio(pièce: Attachment) {
     Row(
         modifier = Modifier
             .clip(ControlShape)
-            .clickable { lecteur.basculer() }
+            .clickable {
+                if (!préparé) {
+                    préparé = true
+                    // Téléchargement détaché : la prochaine composition
+                    // (reprise du fil, réouverture) naît sur le fichier.
+                    portée.launch { runCatching { CacheAudio.préparer(context, pièce.url) } }
+                }
+                lecteur.basculer()
+            }
             .padding(horizontal = 6.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp),
