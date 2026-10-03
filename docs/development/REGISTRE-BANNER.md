@@ -1,7 +1,8 @@
-# Registre and Cours banners: scroll, collapse, and pin
+# Screen banners: scroll, collapse, and pin
 
 This document describes the banner prepared for **0.9.8**, including the
-settings introduced in **0.9.8-beta.7** and **beta.8**. Both tabs use the same behavior: **start fully visible, scroll upward
+settings introduced in **0.9.8-beta.7–9**. Registre, Cours, Devoirs, Documents,
+and Actualités use the same behavior: **start fully visible, scroll upward
 with the feed, then stop moving when only a short faded strip remains**.
 The feed continues scrolling behind that strip.
 
@@ -10,7 +11,10 @@ The feed continues scrolling behind that strip.
 - `app/src/main/java/school/greenwood/plus/ui/screens/registre/BanniereRegistre.kt`:
   Registre image selection and static Compose preview.
 - `app/src/main/java/school/greenwood/plus/ui/components/BanniereOnglet.kt`:
-  shared image rendering, dimensions, and gradients for both tabs.
+  shared image rendering, dimensions, and gradients for all five screens.
+- `app/src/main/java/school/greenwood/plus/ui/components/EcranBanniere.kt`:
+  shared collapsing-banner viewport for Devoirs, Documents, and Actualités,
+  with a single list, status-icon lifecycle, and optional pull-to-refresh.
 - `app/src/main/java/school/greenwood/plus/ui/screens/cours/CoursScreen.kt`:
   Cours list state, collapse offset, insets, and status-icon appearance.
 - `app/src/main/java/school/greenwood/plus/ui/screens/registre/RegistreScreen.kt`:
@@ -18,6 +22,8 @@ The feed continues scrolling behind that strip.
 - `app/src/main/res/drawable-nodpi/registre_banner.png`: supplied school image.
 - `app/src/main/res/drawable-nodpi/cours_banner.png`: supplied desk illustration.
   Its printed timetable is decorative artwork, not the server's timetable data.
+- `app/src/main/res/drawable-nodpi/{devoirs,documents,actualites}_banner.png`:
+  the other three supplied illustrations, also decorative rather than live data.
 - `app/src/main/java/school/greenwood/plus/MainActivity.kt`: existing
   `enableEdgeToEdge()` setup.
 - `app/src/main/java/school/greenwood/plus/ui/AppNav.kt`: the shell's
@@ -27,7 +33,9 @@ The feed continues scrolling behind that strip.
 
 Under **Paramètres → Apparence**, the **Bannière du Registre** switch
 controls a device-wide app preference. **Bannière des Cours** independently
-controls the Cours illustration. Both are enabled by default.
+controls the Cours illustration. **Bannière des Devoirs**, **Bannière des
+Documents**, and **Bannière des Actualités** control the other screens.
+All five are enabled by default.
 
 - `SessionStore.Clefs.banniereRegistre` uses the boolean DataStore key
   `banniere_registre_activee` in the existing `gws_session` store.
@@ -49,6 +57,11 @@ controls the Cours illustration. Both are enabled by default.
 Cours follows the same persistence pattern with `banniere_cours_activee`,
 `bannièreCoursActivée`, and `définirBannièreCours()`. Neither switch changes
 the other tab's preference.
+
+The three additional keys are `banniere_devoirs_activee`,
+`banniere_documents_activee`, and `banniere_actualites_activee`. Each has
+its own flow, setter, and `ParamètresÉtat` field; changing one preference
+never writes another banner's key.
 
 ## Dimensions and threshold
 
@@ -175,6 +188,26 @@ open the existing fullscreen image viewer.
 
 ## Loading, errors, and refresh
 
+### Devoirs, Documents, and Actualités integration
+
+These screens use `EcranBanniere` with their own `LazyListState` and image.
+The title and controls are list items, so day selection, search, filters,
+and data all scroll under the pinned strip. Devoirs and Documents keep
+their existing explicit retry actions; Actualités passes its existing
+refresh callback to the optional `PullToRefreshBox`.
+
+Each screen keeps its existing content actions: homework detail and local
+completion, community attachments, document downloads, quizzes, and news
+article/image viewing. The decorative banner itself has no image-viewer action.
+
+Skeletons are called with `défilable = false` within the outer list to
+avoid nesting two vertically scrollable containers. Loading, error, and
+empty states remain list items and can participate in banner collapse.
+
+Actualités reuses the same list state for pagination. Its near-end detector
+also checks that actual posts exist, so the added title or skeleton items
+cannot trigger a page request for an empty news list.
+
 ### Cours integration
 
 Cours puts its title, week-navigation controls, error banner, day chips, and
@@ -222,6 +255,10 @@ For manual visual verification, install the beta APK and check:
   Re-enable it, restart the app, and verify the saved preference.
 - Repeat for Cours, and verify all four combinations of the two switches:
   both enabled, Registre only, Cours only, and both disabled.
+- Repeat for Devoirs, Documents, and Actualités, toggling one at a time and
+  checking the other screens retain their own saved choices. Verify homework
+  day chips and actions, document search/filters/downloads/quiz navigation,
+  and news pagination/refresh/image viewing.
 
 The static Compose preview covers the banner artwork and gradients only;
 the collapse interaction requires the `RegistreScreen` list. Gradle checks

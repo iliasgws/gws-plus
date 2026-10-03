@@ -80,6 +80,27 @@ private val OptionsActualisation = listOf(
 )
 
 @Composable
+private fun RéglageBannière(titre: String, actif: Boolean, surChangement: (Boolean) -> Unit) {
+    GwsCard(modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth()
+                .toggleable(value = actif, role = Role.Switch, onValueChange = surChangement)
+                .padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Text(
+                text = titre,
+                style = MaterialTheme.typography.bodyMedium,
+                color = RegistreTheme.colors.ink,
+                modifier = Modifier.weight(1f),
+            )
+            Switch(checked = actif, onCheckedChange = null)
+        }
+    }
+}
+
+@Composable
 fun ParametresScreen(
     container: AppContainer,
     padding: PaddingValues,
@@ -197,6 +218,9 @@ fun ParametresScreen(
                     Switch(checked = état.bannièreCoursActivée, onCheckedChange = null)
                 }
             }
+            RéglageBannière("Bannière des Devoirs", état.bannièreDevoirsActivée, vm::définirBannièreDevoirs)
+            RéglageBannière("Bannière des Documents", état.bannièreDocumentsActivée, vm::définirBannièreDocuments)
+            RéglageBannière("Bannière des Actualités", état.bannièreActualitésActivée, vm::définirBannièreActualités)
             SectionLabel("Actualisation des données")
 
             GwsCard(modifier = Modifier.fillMaxWidth()) {

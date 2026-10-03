@@ -76,6 +76,9 @@ class SessionStore(private val context: Context) : CompteCommunautaire {
         val actualisationRetour = intPreferencesKey("actualisation_retour_minutes")
         val banniereRegistre = booleanPreferencesKey("banniere_registre_activee")
         val banniereCours = booleanPreferencesKey("banniere_cours_activee")
+        val banniereDevoirs = booleanPreferencesKey("banniere_devoirs_activee")
+        val banniereDocuments = booleanPreferencesKey("banniere_documents_activee")
+        val banniereActualites = booleanPreferencesKey("banniere_actualites_activee")
 
         /** Mises à jour (issue #46) : millisecondes du dernier contrôle GitHub,
          *  canal choisi — stable par défaut, bêtas sur option — et dernière
@@ -171,6 +174,22 @@ class SessionStore(private val context: Context) : CompteCommunautaire {
 
     suspend fun définirBannièreCours(actif: Boolean) {
         context.dataStore.edit { it[Clefs.banniereCours] = actif }
+    }
+
+    val bannièreDevoirsActivée: Flow<Boolean> = context.dataStore.data.map { it[Clefs.banniereDevoirs] ?: true }
+    val bannièreDocumentsActivée: Flow<Boolean> = context.dataStore.data.map { it[Clefs.banniereDocuments] ?: true }
+    val bannièreActualitésActivée: Flow<Boolean> = context.dataStore.data.map { it[Clefs.banniereActualites] ?: true }
+
+    suspend fun définirBannièreDevoirs(actif: Boolean) {
+        context.dataStore.edit { it[Clefs.banniereDevoirs] = actif }
+    }
+
+    suspend fun définirBannièreDocuments(actif: Boolean) {
+        context.dataStore.edit { it[Clefs.banniereDocuments] = actif }
+    }
+
+    suspend fun définirBannièreActualités(actif: Boolean) {
+        context.dataStore.edit { it[Clefs.banniereActualites] = actif }
     }
 
     /** Millisecondes du dernier contrôle de mise à jour (null = jamais). */

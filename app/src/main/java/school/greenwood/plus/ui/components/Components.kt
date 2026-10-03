@@ -509,11 +509,11 @@ fun SqueletteRegistre() {
 /** Squelette des devoirs : cartes de devoir sous le sélecteur de jour réel
  *  (toujours affiché au-dessus) — matière, titre, corps déroulé. */
 @Composable
-fun SqueletteDevoirs() {
+fun SqueletteDevoirs(défilable: Boolean = true) {
     Column(
         modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
+            .fillMaxWidth()
+            .then(if (défilable) Modifier.verticalScroll(rememberScrollState()) else Modifier)
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
@@ -551,11 +551,11 @@ fun SqueletteDevoirs() {
  *  au-dessus ; ici, groupes par matière — monogramme sur annotation puis deux
  *  lignes de texte. */
 @Composable
-fun SqueletteDocuments() {
+fun SqueletteDocuments(défilable: Boolean = true) {
     Column(
         modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
+            .fillMaxWidth()
+            .then(if (défilable) Modifier.verticalScroll(rememberScrollState()) else Modifier)
             .padding(horizontal = 16.dp, vertical = 4.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
@@ -864,11 +864,11 @@ fun SqueletteQuiz() {
 
 /** Squelette du flux d'actualités : cartes d'actualités avec vignette. */
 @Composable
-fun SqueletteActualites() {
+fun SqueletteActualites(défilable: Boolean = true) {
     Column(
         modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
+            .fillMaxWidth()
+            .then(if (défilable) Modifier.verticalScroll(rememberScrollState()) else Modifier)
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {

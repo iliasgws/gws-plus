@@ -35,10 +35,12 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import school.greenwood.plus.AppContainer
+import school.greenwood.plus.R
 import school.greenwood.plus.ui.ActualitesViewModel
 import school.greenwood.plus.ui.components.AperçuImage
 import school.greenwood.plus.ui.components.AperçuImageRapide
 import school.greenwood.plus.ui.components.BandeauErreur
+import school.greenwood.plus.ui.components.EcranBanniere
 import school.greenwood.plus.ui.components.CarteActualité
 import school.greenwood.plus.ui.components.EmptyState
 import school.greenwood.plus.ui.components.SqueletteActualites
@@ -62,14 +64,16 @@ fun ActualitesScreen(
     val vm: ActualitesViewModel = viewModel { ActualitesViewModel(container) }
     val état by vm.état.collectAsStateWithLifecycle()
     val listState = rememberLazyListState()
+    val bannièreActivée by container.session.bannièreActualitésActivée.collectAsStateWithLifecycle(initialValue = true)
 
     // Défilement infini : déclenche la page suivante à l'approche de la fin (3 derniers éléments)
-    val chargerPlus by remember {
+    val actualitésPrésentes = état.liste.isNotEmpty()
+    val chargerPlus by remember(actualitésPrésentes) {
         derivedStateOf {
             val layoutInfo = listState.layoutInfo
             val totalItems = layoutInfo.totalItemsCount
             val lastVisible = layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
-            totalItems > 0 && lastVisible >= totalItems - 3
+            actualitésPrésentes && totalItems > 0 && lastVisible >= totalItems - 3
         }
     }
 
@@ -83,16 +87,18 @@ fun ActualitesScreen(
     var visualisation: VisualisationImage? by remember { mutableStateOf(null) }
     var aperçu: AperçuImage? by remember { mutableStateOf(null) }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(RegistreTheme.colors.paper)
-            .padding(padding),
+    EcranBanniere(
+        image = R.drawable.actualites_banner,
+        activée = bannièreActivée,
+        padding = padding,
+        liste = listState,
+        rafraîchissement = état.rafraîchissement,
+        surActualiser = { vm.rafraîchir() },
     ) {
+        item(key = "entete") {
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .fillMaxWidth(),
         ) {
             Text(
                 text = "Actualités",
@@ -114,41 +120,33 @@ fun ActualitesScreen(
                 color = RegistreTheme.colors.chalk,
             )
         }
+        }
 
         état.erreur?.let { err ->
+            item(key = "erreur") {
             BandeauErreur(
                 message = err,
                 réessayer = { vm.charger(force = true) },
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                modifier = Modifier.padding(vertical = 4.dp),
             )
+            }
         }
 
-        PullToRefreshBox(
-            isRefreshing = état.rafraîchissement,
-            onRefresh = { vm.rafraîchir() },
-            modifier = Modifier.fillMaxSize(),
-        ) {
             when {
                 état.chargement && état.liste.isEmpty() -> {
-                    SqueletteActualites()
+                    item(key = "chargement") { SqueletteActualites(défilable = false) }
                 }
 
                 !état.chargement && état.liste.isEmpty() -> {
-                    EmptyState(
+                    item(key = "vide") { EmptyState(
                         titre = "Aucune actualité",
                         message = "L'école n'a pas encore publié d'actualités.",
                         modifier = Modifier.padding(top = 40.dp),
                         icone = Icons.Rounded.Newspaper,
-                    )
+                    ) }
                 }
 
                 else -> {
-                    LazyColumn(
-                        state = listState,
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 24.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                    ) {
                         items(état.liste, key = { it.id }) { post ->
                             CarteActualité(
                                 post = post,
@@ -176,10 +174,8 @@ fun ActualitesScreen(
                                 }
                             }
                         }
-                    }
                 }
             }
-        }
     }
 
     // Surfaces plein écran, rendues au-dessus de tout l'écran.

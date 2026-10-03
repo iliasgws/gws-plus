@@ -1721,6 +1721,9 @@ class CoursViewModel(private val container: AppContainer) : ViewModel() {
 data class ParamètresÉtat(
     val bannièreRegistreActivée: Boolean = true,
     val bannièreCoursActivée: Boolean = true,
+    val bannièreDevoirsActivée: Boolean = true,
+    val bannièreDocumentsActivée: Boolean = true,
+    val bannièreActualitésActivée: Boolean = true,
     /** Minutes d'absence déclenchant l'actualisation au retour ; 0 = « jamais ». */
     val minutesRetour: Int = 5,
 
@@ -1753,6 +1756,21 @@ class ParametresViewModel(private val container: AppContainer) : ViewModel() {
             }
         }
         viewModelScope.launch {
+            container.session.bannièreDevoirsActivée.collect { actif ->
+                _état.update { it.copy(bannièreDevoirsActivée = actif) }
+            }
+        }
+        viewModelScope.launch {
+            container.session.bannièreDocumentsActivée.collect { actif ->
+                _état.update { it.copy(bannièreDocumentsActivée = actif) }
+            }
+        }
+        viewModelScope.launch {
+            container.session.bannièreActualitésActivée.collect { actif ->
+                _état.update { it.copy(bannièreActualitésActivée = actif) }
+            }
+        }
+        viewModelScope.launch {
             container.session.actualisationRetour.collect { minutes ->
                 _état.update { it.copy(minutesRetour = minutes) }
             }
@@ -1781,6 +1799,18 @@ class ParametresViewModel(private val container: AppContainer) : ViewModel() {
 
     fun définirBannièreCours(actif: Boolean) {
         viewModelScope.launch { container.session.définirBannièreCours(actif) }
+    }
+
+    fun définirBannièreDevoirs(actif: Boolean) {
+        viewModelScope.launch { container.session.définirBannièreDevoirs(actif) }
+    }
+
+    fun définirBannièreDocuments(actif: Boolean) {
+        viewModelScope.launch { container.session.définirBannièreDocuments(actif) }
+    }
+
+    fun définirBannièreActualités(actif: Boolean) {
+        viewModelScope.launch { container.session.définirBannièreActualités(actif) }
     }
 
     /** Normalisée à l'écriture (schéma ajouté, « /» de fin retirés). */

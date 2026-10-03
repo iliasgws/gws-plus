@@ -4,6 +4,20 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [0.9.8-beta.9] — 2026-10-03
+
+### Préversion (bêta)
+
+### Ajouté
+
+- Devoirs, Documents et Actualités affichent chacun l'illustration fournie,
+  avec le même défilement puis épinglage et le fondu de 64 dp.
+- Chaque bannière dispose de son propre interrupteur mémorisé dans
+  Paramètres → Apparence, indépendamment du Registre et des Cours.
+- Les en-têtes, filtres et contenus partagent le défilement ; les actions
+  des devoirs, les téléchargements, les quiz et la pagination des actualités
+  restent disponibles.
+
 ## [0.9.8-beta.8] — 2026-10-03
 
 ### Préversion (bêta)
