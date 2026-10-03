@@ -545,6 +545,8 @@ detail screen belongs to the tab it was opened from.
 
 Hotfix target: `0.9.6-beta.1` (versionCode 81), published from
 `fix/profile-picture-preview` before preparing any stable `0.9.6`.
+The user confirmed the fix works on 2026-10-03 and authorized merging the
+hotfix and publishing stable `0.9.6` (versionCode 82).
 
 - [x] Registre loads renew signed profile-photo URLs through the documented
       `acces_check` call, including pull-to-refresh and foreground-return refresh.
@@ -553,8 +555,8 @@ Hotfix target: `0.9.6-beta.1` (versionCode 81), published from
       selected child and the remember-session preference.
 - [x] Shared avatars show initials while loading or on image failure, with
       center-cropped photos on success.
-- [ ] On-device check: reopen with an expired avatar URL, then pull to refresh;
-      verify the profile pill and account sheet show the renewed photo.
+- [x] On-device confirmation: `0.9.6-beta.1` installed on the Xiaomi;
+      the user confirmed the profile-picture fix works (2026-10-03).
 
 Small feature, no milestone: the app is opened several times a day; coming
 back after minutes away should show fresh data without anyone thinking

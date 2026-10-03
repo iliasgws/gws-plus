@@ -4,6 +4,14 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [0.9.6] — 2026-10-03
+
+Correctif stable après la bêta 0.9.6-beta.1, confirmé sur appareil : la
+photo de profil retrouve un lien valide au chargement du Registre et lors
+de son actualisation. Les initiales restent visibles pendant le chargement
+ou en cas d'échec de l'image. Le détail figure dans la section de bêta
+ci-dessous.
+
 ## [0.9.6-beta.1] — 2026-10-03
 
 ### Préversion (bêta)
