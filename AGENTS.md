@@ -42,6 +42,7 @@ Current contents (update this section whenever files are added or removed):
 | `…/GwsApplication.kt` | Manual DI container (`AppContainer`), including homework refresh signals |
 | `…/MainActivity.kt` | Single activity, edge-to-edge, Compose |
 | `…/ui/AppNav.kt` | Root state (onboarding → connexion → registre) + 6-tab shell (Registre, Cours, Devoirs, Documents, Messages, Plus — secondary sections live under Plus), back-stack contract |
+| `…/ui/screens/LoginScreen.kt` | Login form with the existing app icon beside the GWS+ title |
 | `…/ui/AppViewModels.kt` | One ViewModel per screen |
 | `…/ui/theme/` | « École vivante » tokens: colors + per-tab accents, Bricolage/Public Sans type, 24/16/10 shapes, motion springs (Mouvement.kt) |
 | `…/ui/components/` | Shared composables (Components.kt: GwsCard, Puce, EmptyState, skeletons…, SqueletteCommunaute (issue #88); CarteActualite.kt; CarteMiseAJour.kt: GitHub update card; BadgeIA.kt: « Généré par IA » icon + badge, issue #58; BarreOnglets.kt: custom accent bottom bar; DialogueDéconnexion.kt: sign-out confirmation, issue #101) |

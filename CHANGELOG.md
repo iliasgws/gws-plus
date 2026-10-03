@@ -17,6 +17,7 @@ les sections de bêta ci-dessous.
 
 ### Changé
 
+- L'écran de connexion affiche l'icône de l'application à côté du titre « GWS+ ».
 - L'accueil (Registre) s'actualise en tirant vers le bas : le bouton
   « Actualiser » de l'en-tête a disparu, comme sur les autres écrans de
   l'app. Le geste rafraîchit le registre et contrôle en silence les mises à
