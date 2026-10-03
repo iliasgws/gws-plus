@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -43,11 +44,14 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -57,16 +61,21 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import school.greenwood.plus.AppContainer
+import school.greenwood.plus.logic.GalerieImages
 import school.greenwood.plus.model.Attachment
 import school.greenwood.plus.model.Commentaire
 import school.greenwood.plus.model.QuestionPost
 import school.greenwood.plus.ui.PostDetailViewModel
+import school.greenwood.plus.ui.components.AperçuImage
+import school.greenwood.plus.ui.components.AperçuImageRapide
 import school.greenwood.plus.ui.components.BandeauErreur
 import school.greenwood.plus.ui.components.GwsAvatar
 import school.greenwood.plus.ui.components.GwsCard
 import school.greenwood.plus.ui.components.Puce
 import school.greenwood.plus.ui.components.SectionLabel
 import school.greenwood.plus.ui.components.SquelettePostDetail
+import school.greenwood.plus.ui.components.VisualisationImage
+import school.greenwood.plus.ui.components.VisualiseurImages
 import school.greenwood.plus.ui.theme.AnnotationShape
 import school.greenwood.plus.ui.theme.ControlShape
 import school.greenwood.plus.ui.theme.PageShape
@@ -95,6 +104,13 @@ fun PostDetailScreen(
     val état by vm.état.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val téléchargements = remember { mutableStateMapOf<String, Boolean>() }
+
+    // Visualiseur plein écran / aperçu rapide des images (appui simple / appui long).
+    var visualisation: VisualisationImage? by remember { mutableStateOf(null) }
+    var aperçu: AperçuImage? by remember { mutableStateOf(null) }
+    val listeImages = remember(état.detail) {
+        GalerieImages.liste(état.detail?.image, état.detail?.images.orEmpty())
+    }
 
     Column(
         modifier = Modifier
@@ -184,20 +200,36 @@ fun PostDetailScreen(
                             }
                         }
 
-                        // Image principale de couverture
+                        // Image principale de couverture.
+                        // Appui simple → visualiseur plein écran (galerie navigable,
+                        // position de départ = image touchée) ; appui long → aperçu rapide.
                         detail.image?.let { url ->
                             AsyncImage(
                                 model = url,
-                                contentDescription = null,
+                                contentDescription = "Afficher l'image en plein écran",
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .heightIn(max = 240.dp)
-                                    .clip(PageShape),
+                                    .clip(PageShape)
+                                    .pointerInput(url, listeImages) {
+                                        detectTapGestures(
+                                            onTap = {
+                                                visualisation = VisualisationImage(
+                                                    images = listeImages,
+                                                    index = GalerieImages.indexDépart(listeImages, url),
+                                                    titre = detail.title,
+                                                )
+                                            },
+                                            onLongPress = { aperçu = AperçuImage(url, detail.title) },
+                                        )
+                                    },
                                 contentScale = ContentScale.Crop,
                             )
                         }
 
-                        // Galerie d'images secondaires si présentes (> 1 image)
+                        // Galerie d'images secondaires si présentes (> 1 image).
+                        // Appui simple sur une vignette → visualiseur plein écran
+                        // (position de départ = vignette touchée) ; appui long → aperçu rapide.
                         if (detail.images.isNotEmpty()) {
                             Row(
                                 modifier = Modifier
@@ -205,13 +237,25 @@ fun PostDetailScreen(
                                     .horizontalScroll(rememberScrollState()),
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                             ) {
-                                detail.images.forEach { imgUrl ->
+                                detail.images.forEachIndexed { _, imgUrl ->
                                     AsyncImage(
                                         model = imgUrl,
-                                        contentDescription = null,
+                                        contentDescription = "Afficher l'image en plein écran",
                                         modifier = Modifier
                                             .size(100.dp)
-                                            .clip(ControlShape),
+                                            .clip(ControlShape)
+                                            .pointerInput(imgUrl, listeImages) {
+                                                detectTapGestures(
+                                                    onTap = {
+                                                        visualisation = VisualisationImage(
+                                                            images = listeImages,
+                                                            index = GalerieImages.indexDépart(listeImages, imgUrl),
+                                                            titre = detail.title,
+                                                        )
+                                                    },
+                                                    onLongPress = { aperçu = AperçuImage(imgUrl, detail.title) },
+                                                )
+                                            },
                                         contentScale = ContentScale.Crop,
                                     )
                                 }
@@ -417,6 +461,31 @@ fun PostDetailScreen(
                     Text("Fermer", color = RegistreTheme.colors.ink)
                 }
             },
+        )
+    }
+
+    visualisation?.let { v ->
+        VisualiseurImages(
+            images = v.images,
+            indexInitial = v.index,
+            titre = v.titre,
+            fermer = { visualisation = null },
+        )
+    }
+
+    aperçu?.let { a ->
+        AperçuImageRapide(
+            url = a.url,
+            titre = a.titre,
+            agrandir = {
+                visualisation = VisualisationImage(
+                    images = listeImages,
+                    index = GalerieImages.indexDépart(listeImages, a.url),
+                    titre = a.titre,
+                )
+                aperçu = null
+            },
+            fermer = { aperçu = null },
         )
     }
 }

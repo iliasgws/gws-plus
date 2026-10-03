@@ -148,6 +148,11 @@ L'actualisation se fait au geste — **tirer vers le bas** (`PullToRefreshBox`),
 comme sur les autres écrans de listes ; aucun bouton d'actualisation nulle
 part dans l'app, l'en-tête ne porte que le menu et la pilule de l'élève.
 
+L'appui long sur une carte ouvre un **aperçu rapide** (`FeuilleApercu`,
+feuille modale) : le contenu réel de la carte — type, titre, date, corps,
+vignette — sans quitter le fil ; le toucher extérieur ou le retour Android
+la referme, et son action éventuelle ferme la feuille avant de naviguer.
+
 Flux chronologique du jour : entrées d'actualité (GET `nouveautes`, détail
 `post_view`, épinglés `pinned_posts`), devoirs donnés aujourd'hui (GET
 `devoirs`), absences (GET `absences`), messages récents (GET `messages`).

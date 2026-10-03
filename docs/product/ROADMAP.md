@@ -1139,3 +1139,94 @@ issue #21.
       file in `Download/gws-plus`; voice replay after leaving and reopening
       the conversation; logout → login as another account → no image,
       document or voice of the previous one remains
+## Long-press preview on the Registre cards (issue #107, branch `t3code/fix-issue-107`)
+
+Reading a card meant navigating to it: the homework, absence and message
+cards were tap-inert, and a news card always left the feed. A long press
+now opens the card's real content in a bottom sheet instead — no
+navigation, the Registre stays where it is.
+
+- [x] New `ui/screens/registre/Apercu.kt`: pure mapping `apercuDe` for the
+      four entry types (actualité, devoir, absence, message) plus
+      `apercuDe(Post)` for the latest news — real fields only, a missing
+      field is null, never invented; HTML stays raw in the model and is
+      flattened only at display time (`htmlToPlainMultiline`)
+- [x] `FeuilleApercu` ModalBottomSheet: type puce, title, French date,
+      detail rows (matière, enseignant, échéance, état, pièces jointes…),
+      160 dp vignette on a sage fallback, scrolling body; outside touch or
+      the Android back gesture dismisses it, it never navigates by itself
+- [x] Optional action button at the bottom of the sheet: it closes the
+      sheet first, then navigates — « Lire l'actualité » (post detail),
+      « Ouvrir le devoir » (devoir detail), « Ouvrir la conversation »;
+      the absence sheet has no action (no detail screen exists for it)
+- [x] Optional `onLongClick` / `surApercu` parameters on `CarteActualité`
+      and on `SectionActualitéUne` / `CarteActualitéUne`, through
+      `combinedClickable(onLongClickLabel = "Afficher l'aperçu rapide")`;
+      a null callback keeps the modifier chain and behaviour unchanged
+- [x] The three tap-inert cards (devoir, absence, message) gain the same
+      long press via `Modifier.appuiLong`: `pointerInput(Unit)` +
+      `detectTapGestures(onLongPress)` over a `rememberUpdatedState`
+      action (the detector is created once, so an in-progress press
+      survives a recomposition of the feed), a merged-semantics long-click
+      action (TalkBack alternative « Afficher l'aperçu rapide », same
+      merged node a `clickable` card would give) and an explicit
+      `HapticFeedbackType.LongPress`; the two already-clickable cards rely
+      on foundation's built-in long-press haptic — one buzz per trigger
+- [x] Scope: « Ce soir » and the quick-access cards stay out on purpose —
+      the focal card already lists every homework it holds, and the quick
+      access cards are pure navigation with nothing to preview
+- [x] `AppNav.kt` wiring: two new `RegistreScreen` callbacks,
+      `allerDétail("devoir/$id")` and `allerDétail("conversation/$id")` —
+      both push on the Registre tab's stack, so Android back returns to
+      the Registre (NAVIGATION.md contract)
+- [x] Tests: `ApercuTest` — 12 unit tests on the pure mapping (real fields
+      only, raw HTML kept, nulls over guesses, post preview ≡ entry
+      preview)
+- [ ] On-device check: TalkBack announces and activates the long-press
+      action on every card, and exactly one haptic buzz fires per trigger
+      (no double buzz on the already-clickable cards)
+- [ ] On-device check: a slow scroll never opens the sheet by accident,
+      and closing the sheet leaves the feed at the same scroll offset
+- [ ] Regression pass on the Android back gesture, in every section of the
+      app, after a preview has been opened (project's #1 priority)
+
+## Full-screen news images (issue #109, branch `feat/issue-109-visuel-actualites`)
+
+News images finally have a real viewer: a tap opens the photo full screen, a
+long press previews it first, and the article underneath keeps its own
+navigation. Both surfaces are dialogs drawn above the screen — no new route,
+so the back-stack contract (`docs/development/NAVIGATION.md`) is untouched.
+
+- [x] `logic/GalerieImages.kt`: the pure rules — cover first then the
+      server's gallery (trimmed, blanks and duplicates dropped, source order
+      kept), start index of the touched image, « 2 / 5 » label and TalkBack
+      description (« Image 2 sur 5 — Titre »), zoom clamped to 1..8,
+      letterboxed displayed size and offset clamped to the image's own edges
+      (back to scale 1 ⇒ framing reset)
+- [x] `ui/components/VisualiseurImages.kt`: `VisualiseurImages` — fullscreen
+      `Dialog` (black, edge-to-edge, white system-bar icons in both themes,
+      Android 11+ controller with the androidx fallback) with
+      `HorizontalPager` starting on the touched image, a hand-written
+      pinch/pan gesture (one-finger pan only when zoomed, nothing consumed
+      at scale 1 so the pager keeps swiping, `userScrollEnabled` off during
+      a two-finger gesture), close button + system back (no `BackHandler` —
+      the back contract stays the system's), loading spinner and
+      broken-image fallback, position pill « 2 / 5 »;
+      `AperçuImageRapide` — the long-press preview, tap anywhere closes,
+      « Agrandir » upgrades to the viewer on the same image
+- [x] `CarteActualité`: optional `ouvrirImage` / `aperçuImage` callbacks on
+      the 64 dp thumbnail (tap → viewer, long press → preview,
+      `contentDescription` « Afficher l'image en plein écran »); the Registre
+      call site passes none and behaves exactly as before — the Registre
+      card long-press belongs to issue #107
+- [x] Actualités list wires both callbacks (a list post has one image);
+      post detail wires the cover and every gallery thumbnail, opening at
+      the touched image via `GalerieImages.indexDépart`; taps on the text
+      still open the article (the child gesture consumes before the card's
+      `clickable` — the Main pointer pass runs leaf → root)
+- [x] Tests: `GalerieImagesTest` (21 tests: liste/index/label/description/
+      zoom/fit/offset rules) — `:app:assembleDebug` +
+      `:app:testDebugUnitTest` green (210 tests)
+- [ ] On-device check: tap → viewer → pinch → swipe → close, long-press
+      preview → « Agrandir », 1 image / several images / missing image /
+      slow network, and the Android back gesture from the viewer

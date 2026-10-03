@@ -25,7 +25,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -34,10 +36,14 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import school.greenwood.plus.AppContainer
 import school.greenwood.plus.ui.ActualitesViewModel
+import school.greenwood.plus.ui.components.AperçuImage
+import school.greenwood.plus.ui.components.AperçuImageRapide
 import school.greenwood.plus.ui.components.BandeauErreur
 import school.greenwood.plus.ui.components.CarteActualité
 import school.greenwood.plus.ui.components.EmptyState
 import school.greenwood.plus.ui.components.SqueletteActualites
+import school.greenwood.plus.ui.components.VisualisationImage
+import school.greenwood.plus.ui.components.VisualiseurImages
 import school.greenwood.plus.ui.theme.AnnotationShape
 import school.greenwood.plus.ui.theme.RegistreTheme
 
@@ -72,6 +78,10 @@ fun ActualitesScreen(
             vm.pageSuivante()
         }
     }
+
+    // Vignettes : plein écran (visualiseur) ou aperçu rapide au-dessus du flux.
+    var visualisation: VisualisationImage? by remember { mutableStateOf(null) }
+    var aperçu: AperçuImage? by remember { mutableStateOf(null) }
 
     Column(
         modifier = Modifier
@@ -143,6 +153,12 @@ fun ActualitesScreen(
                             CarteActualité(
                                 post = post,
                                 onClick = { ouvrirPost(post.id) },
+                                ouvrirImage = { url ->
+                                    visualisation = VisualisationImage(listOf(url), 0, post.title)
+                                },
+                                aperçuImage = { url ->
+                                    aperçu = AperçuImage(url, post.title)
+                                },
                             )
                         }
 
@@ -164,5 +180,26 @@ fun ActualitesScreen(
                 }
             }
         }
+    }
+
+    // Surfaces plein écran, rendues au-dessus de tout l'écran.
+    visualisation?.let { v ->
+        VisualiseurImages(
+            images = v.images,
+            indexInitial = v.index,
+            titre = v.titre,
+            fermer = { visualisation = null },
+        )
+    }
+    aperçu?.let { a ->
+        AperçuImageRapide(
+            url = a.url,
+            titre = a.titre,
+            agrandir = {
+                visualisation = VisualisationImage(listOf(a.url), 0, a.titre)
+                aperçu = null
+            },
+            fermer = { aperçu = null },
+        )
     }
 }

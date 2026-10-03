@@ -1,6 +1,8 @@
 package school.greenwood.plus.ui.components
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -16,6 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -33,17 +36,45 @@ import school.greenwood.plus.util.htmlToPlainSingleLine
  * publication, le badge de lecture (« Vu le … » issu de `intro`), l'auteur si
  * présent, et la vignette d'image. La puce et le signet se mettent à l'accent
  * de l'endroit d'où la carte est ouverte (vert au Registre, ambre dans le flux).
+ *
+ * Interactions :
+ * - appui court sur la vignette → visualiseur plein écran (`ouvrirImage`) ;
+ * - appui long sur la vignette → aperçu rapide d'image (`aperçuImage`) ;
+ * - appui court sur le reste de la carte → ouvre l'article (`onClick`),
+ *   inchangé ;
+ * - sans ces deux callbacks d'image, la vignette reste décorative et son
+ *   appui ouvre l'article (cas du Registre).
+ *
+ * Appui long facultatif [onLongClick] sur toute la carte : quand il est
+ * fourni, TalkBack annonce aussi l'alternative « Afficher l'aperçu rapide »
+ * (issue #107). Les deux appuis longs cohabitent : l'enfant consomme avant
+ * le parent, le geste sur la vignette n'atteint jamais la carte.
+ *
+ * @param ouvrirImage ouvre la vignette dans le visualiseur plein écran ;
+ *   `null` (par défaut) désactive les gestes sur l'image.
+ * @param aperçuImage ouvre la vignette dans l'aperçu rapide d'image ; `null`
+ *   (par défaut) désactive l'appui long sur la vignette.
  */
 @Composable
 fun CarteActualité(
     post: Post,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    onLongClick: (() -> Unit)? = null,
+    ouvrirImage: ((String) -> Unit)? = null,
+    aperçuImage: ((String) -> Unit)? = null,
 ) {
+    val base = modifier.fillMaxWidth()
     GwsCard(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
+        modifier = if (onLongClick == null) {
+            base.clickable(onClick = onClick)
+        } else {
+            base.combinedClickable(
+                onClick = onClick,
+                onLongClickLabel = "Afficher l'aperçu rapide",
+                onLongClick = onLongClick,
+            )
+        },
     ) {
         Row(
             modifier = Modifier
@@ -105,12 +136,29 @@ fun CarteActualité(
                 }
             }
             post.image?.let { url ->
+                // Gestes propres à la vignette : ils consomment l'appui avant
+                // la carte, qui continue de s'ouvrir sur le reste de son aire.
+                val gestesVignette = if (ouvrirImage != null) {
+                    Modifier.pointerInput(ouvrirImage, aperçuImage, url) {
+                        detectTapGestures(
+                            onTap = { ouvrirImage.invoke(url) },
+                            onLongPress = { aperçuImage?.invoke(url) },
+                        )
+                    }
+                } else {
+                    Modifier
+                }
                 AsyncImage(
                     model = url,
-                    contentDescription = null,
+                    contentDescription = if (ouvrirImage != null) {
+                        "Afficher l'image en plein écran"
+                    } else {
+                        null
+                    },
                     modifier = Modifier
                         .size(64.dp)
-                        .clip(ControlShape),
+                        .clip(ControlShape)
+                        .then(gestesVignette),
                     contentScale = ContentScale.Crop,
                 )
             }
