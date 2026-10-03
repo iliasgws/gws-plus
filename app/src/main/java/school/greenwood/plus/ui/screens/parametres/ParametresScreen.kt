@@ -170,6 +170,33 @@ fun ParametresScreen(
                     Switch(checked = état.bannièreRegistreActivée, onCheckedChange = null)
                 }
             }
+            GwsCard(modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth()
+                        .toggleable(
+                            value = état.bannièreCoursActivée,
+                            role = Role.Switch,
+                            onValueChange = vm::définirBannièreCours,
+                        )
+                        .padding(horizontal = 14.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            text = "Bannière des Cours",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = RegistreTheme.colors.ink,
+                        )
+                        Text(
+                            text = "Afficher l'illustration en haut de l'emploi du temps.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = RegistreTheme.colors.chalk,
+                        )
+                    }
+                    Switch(checked = état.bannièreCoursActivée, onCheckedChange = null)
+                }
+            }
             SectionLabel("Actualisation des données")
 
             GwsCard(modifier = Modifier.fillMaxWidth()) {

@@ -75,6 +75,7 @@ class SessionStore(private val context: Context) : CompteCommunautaire {
          *  Survit à une purge de session (préférence d'app, comme le composeur). */
         val actualisationRetour = intPreferencesKey("actualisation_retour_minutes")
         val banniereRegistre = booleanPreferencesKey("banniere_registre_activee")
+        val banniereCours = booleanPreferencesKey("banniere_cours_activee")
 
         /** Mises à jour (issue #46) : millisecondes du dernier contrôle GitHub,
          *  canal choisi — stable par défaut, bêtas sur option — et dernière
@@ -163,6 +164,13 @@ class SessionStore(private val context: Context) : CompteCommunautaire {
 
     suspend fun définirBannièreRegistre(actif: Boolean) {
         context.dataStore.edit { it[Clefs.banniereRegistre] = actif }
+    }
+
+    val bannièreCoursActivée: Flow<Boolean> =
+        context.dataStore.data.map { it[Clefs.banniereCours] ?: true }
+
+    suspend fun définirBannièreCours(actif: Boolean) {
+        context.dataStore.edit { it[Clefs.banniereCours] = actif }
     }
 
     /** Millisecondes du dernier contrôle de mise à jour (null = jamais). */

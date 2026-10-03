@@ -1,17 +1,23 @@
-# Registre banner: scroll, collapse, and pin
+# Registre and Cours banners: scroll, collapse, and pin
 
 This document describes the banner prepared for **0.9.8**, including the
-setting introduced in **0.9.8-beta.7**. The behavior is: **start fully visible, scroll upward
+settings introduced in **0.9.8-beta.7** and **beta.8**. Both tabs use the same behavior: **start fully visible, scroll upward
 with the feed, then stop moving when only a short faded strip remains**.
 The feed continues scrolling behind that strip.
 
 ## Source files
 
 - `app/src/main/java/school/greenwood/plus/ui/screens/registre/BanniereRegistre.kt`:
-  image, dimensions, gradients, and static Compose preview.
+  Registre image selection and static Compose preview.
+- `app/src/main/java/school/greenwood/plus/ui/components/BanniereOnglet.kt`:
+  shared image rendering, dimensions, and gradients for both tabs.
+- `app/src/main/java/school/greenwood/plus/ui/screens/cours/CoursScreen.kt`:
+  Cours list state, collapse offset, insets, and status-icon appearance.
 - `app/src/main/java/school/greenwood/plus/ui/screens/registre/RegistreScreen.kt`:
   list state, scroll offset, layering, insets, and status-icon appearance.
 - `app/src/main/res/drawable-nodpi/registre_banner.png`: supplied school image.
+- `app/src/main/res/drawable-nodpi/cours_banner.png`: supplied desk illustration.
+  Its printed timetable is decorative artwork, not the server's timetable data.
 - `app/src/main/java/school/greenwood/plus/MainActivity.kt`: existing
   `enableEdgeToEdge()` setup.
 - `app/src/main/java/school/greenwood/plus/ui/AppNav.kt`: the shell's
@@ -20,7 +26,8 @@ The feed continues scrolling behind that strip.
 ## Settings toggle and persistence
 
 Under **Paramètres → Apparence**, the **Bannière du Registre** switch
-controls a device-wide app preference. It is enabled by default.
+controls a device-wide app preference. **Bannière des Cours** independently
+controls the Cours illustration. Both are enabled by default.
 
 - `SessionStore.Clefs.banniereRegistre` uses the boolean DataStore key
   `banniere_registre_activee` in the existing `gws_session` store.
@@ -38,6 +45,10 @@ controls a device-wide app preference. It is enabled by default.
 - The choice survives app restarts and logout: `SessionStore.effacer()`
   removes authentication fields, not this app preference. It is local and
   is never sent to the school API.
+
+Cours follows the same persistence pattern with `banniere_cours_activee`,
+`bannièreCoursActivée`, and `définirBannièreCours()`. Neither switch changes
+the other tab's preference.
 
 ## Dimensions and threshold
 
@@ -139,7 +150,7 @@ much of the small remaining strip is already inside this fade.
 
 Using `RegistreTheme.colors.paper` keeps the blend consistent in light and
 dark themes. To soften or shorten the blend, change the fade height in
-`BanniereRegistre.kt`; do not change the collapse threshold for that purpose.
+`BanniereOnglet.kt`; do not change the collapse threshold for that purpose.
 
 ## Status bar: edge-to-edge, not fullscreen
 
@@ -163,6 +174,22 @@ flags, or change navigation routes. The decorative image has
 open the existing fullscreen image viewer.
 
 ## Loading, errors, and refresh
+
+### Cours integration
+
+Cours puts its title, week-navigation controls, error banner, day chips, and
+lesson cards in one `LazyColumn`. This lets the entire screen move upward
+under the collapsed illustration. Its first item is the title; the same
+100 dp scroll clamp applies, with a 40 dp retained strip plus the status inset.
+The supplied image uses the shared 64 dp fade and has no click action.
+
+The Cours list also handles skeleton and empty states, so the banner can
+collapse even when the server has not published lessons. `SqueletteCours`
+is called with `défilable = false` inside this list: the outer list supplies
+scrolling, avoiding a vertically scrollable child with unbounded height.
+Week-navigation callbacks, day selection, and timetable requests are unchanged.
+
+### Registre integration
 
 The banner sits outside the data-state branches, so it is also present
 during the initial skeleton load or a first-load error. Those branches
@@ -193,6 +220,8 @@ For manual visual verification, install the beta APK and check:
 - Light and dark themes, landscape, and a device with a display cutout.
 - Disable the banner in Settings: no illustration or reserved gap remains.
   Re-enable it, restart the app, and verify the saved preference.
+- Repeat for Cours, and verify all four combinations of the two switches:
+  both enabled, Registre only, Cours only, and both disabled.
 
 The static Compose preview covers the banner artwork and gradients only;
 the collapse interaction requires the `RegistreScreen` list. Gradle checks

@@ -1720,6 +1720,7 @@ class CoursViewModel(private val container: AppContainer) : ViewModel() {
 /** — Paramètres --------------------------------------------------------- */
 data class ParamètresÉtat(
     val bannièreRegistreActivée: Boolean = true,
+    val bannièreCoursActivée: Boolean = true,
     /** Minutes d'absence déclenchant l'actualisation au retour ; 0 = « jamais ». */
     val minutesRetour: Int = 5,
 
@@ -1747,6 +1748,11 @@ class ParametresViewModel(private val container: AppContainer) : ViewModel() {
             }
         }
         viewModelScope.launch {
+            container.session.bannièreCoursActivée.collect { actif ->
+                _état.update { it.copy(bannièreCoursActivée = actif) }
+            }
+        }
+        viewModelScope.launch {
             container.session.actualisationRetour.collect { minutes ->
                 _état.update { it.copy(minutesRetour = minutes) }
             }
@@ -1771,6 +1777,10 @@ class ParametresViewModel(private val container: AppContainer) : ViewModel() {
 
     fun définirBannièreRegistre(actif: Boolean) {
         viewModelScope.launch { container.session.définirBannièreRegistre(actif) }
+    }
+
+    fun définirBannièreCours(actif: Boolean) {
+        viewModelScope.launch { container.session.définirBannièreCours(actif) }
     }
 
     /** Normalisée à l'écriture (schéma ajouté, « /» de fin retirés). */

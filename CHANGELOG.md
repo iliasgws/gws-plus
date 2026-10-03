@@ -4,6 +4,18 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [0.9.8-beta.8] — 2026-10-03
+
+### Préversion (bêta)
+
+### Ajouté
+
+- L'onglet Cours affiche l'illustration de l'emploi du temps avec le même
+  défilement, épinglage et fondu que le Registre. Le contenu passe derrière
+  la bande réduite et la barre d'état reste visible.
+- « Bannière des Cours » dans Paramètres → Apparence est un interrupteur
+  indépendant de « Bannière du Registre ». Les deux choix sont mémorisés.
+
 ## [0.9.8-beta.7] — 2026-10-03
 
 ### Préversion (bêta)

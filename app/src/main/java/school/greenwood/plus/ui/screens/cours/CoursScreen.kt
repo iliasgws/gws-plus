@@ -1,5 +1,6 @@
 package school.greenwood.plus.ui.screens.cours
 
+import androidx.activity.ComponentActivity
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -13,12 +14,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
@@ -31,21 +34,33 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.zIndex
+import androidx.core.view.WindowCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import school.greenwood.plus.AppContainer
+import school.greenwood.plus.R
 import school.greenwood.plus.model.Créneau
 import school.greenwood.plus.model.JournéeCours
 import school.greenwood.plus.ui.CoursViewModel
 import school.greenwood.plus.ui.components.BandeauErreur
 import school.greenwood.plus.ui.components.EmptyState
 import school.greenwood.plus.ui.components.GwsCard
+import school.greenwood.plus.ui.components.BanniereOnglet
+import school.greenwood.plus.ui.components.HauteurBannièreComplète
+import school.greenwood.plus.ui.components.HauteurBannièreRéduite
 import school.greenwood.plus.ui.components.SectionLabel
 import school.greenwood.plus.ui.components.SqueletteCours
 import school.greenwood.plus.ui.theme.AnnotationShape
@@ -73,18 +88,63 @@ fun CoursScreen(
 ) {
     val vm: CoursViewModel = viewModel { CoursViewModel(container) }
     val état by vm.état.collectAsStateWithLifecycle()
+    val bannièreActivée by container.session.bannièreCoursActivée.collectAsStateWithLifecycle(initialValue = true)
+    val liste = rememberLazyListState()
+    val hauteurBannière = if (bannièreActivée) HauteurBannièreComplète else 0.dp
+    val seuilBannièrePx = with(LocalDensity.current) {
+        (HauteurBannièreComplète - HauteurBannièreRéduite).roundToPx()
+    }
+    val activité = LocalContext.current as? ComponentActivity
+    val pageClaire = RegistreTheme.colors.page.luminance() > 0.5f
+    DisposableEffect(activité, bannièreActivée, pageClaire) {
+        val contrôleur = activité?.let { WindowCompat.getInsetsController(it.window, it.window.decorView) }
+        val apparencePrécédente = contrôleur?.isAppearanceLightStatusBars
+        contrôleur?.isAppearanceLightStatusBars = !bannièreActivée && pageClaire
+        onDispose {
+            if (apparencePrécédente != null) contrôleur.isAppearanceLightStatusBars = apparencePrécédente
+        }
+    }
 
     // « 14 sept. – 20 sept. » — dérivé du lundi connu, jamais du libellé serveur.
     val plageSemaine = état.semaine?.lundi?.let { lundi ->
         "${lundi.frenchShort()} – ${lundi.plusDays(6).frenchShort()}"
     }
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(RegistreTheme.colors.paper)
-            .padding(padding),
+            .clipToBounds()
+            .background(RegistreTheme.colors.paper),
     ) {
+        if (bannièreActivée) {
+            BanniereOnglet(
+                image = R.drawable.cours_banner,
+                hauteurBarreÉtat = padding.calculateTopPadding(),
+                modifier = Modifier.zIndex(1f).offset {
+                    val défilement = if (liste.firstVisibleItemIndex == 0) {
+                        liste.firstVisibleItemScrollOffset.coerceAtMost(seuilBannièrePx)
+                    } else {
+                        seuilBannièrePx
+                    }
+                    IntOffset(0, -défilement)
+                },
+            )
+        }
+        PullToRefreshBox(
+            isRefreshing = état.rafraîchissement,
+            onRefresh = { vm.rafraîchir() },
+            modifier = Modifier.fillMaxSize().padding(top = padding.calculateTopPadding()),
+        ) {
+        LazyColumn(
+            state = liste,
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(
+                top = hauteurBannière,
+                bottom = padding.calculateBottomPadding() + 24.dp,
+            ),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+        item(key = "entete") {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -110,8 +170,10 @@ fun CoursScreen(
                 color = RegistreTheme.colors.chalk,
             )
         }
+        }
 
         // Navigation ←/→ entre semaines
+        item(key = "semaine") {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -159,42 +221,38 @@ fun CoursScreen(
                 )
             }
         }
+        }
 
         état.erreur?.let { err ->
+            item(key = "erreur") {
             BandeauErreur(
                 message = err,
                 réessayer = { vm.charger(force = true) },
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
             )
+            }
         }
 
-        PullToRefreshBox(
-            isRefreshing = état.rafraîchissement,
-            onRefresh = { vm.rafraîchir() },
-            modifier = Modifier.fillMaxSize(),
-        ) {
             val semaine = état.semaine
             when {
-                état.chargement && semaine == null -> SqueletteCours()
+                état.chargement && semaine == null -> item(key = "chargement") { SqueletteCours(défilable = false) }
 
-                semaine == null -> EmptyState(
+                semaine == null -> item(key = "vide") { EmptyState(
                     titre = "Pas encore d'emploi du temps",
                     message = "L'école n'a pas publié d'emploi du temps pour ce compte.",
                     modifier = Modifier.padding(top = 40.dp, start = 16.dp, end = 16.dp),
-                )
+                ) }
 
                 else -> {
                     val journée = semaine.journées.firstOrNull { it.jour == état.jourChoisi }
                         ?: semaine.journées.firstOrNull()
 
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 24.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                    ) {
                         // Le résumé de la semaine : une puce par jour, avec son nombre de cours.
                         item(key = "jours") {
-                            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            LazyRow(
+                                contentPadding = PaddingValues(horizontal = 16.dp),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            ) {
                                 items(semaine.journées, key = { it.jour }) { jour ->
                                     PuceJourCours(
                                         journée = jour,
@@ -207,13 +265,15 @@ fun CoursScreen(
 
                         if (semaine.restreint) {
                             item(key = "restriction") {
-                                CarteRestriction(message = semaine.messageRestriction?.htmlToPlainMultiline())
+                                Box(Modifier.padding(horizontal = 16.dp)) {
+                                    CarteRestriction(message = semaine.messageRestriction?.htmlToPlainMultiline())
+                                }
                             }
                         }
 
                         if (journée == null || journée.créneaux.isEmpty()) {
                             item(key = "vide-jour") {
-                                Column {
+                                Column(Modifier.padding(horizontal = 16.dp)) {
                                     Spacer(Modifier.height(8.dp))
                                     EmptyState(
                                         titre = "Aucun cours",
@@ -224,19 +284,21 @@ fun CoursScreen(
                             }
                         } else {
                             item(key = "jour-label") {
+                                Box(Modifier.padding(horizontal = 16.dp)) {
                                 SectionLabel(
                                     text = journée.date?.frenchLongDay()
                                         ?: journée.label?.let { "Jour $it" }
                                         ?: "Jour",
                                 )
+                                }
                             }
                             itemsIndexed(journée.créneaux) { _, créneau ->
-                                CarteCréneau(créneau = créneau)
+                                CarteCréneau(créneau = créneau, modifier = Modifier.padding(horizontal = 16.dp))
                             }
                         }
-                    }
                 }
             }
+        }
         }
     }
 }

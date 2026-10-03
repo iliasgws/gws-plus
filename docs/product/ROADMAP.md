@@ -70,7 +70,7 @@ raw probe responses stay out of the repository (personal data).
 
 ## 6. Screens
 
-- [x] Banner behavior documented in `docs/development/REGISTRE-BANNER.md`; beta.7 adds a persisted Settings → Appearance toggle (enabled by default), pending manual confirmation before stable 0.9.8.
+- [x] Banner behavior documented in `docs/development/REGISTRE-BANNER.md`; beta.7 adds the Registre toggle and beta.8 adds the Cours banner with its own persisted toggle (both enabled by default), pending manual confirmation before stable 0.9.8.
 - [x] Registre school banner starts fully visible (140 dp plus the status-bar inset), scrolls up with the feed, then pins at a 40 dp lower strip plus the status-bar inset. A 64 dp bottom paper fade softens the transition and content continues behind the elevated strip. No viewer action or immersive mode; status-icon appearance restored on leaving the screen.
 - [x] Onboarding: 3 sober pages, first launch only
 - [x] Login: phone + password + « retenir », forgot-password, inline red-pen errors

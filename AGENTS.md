@@ -47,6 +47,8 @@ Current contents (update this section whenever files are added or removed):
 | `…/ui/screens/LoginScreen.kt` | Login form with the existing app icon beside the GWS+ title; header and form use 78%-opaque theme surfaces over the supplied illustration |
 | `app/src/main/res/drawable-nodpi/login_background.png` | Supplied school illustration used as the login background, cropped to fill the screen |
 | `app/src/main/res/drawable-nodpi/registre_banner.png` | Supplied school entrance illustration for the Registre banner |
+| `app/src/main/res/drawable-nodpi/cours_banner.png` | Supplied timetable-desk illustration for the independently configurable Cours banner |
+| `…/ui/components/BanniereOnglet.kt` | Shared banner artwork, 140/40 dp dimensions and 64 dp fade for Registre and Cours |
 | `…/ui/screens/registre/BanniereRegistre.kt` | Full school banner that scrolls up, then pins at its reduced lower strip; 64 dp bottom paper fade and content scrolling behind it, no fullscreen viewer action; persisted on/off switch under Settings → Appearance |
 | `…/ui/AppViewModels.kt` | One ViewModel per screen; Registre loads refresh signed profile-photo URLs through `acces_check` |
 | `…/ui/theme/` | « École vivante » tokens: colors + per-tab accents, Bricolage/Public Sans type, 24/16/10 shapes, motion springs (Mouvement.kt) |
