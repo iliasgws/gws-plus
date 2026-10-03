@@ -20,19 +20,19 @@ import school.greenwood.plus.ui.theme.RegistreTheme
 import school.greenwood.plus.ui.theme.GwsPlusTheme
 
 internal val HauteurBannièreRéduite = 40.dp
+internal val HauteurBannièreComplète = 140.dp
 
-/** Pinned lower slice of the illustration, drawn above the scrolling feed. */
+/** Full illustration, scrolling until its reduced lower strip pins above the feed. */
 @Composable
 internal fun BanniereRegistre(
     hauteurBarreÉtat: Dp,
     modifier: Modifier = Modifier,
 ) {
-    Box(modifier.fillMaxWidth().height(HauteurBannièreRéduite + hauteurBarreÉtat)) {
+    Box(modifier.fillMaxWidth().height(HauteurBannièreComplète + hauteurBarreÉtat)) {
         Image(
             painter = painterResource(R.drawable.registre_banner),
             contentDescription = null,
             contentScale = ContentScale.Crop,
-            alignment = Alignment.BottomCenter,
             modifier = Modifier.matchParentSize(),
         )
         Box(

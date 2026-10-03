@@ -49,6 +49,16 @@ Correctif de la photo de profil après la version 0.9.5.
 
 ## Non publié
 
+## [0.9.8-beta.5] — 2026-10-03
+
+### Préversion (bêta)
+
+### Corrigé
+
+- La bannière démarre entièrement visible, défile avec le Registre, puis
+  se fixe lorsqu'il ne reste que sa courte bande inférieure. Le fondu est
+  conservé et le contenu continue de défiler derrière cette bande.
+
 ## [0.9.8-beta.4] — 2026-10-03
 
 ### Préversion (bêta)
