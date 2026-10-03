@@ -19,7 +19,7 @@ import school.greenwood.plus.R
 import school.greenwood.plus.ui.theme.RegistreTheme
 import school.greenwood.plus.ui.theme.GwsPlusTheme
 
-/** Decorative, fixed banner: no image-viewer action or immersive-mode flags. */
+/** Decorative banner; the caller supplies its scroll offset. No viewer or immersive mode. */
 @Composable
 internal fun BanniereRegistre(
     hauteurBarreÉtat: Dp,

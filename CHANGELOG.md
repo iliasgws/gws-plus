@@ -49,6 +49,16 @@ Correctif de la photo de profil après la version 0.9.5.
 
 ## Non publié
 
+## [0.9.8-beta.3] — 2026-10-03
+
+### Préversion (bêta)
+
+### Corrigé
+
+- La bannière défile avec le Registre et disparaît en remontant le contenu.
+  Le fondu inférieur est conservé et les icônes de la barre d'état s'adaptent
+  au fond lorsque l'image disparaît.
+
 ## [0.9.8-beta.2] — 2026-10-03
 
 ### Préversion (bêta)
