@@ -49,6 +49,12 @@ Correctif de la photo de profil après la version 0.9.5.
 
 ## Non publié
 
+### Ajouté
+
+- Une bannière illustrée de l'école apparaît en haut du Registre et se
+  prolonge derrière la barre d'état. L'heure et les icônes système restent
+  visibles ; la bannière n'ouvre pas le visualiseur plein écran.
+
 ## [0.9.7-beta.3] — 2026-10-03
 
 ### Préversion (bêta)

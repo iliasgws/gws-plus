@@ -1,7 +1,6 @@
 package school.greenwood.plus.ui.screens.registre
 
 import androidx.activity.ComponentActivity
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
@@ -45,6 +44,7 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -57,6 +57,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
@@ -67,6 +68,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.core.view.WindowCompat
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import school.greenwood.plus.AppContainer
@@ -147,6 +149,18 @@ fun RegistreScreen(
     // que du contenu (docs/product/DESIGN.md §4).
     val portée = rememberCoroutineScope()
     val tiroir = rememberDrawerState(DrawerValue.Closed)
+    val pageClaire = RegistreTheme.colors.page.luminance() > 0.5f
+    DisposableEffect(activité, tiroir.currentValue, pageClaire) {
+        val contrôleur = activité?.let { WindowCompat.getInsetsController(it.window, it.window.decorView) }
+        val apparencePrécédente = contrôleur?.isAppearanceLightStatusBars
+        contrôleur?.isAppearanceLightStatusBars = tiroir.currentValue == DrawerValue.Open && pageClaire
+        onDispose {
+            if (apparencePrécédente != null) {
+                contrôleur.isAppearanceLightStatusBars = apparencePrécédente
+            }
+        }
+    }
+    val paddingContenu = PaddingValues(bottom = padding.calculateBottomPadding())
     val actionDepuisTiroir: (() -> Unit) -> Unit = { action ->
         portée.launch { tiroir.close() }
         action()
@@ -185,6 +199,8 @@ fun RegistreScreen(
             }
         },
     ) {
+        Column(Modifier.fillMaxSize()) {
+        BanniereRegistre(hauteurBarreÉtat = padding.calculateTopPadding())
         // L'actualisation se fait au geste (issue #104) : plus de bouton dans
         // l'en-tête. Le geste reprend exactement les deux effets de l'ancien
         // bouton — le registre, puis le contrôle silencieux des mises à jour
@@ -195,7 +211,7 @@ fun RegistreScreen(
                 vm.rafraîchir()
                 portée.launch { container.misesÀJour.vérifier(manuel = false) }
             },
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.weight(1f),
         ) {
         when {
         état.registre == null && état.erreur != null -> {
@@ -203,7 +219,7 @@ fun RegistreScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(RegistreTheme.colors.paper)
-                    .padding(padding),
+                    .padding(paddingContenu),
                 contentAlignment = Alignment.Center,
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -229,7 +245,7 @@ fun RegistreScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(RegistreTheme.colors.paper)
-                    .padding(padding),
+                    .padding(paddingContenu),
             ) {
                 SqueletteRegistre()
             }
@@ -258,7 +274,7 @@ fun RegistreScreen(
                 contentPadding = PaddingValues(
                     start = 20.dp,
                     end = 20.dp,
-                    top = padding.calculateTopPadding(),
+                    top = 12.dp,
                     bottom = padding.calculateBottomPadding() + 16.dp,
                 ),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -340,7 +356,7 @@ fun RegistreScreen(
 
                 itemsIndexed(registre.entrees, key = { _, entrée -> entrée.id }) { index, entrée ->
                     val délai = (index * 40).coerceAtMost(400)
-                    AnimatedVisibility(
+                    androidx.compose.animation.AnimatedVisibility(
                         visible = cascade.value,
                         enter = fadeIn(tween(240, delayMillis = délai)) +
                             slideInVertically(tween(280, delayMillis = délai)) { it / 6 },
@@ -358,6 +374,8 @@ fun RegistreScreen(
         }
     }
     }
+        }
+
         }
 
     if (feuilleOuverte) {
