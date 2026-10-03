@@ -4,21 +4,13 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
-## [0.9.5-beta.2] — 2026-10-03
+## [0.9.5] — 2026-10-03
 
-### Préversion (bêta)
-
-### Ajouté
-
-- Sur l'accueil (Registre), un **appui long sur une carte** ouvre un
-  aperçu immédiat de son contenu — type, titre, date, détails, corps, et
-  vignette pour les actualités — sans quitter le fil : la feuille se
-  referme au toucher extérieur ou au retour Android.
-- Quand l'entrée le permet, l'aperçu propose une action — « Lire
-  l'actualité », « Ouvrir le devoir » ou « Ouvrir la conversation » — qui
-  referme la feuille avant d'ouvrir l'écran demandé.
-
-## Non publié
+Stable après deux bêtas : le Registre s'actualise en tirant vers le bas —
+le bouton « Actualiser » de l'en-tête a disparu — et un appui long sur une
+carte ouvre un aperçu de son contenu sans quitter le fil. S'y ajoutent deux
+évolutions livrées après la dernière bêta, détaillées ci-dessous : les
+images d'actualités en plein écran et la cohérence des caches de médias.
 
 ### Ajouté
 
@@ -45,6 +37,22 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
   après expiration des URL signées. Tous ces caches sont purgés à la
   connexion et à la déconnexion : un compte ne retrouve jamais les médias du
   précédent.
+
+## Non publié
+
+## [0.9.5-beta.2] — 2026-10-03
+
+### Préversion (bêta)
+
+### Ajouté
+
+- Sur l'accueil (Registre), un **appui long sur une carte** ouvre un
+  aperçu immédiat de son contenu — type, titre, date, détails, corps, et
+  vignette pour les actualités — sans quitter le fil : la feuille se
+  referme au toucher extérieur ou au retour Android.
+- Quand l'entrée le permet, l'aperçu propose une action — « Lire
+  l'actualité », « Ouvrir le devoir » ou « Ouvrir la conversation » — qui
+  referme la feuille avant d'ouvrir l'écran demandé.
 
 ## [0.9.5-beta.1] — 2026-10-03
 
