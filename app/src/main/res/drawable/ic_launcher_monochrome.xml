@@ -1,24 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Le monogramme du registre : une page d'encre, le point rouge du stylo.
-     Le rouge ne décore jamais — il marque l'action requise, même sur l'icône. -->
+<!-- Alpha-only tree, shield and plus artwork for Android 13+ themed icons.
+     Transparent gaps keep each shape readable when the launcher applies Monet colors.
+     All artwork stays inside the adaptive icon's central 66 dp safe area. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Page encre, arrondie 12 dp -->
+    <group
+        android:pivotX="54"
+        android:pivotY="54"
+        android:scaleX="0.85"
+        android:scaleY="0.85">
+    <!-- Shield outline; the upper-right opening leaves room for the plus. -->
     <path
-        android:fillColor="#1F3D2B"
-        android:pathData="M36,34 h36 a8,8 0 0 1 8,8 v24 a8,8 0 0 1 -8,8 h-36 a8,8 0 0 1 -8,-8 v-24 a8,8 0 0 1 8,-8 z" />
-    <!-- Point stylo rouge -->
+        android:fillColor="@android:color/black"
+        android:pathData="M61,29 L52,26 L29,34 L29,52 C29,68 38,78 52,84 C66,78 75,68 75,54 L71,54 C71,65 64,74 52,80 C40,74 33,65 33,52 L33,37 L52,30 L61,33 Z" />
+    <!-- Organic canopy with transparent branching, not painted highlights. -->
     <path
-        android:fillColor="#B3382A"
-        android:pathData="M66,64 m-5,0 a5,5 0 1 0 10,0 a5,5 0 1 0 -10,0" />
-    <!-- Ligne d'écriture claire sur la page -->
+        android:fillColor="@android:color/black"
+        android:pathData="M49,57 C45,60 38,59 36,55 C33,51 36,46 40,45 C39,40 44,37 48,39 C51,34 56,36 57,41 C57,44 61,46 64,46 C63,49 63,50 65,51 C68,54 67,58 63,58 C60,60 57,58 55,57 L55,53 L62,49 L60,47 L55,49 L54,42 L51,42 L52,51 L44,45 L42,47 L49,54 Z" />
+    <!-- Trunk, roots and ground echo the full-color tree silhouette. -->
     <path
-        android:fillColor="#E9EFE7"
-        android:pathData="M36,46 h24 a3,3 0 0 1 0,6 h-24 a3,3 0 0 1 0,-6 z" />
+        android:fillColor="@android:color/black"
+        android:pathData="M49,53 L55,53 C54,63 55,67 60,70 C63,70 65,71 67,72 L52,77 L37,72 C40,70 44,70 46,70 C50,66 50,61 49,53 Z" />
+    <!-- Bold plus, separated from the shield and canopy by clear space. -->
     <path
-        android:fillColor="#E9EFE7"
-        android:pathData="M36,56 h16 a3,3 0 0 1 0,6 h-16 a3,3 0 0 1 0,-6 z" />
+        android:fillColor="@android:color/black"
+        android:pathData="M69,24 L75,24 Q77,24 77,26 L77,32 L83,32 Q85,32 85,34 L85,40 Q85,42 83,42 L77,42 L77,48 Q77,50 75,50 L69,50 Q67,50 67,48 L67,42 L61,42 Q59,42 59,40 L59,34 Q59,32 61,32 L67,32 L67,26 Q67,24 69,24 Z" />
+    </group>
 </vector>

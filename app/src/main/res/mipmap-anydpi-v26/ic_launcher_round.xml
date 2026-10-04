@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Icône adaptative : visuel « arbre et + » centré sur un dégradé bleu
-     dérivé des bords du visuel ; le monochrome thématique garde le
-     monogramme du registre. -->
+<!-- Adaptive tree-and-plus icon; the monochrome layer follows the same
+     identity and lets Android 13+ launchers apply wallpaper-derived colors. -->
 <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
     <background android:drawable="@mipmap/ic_launcher_background" />
     <foreground android:drawable="@mipmap/ic_launcher_foreground" />

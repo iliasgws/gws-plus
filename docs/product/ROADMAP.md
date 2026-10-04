@@ -35,7 +35,9 @@ raw probe responses stay out of the repository (personal data).
 - [x] Gradle wrapper (9.6.0) committed
 - [x] `AndroidManifest.xml`: INTERNET only, `enableOnBackInvokedCallback`, FileProvider
 - [x] Launcher icon (adaptive: tree + cross artwork on a blue gradient sized
-      to survive every launcher mask; themed icon keeps the ink monogram)
+      to survive every launcher mask; Android 13+ Monet themed icon uses an
+      alpha-only tree, shield and plus matching the current brand, with transparent
+      branching and gaps so wallpaper-derived launcher colors stay legible)
 
 ## 3. Theme « Le registre »
 
@@ -70,6 +72,8 @@ raw probe responses stay out of the repository (personal data).
 
 ## 6. Screens
 
+- [x] Banner behavior documented in `docs/development/REGISTRE-BANNER.md`; beta.7 adds the Registre toggle, beta.8 adds Cours, and beta.9 adds Devoirs/Documents/Actualités with independent persisted toggles (all enabled by default), pending manual confirmation before stable 0.9.8.
+- [x] Registre school banner starts fully visible (140 dp plus the status-bar inset), scrolls up with the feed, then pins at a 40 dp lower strip plus the status-bar inset. A 64 dp bottom paper fade softens the transition and content continues behind the elevated strip. No viewer action or immersive mode; status-icon appearance restored on leaving the screen.
 - [x] Onboarding: 3 sober pages, first launch only
 - [x] Login: phone + password + « retenir », forgot-password, inline red-pen errors
 - [x] Login branding: existing app icon beside the « GWS+ » title.
