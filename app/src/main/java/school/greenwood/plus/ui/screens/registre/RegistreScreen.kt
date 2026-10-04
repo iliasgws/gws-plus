@@ -1,7 +1,6 @@
 package school.greenwood.plus.ui.screens.registre
 
 import androidx.activity.ComponentActivity
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
@@ -19,9 +18,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -45,6 +46,7 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -56,17 +58,23 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.onLongClick
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.core.view.WindowCompat
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import school.greenwood.plus.AppContainer
@@ -85,6 +93,8 @@ import school.greenwood.plus.ui.components.EmptyState
 import school.greenwood.plus.ui.components.ErrorInline
 import school.greenwood.plus.ui.components.GwsAvatar
 import school.greenwood.plus.ui.components.GwsCard
+import school.greenwood.plus.ui.components.HauteurBannièreComplète
+import school.greenwood.plus.ui.components.HauteurBannièreRéduite
 import school.greenwood.plus.ui.components.Puce
 import school.greenwood.plus.ui.components.SectionLabel
 import school.greenwood.plus.ui.components.SqueletteRegistre
@@ -129,6 +139,8 @@ fun RegistreScreen(
         viewModel { RegistreViewModel(container) }
     }
     val état by vm.état.collectAsStateWithLifecycle()
+    val bannièreActivée by container.session.bannièreRegistreActivée.collectAsStateWithLifecycle(initialValue = true)
+    val hauteurBannière = if (bannièreActivée) HauteurBannièreComplète else 0.dp
 
     // Mise à jour de l'app (issue #46) : contrôle à chaque ouverture
     // (échec silencieux) et carte en tête du flux quand une publication
@@ -147,6 +159,23 @@ fun RegistreScreen(
     // que du contenu (docs/product/DESIGN.md §4).
     val portée = rememberCoroutineScope()
     val tiroir = rememberDrawerState(DrawerValue.Closed)
+    val liste = rememberLazyListState()
+    val seuilBannièrePx = with(LocalDensity.current) {
+        (HauteurBannièreComplète - HauteurBannièreRéduite).roundToPx()
+    }
+    val pageClaire = RegistreTheme.colors.page.luminance() > 0.5f
+    DisposableEffect(activité, tiroir.currentValue, pageClaire, bannièreActivée) {
+        val contrôleur = activité?.let { WindowCompat.getInsetsController(it.window, it.window.decorView) }
+        val apparencePrécédente = contrôleur?.isAppearanceLightStatusBars
+        contrôleur?.isAppearanceLightStatusBars =
+            (!bannièreActivée || tiroir.currentValue == DrawerValue.Open) && pageClaire
+        onDispose {
+            if (apparencePrécédente != null) {
+                contrôleur.isAppearanceLightStatusBars = apparencePrécédente
+            }
+        }
+    }
+    val paddingContenu = PaddingValues(top = hauteurBannière, bottom = padding.calculateBottomPadding())
     val actionDepuisTiroir: (() -> Unit) -> Unit = { action ->
         portée.launch { tiroir.close() }
         action()
@@ -185,6 +214,22 @@ fun RegistreScreen(
             }
         },
     ) {
+        Box(Modifier.fillMaxSize().clipToBounds().background(RegistreTheme.colors.paper)) {
+        if (bannièreActivée) {
+        BanniereRegistre(
+            hauteurBarreÉtat = padding.calculateTopPadding(),
+            modifier = Modifier
+                .zIndex(1f)
+                .offset {
+                    val défilement = if (liste.firstVisibleItemIndex == 0) {
+                        liste.firstVisibleItemScrollOffset.coerceAtMost(seuilBannièrePx)
+                    } else {
+                        seuilBannièrePx
+                    }
+                    IntOffset(0, -défilement)
+                },
+        )
+        }
         // L'actualisation se fait au geste (issue #104) : plus de bouton dans
         // l'en-tête. Le geste reprend exactement les deux effets de l'ancien
         // bouton — le registre, puis le contrôle silencieux des mises à jour
@@ -195,15 +240,14 @@ fun RegistreScreen(
                 vm.rafraîchir()
                 portée.launch { container.misesÀJour.vérifier(manuel = false) }
             },
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize().padding(top = padding.calculateTopPadding()),
         ) {
         when {
         état.registre == null && état.erreur != null -> {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(RegistreTheme.colors.paper)
-                    .padding(padding),
+                    .padding(paddingContenu),
                 contentAlignment = Alignment.Center,
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -228,8 +272,7 @@ fun RegistreScreen(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(RegistreTheme.colors.paper)
-                    .padding(padding),
+                    .padding(paddingContenu),
             ) {
                 SqueletteRegistre()
             }
@@ -252,13 +295,12 @@ fun RegistreScreen(
             val derniereActu = état.derniereActualite?.takeIf { it.id !in idPostsAujourdhui }
 
             LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(RegistreTheme.colors.paper),
+                state = liste,
+                modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(
                     start = 20.dp,
                     end = 20.dp,
-                    top = padding.calculateTopPadding(),
+                    top = hauteurBannière + 12.dp,
                     bottom = padding.calculateBottomPadding() + 16.dp,
                 ),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -340,7 +382,7 @@ fun RegistreScreen(
 
                 itemsIndexed(registre.entrees, key = { _, entrée -> entrée.id }) { index, entrée ->
                     val délai = (index * 40).coerceAtMost(400)
-                    AnimatedVisibility(
+                    androidx.compose.animation.AnimatedVisibility(
                         visible = cascade.value,
                         enter = fadeIn(tween(240, delayMillis = délai)) +
                             slideInVertically(tween(280, delayMillis = délai)) { it / 6 },
@@ -358,6 +400,8 @@ fun RegistreScreen(
         }
     }
     }
+        }
+
         }
 
     if (feuilleOuverte) {

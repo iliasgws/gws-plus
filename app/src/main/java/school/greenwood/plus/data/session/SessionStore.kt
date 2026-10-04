@@ -74,6 +74,11 @@ class SessionStore(private val context: Context) : CompteCommunautaire {
          *  écrans se rafraîchissent au retour au premier plan ; 0 = « jamais ».
          *  Survit à une purge de session (préférence d'app, comme le composeur). */
         val actualisationRetour = intPreferencesKey("actualisation_retour_minutes")
+        val banniereRegistre = booleanPreferencesKey("banniere_registre_activee")
+        val banniereCours = booleanPreferencesKey("banniere_cours_activee")
+        val banniereDevoirs = booleanPreferencesKey("banniere_devoirs_activee")
+        val banniereDocuments = booleanPreferencesKey("banniere_documents_activee")
+        val banniereActualites = booleanPreferencesKey("banniere_actualites_activee")
 
         /** Mises à jour (issue #46) : millisecondes du dernier contrôle GitHub,
          *  canal choisi — stable par défaut, bêtas sur option — et dernière
@@ -154,6 +159,37 @@ class SessionStore(private val context: Context) : CompteCommunautaire {
 
     suspend fun définirActualisationRetour(minutes: Int) {
         context.dataStore.edit { it[Clefs.actualisationRetour] = minutes }
+    }
+
+    /** Préférence d'apparence de l'app, conservée à la déconnexion. */
+    val bannièreRegistreActivée: Flow<Boolean> =
+        context.dataStore.data.map { it[Clefs.banniereRegistre] ?: true }
+
+    suspend fun définirBannièreRegistre(actif: Boolean) {
+        context.dataStore.edit { it[Clefs.banniereRegistre] = actif }
+    }
+
+    val bannièreCoursActivée: Flow<Boolean> =
+        context.dataStore.data.map { it[Clefs.banniereCours] ?: true }
+
+    suspend fun définirBannièreCours(actif: Boolean) {
+        context.dataStore.edit { it[Clefs.banniereCours] = actif }
+    }
+
+    val bannièreDevoirsActivée: Flow<Boolean> = context.dataStore.data.map { it[Clefs.banniereDevoirs] ?: true }
+    val bannièreDocumentsActivée: Flow<Boolean> = context.dataStore.data.map { it[Clefs.banniereDocuments] ?: true }
+    val bannièreActualitésActivée: Flow<Boolean> = context.dataStore.data.map { it[Clefs.banniereActualites] ?: true }
+
+    suspend fun définirBannièreDevoirs(actif: Boolean) {
+        context.dataStore.edit { it[Clefs.banniereDevoirs] = actif }
+    }
+
+    suspend fun définirBannièreDocuments(actif: Boolean) {
+        context.dataStore.edit { it[Clefs.banniereDocuments] = actif }
+    }
+
+    suspend fun définirBannièreActualités(actif: Boolean) {
+        context.dataStore.edit { it[Clefs.banniereActualites] = actif }
     }
 
     /** Millisecondes du dernier contrôle de mise à jour (null = jamais). */
