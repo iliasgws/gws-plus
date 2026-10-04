@@ -40,6 +40,7 @@ Current contents (update this section whenever files are added or removed):
 | `docs/security/` | `SECURITY-NOTES.md` |
 | `settings.gradle.kts`, `build.gradle.kts`, `gradle.properties`, `gradlew`, `gradle/wrapper/` | Gradle 9.6 build (AGP 9.4.1, Kotlin 2.4.20, built-in Kotlin — no `kotlin.android` plugin) |
 | `app/` | The Android application (`:app` module), namespace `school.greenwood.plus` |
+| `app/src/main/res/drawable/ic_launcher_monochrome.xml`, `app/src/main/res/mipmap-anydpi-v26/` | Adaptive launcher icons; alpha-only tree, shield and plus for Android 13+ Monet themed icons |
 | `app/src/main/java/school/greenwood/plus/` | Sources — key entries below |
 | `…/GwsApplication.kt` | Manual DI container (`AppContainer`), including homework refresh signals |
 | `…/MainActivity.kt` | Single activity, edge-to-edge, Compose |

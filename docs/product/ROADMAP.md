@@ -35,7 +35,9 @@ raw probe responses stay out of the repository (personal data).
 - [x] Gradle wrapper (9.6.0) committed
 - [x] `AndroidManifest.xml`: INTERNET only, `enableOnBackInvokedCallback`, FileProvider
 - [x] Launcher icon (adaptive: tree + cross artwork on a blue gradient sized
-      to survive every launcher mask; themed icon keeps the ink monogram)
+      to survive every launcher mask; Android 13+ Monet themed icon uses an
+      alpha-only tree, shield and plus matching the current brand, with transparent
+      branching and gaps so wallpaper-derived launcher colors stay legible)
 
 ## 3. Theme « Le registre »
 

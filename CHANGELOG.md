@@ -4,6 +4,20 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [0.9.8-beta.10] — 2026-10-04
+
+### Préversion (bêta)
+
+### Changé
+
+- L'icône thématique Android 13+ (Monet) reprend désormais l'arbre, le
+  bouclier et le « + » de Greenwood School ; ses couleurs s'accordent au
+  fond d'écran lorsque les icônes thématiques sont activées dans le lanceur.
+- Cette bêta inclut les fonctionnalités des bêtas 0.9.8 précédentes :
+  bannières illustrées du Registre, des Cours, des Devoirs, des Documents et
+  des Actualités, défilement puis épinglage, fondu de 64 dp et interrupteurs
+  indépendants mémorisés dans Paramètres → Apparence.
+
 ## [0.9.8-beta.9] — 2026-10-03
 
 ### Préversion (bêta)
