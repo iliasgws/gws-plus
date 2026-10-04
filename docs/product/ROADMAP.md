@@ -38,6 +38,8 @@ raw probe responses stay out of the repository (personal data).
       to survive every launcher mask; Android 13+ Monet themed icon uses an
       alpha-only tree, shield and plus matching the current brand, with transparent
       branching and gaps so wallpaper-derived launcher colors stay legible)
+- [x] Stable 0.9.8 prepared from 0.9.8-beta.10 after the user confirmed installation
+      and the app, banners and Monet icon working on-device (2026-10-04).
 
 ## 3. Theme « Le registre »
 
