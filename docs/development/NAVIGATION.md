@@ -91,8 +91,13 @@ le geste système prédit le retour sur tous les écrans. **À ne pas régresser
 All shell destinations use the shared `écran` wrapper in `AppNav.kt`. Its
 paper background is clipped from 0 to 28 dp by the destination's
 `AnimatedContentScope.transition`, while NavHost's pop exit scales to 0.92
-and fades over 240 ms. Navigation Compose seeks these animations during
-predictive back and reverses them on cancellation. Forward exits also round
+and fades over 240 ms. **Predictive back has separate callbacks**:
+`predictivePopExitTransition` explicitly uses linear 240 ms scale/fade specs
+matching the corner animation, and `predictivePopEnterTransition` is `None`
+so the previous page stays opaque. Configuring only `popExitTransition`
+leaves the predictive default (scale without fade) active. Navigation Compose
+seeks the predictive animations and reverses them on cancellation; linear
+easing avoids an artificial slow-start threshold. Forward exits also round
 while retaining their existing fade; forward entrance motion is unchanged.
 No additional back callback or manual pop is introduced. The bottom tab bar
 stays outside the animated surface; dialogs and quiz exit confirmation retain

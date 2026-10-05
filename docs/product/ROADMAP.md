@@ -15,6 +15,11 @@ raw probe responses stay out of the repository (personal data).
       Cancellation restores the surface without manually changing the back stack.
       Forward navigation retains its existing fade/slide (with the same corner exit).
 - [x] Preserve tab stacks, child BackHandlers, quiz confirmation and dialog handling.
+- [x] Address beta.1 feedback: configure predictive-specific exit/enter callbacks
+      (ordinary pop callbacks do not override gesture defaults). Linear 240 ms
+      corner/scale/fade specs respond together; the revealed page stays opaque.
+      Prepare 0.9.10-beta.2 (versionCode 102); assembleDebug, testDebugUnitTest
+      and assembleRelease pass again for the corrected callbacks.
 - [x] Build 0.9.10-beta.1 (versionCode 101): assembleDebug, testDebugUnitTest
       and assembleRelease pass; release certificate matches existing updates.
 - [ ] Check committed and cancelled gestures on Android, especially

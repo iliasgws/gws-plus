@@ -3,6 +3,8 @@ package school.greenwood.plus.ui
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.EnterExitState
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.core.tween
@@ -249,6 +251,13 @@ fun Shell(container: AppContainer) {
             exitTransition = { fadeOut(tween(140)) },
             popEnterTransition = { fadeIn(tween(180)) },
             popExitTransition = { fadeOut(tween(240)) + scaleOut(tween(240), targetScale = 0.92f) },
+            // Predictive gestures have separate defaults; popExitTransition alone
+            // only customizes non-predictive back. Keep the revealed page opaque.
+            predictivePopEnterTransition = { EnterTransition.None },
+            predictivePopExitTransition = {
+                fadeOut(tween(240, easing = LinearEasing)) +
+                    scaleOut(tween(240, easing = LinearEasing), targetScale = 0.92f)
+            },
         ) {
             écran("registre") {
                 RegistreScreen(
@@ -448,7 +457,7 @@ private fun NavGraphBuilder.écran(
 ) {
     composable(route = route, arguments = arguments) { entrée ->
         val arrondi by transition.animateFloat(
-            transitionSpec = { tween(240) },
+            transitionSpec = { tween(240, easing = LinearEasing) },
             label = "coinsRetour",
         ) { état -> if (état == EnterExitState.PostExit) 28f else 0f }
         Box(

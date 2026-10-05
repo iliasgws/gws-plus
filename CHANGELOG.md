@@ -4,6 +4,17 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [0.9.10-beta.2] — 2026-10-05
+
+### Préversion (bêta)
+
+### Corrigé
+
+- Le fondu s'applique maintenant pendant le geste de retour prédictif, et
+  pas seulement après un retour classique. Les coins arrondis, la réduction
+  et l'opacité suivent une progression linéaire, sans seuil ajouté ; l'écran
+  précédent reste opaque pendant le geste (#124).
+
 ## [0.9.10-beta.1] — 2026-10-05
 
 ### Préversion (bêta)
