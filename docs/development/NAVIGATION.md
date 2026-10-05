@@ -103,6 +103,13 @@ No additional back callback or manual pop is introduced. The bottom tab bar
 stays outside the animated surface; dialogs and quiz exit confirmation retain
 their own back handling.
 
+Each `écran` also provides `LocalGwsAccent` from its own back-stack entry's
+route (#127). During predictive back the controller's current route still
+belongs to the outgoing screen, so a shared shell accent cannot theme both
+visible destinations correctly. The per-entry provider keeps the preview's
+accent correct on drag, cancellation and completion, including child dialogs;
+the shell-level provider remains available for UI outside destinations.
+
 ## Composeur et clavier
 
 Les écrans avec composeur (conversation, nouveau message) appliquent

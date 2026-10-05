@@ -75,8 +75,8 @@ fun darkGwsColors() = GwsColors(
 val LocalGwsColors = staticCompositionLocalOf { lightGwsColors() }
 
 /**
- * L'accent de l'endroit où l'on se trouve, fourni autour du Scaffold par
- * AppNav (`LocalGwsAccent provides …`, fondu animé au changement d'onglet).
+ * L'accent de chaque destination, fourni par AppNav d'après sa propre route.
+ * La coquille garde un accent animé pour ses éléments hors destination.
  * Les écrans lisent `RegistreTheme.accent` sans paramètre de plus.
  */
 val LocalGwsAccent = staticCompositionLocalOf {

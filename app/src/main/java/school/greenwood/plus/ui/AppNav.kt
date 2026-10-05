@@ -205,8 +205,8 @@ fun Shell(container: AppContainer) {
     val quizEnJeu by container.quizEnJeu.collectAsStateWithLifecycle()
     var ongletEnAttente by remember { mutableStateOf<String?>(null) }
 
-    // L'accent suit l'écran, en fondu : puces, surligneurs et états vides se
-    // teintent de la matière de l'endroit où l'on se trouve.
+    // L'accent de la coquille suit l'écran courant, en fondu. Les destinations
+    // fournissent leur propre accent, y compris pendant un aperçu prédictif.
     val couleurs = RegistreTheme.colors
     val cible = accentDe(routeCourante, couleurs)
     val accentAnimé = GwsAccent(
@@ -460,15 +460,21 @@ private fun NavGraphBuilder.écran(
             transitionSpec = { tween(240, easing = LinearEasing) },
             label = "coinsRetour",
         ) { état -> if (état == EnterExitState.PostExit) 28f else 0f }
-        Box(
-            Modifier.fillMaxSize()
-                .graphicsLayer {
-                    shape = RoundedCornerShape(arrondi.dp)
-                    clip = true
-                }
-                .background(RegistreTheme.colors.paper),
+        // Both entries can be visible during predictive back. The preview must
+        // use its own route, not Shell's still-current outgoing destination.
+        CompositionLocalProvider(
+            LocalGwsAccent provides accentDe(entrée.destination.route, RegistreTheme.colors),
         ) {
-            content(entrée)
+            Box(
+                Modifier.fillMaxSize()
+                    .graphicsLayer {
+                        shape = RoundedCornerShape(arrondi.dp)
+                        clip = true
+                    }
+                    .background(RegistreTheme.colors.paper),
+            ) {
+                content(entrée)
+            }
         }
     }
 }

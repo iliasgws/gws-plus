@@ -4,6 +4,17 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [0.9.10-beta.3] — 2026-10-05
+
+### Préversion (bêta)
+
+### Corrigé
+
+- Pendant le retour prédictif entre des sections de couleurs différentes,
+  chaque écran conserve son propre accent : la page précédente en aperçu
+  n'hérite plus de la couleur de la page quittée. La couleur reste correcte
+  lorsque le geste est annulé ou validé (#127).
+
 ## [0.9.10-beta.2] — 2026-10-05
 
 ### Préversion (bêta)
