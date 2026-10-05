@@ -4,6 +4,29 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [0.9.11] — 2026-10-06
+
+Version stable après la bêta 0.9.11-beta.3, acceptée par l'utilisateur
+avec sa demande de publication stable.
+
+### Changé
+
+- La carte des devoirs du Registre adapte son titre à l'heure locale :
+  formulations du soir de 18 h à minuit, compteur de devoirs restants en journée.
+- Chaque période dispose de 100 formulations françaises, choisies au hasard
+  toutes les 12 secondes sans répétition immédiate, avec un fondu de 450 ms.
+  Le titre de journée conserve le nombre de devoirs ; le soir, le compteur
+  reste visible dans le sous-titre. La rotation s'arrête quand la carte n'est
+  plus active.
+
+### Corrigé
+
+- Les devoirs faits ou marqués « fait pour moi » sont exclus du compteur,
+  qui suit les changements de statut. Une carte entièrement terminée affiche
+  « Tout est fait ! » (#126).
+- Cette version conserve les fonctionnalités de la bêta 3 ; seuls le numéro
+  de version et la documentation de publication évoluent.
+
 ## [0.9.11-beta.3] — 2026-10-06
 
 ### Préversion (bêta)

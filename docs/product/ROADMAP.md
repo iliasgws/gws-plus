@@ -10,6 +10,12 @@ raw probe responses stay out of the repository (personal data).
 
 ## Time-aware homework heading (issue #126)
 
+- [x] User approved stable promotion after 0.9.11-beta.3; merge feature PR #129
+      and prepare 0.9.11 (versionCode 108) with the same application behaviour.
+      Stable assembleDebug, testDebugUnitTest and assembleRelease pass.
+      Local emulator installation remains unavailable as recorded below; the
+      stable request is user approval, not evidence of a local device check.
+
 - [x] Extend the same 12-second random rotation and 450 ms fade to 100 daytime
       variations. Every daytime title starts with the remaining count and its
       French singular/plural, including zero. Keep separate saved selections
