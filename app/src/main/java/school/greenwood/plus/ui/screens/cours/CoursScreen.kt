@@ -134,6 +134,7 @@ fun CoursScreen(
             isRefreshing = état.rafraîchissement,
             onRefresh = { vm.rafraîchir() },
             modifier = Modifier.fillMaxSize().padding(top = padding.calculateTopPadding()),
+            indicatorTopInset = hauteurBannière,
         ) {
         LazyColumn(
             state = liste,

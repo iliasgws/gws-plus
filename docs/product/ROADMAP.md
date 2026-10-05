@@ -10,6 +10,11 @@ raw probe responses stay out of the repository (personal data).
 
 ## Shared Material 3 Expressive loading animation
 
+- [x] Address beta.1 feedback: offset only the refresh indicator below the full
+      enabled banner (140 dp) on Registre, Cours and shared banner screens.
+      Disabled banners retain zero inset; list geometry and drag thresholds stay
+      unchanged. Prepare 0.9.12-beta.2 (versionCode 110); assembleDebug,
+      testDebugUnitTest and assembleRelease pass. Device check remains pending.
 - [x] Use AndroidX's `ContainedLoadingIndicator` directly for all circular
       loading states, retaining existing sizes and screen colors. The official
       Apache-2.0 component supplies morphing, rotation and progress semantics;

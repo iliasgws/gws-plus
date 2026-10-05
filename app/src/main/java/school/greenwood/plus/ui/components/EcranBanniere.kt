@@ -84,6 +84,7 @@ internal fun EcranBanniere(
                     isRefreshing = rafraîchissement,
                     onRefresh = surActualiser,
                     modifier = Modifier.fillMaxSize(),
+                    indicatorTopInset = if (activée) HauteurBannièreComplète else 0.dp,
                 ) { flux() }
             } else flux()
         }

@@ -243,6 +243,7 @@ fun RegistreScreen(
                 portée.launch { container.misesÀJour.vérifier(manuel = false) }
             },
             modifier = Modifier.fillMaxSize().padding(top = padding.calculateTopPadding()),
+            indicatorTopInset = hauteurBannière,
         ) {
         when {
         état.registre == null && état.erreur != null -> {

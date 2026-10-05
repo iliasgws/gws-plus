@@ -1,6 +1,7 @@
 package school.greenwood.plus.ui.components
 
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.ContainedLoadingIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -13,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import school.greenwood.plus.ui.theme.GwsPlusTheme
 import school.greenwood.plus.ui.theme.RegistreTheme
@@ -40,6 +42,7 @@ internal fun GwsPullToRefreshBox(
     isRefreshing: Boolean,
     onRefresh: () -> Unit,
     modifier: Modifier = Modifier,
+    indicatorTopInset: Dp = 0.dp,
     content: @Composable BoxScope.() -> Unit,
 ) {
     val state = rememberPullToRefreshState()
@@ -54,7 +57,9 @@ internal fun GwsPullToRefreshBox(
                 PullToRefreshDefaults.LoadingIndicator(
                     state = state,
                     isRefreshing = isRefreshing,
-                    modifier = Modifier.align(Alignment.TopCenter),
+                    // Translate only the indicator: the list and drag threshold
+                    // keep their native geometry, below any enabled artwork.
+                    modifier = Modifier.align(Alignment.TopCenter).offset(y = indicatorTopInset),
                     containerColor = RegistreTheme.colors.page,
                     color = RegistreTheme.colors.ink,
                 )
