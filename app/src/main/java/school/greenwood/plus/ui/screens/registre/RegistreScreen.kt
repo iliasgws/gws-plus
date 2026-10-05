@@ -139,6 +139,8 @@ fun RegistreScreen(
         viewModel { RegistreViewModel(container) }
     }
     val état by vm.état.collectAsStateWithLifecycle()
+    val faitsLocaux by container.session.devoirsFaitLocal
+        .collectAsStateWithLifecycle<Set<String>?>(initialValue = null)
     val bannièreActivée by container.session.bannièreRegistreActivée.collectAsStateWithLifecycle(initialValue = true)
     val hauteurBannière = if (bannièreActivée) HauteurBannièreComplète else 0.dp
 
@@ -344,7 +346,12 @@ fun RegistreScreen(
                 }
 
                 item(key = "ce-soir") {
-                    CarteCeSoir(registre = registre, ouvrirDevoirs = ouvrirDevoirs)
+                    CarteCeSoir(
+                        registre = registre.copy(ceSoir = registre.ceSoir.map { devoir ->
+                            faitsLocaux?.let { devoir.copy(faitLocal = devoir.id in it) } ?: devoir
+                        }),
+                        ouvrirDevoirs = ouvrirDevoirs,
+                    )
                 }
 
                 if (derniereActu != null) {

@@ -151,6 +151,9 @@ class RegistreViewModel(private val container: AppContainer) : ViewModel() {
 
     init {
         viewModelScope.launch {
+            container.devoirsModifiés.collect { charger(force = true) }
+        }
+        viewModelScope.launch {
             appliquerSession(container.session.state.first())
             charger()
         }

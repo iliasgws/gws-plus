@@ -1,5 +1,7 @@
 package school.greenwood.plus.ui.screens.registre
 
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -32,6 +34,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.produceState
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -46,8 +54,15 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
 import coil3.compose.AsyncImage
+import kotlinx.coroutines.delay
 import school.greenwood.plus.data.repo.RegistreDuJour
+import school.greenwood.plus.logic.CeSoir
+import school.greenwood.plus.logic.TitresDuJour
+import school.greenwood.plus.logic.TitresDuSoir
 import school.greenwood.plus.model.Devoir
 import school.greenwood.plus.model.Eleve
 import school.greenwood.plus.model.Post
@@ -67,6 +82,8 @@ import school.greenwood.plus.util.frenchLongDay
 import school.greenwood.plus.util.htmlToPlainSingleLine
 import java.time.DayOfWeek
 import java.time.LocalDate
+import java.time.LocalTime
+import kotlin.random.Random
 
 /*
  * Le haut de l'accueil (issues #101 + revue de finition) : la barre
@@ -230,6 +247,32 @@ private fun élèveBloc(
  */
 @Composable
 internal fun CarteCeSoir(registre: RegistreDuJour, ouvrirDevoirs: () -> Unit) {
+    val cycle = LocalLifecycleOwner.current.lifecycle
+    val heure by produceState(initialValue = LocalTime.now(), cycle) {
+        cycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            while (true) {
+                value = LocalTime.now()
+                // Réévaluer à la minute suivante, et immédiatement à chaque retour.
+                delay(60_000L - value.second * 1_000L - value.nano / 1_000_000L)
+            }
+        }
+    }
+    val soir = CeSoir.estLeSoir(heure)
+    var titreDuSoir by rememberSaveable { mutableIntStateOf(Random.nextInt(TitresDuSoir.textes.size)) }
+    var titreDuJour by rememberSaveable { mutableIntStateOf(Random.nextInt(TitresDuJour.textes.size)) }
+    LaunchedEffect(cycle, soir) {
+        cycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            while (true) {
+                delay(TitresDuSoir.intervalleMillis)
+                if (soir) {
+                    titreDuSoir = TitresDuSoir.suivant(titreDuSoir)
+                } else {
+                    titreDuJour = TitresDuJour.suivant(titreDuJour)
+                }
+            }
+        }
+    }
+    val restants = CeSoir.restants(registre.ceSoir)
     val accent = RegistreTheme.accent
     val dégradé = Brush.verticalGradient(
         listOf(
@@ -262,13 +305,22 @@ internal fun CarteCeSoir(registre: RegistreDuJour, ouvrirDevoirs: () -> Unit) {
                         modifier = Modifier.weight(1f),
                         verticalArrangement = Arrangement.spacedBy(2.dp),
                     ) {
+                        Crossfade(
+                            targetState = if (soir) TitresDuSoir.textes[titreDuSoir]
+                                else TitresDuJour.titre(titreDuJour, restants),
+                            animationSpec = tween(450),
+                            label = "titre-devoirs",
+                        ) { titre ->
+                            Text(
+                                text = titre,
+                                style = MaterialTheme.typography.headlineSmall.tabulaire(),
+                                color = accent.surConteneur,
+                            )
+                        }
                         Text(
-                            text = "Ce soir",
-                            style = MaterialTheme.typography.headlineSmall,
-                            color = accent.surConteneur,
-                        )
-                        Text(
-                            text = échéanceCeSoir(registre.horizonCeSoir),
+                            text = if (soir) {
+                                "${CeSoir.compteur(restants)} · ${échéanceCeSoir(registre.horizonCeSoir)}"
+                            } else échéanceCeSoir(registre.horizonCeSoir),
                             style = MaterialTheme.typography.labelMedium.tabulaire(),
                             color = RegistreTheme.colors.chalk,
                         )
@@ -284,7 +336,7 @@ internal fun CarteCeSoir(registre: RegistreDuJour, ouvrirDevoirs: () -> Unit) {
                 if (registre.ceSoir.isEmpty()) {
                     // Le vide est une bonne nouvelle, pas un manque.
                     Text(
-                        text = "Rien pour demain",
+                        text = "Aucun devoir pour la prochaine rentrée",
                         style = MaterialTheme.typography.titleLarge,
                         color = accent.surConteneur,
                     )
@@ -294,6 +346,13 @@ internal fun CarteCeSoir(registre: RegistreDuJour, ouvrirDevoirs: () -> Unit) {
                         color = RegistreTheme.colors.chalk,
                     )
                 } else {
+                    if (restants == 0) {
+                        Text(
+                            text = "Tout est fait !",
+                            style = MaterialTheme.typography.titleLarge,
+                            color = accent.surConteneur,
+                        )
+                    }
                     registre.ceSoir.forEachIndexed { index, devoir ->
                         if (index > 0) {
                             Box(

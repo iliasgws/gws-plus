@@ -3,6 +3,7 @@ package school.greenwood.plus.logic
 import school.greenwood.plus.model.Devoir
 import java.time.DayOfWeek
 import java.time.LocalDate
+import java.time.LocalTime
 
 /*
  * La carte focale du registre (docs/product/DESIGN.md §2).
@@ -18,6 +19,16 @@ import java.time.LocalDate
  * endroit change.
  */
 object CeSoir {
+
+    /** Le soir commence à 18 h, dans l'heure locale de l'appareil. */
+    fun estLeSoir(heure: LocalTime): Boolean = heure >= LocalTime.of(18, 0)
+
+    fun restants(devoirs: List<Devoir>): Int = devoirs.count { !it.fait && !it.faitLocal }
+
+    fun compteur(restants: Int): String = "$restants devoir${if (restants > 1) "s" else ""}"
+
+    fun titre(devoirs: List<Devoir>, heure: LocalTime): String =
+        if (estLeSoir(heure)) "Ce soir" else compteur(restants(devoirs))
 
     /** Le prochain jour de rentrée après `today` : demain, sauf week-end. */
     fun prochaineRentree(today: LocalDate): LocalDate {

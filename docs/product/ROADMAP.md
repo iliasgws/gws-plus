@@ -8,6 +8,40 @@ raw probe responses stay out of the repository (personal data).
 
 `[x]` done · `[~]` in progress · `[ ]` todo · `(!)` needs a decision or a real-device check
 
+## Time-aware homework heading (issue #126)
+
+- [x] Extend the same 12-second random rotation and 450 ms fade to 100 daytime
+      variations. Every daytime title starts with the remaining count and its
+      French singular/plural, including zero. Keep separate saved selections
+      for day/evening and update the count immediately when completion changes.
+- [x] Prepare 0.9.11-beta.3 (versionCode 107) on the stable 0.9.10 base.
+      assembleDebug, testDebugUnitTest and assembleRelease pass; tests cover
+      all 100 daytime variations, zero/singular/plural counts and random draws.
+
+- [x] Add 100 distinct French evening headings, randomly selected every
+      12 seconds without immediate repeats, with a 450 ms crossfade. Pause
+      rotation outside the evening window and while the card is not resumed;
+      preserve the selected heading across configuration changes. The daytime
+      count and evening count/deadline remain independent of the chosen wording.
+- [x] Prepare 0.9.11-beta.2 (versionCode 106) with the evening variations;
+      cover list size/uniqueness and selection of every other heading in tests.
+      assembleDebug, testDebugUnitTest and assembleRelease pass.
+
+- [x] Prepare 0.9.11-beta.1 (versionCode 105) from stable v0.9.10,
+      including the predictive-preview accent fix from issue #127.
+- [x] Verify assembleDebug, testDebugUnitTest and assembleRelease on that base.
+- [ ] Check the published beta on a device: both GWS_API_36_STABLE and
+      GWS_API_36 failed to boot locally, as did MediumPhone_API_37 for beta.2.
+      Installation and visual verification of the heading/count/fade remain pending.
+
+- [x] Show « Ce soir » only from 18:00 until local midnight; otherwise show
+      the remaining homework count with French singular/plural. Keep the count
+      in the evening subtitle and show a completion message when all are done.
+- [x] Exclude official and local completion, observe local marks/unmarks directly,
+      and refresh the Registre after an official submission. Reevaluate the
+      heading each minute while resumed and immediately on foreground return.
+- [x] Preserve the next-school-day homework window and existing navigation.
+
 ## Rounded predictive back (issue #124)
 
 - [x] Wrap shell destinations in paper surfaces with animated 0–28 dp clipping;

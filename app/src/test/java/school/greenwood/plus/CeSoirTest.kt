@@ -6,6 +6,7 @@ import org.junit.Test
 import school.greenwood.plus.logic.CeSoir
 import school.greenwood.plus.model.Devoir
 import java.time.LocalDate
+import java.time.LocalTime
 
 /*
  * La carte « Ce soir » (docs/product/DESIGN.md §2) : échéance = prochaine rentrée.
@@ -26,6 +27,28 @@ class CeSoirTest {
     private val samedi = LocalDate.of(2026, 9, 19)
     private val dimanche = LocalDate.of(2026, 9, 20)
     private val lundiSuivant = LocalDate.of(2026, 9, 21)
+
+    @Test
+    fun `titre - soir à partir de 18 h jusqu'à minuit`() {
+        val liste = listOf(devoir("a", lundiSuivant))
+        assertEquals("1 devoir", CeSoir.titre(liste, LocalTime.of(17, 59, 59)))
+        assertEquals("Ce soir", CeSoir.titre(liste, LocalTime.of(18, 0)))
+        assertEquals("Ce soir", CeSoir.titre(liste, LocalTime.of(23, 59, 59)))
+        assertEquals("1 devoir", CeSoir.titre(liste, LocalTime.MIDNIGHT))
+        assertEquals("1 devoir", CeSoir.titre(liste, LocalTime.of(8, 0)))
+    }
+
+    @Test
+    fun `compteur - exclut les faits officiels et locaux et suit leur annulation`() {
+        val a = devoir("a", lundiSuivant)
+        val b = devoir("b", lundiSuivant)
+        val faits = listOf(a.copy(fait = true), b.copy(faitLocal = true))
+        assertEquals(0, CeSoir.restants(faits))
+        assertEquals("0 devoir", CeSoir.titre(faits, LocalTime.NOON))
+        assertEquals("1 devoir", CeSoir.titre(listOf(faits[0], b), LocalTime.NOON))
+        assertEquals("2 devoirs", CeSoir.titre(listOf(a, b), LocalTime.NOON))
+        assertEquals("0 devoir", CeSoir.titre(emptyList(), LocalTime.NOON))
+    }
 
     @Test
     fun `horizon - jeudi, demain vendredi`() {
