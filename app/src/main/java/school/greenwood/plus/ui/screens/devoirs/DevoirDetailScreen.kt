@@ -28,7 +28,6 @@ import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -63,6 +62,7 @@ import school.greenwood.plus.model.Devoir
 import school.greenwood.plus.model.DevoirDétail
 import school.greenwood.plus.model.SoumissionDétail
 import school.greenwood.plus.ui.components.GwsCard
+import school.greenwood.plus.ui.components.GwsLoadingIndicator
 import school.greenwood.plus.ui.components.Puce
 import school.greenwood.plus.ui.components.SectionLabel
 import school.greenwood.plus.ui.theme.ControlShape
@@ -182,7 +182,7 @@ fun DevoirDetailScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                CircularProgressIndicator(color = RegistreTheme.colors.ink)
+                GwsLoadingIndicator(color = RegistreTheme.colors.ink)
             }
         } else {
             val infos = détail
@@ -588,9 +588,8 @@ private fun LignePièceJointeDétail(
             modifier = Modifier.weight(1f),
         )
         if (enCours) {
-            CircularProgressIndicator(
+            GwsLoadingIndicator(
                 color = RegistreTheme.colors.ink,
-                strokeWidth = 2.dp,
                 modifier = Modifier.size(16.dp),
             )
         } else {

@@ -25,14 +25,12 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -58,6 +56,8 @@ import school.greenwood.plus.ui.CoursViewModel
 import school.greenwood.plus.ui.components.BandeauErreur
 import school.greenwood.plus.ui.components.EmptyState
 import school.greenwood.plus.ui.components.GwsCard
+import school.greenwood.plus.ui.components.GwsLoadingIndicator
+import school.greenwood.plus.ui.components.GwsPullToRefreshBox
 import school.greenwood.plus.ui.components.BanniereOnglet
 import school.greenwood.plus.ui.components.HauteurBannièreComplète
 import school.greenwood.plus.ui.components.HauteurBannièreRéduite
@@ -130,10 +130,11 @@ fun CoursScreen(
                 },
             )
         }
-        PullToRefreshBox(
+        GwsPullToRefreshBox(
             isRefreshing = état.rafraîchissement,
             onRefresh = { vm.rafraîchir() },
             modifier = Modifier.fillMaxSize().padding(top = padding.calculateTopPadding()),
+            indicatorTopInset = hauteurBannière,
         ) {
         LazyColumn(
             state = liste,
@@ -197,9 +198,8 @@ fun CoursScreen(
                 contentAlignment = Alignment.Center,
             ) {
                 if (état.navigation) {
-                    CircularProgressIndicator(
+                    GwsLoadingIndicator(
                         modifier = Modifier.size(16.dp),
-                        strokeWidth = 2.dp,
                         color = RegistreTheme.accent.teinte,
                     )
                 } else {

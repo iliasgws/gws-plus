@@ -13,7 +13,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Modifier
@@ -81,10 +80,11 @@ internal fun EcranBanniere(
         }
         Box(Modifier.fillMaxSize().padding(top = padding.calculateTopPadding())) {
             if (surActualiser != null) {
-                PullToRefreshBox(
+                GwsPullToRefreshBox(
                     isRefreshing = rafraîchissement,
                     onRefresh = surActualiser,
                     modifier = Modifier.fillMaxSize(),
+                    indicatorTopInset = if (activée) HauteurBannièreComplète else 0.dp,
                 ) { flux() }
             } else flux()
         }

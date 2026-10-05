@@ -8,6 +8,29 @@ raw probe responses stay out of the repository (personal data).
 
 `[x]` done · `[~]` in progress · `[ ]` todo · `(!)` needs a decision or a real-device check
 
+## Shared Material 3 Expressive loading animation
+
+- [x] Address beta.1 feedback: offset only the refresh indicator below the full
+      enabled banner (140 dp) on Registre, Cours and shared banner screens.
+      Disabled banners retain zero inset; list geometry and drag thresholds stay
+      unchanged. Prepare 0.9.12-beta.2 (versionCode 110); assembleDebug,
+      testDebugUnitTest and assembleRelease pass. Device check remains pending.
+- [x] Use AndroidX's `ContainedLoadingIndicator` directly for all circular
+      loading states, retaining existing sizes and screen colors. The official
+      Apache-2.0 component supplies morphing, rotation and progress semantics;
+      no GPL-licensed Metrolist implementation is copied.
+- [x] Pin Material 3 to 1.5.0-alpha29 (verified from Google Maven metadata);
+      the stable BOM dependency does not expose the expressive loading APIs.
+- [x] Use `PullToRefreshDefaults.LoadingIndicator` for drag-driven morphing and
+      refresh animation, retaining native gesture handling and positioning.
+      Preserve content-shaped first-load skeletons and determinate quiz progress.
+- [x] Prepare 0.9.12-beta.1 (versionCode 109) from the updated 0.9.11 base:
+      assembleDebug, testDebugUnitTest and assembleRelease pass. APK metadata and
+      the existing release signing certificate are verified; diff/accent audit passes.
+- [ ] Install and visually verify the beta on a device: GWS_API_36_STABLE failed
+      to boot locally and no physical device is connected. Check inline loaders,
+      drag/refresh morphing, both themes and Android back navigation before stable.
+
 ## Time-aware homework heading (issue #126)
 
 - [x] User approved stable promotion after 0.9.11-beta.3; merge feature PR #129

@@ -24,7 +24,6 @@ import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -57,6 +56,7 @@ import school.greenwood.plus.ui.QuizÉtat
 import school.greenwood.plus.ui.components.EmptyState
 import school.greenwood.plus.ui.components.ErrorInline
 import school.greenwood.plus.ui.components.GwsCard
+import school.greenwood.plus.ui.components.GwsLoadingIndicator
 import school.greenwood.plus.ui.components.Puce
 import school.greenwood.plus.ui.components.SqueletteQuiz
 import school.greenwood.plus.ui.theme.ControlShape
@@ -513,10 +513,9 @@ private fun RésultatQuiz(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        CircularProgressIndicator(
+                        GwsLoadingIndicator(
                             color = RegistreTheme.colors.ink,
                             modifier = Modifier.size(16.dp),
-                            strokeWidth = 2.dp,
                         )
                         Text(
                             text = "Enregistrement du score…",

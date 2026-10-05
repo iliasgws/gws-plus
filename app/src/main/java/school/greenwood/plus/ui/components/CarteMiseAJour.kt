@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -93,9 +92,8 @@ fun CarteMiseÀJour(
                         enabled = false,
                         shape = ControlShape,
                     ) {
-                        CircularProgressIndicator(
+                        GwsLoadingIndicator(
                             modifier = Modifier.size(16.dp),
-                            strokeWidth = 2.dp,
                             color = RegistreTheme.colors.page,
                         )
                         Spacer(Modifier.size(8.dp))

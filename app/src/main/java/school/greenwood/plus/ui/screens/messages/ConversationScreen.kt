@@ -24,7 +24,6 @@ import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -57,6 +56,7 @@ import school.greenwood.plus.ui.ConversationViewModel
 import school.greenwood.plus.ui.components.BandeauErreur
 import school.greenwood.plus.ui.components.EmptyState
 import school.greenwood.plus.ui.components.ErrorInline
+import school.greenwood.plus.ui.components.GwsLoadingIndicator
 import school.greenwood.plus.ui.components.SqueletteConversation
 import school.greenwood.plus.ui.theme.ControlShape
 import school.greenwood.plus.ui.theme.tabulaire
@@ -369,9 +369,8 @@ private fun BulleEnvoi(
         ) {
             when (envoi.statut) {
                 MessageEnvoi.Statut.EnCours -> {
-                    CircularProgressIndicator(
+                    GwsLoadingIndicator(
                         modifier = Modifier.size(12.dp),
-                        strokeWidth = 2.dp,
                         color = RegistreTheme.colors.chalk,
                     )
                     Text(
@@ -483,9 +482,8 @@ private fun LignePièceJointe(
         horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         if (occupé) {
-            CircularProgressIndicator(
+            GwsLoadingIndicator(
                 modifier = Modifier.size(14.dp),
-                strokeWidth = 2.dp,
                 color = RegistreTheme.colors.chalk,
             )
         } else {

@@ -16,11 +16,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Newspaper
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -43,6 +41,7 @@ import school.greenwood.plus.ui.components.BandeauErreur
 import school.greenwood.plus.ui.components.EcranBanniere
 import school.greenwood.plus.ui.components.CarteActualité
 import school.greenwood.plus.ui.components.EmptyState
+import school.greenwood.plus.ui.components.GwsLoadingIndicator
 import school.greenwood.plus.ui.components.SqueletteActualites
 import school.greenwood.plus.ui.components.VisualisationImage
 import school.greenwood.plus.ui.components.VisualiseurImages
@@ -168,7 +167,7 @@ fun ActualitesScreen(
                                         .padding(vertical = 16.dp),
                                     contentAlignment = Alignment.Center,
                                 ) {
-                                    CircularProgressIndicator(
+                                    GwsLoadingIndicator(
                                         color = RegistreTheme.accent.teinte,
                                     )
                                 }
