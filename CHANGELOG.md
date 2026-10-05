@@ -4,6 +4,26 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [0.9.12] — 2026-10-06
+
+Version stable après la bêta 0.9.12-beta.2, acceptée par l'utilisateur
+avec sa demande de publication stable.
+
+### Changé
+
+- Les chargements utilisent l'animation officielle Material 3 Expressive :
+  des formes arrondies qui tournent et se transforment, avec les couleurs
+  de chaque écran en thème clair comme sombre.
+- L'actualisation par glissement utilise le même composant natif ; la forme
+  se transforme au fil du geste puis s'anime pendant le chargement.
+
+### Corrigé
+
+- L'indicateur d'actualisation reste visible sous les bannières activées
+  dans le Registre, les Cours, les Devoirs, les Documents et les Actualités.
+- Cette version conserve les fonctionnalités de la bêta 2 ; seuls le numéro
+  de version et la documentation de publication évoluent.
+
 ## [0.9.12-beta.2] — 2026-10-06
 
 ### Préversion (bêta)
