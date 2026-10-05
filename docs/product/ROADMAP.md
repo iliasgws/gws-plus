@@ -10,6 +10,13 @@ raw probe responses stay out of the repository (personal data).
 
 ## Time-aware homework heading (issue #126)
 
+- [x] Prepare 0.9.11-beta.1 (versionCode 105) from stable v0.9.10,
+      including the predictive-preview accent fix from issue #127.
+- [x] Verify assembleDebug, testDebugUnitTest and assembleRelease on that base.
+- [ ] Check the published beta on a device: both GWS_API_36_STABLE and
+      GWS_API_36 failed to boot locally. Installation and visual verification
+      of the heading/count remain pending.
+
 - [x] Show « Ce soir » only from 18:00 until local midnight; otherwise show
       the remaining homework count with French singular/plural. Keep the count
       in the evening subtitle and show a completion message when all are done.
