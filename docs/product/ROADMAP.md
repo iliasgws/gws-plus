@@ -17,6 +17,9 @@ raw probe responses stay out of the repository (personal data).
 - [x] Scroll the calendar and selected-day assignments together, preserving
       loading/error states and the existing tab/detail back-stack contract.
 - [x] Cover month alignment, leap days and six-week months with unit tests.
+- [x] Publish 0.9.9-beta.1 and receive user confirmation of installation,
+      calendar behaviour and Android back navigation before preparing stable
+      0.9.9 (versionCode 100).
 
 ## 1. Groundwork
 
