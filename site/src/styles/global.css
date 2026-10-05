@@ -1,0 +1,367 @@
+/* « Le registre » — jetons repris de l'app (docs/product/DESIGN.md, ui/theme/Color.kt) */
+
+@font-face {
+  font-family: 'Bricolage Grotesque';
+  src: url('/fonts/bricolage-grotesque.ttf') format('truetype-variations');
+  font-weight: 200 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Public Sans';
+  src: url('/fonts/public-sans.ttf') format('truetype-variations');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --paper: #f7f1e5;
+  --page: #ffffff;
+  --ink: #1f3324;
+  --sage: #ebe6d7;
+  --red-pen: #b3382a;
+  /* Rouge « action » : blanc lisible dessus (≥4.5:1) dans les deux schémas */
+  --rouge-cta: #b3382a;
+  --chalk: #5e6b5c;
+  --signet: #e27a0f;
+  --outline: #949b8c;
+  --outline-variant: #ddd5c2;
+
+  --vert-teinte: #256b3b;
+  --vert-conteneur: #ddebd3;
+  --ambre-teinte: #a85e10;
+  --ambre-conteneur: #fae6cc;
+  --bleu-teinte: #21618f;
+  --violet-teinte: #6b3fa8;
+  --ocre-teinte: #7d5e00;
+  --corail-teinte: #c13b69;
+  --sarcelle-teinte: #16665e;
+
+  --radius-page: 24px;
+  --radius-control: 16px;
+  --radius-annotation: 10px;
+
+  --font-display: 'Bricolage Grotesque', 'Public Sans', system-ui, sans-serif;
+  --font-text: 'Public Sans', system-ui, sans-serif;
+
+  --measure: 68ch;
+  --sheet: 56rem;
+  --header-h: 4rem;
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #141b15;
+    --page: #1d271e;
+    --ink: #e9f0e6;
+    --sage: #262f24;
+    --red-pen: #f0917f;
+    --rouge-cta: #c9402f;
+    --chalk: #9aab97;
+    --signet: #ffa94f;
+    --outline: #6f7b6d;
+    --outline-variant: #39443a;
+
+    --vert-teinte: #8ed6a4;
+    --vert-conteneur: #1f3a26;
+    --ambre-teinte: #ffb35c;
+    --ambre-conteneur: #452b10;
+    --bleu-teinte: #96c6ec;
+    --violet-teinte: #cda9f4;
+    --ocre-teinte: #e6c368;
+    --corail-teinte: #f59fb4;
+    --sarcelle-teinte: #7fd8cf;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: calc(var(--header-h) + 1rem);
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-text);
+  font-size: 1rem;
+  line-height: 1.6;
+  font-optical-sizing: auto;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  caret-color: var(--red-pen);
+}
+
+/* Surfaces de navigateur : la page les porte, plus le défaut du navigateur */
+::selection {
+  background: var(--vert-conteneur);
+  color: var(--ink);
+}
+
+:focus-visible {
+  outline: 2px solid var(--red-pen);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+  margin: 0;
+}
+
+h1 {
+  font-size: clamp(2rem, 1.2rem + 3.2vw, 3.4rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+h2 {
+  font-size: clamp(1.4rem, 1.1rem + 1.2vw, 1.9rem);
+  font-weight: 650;
+  margin-top: 2.75rem;
+  margin-bottom: 0.9rem;
+}
+
+h3 {
+  font-size: 1.2rem;
+  font-weight: 640;
+  margin-top: 2rem;
+  margin-bottom: 0.6rem;
+}
+
+p,
+li {
+  max-width: var(--measure);
+}
+
+a {
+  color: var(--vert-teinte);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
+a:hover {
+  color: var(--ink);
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid var(--outline-variant);
+  margin: 2.5rem 0;
+}
+
+code {
+  font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, monospace;
+  font-size: 0.9em;
+  background: var(--sage);
+  padding: 0.1em 0.35em;
+  border-radius: 6px;
+}
+
+pre {
+  background: var(--sage);
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-control);
+  padding: 1rem 1.15rem;
+  overflow-x: auto;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  max-width: var(--measure);
+}
+
+pre code {
+  background: none;
+  padding: 0;
+  font-size: inherit;
+}
+
+blockquote {
+  margin: 1.4rem 0;
+  padding: 0.2rem 0 0.2rem 1.1rem;
+  border-left: 2px solid var(--outline-variant);
+  color: var(--chalk);
+  max-width: var(--measure);
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  max-width: var(--measure);
+  font-size: 0.94rem;
+  font-variant-numeric: tabular-nums;
+  margin: 1.4rem 0;
+}
+
+th,
+td {
+  border: 1px solid var(--outline-variant);
+  padding: 0.5rem 0.7rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  background: var(--sage);
+  font-weight: 650;
+}
+
+td {
+  background: var(--page);
+}
+
+/* Barre de défilement discrète, teintée du monde */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--outline) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--outline);
+  border-radius: 8px;
+  border: 3px solid var(--paper);
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* — Chrome : en-tête — */
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--paper);
+  border-bottom: 1px solid var(--outline-variant);
+}
+
+.site-header__inner {
+  max-width: 74rem;
+  margin: 0 auto;
+  padding: 0.55rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  text-decoration: none;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.06rem;
+  letter-spacing: -0.01em;
+}
+
+.brand img {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+}
+
+.site-nav {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+}
+
+.site-nav a {
+  color: var(--ink);
+  text-decoration: none;
+  font-size: 0.95rem;
+  font-weight: 550;
+}
+
+.site-nav a:hover {
+  color: var(--vert-teinte);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+/* CTA : le rouge stylo ne décore jamais — il réclame l'action (installer) */
+a.btn-download {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--rouge-cta);
+  color: #fff;
+  font-weight: 650;
+  font-size: 0.95rem;
+  padding: 0.5rem 1.05rem;
+  border-radius: 14px;
+  text-decoration: none;
+  transition: transform 0.25s var(--ease-out-quint), filter 0.2s ease;
+}
+
+a.btn-download:hover {
+  color: #fff;
+  filter: brightness(1.07);
+  transform: translateY(-1px);
+}
+
+a.btn-download:active {
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  a.btn-download {
+    transition: none;
+  }
+}
+
+/* — Pied de page — */
+.site-footer {
+  border-top: 1px solid var(--outline-variant);
+  margin-top: 5rem;
+  padding: 2.5rem 1.25rem 3.5rem;
+}
+
+.site-footer__inner {
+  max-width: 74rem;
+  margin: 0 auto;
+  display: grid;
+  gap: 1rem;
+  font-size: 0.9rem;
+  color: var(--chalk);
+}
+
+.site-footer a {
+  color: var(--chalk);
+}
+
+.site-footer strong {
+  color: var(--ink);
+  font-weight: 650;
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+}

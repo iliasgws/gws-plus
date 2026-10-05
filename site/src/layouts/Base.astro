@@ -1,0 +1,126 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const { title, description } = Astro.props;
+const full = title === 'Greenwood School +' ? title : `${title} — Greenwood School +`;
+const onDocs = Astro.url.pathname.startsWith('/docs');
+const desc =
+  description ??
+  'Greenwood School + : le registre du jour, les devoirs, les documents et la messagerie avec l’administration de l’école Greenwood, dans une application Android calme et rapide.';
+---
+
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{full}</title>
+    <meta name="description" content={desc} />
+    <meta name="color-scheme" content="light dark" />
+    <meta property="og:title" content={full} />
+    <meta property="og:description" content={desc} />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="/icon.png" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="alternate icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="preload" href="/fonts/public-sans.ttf" as="font" type="font/ttf" crossorigin />
+    <link
+      rel="preload"
+      href="/fonts/bricolage-grotesque.ttf"
+      as="font"
+      type="font/ttf"
+      crossorigin
+    />
+  </head>
+  <body>
+    <a class="skip-link" href="#contenu">Aller au contenu</a>
+    <header class="site-header">
+      <div class="site-header__inner">
+        <a class="brand" href="/" aria-label="Greenwood School + — accueil">
+          <img src="/icon.png" alt="" width="30" height="30" />
+          <span>Greenwood School <span aria-hidden="true">+</span></span>
+        </a>
+        <nav class="site-nav" aria-label="Navigation principale">
+          <a href="/docs/" aria-current={onDocs ? 'page' : undefined}>Documentation</a>
+          <a
+            class="nav-github"
+            href="https://github.com/iliasgws/gws-plus"
+            rel="noopener"
+            target="_blank">GitHub</a
+          >
+          <a
+            class="btn-download"
+            href="https://github.com/iliasgws/gws-plus/releases/latest"
+            rel="noopener">Télécharger</a
+          >
+        </nav>
+      </div>
+    </header>
+
+    <main id="contenu">
+      <slot />
+    </main>
+
+    <footer class="site-footer">
+      <div class="site-footer__inner">
+        <p>
+          <strong>Greenwood School +</strong> est un client
+          <strong>non officiel</strong>, indépendant. Pas affilié à Greenwood
+          School ni à Boti Education. Le protocole réseau a été reconstitué par
+          observation ; aucune donnée personnelle n’est conservée dans le dépôt.
+        </p>
+        <p>
+          <a href="https://github.com/iliasgws/gws-plus" rel="noopener">Code source</a>
+          · <a href="https://github.com/iliasgws/gws-plus/releases" rel="noopener">Releases</a>
+          · <a href="https://github.com/iliasgws/gws-plus/blob/main/LICENSE" rel="noopener">Licence MIT</a>
+          · <a href="/docs/">Documentation</a>
+        </p>
+      </div>
+    </footer>
+
+    <style is:global>
+      @media (max-width: 700px) {
+        .site-nav .nav-github {
+          display: none;
+        }
+      }
+
+      @media (max-width: 520px) {
+        .brand span {
+          display: none;
+        }
+
+        .site-nav {
+          gap: 0.9rem;
+        }
+
+        .site-nav a {
+          font-size: 0.9rem;
+        }
+      }
+
+      .skip-link {
+        position: absolute;
+        left: 1rem;
+        top: -4rem;
+        background: var(--page);
+        color: var(--ink);
+        padding: 0.6rem 1rem;
+        border-radius: var(--radius-annotation);
+        border: 1px solid var(--outline-variant);
+        z-index: 50;
+        transition: top 0.15s ease;
+      }
+
+      .skip-link:focus {
+        top: 0.8rem;
+      }
+    </style>
+  </body>
+</html>

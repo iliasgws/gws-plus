@@ -1,0 +1,19 @@
+---
+import { getCollection, render } from 'astro:content';
+import Doc from '../../layouts/Doc.astro';
+import { byId, extractToc } from '../../lib/docs';
+
+const item = byId('readme')!;
+const all = await getCollection('docs');
+const entry = all.find(
+  (e) => e.id.toLowerCase().replace(/\.md$/, '') === 'readme',
+);
+if (!entry) throw new Error('Index docs/README.md introuvable dans la collection');
+
+const { Content } = await render(entry);
+const toc = extractToc(item.repoPath);
+---
+
+<Doc item={item} toc={toc}>
+  <Content />
+</Doc>

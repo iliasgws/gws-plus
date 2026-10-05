@@ -1,0 +1,29 @@
+---
+import { getCollection, render } from 'astro:content';
+import Doc from '../../layouts/Doc.astro';
+import { ORDERED, byId, extractToc } from '../../lib/docs';
+
+export async function getStaticPaths() {
+  return ORDERED.filter((entry) => entry.id !== 'readme').map((entry) => ({
+    params: {
+      slug: entry.route.replace(/^\/docs\//, '').replace(/\/$/, ''),
+    },
+    props: { docId: entry.id },
+  }));
+}
+
+const { docId } = Astro.props;
+const item = byId(docId)!;
+const all = await getCollection('docs');
+const entry = all.find(
+  (e) => e.id.toLowerCase().replace(/\.md$/, '') === item.id,
+);
+if (!entry) throw new Error(`Document introuvable dans la collection : ${item.repoPath}`);
+
+const { Content } = await render(entry);
+const toc = extractToc(item.repoPath);
+---
+
+<Doc item={item} toc={toc}>
+  <Content />
+</Doc>

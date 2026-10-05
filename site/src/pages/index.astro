@@ -1,0 +1,597 @@
+---
+import Base from '../layouts/Base.astro';
+
+const date = (() => {
+  const raw = new Intl.DateTimeFormat('fr-FR', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  }).format(new Date());
+  return raw.charAt(0).toUpperCase() + raw.slice(1);
+})();
+
+const rows = [
+  {
+    nom: 'Registre',
+    quotidien: 'Le fil du jour : ce qui s’est passé à l’école et ce qui vous attend ce soir.',
+    etat: 'en-service',
+  },
+  {
+    nom: 'Actualités',
+    quotidien: 'Toutes les annonces de l’école, images et pièces jointes comprises.',
+    etat: 'en-service',
+  },
+  {
+    nom: 'Emploi du temps',
+    quotidien: 'La semaine de votre enfant : horaires, matières, salles.',
+    etat: 'en-service',
+  },
+  {
+    nom: 'Devoirs',
+    quotidien: 'Classés par échéance ; les fichiers s’ouvrent au bon endroit.',
+    etat: 'en-service',
+  },
+  {
+    nom: 'Documents',
+    quotidien: 'Les ressources par matière, et les quiz jouables avec score.',
+    etat: 'en-service',
+  },
+  {
+    nom: 'Messagerie et demandes',
+    quotidien: 'Écrire à l’administration et suivre le statut de vos demandes.',
+    etat: 'partiel',
+  },
+];
+
+const sections = [
+  {
+    titre: 'Produit',
+    ligne: 'Ce que fait l’app, la direction visuelle « Le registre », la feuille de route.',
+    pages: '3 pages',
+    href: '/docs/product/overview/',
+  },
+  {
+    titre: 'Développement',
+    ligne: 'Installation de l’environnement, architecture en couches, contrat de navigation.',
+    pages: '3 pages',
+    href: '/docs/development/setup/',
+  },
+  {
+    titre: 'API Boti',
+    ligne: 'Le protocole reconstitué par observation, endpoint par endpoint.',
+    pages: '3 pages',
+    href: '/docs/api/boti-api/',
+  },
+  {
+    titre: 'Sécurité',
+    ligne: 'Les observations et les règles du dépôt : aucun secret, aucune donnée personnelle.',
+    pages: '1 page',
+    href: '/docs/security/security-notes/',
+  },
+];
+---
+
+<Base
+  title="Greenwood School +"
+  description="Le registre du jour, les devoirs, les documents et la messagerie avec l’administration de l’école Greenwood — application Android non officielle, à installer directement depuis GitHub."
+>
+  <div class="registre">
+    <section class="feuille" aria-labelledby="titre-page">
+      <header class="feuille__tete">
+        <div>
+          <h1 id="titre-page">Greenwood School <span aria-hidden="true">+</span></h1>
+          <p class="lede">
+            L’application des parents de Greenwood : le registre du jour, les
+            devoirs, les documents et l’administration — Android, sobre et
+            rapide.
+          </p>
+        </div>
+        <p class="dateline num" translate="off">{date}</p>
+      </header>
+
+      <table class="appel">
+        <caption class="visuellement-cachee">
+          L’appel des fonctions de Greenwood School + : ce que fait chaque
+          fonction et son état réel.
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col">Fonction</th>
+            <th scope="col">Au quotidien</th>
+            <th scope="col">État</th>
+          </tr>
+        </thead>
+        <tbody>
+          {
+            rows.map((row, i) => (
+              <tr class="appel__ligne" style={`--rang: ${i}`}>
+                <th scope="row" class="appel__nom">{row.nom}</th>
+                <td class="appel__fait">{row.quotidien}</td>
+                <td class="appel__etat">
+                  <span class="etat etat--ok">
+                    <svg viewBox="0 0 20 20" aria-hidden="true" class="marque">
+                      <path
+                        d="M4 11.2 8 15.2 16.2 5.4"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2.4"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                    En service
+                  </span>
+                  {row.etat === 'partiel' && (
+                    <span class="etat etat--partiel">
+                      <svg viewBox="0 0 20 20" aria-hidden="true" class="marque">
+                        <path
+                          d="M10 3.4 17.4 16.4H2.6Z"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="1.9"
+                          stroke-linejoin="round"
+                        />
+                        <path
+                          d="M10 8.4v3.4"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="1.9"
+                          stroke-linecap="round"
+                        />
+                        <circle cx="10" cy="13.9" r="1.05" fill="currentColor" />
+                      </svg>
+                      Demandes en lecture seule
+                    </span>
+                  )}
+                </td>
+              </tr>
+            ))
+          }
+        </tbody>
+      </table>
+    </section>
+
+    <section class="signature" aria-labelledby="titre-installer">
+      <div class="signature__bloc">
+        <div class="signature__texte">
+          <h2 id="titre-installer">Installer l’application</h2>
+          <p>
+            Le fichier <span class="num">.apk</span> est téléchargé
+            directement depuis GitHub Releases — aucun magasin, aucune
+            inscription. Android vous demandera d’autoriser les « apps
+            inconnues » pour ce site, une seule fois.
+          </p>
+        </div>
+        <div class="signature__acte">
+          <a
+            class="signer"
+            href="https://github.com/iliasgws/gws-plus/releases/latest"
+            rel="noopener"
+          >
+            <span>Télécharger l’APK</span>
+            <svg class="signer__trait" viewBox="0 0 240 16" aria-hidden="true" preserveAspectRatio="none">
+              <path
+                d="M4 11C38 5.5 74 13 112 8.5 150 4 186 12.5 236 6"
+                pathLength="100"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="3.4"
+                stroke-linecap="round"
+              />
+            </svg>
+          </a>
+          <p class="signature__note">
+            Version stable publiée sur
+            <a href="https://github.com/iliasgws/gws-plus/releases" rel="noopener">GitHub Releases</a>.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="doc-index" aria-labelledby="titre-docs">
+      <div class="doc-index__tete">
+        <h2 id="titre-docs">La documentation</h2>
+        <p>
+          Le projet écrit noir sur crème : le produit, le code, le protocole
+          et la sécurité — la même documentation que celle du dépôt.
+        </p>
+      </div>
+      <ul class="doc-liste">
+        {
+          sections.map((s) => (
+            <li>
+              <a href={s.href} class="doc-rang">
+                <span class="doc-rang__titre">{s.titre}</span>
+                <span class="doc-rang__ligne">{s.ligne}</span>
+                <span class="doc-rang__pages num">{s.pages}</span>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+      <p class="doc-suite">
+        <a href="/docs/">Ouvrir la documentation →</a>
+      </p>
+    </section>
+  </div>
+</Base>
+
+<style>
+  .registre {
+    max-width: var(--sheet);
+    margin: 0 auto;
+    padding: clamp(1rem, 2.4vw, 1.25rem) 1.25rem 0;
+  }
+
+  .feuille {
+    background: var(--page);
+    border: 1px solid var(--outline-variant);
+    border-radius: var(--radius-page);
+    padding: clamp(1rem, 2vw, 1.4rem);
+  }
+
+  .feuille__tete {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem 1.5rem;
+    padding-bottom: 1.15rem;
+    border-bottom: 2px solid var(--ink);
+  }
+
+  .feuille__tete > div {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  @media (max-width: 700px) {
+    .feuille__tete > div {
+      flex-basis: 100%;
+    }
+  }
+
+  .feuille__tete h1 {
+    margin-bottom: 0.55rem;
+  }
+
+  .feuille__tete h1 span {
+    color: var(--vert-teinte);
+  }
+
+  .lede {
+    margin: 0;
+    color: var(--chalk);
+    font-size: 1.02rem;
+    max-width: 66ch;
+  }
+
+  .dateline {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 650;
+    color: var(--chalk);
+    white-space: nowrap;
+  }
+
+  /* — L’appel — */
+  .appel {
+    width: 100%;
+    max-width: none;
+    border-collapse: collapse;
+    margin: 1.2rem 0 0;
+    display: block;
+  }
+
+  .appel thead,
+  .appel tbody {
+    display: contents;
+  }
+
+  .appel tr {
+    display: grid;
+    grid-template-columns: minmax(8rem, 11rem) minmax(0, 1fr) minmax(12.5rem, auto);
+    gap: 0.4rem 1.4rem;
+    align-items: start;
+    padding: 0.62rem 0.25rem;
+    border-bottom: 1px solid var(--outline-variant);
+  }
+
+  .appel thead tr {
+    padding-top: 0.7rem;
+    border-bottom: 1px solid var(--ink);
+  }
+
+  .appel th,
+  .appel td {
+    border: 0;
+    background: none;
+    padding: 0;
+    text-align: left;
+    vertical-align: top;
+    font-weight: 400;
+  }
+
+  .appel thead th {
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--chalk);
+  }
+
+  .appel__nom {
+    font-family: var(--font-display);
+    font-size: 1.12rem;
+    font-weight: 650;
+    line-height: 1.25;
+    color: var(--ink);
+  }
+
+  .appel__fait {
+    color: var(--chalk);
+    font-size: 0.97rem;
+    line-height: 1.5;
+    max-width: 52ch;
+  }
+
+  .appel__etat {
+    display: grid;
+    gap: 0.4rem;
+    justify-items: start;
+    min-width: 11.5rem;
+  }
+
+  .etat {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.87rem;
+    font-weight: 650;
+    border-radius: var(--radius-annotation);
+    padding: 0.22rem 0.6rem;
+    white-space: nowrap;
+  }
+
+  .etat--ok {
+    color: var(--vert-teinte);
+    background: var(--vert-conteneur);
+  }
+
+  .etat--partiel {
+    color: var(--ambre-teinte);
+    background: var(--ambre-conteneur);
+  }
+
+  .marque {
+    width: 0.95rem;
+    height: 0.95rem;
+    flex: none;
+  }
+
+  @media (max-width: 640px) {
+    .appel tr {
+      grid-template-columns: 1fr;
+      gap: 0.45rem;
+    }
+
+    .appel thead tr {
+      display: none;
+    }
+
+    .appel__etat {
+      min-width: 0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+  }
+
+  /* Cascade : une seule fois, décalage 40 ms, plafond 400 ms (contraste app) */
+  .appel__ligne {
+    animation: ligne-entree 0.4s var(--ease-out) backwards;
+    animation-delay: calc(var(--rang) * 40ms);
+  }
+
+  @keyframes ligne-entree {
+    from {
+      opacity: 0;
+      transform: translateY(7px);
+    }
+  }
+
+  /* — Signature — */
+  .signature {
+    margin-top: clamp(1.25rem, 2.4vw, 1.75rem);
+  }
+
+  .signature__bloc {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 1.75rem 3rem;
+    align-items: start;
+    background: var(--page);
+    border: 1px solid var(--outline-variant);
+    border-radius: var(--radius-page);
+    padding: clamp(1.4rem, 4vw, 2.4rem);
+  }
+
+  .signature__texte h2 {
+    margin-top: 0;
+    margin-bottom: 0.6rem;
+  }
+
+  .signature__texte p {
+    margin: 0;
+    color: var(--chalk);
+  }
+
+  .signature__acte {
+    display: grid;
+    gap: 0.6rem;
+    justify-items: center;
+  }
+
+  .signer {
+    position: relative;
+    display: inline-grid;
+    justify-items: center;
+    gap: 0.35rem;
+    text-decoration: none;
+    color: var(--red-pen);
+    font-family: var(--font-display);
+    font-size: clamp(1.35rem, 1.1rem + 1vw, 1.7rem);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    padding: 0.35rem 0.6rem 0.1rem;
+  }
+
+  .signer:hover {
+    color: var(--red-pen);
+  }
+
+  .signer:hover .signer__trait {
+    transform: translateY(2px);
+  }
+
+  .signer__trait {
+    width: 100%;
+    height: 0.85rem;
+    color: var(--red-pen);
+    transition: transform 0.3s var(--ease-out-quint);
+    animation: tiret 0.85s var(--ease-out) 0.3s backwards;
+  }
+
+  @keyframes tiret {
+    from {
+      stroke-dashoffset: 100;
+    }
+  }
+
+  .signer__trait path {
+    stroke-dasharray: 100;
+  }
+
+  .signature__note {
+    margin: 0;
+    font-size: 0.88rem;
+    color: var(--chalk);
+    text-align: center;
+    max-width: 24rem;
+  }
+
+  @media (max-width: 760px) {
+    .signature__bloc {
+      grid-template-columns: minmax(0, 1fr);
+      align-items: start;
+    }
+
+    .signature__acte {
+      justify-items: start;
+    }
+
+    .signature__note {
+      text-align: left;
+    }
+  }
+
+  /* — Documentation — */
+  .doc-index {
+    margin-top: clamp(3rem, 8vw, 5rem);
+  }
+
+  .doc-index__tete h2 {
+    margin-top: 0;
+  }
+
+  .doc-index__tete p {
+    margin: 0 0 1.4rem;
+    color: var(--chalk);
+  }
+
+  .doc-liste {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--ink);
+  }
+
+  .doc-liste li {
+    border-bottom: 1px solid var(--outline-variant);
+  }
+
+  .doc-rang {
+    display: grid;
+    grid-template-columns: minmax(8rem, 11rem) minmax(0, 1fr) minmax(12.5rem, auto);
+    gap: 0.35rem 1.4rem;
+    align-items: baseline;
+    padding: 1.05rem 0.25rem;
+    text-decoration: none;
+    color: var(--ink);
+    transition: background 0.15s ease;
+  }
+
+  .doc-rang:hover {
+    background: var(--sage);
+    color: var(--ink);
+  }
+
+  .doc-rang:hover .doc-rang__titre {
+    color: var(--vert-teinte);
+  }
+
+  .doc-rang__titre {
+    font-family: var(--font-display);
+    font-weight: 650;
+    font-size: 1.08rem;
+  }
+
+  .doc-rang__ligne {
+    color: var(--chalk);
+    font-size: 0.97rem;
+    line-height: 1.5;
+    max-width: 56ch;
+  }
+
+  .doc-rang__pages {
+    font-size: 0.85rem;
+    color: var(--chalk);
+    white-space: nowrap;
+  }
+
+  @media (max-width: 640px) {
+    .doc-rang {
+      grid-template-columns: 1fr auto;
+    }
+
+    .doc-rang__ligne {
+      grid-column: 1 / -1;
+    }
+  }
+
+  .doc-suite {
+    margin: 1.3rem 0 0;
+    font-weight: 650;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .appel__ligne,
+    .signer__trait {
+      animation: none;
+    }
+
+    .signer__trait {
+      transition: none;
+    }
+  }
+
+  .visuellement-cachee {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+</style>

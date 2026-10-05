@@ -1,0 +1,351 @@
+---
+import Base from './Base.astro';
+import { SECTIONS, neighbours, type DocItem, type TocEntry } from '../lib/docs';
+
+interface Props {
+  item: DocItem;
+  toc: TocEntry[];
+}
+
+const { item, toc } = Astro.props;
+const { prev, next } = neighbours(item.id);
+---
+
+<Base title={item.label} description={`Documentation Greenwood School + — ${item.label}`}>
+  <div class="doc-shell">
+    <details class="doc-mobile-nav" id="doc-mobile-nav" open={false}>
+      <summary>Dans la documentation</summary>
+      <nav aria-label="Sommaire de la documentation">
+        {
+          SECTIONS.map((section) => (
+            <div class="side-group">
+              <p class="side-group__label">{section.label}</p>
+              <ul>
+                {section.items.map((entry) => (
+                  <li>
+                    <a
+                      href={entry.route}
+                      aria-current={entry.id === item.id ? 'page' : undefined}
+                    >
+                      {entry.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))
+        }
+      </nav>
+    </details>
+
+    <aside class="doc-sidebar">
+      <nav aria-label="Sommaire de la documentation">
+        {
+          SECTIONS.map((section) => (
+            <div class="side-group">
+              <p class="side-group__label">{section.label}</p>
+              <ul>
+                {section.items.map((entry) => (
+                  <li>
+                    <a
+                      href={entry.route}
+                      aria-current={entry.id === item.id ? 'page' : undefined}
+                    >
+                      {entry.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))
+        }
+      </nav>
+    </aside>
+
+    <article class="doc-sheet">
+      <div class="doc-body">
+        <slot />
+      </div>
+
+      <nav class="doc-pager" aria-label="Pages voisines">
+        {
+          prev ? (
+            <a class="pager-link pager-link--prev" href={prev.route}>
+              <span class="pager-dir">Page précédente</span>
+              <span class="pager-title">{prev.label}</span>
+            </a>
+          ) : (
+            <span />
+          )
+        }
+        {
+          next ? (
+            <a class="pager-link pager-link--next" href={next.route}>
+              <span class="pager-dir">Page suivante</span>
+              <span class="pager-title">{next.label}</span>
+            </a>
+          ) : (
+            <span />
+          )
+        }
+      </nav>
+    </article>
+
+    {
+      toc.length > 2 && (
+        <aside class="doc-toc">
+          <p class="toc-label">Sur cette page</p>
+          <nav aria-label="Table des matières">
+            <ul>
+              {toc.map((entry) => (
+                <li class={`toc-${entry.depth}`}>
+                  <a href={`#${entry.slug}`}>{entry.text}</a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        </aside>
+      )
+    }
+  </div>
+</Base>
+
+<style>
+  .doc-shell {
+    max-width: 74rem;
+    margin: 0 auto;
+    padding: 2rem 1.25rem 1rem;
+    display: grid;
+    grid-template-columns: 15rem minmax(0, 1fr);
+    gap: 2.5rem;
+    align-items: start;
+  }
+
+  .doc-sidebar {
+    position: sticky;
+    top: calc(var(--header-h) + 1.2rem);
+    max-height: calc(100vh - var(--header-h) - 2.4rem);
+    overflow-y: auto;
+    padding-right: 0.4rem;
+  }
+
+  .doc-mobile-nav {
+    display: none;
+  }
+
+  .side-group + .side-group {
+    margin-top: 1.4rem;
+  }
+
+  .side-group__label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--chalk);
+    margin: 0 0 0.45rem;
+  }
+
+  .side-group ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.15rem;
+  }
+
+  .side-group a {
+    display: block;
+    padding: 0.35rem 0.65rem;
+    border-radius: var(--radius-annotation);
+    color: var(--ink);
+    text-decoration: none;
+    font-size: 0.93rem;
+    line-height: 1.35;
+  }
+
+  .side-group a:hover {
+    background: var(--sage);
+  }
+
+  .side-group a[aria-current='page'] {
+    background: var(--vert-conteneur);
+    color: var(--vert-teinte);
+    font-weight: 650;
+  }
+
+  .doc-sheet {
+    background: var(--page);
+    border: 1px solid var(--outline-variant);
+    border-radius: var(--radius-page);
+    padding: clamp(1.4rem, 4vw, 3rem);
+    min-width: 0;
+  }
+
+  .doc-body :global(h1) {
+    margin-bottom: 1.4rem;
+  }
+
+  .doc-body :global(h1 + p) {
+    font-size: 1.06rem;
+    color: var(--chalk);
+    margin-top: 0;
+  }
+
+  .doc-body :global(> :first-child) {
+    margin-top: 0;
+  }
+
+  .doc-body :global(table) {
+    display: block;
+    overflow-x: auto;
+    margin-inline: -0.5rem;
+    padding-inline: 0.5rem;
+  }
+
+  .doc-pager {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-top: 2.5rem;
+    padding-top: 1.6rem;
+    border-top: 1px solid var(--outline-variant);
+  }
+
+  .pager-link {
+    display: grid;
+    gap: 0.15rem;
+    padding: 0.85rem 1rem;
+    border: 1px solid var(--outline-variant);
+    border-radius: var(--radius-control);
+    text-decoration: none;
+    color: var(--ink);
+    background: var(--paper);
+    transition: border-color 0.15s ease, transform 0.25s var(--ease-out-quint);
+  }
+
+  .pager-link:hover {
+    border-color: var(--vert-teinte);
+    color: var(--ink);
+    transform: translateY(-1px);
+  }
+
+  .pager-link--next {
+    text-align: right;
+  }
+
+  .pager-dir {
+    font-size: 0.78rem;
+    color: var(--chalk);
+  }
+
+  .pager-title {
+    font-weight: 650;
+  }
+
+  .doc-toc {
+    position: sticky;
+    top: calc(var(--header-h) + 1.2rem);
+    max-height: calc(100vh - var(--header-h) - 2.4rem);
+    overflow-y: auto;
+    font-size: 0.87rem;
+  }
+
+  .toc-label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--chalk);
+    margin: 0 0 0.5rem;
+  }
+
+  .doc-toc ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.35rem;
+  }
+
+  .doc-toc a {
+    color: var(--chalk);
+    text-decoration: none;
+    display: block;
+    line-height: 1.35;
+  }
+
+  .doc-toc a:hover {
+    color: var(--vert-teinte);
+    text-decoration: underline;
+    text-underline-offset: 0.18em;
+  }
+
+  .doc-toc .toc-3 {
+    padding-left: 0.9rem;
+    font-size: 0.83rem;
+  }
+
+  @media (min-width: 1180px) {
+    .doc-shell {
+      grid-template-columns: 15rem minmax(0, 1fr) 13.5rem;
+    }
+  }
+
+  @media (max-width: 1179px) {
+    .doc-toc {
+      display: none;
+    }
+  }
+
+  @media (max-width: 899px) {
+    .doc-shell {
+      display: block;
+      padding-top: 1.25rem;
+    }
+
+    .doc-mobile-nav {
+      margin-bottom: 1.25rem;
+    }
+
+    .doc-sidebar {
+      display: none;
+    }
+
+    .doc-mobile-nav {
+      display: block;
+      background: var(--page);
+      border: 1px solid var(--outline-variant);
+      border-radius: var(--radius-control);
+      padding: 0.7rem 1rem;
+    }
+
+    .doc-mobile-nav summary {
+      cursor: pointer;
+      font-weight: 650;
+      font-size: 0.93rem;
+    }
+
+    .doc-mobile-nav nav {
+      margin-top: 0.9rem;
+    }
+
+    .doc-mobile-nav:not([open]) > nav {
+      display: none;
+    }
+
+    .doc-pager {
+      grid-template-columns: 1fr;
+    }
+
+    .pager-link--next {
+      text-align: left;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pager-link {
+      transition: none;
+    }
+  }
+</style>

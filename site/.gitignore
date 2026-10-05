@@ -1,0 +1,8 @@
+
+# Site de documentation (site/)
+site/node_modules/
+site/dist/
+site/.astro/
+.impeccable/review/
+.impeccable/build/
+.impeccable/config.local.json

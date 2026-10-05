@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="24 22 64 64" role="img" aria-label="Greenwood School +">
+  <title>Greenwood School +</title>
+  <path fill="#1F3D2B" d="M36,34 h36 a8,8 0 0 1 8,8 v24 a8,8 0 0 1 -8,8 h-36 a8,8 0 0 1 -8,-8 v-24 a8,8 0 0 1 8,-8 z"/>
+  <path fill="#B3382A" d="M66,64 m-5,0 a5,5 0 1 0 10,0 a5,5 0 1 0 -10,0"/>
+  <path fill="#E9EFE7" d="M36,46 h24 a3,3 0 0 1 0,6 h-24 a3,3 0 0 1 0,-6 z"/>
+  <path fill="#E9EFE7" d="M36,56 h16 a3,3 0 0 1 0,6 h-16 a3,3 0 0 1 0,-6 z"/>
+</svg>
