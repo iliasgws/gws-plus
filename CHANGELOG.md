@@ -4,6 +4,18 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [0.9.11-beta.3] — 2026-10-06
+
+### Préversion (bêta)
+
+### Changé
+
+- En journée, la carte des devoirs varie aussi parmi 100 formulations
+  françaises, choisies aléatoirement toutes les 12 secondes sans répétition
+  immédiate, avec le même fondu de 450 ms. Chaque titre commence par le nombre
+  de devoirs restants (« 1 devoir », « 2 devoirs »…) ; le compteur suit les
+  changements de statut. La rotation s'arrête lorsque la carte n'est plus active.
+
 ## [0.9.11-beta.2] — 2026-10-06
 
 ### Préversion (bêta)

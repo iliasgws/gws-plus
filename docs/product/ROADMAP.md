@@ -10,11 +10,19 @@ raw probe responses stay out of the repository (personal data).
 
 ## Time-aware homework heading (issue #126)
 
+- [x] Extend the same 12-second random rotation and 450 ms fade to 100 daytime
+      variations. Every daytime title starts with the remaining count and its
+      French singular/plural, including zero. Keep separate saved selections
+      for day/evening and update the count immediately when completion changes.
+- [x] Prepare 0.9.11-beta.3 (versionCode 107) on the stable 0.9.10 base.
+      assembleDebug, testDebugUnitTest and assembleRelease pass; tests cover
+      all 100 daytime variations, zero/singular/plural counts and random draws.
+
 - [x] Add 100 distinct French evening headings, randomly selected every
       12 seconds without immediate repeats, with a 450 ms crossfade. Pause
       rotation outside the evening window and while the card is not resumed;
       preserve the selected heading across configuration changes. The daytime
-      count and evening count/deadline remain independent of the heading.
+      count and evening count/deadline remain independent of the chosen wording.
 - [x] Prepare 0.9.11-beta.2 (versionCode 106) with the evening variations;
       cover list size/uniqueness and selection of every other heading in tests.
       assembleDebug, testDebugUnitTest and assembleRelease pass.

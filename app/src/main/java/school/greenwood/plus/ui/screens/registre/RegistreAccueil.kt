@@ -61,6 +61,7 @@ import coil3.compose.AsyncImage
 import kotlinx.coroutines.delay
 import school.greenwood.plus.data.repo.RegistreDuJour
 import school.greenwood.plus.logic.CeSoir
+import school.greenwood.plus.logic.TitresDuJour
 import school.greenwood.plus.logic.TitresDuSoir
 import school.greenwood.plus.model.Devoir
 import school.greenwood.plus.model.Eleve
@@ -258,12 +259,15 @@ internal fun CarteCeSoir(registre: RegistreDuJour, ouvrirDevoirs: () -> Unit) {
     }
     val soir = CeSoir.estLeSoir(heure)
     var titreDuSoir by rememberSaveable { mutableIntStateOf(Random.nextInt(TitresDuSoir.textes.size)) }
+    var titreDuJour by rememberSaveable { mutableIntStateOf(Random.nextInt(TitresDuJour.textes.size)) }
     LaunchedEffect(cycle, soir) {
-        if (soir) {
-            cycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
-                while (true) {
-                    delay(TitresDuSoir.intervalleMillis)
+        cycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            while (true) {
+                delay(TitresDuSoir.intervalleMillis)
+                if (soir) {
                     titreDuSoir = TitresDuSoir.suivant(titreDuSoir)
+                } else {
+                    titreDuJour = TitresDuJour.suivant(titreDuJour)
                 }
             }
         }
@@ -303,7 +307,7 @@ internal fun CarteCeSoir(registre: RegistreDuJour, ouvrirDevoirs: () -> Unit) {
                     ) {
                         Crossfade(
                             targetState = if (soir) TitresDuSoir.textes[titreDuSoir]
-                                else CeSoir.titre(registre.ceSoir, heure),
+                                else TitresDuJour.titre(titreDuJour, restants),
                             animationSpec = tween(450),
                             label = "titre-devoirs",
                         ) { titre ->
