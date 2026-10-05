@@ -13,7 +13,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.OutlinedButton
@@ -34,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import school.greenwood.plus.ui.CommunauteViewModel
 import school.greenwood.plus.ui.DialogueCommunautaire
 import school.greenwood.plus.ui.components.ErrorInline
+import school.greenwood.plus.ui.components.GwsLoadingIndicator
 import school.greenwood.plus.ui.theme.ControlShape
 import school.greenwood.plus.ui.theme.RegistreTheme
 
@@ -313,9 +313,8 @@ fun DialogueNoticeEnChargement() {
         },
         text = {
             Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                CircularProgressIndicator(
+                GwsLoadingIndicator(
                     modifier = Modifier.size(20.dp),
-                    strokeWidth = 2.dp,
                     color = RegistreTheme.colors.chalk,
                 )
             }

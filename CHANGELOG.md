@@ -4,6 +4,22 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [0.9.12-beta.1] — 2026-10-06
+
+### Préversion (bêta)
+
+Basée sur la stable 0.9.11. S'installe au-dessus de celle-ci sans désinstallation.
+
+### Changé
+
+- Les indicateurs de chargement utilisent l'animation officielle Material 3
+  Expressive : des formes arrondies qui tournent et se transforment, comme dans
+  Metrolist. Le composant AndroidX est utilisé directement, avec les couleurs
+  de Greenwood School + en thème clair comme sombre.
+- Les boutons, chargements intégrés et gestes d'actualisation partagent cette
+  animation. Pendant le geste, la forme suit la progression du glissement.
+  Les squelettes de premier chargement conservent la structure du contenu.
+
 ## [0.9.11] — 2026-10-06
 
 Version stable après la bêta 0.9.11-beta.3, acceptée par l'utilisateur

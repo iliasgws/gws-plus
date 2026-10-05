@@ -32,7 +32,6 @@ import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.RadioButtonChecked
 import androidx.compose.material.icons.rounded.RadioButtonUnchecked
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -71,6 +70,7 @@ import school.greenwood.plus.ui.components.AperçuImageRapide
 import school.greenwood.plus.ui.components.BandeauErreur
 import school.greenwood.plus.ui.components.GwsAvatar
 import school.greenwood.plus.ui.components.GwsCard
+import school.greenwood.plus.ui.components.GwsLoadingIndicator
 import school.greenwood.plus.ui.components.Puce
 import school.greenwood.plus.ui.components.SectionLabel
 import school.greenwood.plus.ui.components.SquelettePostDetail
@@ -415,9 +415,8 @@ fun PostDetailScreen(
                                             enabled = état.texteCommentaire.isNotBlank() && !état.envoiCommentaire,
                                         ) {
                                             if (état.envoiCommentaire) {
-                                                CircularProgressIndicator(
+                                                GwsLoadingIndicator(
                                                     modifier = Modifier.size(18.dp),
-                                                    strokeWidth = 2.dp,
                                                     color = RegistreTheme.colors.ink,
                                                 )
                                             } else {
@@ -516,9 +515,8 @@ private fun LignePièceJointePost(
             modifier = Modifier.weight(1f),
         )
         if (enCours) {
-            CircularProgressIndicator(
+            GwsLoadingIndicator(
                 color = RegistreTheme.colors.ink,
-                strokeWidth = 2.dp,
                 modifier = Modifier.size(16.dp),
             )
         } else {

@@ -26,7 +26,6 @@ import androidx.compose.material.icons.rounded.LinearScale
 import androidx.compose.material.icons.rounded.RestartAlt
 import androidx.compose.material.icons.rounded.Spellcheck
 import androidx.compose.material.icons.rounded.UnfoldMore
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -51,6 +50,7 @@ import school.greenwood.plus.data.ai.ComposeurIA
 import school.greenwood.plus.data.ai.RéglagesIA
 import school.greenwood.plus.data.ai.TonIA
 import school.greenwood.plus.ui.components.BadgeGénéréIA
+import school.greenwood.plus.ui.components.GwsLoadingIndicator
 import school.greenwood.plus.ui.theme.AnnotationShape
 import school.greenwood.plus.ui.theme.ControlShape
 import school.greenwood.plus.ui.theme.RegistreTheme
@@ -305,9 +305,8 @@ fun PanneauIA(
                         horizontalArrangement = Arrangement.Center,
                     ) {
                         if (enCours) {
-                            CircularProgressIndicator(
+                            GwsLoadingIndicator(
                                 modifier = Modifier.size(16.dp),
-                                strokeWidth = 2.dp,
                                 color = RegistreTheme.colors.page,
                             )
                         } else {
@@ -442,9 +441,8 @@ private fun BoutonPanneau(
             horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             if (chargement) {
-                CircularProgressIndicator(
+                GwsLoadingIndicator(
                     modifier = Modifier.size(14.dp),
-                    strokeWidth = 2.dp,
                     color = RegistreTheme.colors.ink,
                 )
             } else {

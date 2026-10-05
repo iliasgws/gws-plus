@@ -12,8 +12,8 @@ android {
         applicationId = "school.greenwood.plus"
         minSdk = 26
         targetSdk = 36
-        versionCode = 108
-        versionName = "0.9.11"
+        versionCode = 109
+        versionName = "0.9.12-beta.1"
     }
 
     signingConfigs {
@@ -55,7 +55,8 @@ dependencies {
 
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-tooling-preview")
-    implementation("androidx.compose.material3:material3")
+    // Expressive loading indicators are not exposed by the stable BOM version.
+    implementation("androidx.compose.material3:material3:1.5.0-alpha29")
     // Icônes : ensemble étendu, gelé par AndroidX depuis 1.7.8 — hors BOM.
     implementation("androidx.compose.material:material-icons-extended:1.7.8")
     debugImplementation("androidx.compose.ui:ui-tooling")

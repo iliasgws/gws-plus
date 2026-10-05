@@ -25,7 +25,6 @@ import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.SearchOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -58,6 +57,7 @@ import school.greenwood.plus.ui.components.BandeauErreur
 import school.greenwood.plus.ui.components.EmptyState
 import school.greenwood.plus.ui.components.ErrorInline
 import school.greenwood.plus.ui.components.GwsCard
+import school.greenwood.plus.ui.components.GwsLoadingIndicator
 import school.greenwood.plus.ui.components.EcranBanniere
 import school.greenwood.plus.ui.components.Puce
 import school.greenwood.plus.ui.components.SectionLabel
@@ -451,9 +451,8 @@ private fun LigneFiche(
                 }
                 Puce("Bibliothèque")
                 if (enCours) {
-                    CircularProgressIndicator(
+                    GwsLoadingIndicator(
                         modifier = Modifier.size(24.dp),
-                        strokeWidth = 2.dp,
                         color = RegistreTheme.colors.chalk,
                     )
                 } else {

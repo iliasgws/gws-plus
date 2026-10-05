@@ -292,9 +292,8 @@ fun Composeur(
                             enabled = envoiPossible && !enCours && (texte.isNotBlank() || pièces.isNotEmpty() || audio != null),
                         ) {
                             if (enCours) {
-                                androidx.compose.material3.CircularProgressIndicator(
+                                school.greenwood.plus.ui.components.GwsLoadingIndicator(
                                     modifier = Modifier.size(18.dp),
-                                    strokeWidth = 2.dp,
                                     color = RegistreTheme.colors.ink,
                                 )
                             } else {
@@ -453,9 +452,8 @@ fun Composeur(
                             enabled = envoiPossible && !enCours && (texte.isNotBlank() || pièces.isNotEmpty() || audio != null),
                         ) {
                             if (enCours) {
-                                androidx.compose.material3.CircularProgressIndicator(
+                                school.greenwood.plus.ui.components.GwsLoadingIndicator(
                                     modifier = Modifier.size(18.dp),
-                                    strokeWidth = 2.dp,
                                     color = RegistreTheme.colors.ink,
                                 )
                             } else {

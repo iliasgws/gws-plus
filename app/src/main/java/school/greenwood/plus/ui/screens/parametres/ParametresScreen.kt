@@ -23,7 +23,6 @@ import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.ErrorOutline
 import androidx.compose.material.icons.rounded.Logout
 import androidx.compose.material3.Surface
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -56,6 +55,7 @@ import school.greenwood.plus.ui.components.CarteMiseÀJour
 import school.greenwood.plus.ui.components.DialogueDéconnexion
 import school.greenwood.plus.ui.components.ErrorInline
 import school.greenwood.plus.ui.components.GwsCard
+import school.greenwood.plus.ui.components.GwsLoadingIndicator
 import school.greenwood.plus.ui.components.SectionLabel
 import school.greenwood.plus.ui.theme.AnnotationShape
 import school.greenwood.plus.ui.theme.ControlShape
@@ -302,9 +302,8 @@ fun ParametresScreen(
                             modifier = Modifier.weight(1f),
                         )
                         if (état.testEnCours) {
-                            CircularProgressIndicator(
+                            GwsLoadingIndicator(
                                 modifier = Modifier.size(18.dp),
-                                strokeWidth = 2.dp,
                                 color = RegistreTheme.colors.chalk,
                             )
                         } else {
@@ -344,9 +343,8 @@ fun ParametresScreen(
                                 modifier = Modifier.weight(1f),
                             )
                             if (état.révocationEnCours) {
-                                CircularProgressIndicator(
+                                GwsLoadingIndicator(
                                     modifier = Modifier.size(18.dp),
-                                    strokeWidth = 2.dp,
                                     color = RegistreTheme.colors.chalk,
                                 )
                             }
@@ -437,9 +435,8 @@ fun ParametresScreen(
                             modifier = Modifier.weight(1f),
                         )
                         if (majÉtat.contrôle) {
-                            CircularProgressIndicator(
+                            GwsLoadingIndicator(
                                 modifier = Modifier.size(18.dp),
-                                strokeWidth = 2.dp,
                                 color = RegistreTheme.colors.chalk,
                             )
                         }

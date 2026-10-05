@@ -27,7 +27,6 @@ import androidx.compose.material.icons.rounded.BrokenImage
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -286,9 +285,8 @@ fun VisualiseurImages(
                                 .align(Alignment.Center),
                         )
                     } else if (chargement) {
-                        CircularProgressIndicator(
+                        GwsLoadingIndicator(
                             color = Color.White,
-                            strokeWidth = 2.dp,
                             modifier = Modifier.align(Alignment.Center),
                         )
                     }
@@ -418,9 +416,8 @@ fun AperçuImageRapide(
                                 .align(Alignment.Center),
                         )
                     } else if (chargement) {
-                        CircularProgressIndicator(
+                        GwsLoadingIndicator(
                             color = Color.White,
-                            strokeWidth = 2.dp,
                             modifier = Modifier.align(Alignment.Center),
                         )
                     }

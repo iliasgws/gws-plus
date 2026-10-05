@@ -23,7 +23,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
@@ -46,6 +45,7 @@ import school.greenwood.plus.AppContainer
 import school.greenwood.plus.R
 import school.greenwood.plus.ui.ConnexionViewModel
 import school.greenwood.plus.ui.components.ErrorInline
+import school.greenwood.plus.ui.components.GwsLoadingIndicator
 import school.greenwood.plus.ui.theme.AnnotationShape
 import school.greenwood.plus.ui.theme.ControlShape
 import school.greenwood.plus.ui.theme.PageShape
@@ -189,9 +189,8 @@ fun LoginScreen(
                             .height(48.dp),
                     ) {
                         if (état.chargement) {
-                            CircularProgressIndicator(
+                            GwsLoadingIndicator(
                                 modifier = Modifier.size(18.dp),
-                                strokeWidth = 2.dp,
                                 color = RegistreTheme.colors.page,
                             )
                         } else {

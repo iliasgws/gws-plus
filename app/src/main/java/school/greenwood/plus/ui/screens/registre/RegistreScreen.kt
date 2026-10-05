@@ -42,7 +42,6 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Text
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -93,6 +92,7 @@ import school.greenwood.plus.ui.components.EmptyState
 import school.greenwood.plus.ui.components.ErrorInline
 import school.greenwood.plus.ui.components.GwsAvatar
 import school.greenwood.plus.ui.components.GwsCard
+import school.greenwood.plus.ui.components.GwsPullToRefreshBox
 import school.greenwood.plus.ui.components.HauteurBannièreComplète
 import school.greenwood.plus.ui.components.HauteurBannièreRéduite
 import school.greenwood.plus.ui.components.Puce
@@ -236,7 +236,7 @@ fun RegistreScreen(
         // l'en-tête. Le geste reprend exactement les deux effets de l'ancien
         // bouton — le registre, puis le contrôle silencieux des mises à jour
         // (échec muet, jamais de blocage).
-        PullToRefreshBox(
+        GwsPullToRefreshBox(
             isRefreshing = état.rafraîchissement,
             onRefresh = {
                 vm.rafraîchir()
