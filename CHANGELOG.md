@@ -4,6 +4,18 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [0.9.9-beta.1] — 2026-10-05
+
+### Préversion (bêta)
+
+### Changé
+
+- Les devoirs se consultent dans un calendrier mensuel : sélection d'un jour,
+  points de suivi sur les échéances, navigation entre les mois et raccourci
+  « Aujourd'hui ». Les devoirs et propositions des familles du jour choisi
+  s'affichent sous le calendrier, dans une seule page défilante.
+- La bannière des Devoirs et son réglage dans Apparence sont conservés.
+
 ## [0.9.8] — 2026-10-04
 
 Version stable après dix bêtas, avec la bêta 0.9.8-beta.10 installée et
