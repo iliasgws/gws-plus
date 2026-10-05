@@ -32,9 +32,16 @@ raw probe responses stay out of the repository (personal data).
       and assembleRelease pass again for the corrected callbacks.
 - [x] Build 0.9.10-beta.1 (versionCode 101): assembleDebug, testDebugUnitTest
       and assembleRelease pass; release certificate matches existing updates.
-- [ ] Check committed and cancelled gestures on Android, especially
-      Devoirs → Registre and menu/detail returns. Local device attempts failed
-      to boot or timed out; phone confirmation is still required.
+- [x] Merge PR #125 at the user's request. Stable publication paused when the
+      user reported cross-section accent leakage in the predictive preview.
+- [x] Scope destination accents to each displayed entry's own route (#127),
+      retaining the shell accent for shell-level UI and the existing animations.
+      Prepare 0.9.10-beta.3 (versionCode 103) before resuming stable publication;
+      assembleDebug, testDebugUnitTest and assembleRelease pass.
+- [x] User accepted beta.3 with an explicit merge + stable request after the
+      preview-color correction. No agent-side device verification is available.
+- [x] Prepare stable 0.9.10 (versionCode 104) from the accepted beta.3:
+      version metadata and publication documentation only, with PR #128 merged.
 
 ## Homework calendar
 

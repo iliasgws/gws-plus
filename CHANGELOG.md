@@ -14,6 +14,36 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
   « fait pour moi ». Le compteur reste visible le soir et suit les changements
   de statut ; une carte entièrement terminée indique « Tout est fait ! » (#126).
 
+## [0.9.10] — 2026-10-05
+
+Version stable après la bêta 0.9.10-beta.3, acceptée par l'utilisateur
+avec sa demande de fusion et de publication stable.
+
+### Changé
+
+- Les écrans des menus, onglets et détails prennent des coins arrondis,
+  se réduisent légèrement et s'estompent pendant le geste de retour Android.
+- Les coins, la réduction et l'opacité suivent une progression linéaire ;
+  l'écran précédent reste opaque et annuler le geste restaure l'écran courant.
+
+### Corrigé
+
+- Chaque écran conserve sa propre couleur pendant l'aperçu du retour prédictif,
+  y compris entre des sections aux accents différents (#127).
+- Cette version conserve les fonctionnalités de la bêta 3 ; seuls le numéro
+  de version et la documentation de publication évoluent.
+
+## [0.9.10-beta.3] — 2026-10-05
+
+### Préversion (bêta)
+
+### Corrigé
+
+- Pendant le retour prédictif entre des sections de couleurs différentes,
+  chaque écran conserve son propre accent : la page précédente en aperçu
+  n'hérite plus de la couleur de la page quittée. La couleur reste correcte
+  lorsque le geste est annulé ou validé (#127).
+
 ## [0.9.10-beta.2] — 2026-10-05
 
 ### Préversion (bêta)
