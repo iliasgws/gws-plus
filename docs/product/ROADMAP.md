@@ -8,6 +8,19 @@ raw probe responses stay out of the repository (personal data).
 
 `[x]` done · `[~]` in progress · `[ ]` todo · `(!)` needs a decision or a real-device check
 
+## Rounded predictive back (issue #124)
+
+- [x] Wrap shell destinations in paper surfaces with animated 0–28 dp clipping;
+      use NavHost's seekable exit transition for a 0.92 scale and fade on back.
+      Cancellation restores the surface without manually changing the back stack.
+      Forward navigation retains its existing fade/slide (with the same corner exit).
+- [x] Preserve tab stacks, child BackHandlers, quiz confirmation and dialog handling.
+- [x] Build 0.9.10-beta.1 (versionCode 101): assembleDebug, testDebugUnitTest
+      and assembleRelease pass; release certificate matches existing updates.
+- [ ] Check committed and cancelled gestures on Android, especially
+      Devoirs → Registre and menu/detail returns. Local device attempts failed
+      to boot or timed out; phone confirmation is still required.
+
 ## Homework calendar
 
 - [x] Replace the due-date chip strip with a Monday-first monthly calendar,

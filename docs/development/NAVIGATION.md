@@ -86,6 +86,18 @@ quittables — rien à perdre.
 le geste système prédit le retour sur tous les écrans. **À ne pas régresser**
 — c'est le point de vigilance n°1 des revues.
 
+## Rounded destination exits (issue #124)
+
+All shell destinations use the shared `écran` wrapper in `AppNav.kt`. Its
+paper background is clipped from 0 to 28 dp by the destination's
+`AnimatedContentScope.transition`, while NavHost's pop exit scales to 0.92
+and fades over 240 ms. Navigation Compose seeks these animations during
+predictive back and reverses them on cancellation. Forward exits also round
+while retaining their existing fade; forward entrance motion is unchanged.
+No additional back callback or manual pop is introduced. The bottom tab bar
+stays outside the animated surface; dialogs and quiz exit confirmation retain
+their own back handling.
+
 ## Composeur et clavier
 
 Les écrans avec composeur (conversation, nouveau message) appliquent

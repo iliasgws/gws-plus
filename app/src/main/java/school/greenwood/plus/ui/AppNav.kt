@@ -1,13 +1,17 @@
 package school.greenwood.plus.ui
 
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.AnimatedContentScope
+import androidx.compose.animation.EnterExitState
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
@@ -30,6 +34,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
@@ -37,6 +43,8 @@ import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
+import androidx.navigation.NavGraphBuilder
+import androidx.navigation.NamedNavArgument
 import androidx.navigation.navArgument
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -240,9 +248,9 @@ fun Shell(container: AppContainer) {
             enterTransition = { fadeIn(tween(180)) + slideInVertically(tween(220)) { it / 24 } },
             exitTransition = { fadeOut(tween(140)) },
             popEnterTransition = { fadeIn(tween(180)) },
-            popExitTransition = { fadeOut(tween(140)) + slideOutVertically(tween(200)) { it / 24 } },
+            popExitTransition = { fadeOut(tween(240)) + scaleOut(tween(240), targetScale = 0.92f) },
         ) {
-            composable("registre") {
+            écran("registre") {
                 RegistreScreen(
                     container = container,
                     padding = padding,
@@ -259,14 +267,14 @@ fun Shell(container: AppContainer) {
                     ouvrirConversation = { id -> navController.allerDétail("conversation/$id") },
                 )
             }
-            composable("actualites") {
+            écran("actualites") {
                 ActualitesScreen(
                     container = container,
                     padding = padding,
                     ouvrirPost = { id -> navController.allerDétail("post/$id") },
                 )
             }
-            composable("plus") {
+            écran("plus") {
                 PlusScreen(
                     padding = padding,
                     ouvrirActualités = { navController.allerDétail("actualites") },
@@ -274,7 +282,7 @@ fun Shell(container: AppContainer) {
                     ouvrirCommunauté = { navController.allerDétail("communaute") },
                 )
             }
-            composable("boutique") {
+            écran("boutique") {
                 BoutiqueScreen(
                     container = container,
                     padding = padding,
@@ -282,7 +290,7 @@ fun Shell(container: AppContainer) {
                     ouvrirHistorique = { navController.allerDétail("boutique-historique") },
                 )
             }
-            composable(
+            écran(
                 route = "boutique/{produitId}?commande={commandeId}",
                 arguments = listOf(
                     navArgument("produitId") { type = NavType.StringType },
@@ -301,7 +309,7 @@ fun Shell(container: AppContainer) {
                     retour = { navController.popBackStack() },
                 )
             }
-            composable("boutique-historique") {
+            écran("boutique-historique") {
                 BoutiqueHistoriqueScreen(
                     container = container,
                     padding = padding,
@@ -311,17 +319,17 @@ fun Shell(container: AppContainer) {
                     retour = { navController.popBackStack() },
                 )
             }
-            composable("repas-invite") {
+            écran("repas-invite") {
                 RepasInviteScreen(
                     container = container,
                     padding = padding,
                     retour = { navController.popBackStack() },
                 )
             }
-            composable("cours") {
+            écran("cours") {
                 CoursScreen(container = container, padding = padding)
             }
-            composable("devoirs") {
+            écran("devoirs") {
                 DevoirsScreen(
                     container = container,
                     padding = padding,
@@ -329,7 +337,7 @@ fun Shell(container: AppContainer) {
                     onProposerDevoirManquant = { navController.allerDétail("communaute/proposer-devoir") },
                 )
             }
-            composable("devoir/{devoirId}") { entrée ->
+            écran("devoir/{devoirId}") { entrée ->
                 DevoirDetailScreen(
                     container = container,
                     padding = padding,
@@ -337,14 +345,14 @@ fun Shell(container: AppContainer) {
                     retour = { navController.popBackStack() },
                 )
             }
-            composable("documents") {
+            écran("documents") {
                 DocumentsScreen(
                     container = container,
                     padding = padding,
                     onOuvrirQuiz = { id -> navController.allerDétail("quiz/$id") },
                 )
             }
-            composable("quiz/{quizId}") { entrée ->
+            écran("quiz/{quizId}") { entrée ->
                 QuizScreen(
                     container = container,
                     padding = padding,
@@ -352,7 +360,7 @@ fun Shell(container: AppContainer) {
                     retour = { navController.popBackStack() },
                 )
             }
-            composable("messages") {
+            écran("messages") {
                 MessagesScreen(
                     container = container,
                     padding = padding,
@@ -360,7 +368,7 @@ fun Shell(container: AppContainer) {
                     onNouveauMessage = { navController.allerDétail("nouveau-message") },
                 )
             }
-            composable("conversation/{conversationId}") { entrée ->
+            écran("conversation/{conversationId}") { entrée ->
                 ConversationScreen(
                     container = container,
                     padding = padding,
@@ -368,7 +376,7 @@ fun Shell(container: AppContainer) {
                     retour = { navController.popBackStack() },
                 )
             }
-            composable("nouveau-message") {
+            écran("nouveau-message") {
                 NouveauMessageScreen(
                     container = container,
                     padding = padding,
@@ -376,21 +384,21 @@ fun Shell(container: AppContainer) {
                     onEnvoyé = { navController.popBackStack() },
                 )
             }
-            composable("demandes") {
+            écran("demandes") {
                 DemandesScreen(
                     container = container,
                     padding = padding,
                     retour = { navController.popBackStack() },
                 )
             }
-            composable("communaute") {
+            écran("communaute") {
                 CommunauteScreen(
                     container = container,
                     padding = padding,
                     retour = { navController.popBackStack() },
                 )
             }
-            composable("communaute/proposer-devoir") {
+            écran("communaute/proposer-devoir") {
                 CommunauteScreen(
                     container = container,
                     padding = padding,
@@ -398,7 +406,7 @@ fun Shell(container: AppContainer) {
                     ouvrirCréationDevoir = true,
                 )
             }
-            composable("post/{postId}") { entrée ->
+            écran("post/{postId}") { entrée ->
                 PostDetailScreen(
                     container = container,
                     padding = padding,
@@ -406,7 +414,7 @@ fun Shell(container: AppContainer) {
                     retour = { navController.popBackStack() },
                 )
             }
-            composable("parametres") {
+            écran("parametres") {
                 ParametresScreen(
                     container = container,
                     padding = padding,
@@ -428,6 +436,30 @@ fun Shell(container: AppContainer) {
                     navController.allerÀLOnglet(cible)
                 },
             )
+        }
+    }
+}
+
+/** A paper surface driven by NavHost's seekable transition, including cancellation. */
+private fun NavGraphBuilder.écran(
+    route: String,
+    arguments: List<NamedNavArgument> = emptyList(),
+    content: @Composable AnimatedContentScope.(NavBackStackEntry) -> Unit,
+) {
+    composable(route = route, arguments = arguments) { entrée ->
+        val arrondi by transition.animateFloat(
+            transitionSpec = { tween(240) },
+            label = "coinsRetour",
+        ) { état -> if (état == EnterExitState.PostExit) 28f else 0f }
+        Box(
+            Modifier.fillMaxSize()
+                .graphicsLayer {
+                    shape = RoundedCornerShape(arrondi.dp)
+                    clip = true
+                }
+                .background(RegistreTheme.colors.paper),
+        ) {
+            content(entrée)
         }
     }
 }
