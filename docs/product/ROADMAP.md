@@ -28,8 +28,10 @@ raw probe responses stay out of the repository (personal data).
       retaining the shell accent for shell-level UI and the existing animations.
       Prepare 0.9.10-beta.3 (versionCode 103) before resuming stable publication;
       assembleDebug, testDebugUnitTest and assembleRelease pass.
-- [ ] Validate beta.3 predictive previews, including cancellation and completion
-      across different section accents. No agent-side device check is available.
+- [x] User accepted beta.3 with an explicit merge + stable request after the
+      preview-color correction. No agent-side device verification is available.
+- [x] Prepare stable 0.9.10 (versionCode 104) from the accepted beta.3:
+      version metadata and publication documentation only, with PR #128 merged.
 
 ## Homework calendar
 
