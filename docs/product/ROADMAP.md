@@ -8,6 +8,16 @@ raw probe responses stay out of the repository (personal data).
 
 `[x]` done · `[~]` in progress · `[ ]` todo · `(!)` needs a decision or a real-device check
 
+## Time-aware homework heading (issue #126)
+
+- [x] Show « Ce soir » only from 18:00 until local midnight; otherwise show
+      the remaining homework count with French singular/plural. Keep the count
+      in the evening subtitle and show a completion message when all are done.
+- [x] Exclude official and local completion, observe local marks/unmarks directly,
+      and refresh the Registre after an official submission. Reevaluate the
+      heading each minute while resumed and immediately on foreground return.
+- [x] Preserve the next-school-day homework window and existing navigation.
+
 ## Rounded predictive back (issue #124)
 
 - [x] Wrap shell destinations in paper surfaces with animated 0–28 dp clipping;

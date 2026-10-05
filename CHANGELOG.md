@@ -4,6 +4,16 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [Non publié]
+
+### Corrigé
+
+- La carte des devoirs du Registre affiche « Ce soir » uniquement de 18 h à
+  minuit (heure locale). En journée, son titre indique « X devoir » ou
+  « X devoirs » restant à faire, sans compter les devoirs faits ou marqués
+  « fait pour moi ». Le compteur reste visible le soir et suit les changements
+  de statut ; une carte entièrement terminée indique « Tout est fait ! » (#126).
+
 ## [0.9.10-beta.2] — 2026-10-05
 
 ### Préversion (bêta)
