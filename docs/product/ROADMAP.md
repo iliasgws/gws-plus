@@ -10,6 +10,11 @@ raw probe responses stay out of the repository (personal data).
 
 ## Shared Material 3 Expressive loading animation
 
+- [x] User approved stable promotion after 0.9.12-beta.2; merge feature PR #132
+      and prepare 0.9.12 (versionCode 111) with the same application behaviour.
+      Stable assembleDebug, testDebugUnitTest and assembleRelease pass.
+      Local device verification remains unavailable as recorded below; the stable
+      request is user approval, not evidence of an agent-side device check.
 - [x] Address beta.1 feedback: offset only the refresh indicator below the full
       enabled banner (140 dp) on Registre, Cours and shared banner screens.
       Disabled banners retain zero inset; list geometry and drag thresholds stay
