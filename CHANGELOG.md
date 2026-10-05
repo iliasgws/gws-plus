@@ -4,6 +4,28 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [0.9.10-beta.2] — 2026-10-05
+
+### Préversion (bêta)
+
+### Corrigé
+
+- Le fondu s'applique maintenant pendant le geste de retour prédictif, et
+  pas seulement après un retour classique. Les coins arrondis, la réduction
+  et l'opacité suivent une progression linéaire, sans seuil ajouté ; l'écran
+  précédent reste opaque pendant le geste (#124).
+
+## [0.9.10-beta.1] — 2026-10-05
+
+### Préversion (bêta)
+
+### Changé
+
+- Les écrans des menus, onglets et détails prennent des coins arrondis,
+  se réduisent légèrement et s'estompent pendant le geste de retour Android
+  pour révéler l'écran précédent. Annuler le geste restaure l'écran en douceur
+  sans modifier la pile de navigation (#124).
+
 ## [0.9.9] — 2026-10-05
 
 Version stable après la bêta 0.9.9-beta.1, installée et confirmée sur appareil
