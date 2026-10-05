@@ -17,6 +17,10 @@ les sections de bêta ci-dessous.
 
 ### Changé
 
+- Les devoirs se consultent dans un calendrier mensuel : sélection d'un jour,
+  points de suivi sur les échéances, navigation entre les mois et raccourci
+  « Aujourd'hui ». Les devoirs et propositions des familles du jour choisi
+  s'affichent sous le calendrier, dans une seule page défilante.
 - L'écran de connexion affiche l'icône de l'application à côté du titre « GWS+ ».
 - L'accueil (Registre) s'actualise en tirant vers le bas : le bouton
   « Actualiser » de l'en-tête a disparu, comme sur les autres écrans de

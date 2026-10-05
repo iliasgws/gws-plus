@@ -1,15 +1,9 @@
 package school.greenwood.plus.ui.screens.devoirs
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -20,13 +14,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.ChevronLeft
-import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Attachment
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.CheckCircle
@@ -36,19 +25,13 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.dp
@@ -67,10 +50,8 @@ import school.greenwood.plus.ui.components.Puce
 import school.greenwood.plus.ui.components.SqueletteDevoirs
 import school.greenwood.plus.ui.theme.AnnotationShape
 import school.greenwood.plus.ui.theme.ControlShape
-import school.greenwood.plus.ui.theme.RessortVif
-import school.greenwood.plus.ui.theme.tabulaire
 import school.greenwood.plus.ui.theme.RegistreTheme
-import school.greenwood.plus.util.frenchShort
+import school.greenwood.plus.util.frenchLongDay
 import school.greenwood.plus.util.htmlToPlainSingleLine
 
 /*
@@ -84,10 +65,7 @@ import school.greenwood.plus.util.htmlToPlainSingleLine
 /** Suivi d'un jour : [Vert] = jour passé ou tout est fait aussi pour
  *  l'école, [Orange] = fait pour soi seulement, [Rouge] = au moins un
  *  reste. */
-private enum class ÉtatJour { Vert, Orange, Rouge }
-
-/** Jours avec devoirs non faits qui ont défilé hors de la rangée d'onglets. */
-private data class JoursHorsÉcran(val àGauche: Boolean, val àDroite: Boolean)
+internal enum class ÉtatJour { Vert, Orange, Rouge, Communauté }
 
 /*
  * L'onglet Devoirs (docs/product/DESIGN.md §4) : liste par jour, sélection côté client sur
@@ -106,147 +84,133 @@ fun DevoirsScreen(
     val état by vm.état.collectAsStateWithLifecycle()
     val aujourdhui = LocalDate.now()
 
-    Column(
+    val étatsJours = remember(état.tous, état.propositionsCommunautaires, aujourdhui) {
+        val officiels = état.tous.filter { it.dateRemise != null }.groupBy { it.dateRemise!! }
+        val propositions = état.propositionsCommunautaires.groupBy { it.dateRemise ?: aujourdhui }
+        (officiels.keys + propositions.keys).associateWith { jour ->
+            val duJour = officiels[jour].orEmpty()
+            when {
+                duJour.isEmpty() -> ÉtatJour.Communauté
+                jour.isBefore(aujourdhui) || duJour.all { it.fait } -> ÉtatJour.Vert
+                duJour.all { it.fait || it.faitLocal } -> ÉtatJour.Orange
+                else -> ÉtatJour.Rouge
+            }
+        }
+    }
+    val duJour = état.tous.filter { it.dateRemise == état.jourChoisi }
+    val propositions = état.propositionsCommunautaires.filter {
+        it.dateRemise == état.jourChoisi || (it.dateRemise == null && état.jourChoisi == aujourdhui)
+    }
+
+    LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .background(RegistreTheme.colors.paper)
             .padding(padding),
+        contentPadding = PaddingValues(bottom = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Column(Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
-            Text(
-                text = "Devoirs",
-                style = MaterialTheme.typography.displayLarge,
-                color = RegistreTheme.colors.ink,
-            )
-            // Le surligneur : le trait de l'onglet, sous le titre.
-            Box(
-                modifier = Modifier
-                    .padding(top = 6.dp)
-                    .size(width = 56.dp, height = 5.dp)
-                    .clip(AnnotationShape)
-                    .background(RegistreTheme.accent.conteneur),
-            )
-            Spacer(Modifier.height(4.dp))
-            Text(
-                text = "Par jour de rentrée",
-                style = MaterialTheme.typography.bodySmall,
-                color = RegistreTheme.colors.chalk,
-            )
-        }
-
-        Button(
-            onClick = onProposerDevoirManquant,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 4.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = RegistreTheme.colors.ink,
-                contentColor = RegistreTheme.colors.page,
-            ),
-            shape = ControlShape,
-        ) {
-            Icon(imageVector = Icons.Rounded.Add, contentDescription = null, modifier = Modifier.size(18.dp))
-            Spacer(Modifier.size(6.dp))
-            Text("Proposer un devoir manquant")
-        }
-
-        // Sélecteur de jour : les échéances présentes, plus aujourd'hui et demain.
-        val jours = remember(état.tous, aujourdhui) {
-            (état.tous.mapNotNull { it.dateRemise } + état.propositionsCommunautaires.mapNotNull { it.dateRemise } + aujourdhui + aujourdhui.plusDays(1))
-                .distinct()
-                .sorted()
-        }
-        // Issue #78 : état « fait » de chaque jour, pour le point sur l'onglet
-        // et la pastille hors écran. Le marquage local « fait pour moi »
-        // (issue #82) compte lui aussi — vert quand l'école le sait aussi,
-        // orange tant que le jour n'est fait que pour soi, rouge sinon.
-        // Un jour entièrement passé est vert sans vérifier le serveur : le
-        // travail est derrière, inutile de l'afficher comme à faire.
-        val étatsJours = remember(état.tous, jours) {
-            jours.associateWith { jour ->
-                val duJour = état.tous.filter { it.dateRemise == jour }
-                when {
-                    duJour.isEmpty() -> null
-                    jour.isBefore(aujourdhui) -> ÉtatJour.Vert
-                    duJour.all { it.fait } -> ÉtatJour.Vert
-                    duJour.all { it.fait || it.faitLocal } -> ÉtatJour.Orange
-                    else -> ÉtatJour.Rouge
-                }
-            }
-        }
-        val listeJours = rememberLazyListState()
-        // Un jour rouge hors du viewport : de quel côté est-il ?
-        val horsÉcran by remember(jours, étatsJours) {
-            derivedStateOf {
-                val visibles = listeJours.layoutInfo.visibleItemsInfo
-                val premier = visibles.minOfOrNull { it.index }
-                val dernier = visibles.maxOfOrNull { it.index }
-                JoursHorsÉcran(
-                    àGauche = premier != null && premier > 0 &&
-                        (0 until premier).any { étatsJours[jours[it]] == ÉtatJour.Rouge },
-                    àDroite = dernier != null && dernier < jours.lastIndex &&
-                        ((dernier + 1)..jours.lastIndex).any { étatsJours[jours[it]] == ÉtatJour.Rouge },
+        item(key = "titre") {
+            Column(Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
+                Text(
+                    text = "Devoirs",
+                    style = MaterialTheme.typography.displayLarge,
+                    color = RegistreTheme.colors.ink,
+                )
+                // Le surligneur : le trait de l'onglet, sous le titre.
+                Box(
+                    modifier = Modifier
+                        .padding(top = 6.dp)
+                        .size(width = 56.dp, height = 5.dp)
+                        .clip(AnnotationShape)
+                        .background(RegistreTheme.accent.conteneur),
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = "Le calendrier des devoirs",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = RegistreTheme.colors.chalk,
                 )
             }
         }
-        Box {
-            LazyRow(
-                state = listeJours,
-                contentPadding = PaddingValues(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                items(jours) { jour ->
-                    JourChip(
-                        jour = jour,
-                        état = étatsJours[jour],
-                        sélectionné = jour == état.jourChoisi,
-                        onClick = { vm.choisirJour(jour) },
-                    )
-                }
-            }
-            PastilleHorsÉcran(horsÉcran.àGauche, horsÉcran.àDroite)
+        item(key = "calendrier") {
+            CalendrierDevoirs(
+                jourChoisi = état.jourChoisi,
+                aujourdhui = aujourdhui,
+                étatsJours = étatsJours,
+                onChoisirJour = vm::choisirJour,
+                modifier = Modifier.padding(horizontal = 16.dp),
+            )
         }
-
-        when {
-            état.chargement -> SqueletteDevoirs()
-            état.erreur != null && état.tous.isEmpty() -> Column(
-                Modifier
+        item(key = "proposer") {
+            Button(
+                onClick = onProposerDevoirManquant,
+                modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                    .padding(horizontal = 16.dp, vertical = 4.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = RegistreTheme.colors.ink,
+                    contentColor = RegistreTheme.colors.page,
+                ),
+                shape = ControlShape,
             ) {
-                ErrorInline(message = état.erreur ?: "")
-                Button(
-                    onClick = { vm.charger(force = true) },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = RegistreTheme.colors.ink,
-                        contentColor = RegistreTheme.colors.page,
-                    ),
-                    shape = ControlShape,
+                Icon(imageVector = Icons.Rounded.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.size(6.dp))
+                Text("Proposer un devoir manquant")
+            }
+        }
+        item(key = "jour") {
+            Column(Modifier.padding(horizontal = 16.dp)) {
+                Text(
+                    état.jourChoisi.frenchLongDay(),
+                    style = MaterialTheme.typography.titleLarge,
+                    color = RegistreTheme.colors.ink,
+                )
+                if (!état.chargement) Text(
+                    "${duJour.size} devoir(s) · ${propositions.size} proposition(s)",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = RegistreTheme.colors.chalk,
+                )
+            }
+        }
+        when {
+            état.chargement -> item { SqueletteDevoirs() }
+            état.erreur != null && état.tous.isEmpty() && état.propositionsCommunautaires.isEmpty() -> item {
+                Column(
+                    Modifier.fillMaxWidth().padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    Text("Réessayer")
+                    ErrorInline(message = état.erreur ?: "")
+                    Button(
+                        onClick = { vm.charger(force = true) },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = RegistreTheme.colors.ink,
+                            contentColor = RegistreTheme.colors.page,
+                        ),
+                        shape = ControlShape,
+                    ) {
+                        Text("Réessayer")
+                    }
                 }
             }
             else -> {
                 // Bandeau discret au-dessus de la liste quand un échec réseau
                 // laisse le contenu connu affiché (issue #21).
-                val duJour = état.tous.filter { it.dateRemise == état.jourChoisi }
-                val propositions = état.propositionsCommunautaires.filter {
-                    it.dateRemise == état.jourChoisi || (it.dateRemise == null && état.jourChoisi == aujourdhui)
-                }
-                Column(Modifier.fillMaxSize()) {
-                    état.erreur?.let { message ->
+                état.erreur?.let { message ->
+                    item(key = "erreur") {
                         BandeauErreur(
                             message = message,
                             réessayer = { vm.charger(force = true) },
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                         )
                     }
-                    if (duJour.isEmpty() && propositions.isEmpty()) {
+                }
+                if (duJour.isEmpty() && propositions.isEmpty()) {
+                    item(key = "vide") {
                         Box(
                             Modifier
                                 .fillMaxWidth()
-                                .weight(1f),
+                                .padding(vertical = 24.dp),
                             contentAlignment = Alignment.Center,
                         ) {
                             EmptyState(
@@ -254,26 +218,29 @@ fun DevoirsScreen(
                                 message = "Aucun devoir pour cette date.",
                             )
                         }
-                    } else {
-                        LazyColumn(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .weight(1f),
-                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
-                            verticalArrangement = Arrangement.spacedBy(12.dp),
-                        ) {
-                            if (propositions.isNotEmpty()) {
-                                item { Text("Propositions des familles", style = MaterialTheme.typography.titleMedium, color = RegistreTheme.colors.ink) }
-                                items(propositions, key = { "communaute-${it.id}" }) { proposition -> CarteProposition(proposition) }
-                            }
-                            items(duJour, key = { it.id }) { devoir ->
-                                CarteDevoir(
-                                    devoir = devoir,
-                                    aujourdhui = aujourdhui,
-                                    onOuvrir = { onOuvrirDevoir(devoir.id) },
-                                    onBasculerFaitLocal = { vm.basculerFaitLocal(devoir) },
-                                )
-                            }
+                    }
+                } else {
+                    if (propositions.isNotEmpty()) {
+                        item(key = "familles") {
+                            Text(
+                                "Propositions des familles",
+                                modifier = Modifier.padding(horizontal = 16.dp),
+                                style = MaterialTheme.typography.titleMedium,
+                                color = RegistreTheme.colors.ink,
+                            )
+                        }
+                        items(propositions, key = { "communaute-${it.id}" }) { proposition ->
+                            Box(Modifier.padding(horizontal = 16.dp)) { CarteProposition(proposition) }
+                        }
+                    }
+                    items(duJour, key = { "devoir-${it.id}" }) { devoir ->
+                        Box(Modifier.padding(horizontal = 16.dp)) {
+                            CarteDevoir(
+                                devoir = devoir,
+                                aujourdhui = aujourdhui,
+                                onOuvrir = { onOuvrirDevoir(devoir.id) },
+                                onBasculerFaitLocal = { vm.basculerFaitLocal(devoir) },
+                            )
                         }
                     }
                 }
@@ -301,124 +268,6 @@ private fun CarteProposition(devoir: DevoirSuggéré) {
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun JourChip(
-    jour: LocalDate,
-    état: ÉtatJour?,
-    sélectionné: Boolean,
-    onClick: () -> Unit,
-) {
-    val accent = RegistreTheme.accent
-    val échelle by animateFloatAsState(
-        targetValue = if (sélectionné) 1.04f else 1f,
-        animationSpec = RessortVif,
-        label = "jourÉchelle",
-    )
-    Surface(
-        shape = ControlShape,
-        color = if (sélectionné) accent.conteneur else RegistreTheme.colors.page,
-        border = if (sélectionné) null else BorderStroke(1.dp, RegistreTheme.colors.sage),
-        modifier = Modifier
-            .graphicsLayer {
-                scaleX = échelle
-                scaleY = échelle
-            }
-            .clickable(onClick = onClick),
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-        ) {
-            état?.let { PointSuivi(it) }
-            Text(
-                text = if (jour == LocalDate.now()) "Aujourd'hui" else jour.frenchShort(),
-                style = MaterialTheme.typography.labelMedium.tabulaire(),
-                color = if (sélectionné) accent.surConteneur else RegistreTheme.colors.chalk,
-            )
-        }
-    }
-}
-
-/** Le point de suivi (issues #78 + #82) : vert si tout le travail du jour est
- *  fait aussi pour l'école, orange signet s'il n'est fait que « pour soi »,
- *  rouge stylo dès qu'un devoir reste à faire. */
-@Composable
-private fun PointSuivi(état: ÉtatJour) {
-    val couleur = when (état) {
-        ÉtatJour.Vert -> RegistreTheme.colors.accents.getValue("registre").teinte
-        ÉtatJour.Orange -> RegistreTheme.colors.signetVif
-        ÉtatJour.Rouge -> RegistreTheme.colors.redPen
-    }
-    val description = when (état) {
-        ÉtatJour.Vert -> "Tous les devoirs de ce jour sont faits"
-        ÉtatJour.Orange -> "Fait pour vous ce jour-là, mais pas encore pour l'école"
-        ÉtatJour.Rouge -> "Il reste des devoirs à faire ce jour-là"
-    }
-    Box(
-        modifier = Modifier
-            .size(8.dp)
-            .clip(CircleShape)
-            .background(couleur)
-            .semantics { contentDescription = description },
-    )
-}
-
-/** Issue #78 : quand un jour avec devoirs non faits a défilé hors de la rangée
- *  d'onglets, une petite pastille rouge au bord indique de quel côté il se
- *  trouve. */
-@Composable
-private fun BoxScope.PastilleHorsÉcran(àGauche: Boolean, àDroite: Boolean) {
-    AnimatedVisibility(
-        visible = àGauche,
-        enter = fadeIn(),
-        exit = fadeOut(),
-        modifier = Modifier.align(Alignment.CenterStart),
-    ) {
-        BadgeDirection(
-            icône = Icons.Rounded.ChevronLeft,
-            description = "Des devoirs non faits se trouvent plus tôt dans la liste des jours",
-            modifier = Modifier.padding(start = 2.dp),
-        )
-    }
-    AnimatedVisibility(
-        visible = àDroite,
-        enter = fadeIn(),
-        exit = fadeOut(),
-        modifier = Modifier.align(Alignment.CenterEnd),
-    ) {
-        BadgeDirection(
-            icône = Icons.Rounded.ChevronRight,
-            description = "Des devoirs non faits se trouvent plus loin dans la liste des jours",
-            modifier = Modifier.padding(end = 2.dp),
-        )
-    }
-}
-
-/** La pastille elle-même : rond rouge stylo, chevron vers le jour concerné. */
-@Composable
-private fun BadgeDirection(
-    icône: ImageVector,
-    description: String,
-    modifier: Modifier = Modifier,
-) {
-    Box(
-        modifier = modifier
-            .size(22.dp)
-            .clip(CircleShape)
-            .background(RegistreTheme.colors.redPen)
-            .semantics { contentDescription = description },
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(
-            imageVector = icône,
-            contentDescription = null,
-            tint = RegistreTheme.colors.page,
-            modifier = Modifier.size(16.dp),
-        )
     }
 }
 

@@ -8,6 +8,16 @@ raw probe responses stay out of the repository (personal data).
 
 `[x]` done · `[~]` in progress · `[ ]` todo · `(!)` needs a decision or a real-device check
 
+## Homework calendar
+
+- [x] Replace the due-date chip strip with a Monday-first monthly calendar,
+      month navigation and an « Aujourd'hui » shortcut. Preserve selected-day
+      homework details and local completion controls; mark official homework
+      and family proposals (including undated proposals shown today).
+- [x] Scroll the calendar and selected-day assignments together, preserving
+      loading/error states and the existing tab/detail back-stack contract.
+- [x] Cover month alignment, leap days and six-week months with unit tests.
+
 ## 1. Groundwork
 
 - [x] Read DESIGN.md, AGENTS.md, docs/api/BOTI-API.md, greenwood-school-re protocol docs
