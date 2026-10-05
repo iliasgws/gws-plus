@@ -1,5 +1,7 @@
 package school.greenwood.plus.ui.screens.registre
 
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -32,8 +34,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.produceState
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -55,6 +61,7 @@ import coil3.compose.AsyncImage
 import kotlinx.coroutines.delay
 import school.greenwood.plus.data.repo.RegistreDuJour
 import school.greenwood.plus.logic.CeSoir
+import school.greenwood.plus.logic.TitresDuSoir
 import school.greenwood.plus.model.Devoir
 import school.greenwood.plus.model.Eleve
 import school.greenwood.plus.model.Post
@@ -75,6 +82,7 @@ import school.greenwood.plus.util.htmlToPlainSingleLine
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
+import kotlin.random.Random
 
 /*
  * Le haut de l'accueil (issues #101 + revue de finition) : la barre
@@ -248,6 +256,18 @@ internal fun CarteCeSoir(registre: RegistreDuJour, ouvrirDevoirs: () -> Unit) {
             }
         }
     }
+    val soir = CeSoir.estLeSoir(heure)
+    var titreDuSoir by rememberSaveable { mutableIntStateOf(Random.nextInt(TitresDuSoir.textes.size)) }
+    LaunchedEffect(cycle, soir) {
+        if (soir) {
+            cycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                while (true) {
+                    delay(TitresDuSoir.intervalleMillis)
+                    titreDuSoir = TitresDuSoir.suivant(titreDuSoir)
+                }
+            }
+        }
+    }
     val restants = CeSoir.restants(registre.ceSoir)
     val accent = RegistreTheme.accent
     val dégradé = Brush.verticalGradient(
@@ -281,13 +301,20 @@ internal fun CarteCeSoir(registre: RegistreDuJour, ouvrirDevoirs: () -> Unit) {
                         modifier = Modifier.weight(1f),
                         verticalArrangement = Arrangement.spacedBy(2.dp),
                     ) {
+                        Crossfade(
+                            targetState = if (soir) TitresDuSoir.textes[titreDuSoir]
+                                else CeSoir.titre(registre.ceSoir, heure),
+                            animationSpec = tween(450),
+                            label = "titre-devoirs",
+                        ) { titre ->
+                            Text(
+                                text = titre,
+                                style = MaterialTheme.typography.headlineSmall.tabulaire(),
+                                color = accent.surConteneur,
+                            )
+                        }
                         Text(
-                            text = CeSoir.titre(registre.ceSoir, heure),
-                            style = MaterialTheme.typography.headlineSmall.tabulaire(),
-                            color = accent.surConteneur,
-                        )
-                        Text(
-                            text = if (CeSoir.estLeSoir(heure)) {
+                            text = if (soir) {
                                 "${CeSoir.compteur(restants)} · ${échéanceCeSoir(registre.horizonCeSoir)}"
                             } else échéanceCeSoir(registre.horizonCeSoir),
                             style = MaterialTheme.typography.labelMedium.tabulaire(),

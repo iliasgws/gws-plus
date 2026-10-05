@@ -4,6 +4,19 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [0.9.11-beta.2] — 2026-10-06
+
+### Préversion (bêta)
+
+Basée sur la stable 0.9.10 et les corrections de la bêta 0.9.11-beta.1.
+
+### Changé
+
+- Le titre du soir varie parmi 100 formulations françaises courtes, choisies
+  aléatoirement toutes les 12 secondes sans répétition immédiate, avec un fondu
+  de 450 ms. La rotation s'arrête en journée et en arrière-plan ; le compteur
+  des devoirs restants et l'échéance restent visibles.
+
 ## [0.9.11-beta.1] — 2026-10-06
 
 ### Préversion (bêta)

@@ -10,12 +10,21 @@ raw probe responses stay out of the repository (personal data).
 
 ## Time-aware homework heading (issue #126)
 
+- [x] Add 100 distinct French evening headings, randomly selected every
+      12 seconds without immediate repeats, with a 450 ms crossfade. Pause
+      rotation outside the evening window and while the card is not resumed;
+      preserve the selected heading across configuration changes. The daytime
+      count and evening count/deadline remain independent of the heading.
+- [x] Prepare 0.9.11-beta.2 (versionCode 106) with the evening variations;
+      cover list size/uniqueness and selection of every other heading in tests.
+      assembleDebug, testDebugUnitTest and assembleRelease pass.
+
 - [x] Prepare 0.9.11-beta.1 (versionCode 105) from stable v0.9.10,
       including the predictive-preview accent fix from issue #127.
 - [x] Verify assembleDebug, testDebugUnitTest and assembleRelease on that base.
 - [ ] Check the published beta on a device: both GWS_API_36_STABLE and
-      GWS_API_36 failed to boot locally. Installation and visual verification
-      of the heading/count remain pending.
+      GWS_API_36 failed to boot locally, as did MediumPhone_API_37 for beta.2.
+      Installation and visual verification of the heading/count/fade remain pending.
 
 - [x] Show « Ce soir » only from 18:00 until local midnight; otherwise show
       the remaining homework count with French singular/plural. Keep the count
