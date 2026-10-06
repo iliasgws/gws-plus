@@ -4,6 +4,25 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [0.9.13-beta.1] — 2026-10-06
+
+### Préversion (bêta)
+
+### Changé
+
+- L’espace disponible sur tablette est utilisé pour afficher le Registre en
+  deux colonnes, avec les devoirs à venir et la dernière actualité côte à côte (#134).
+- Le calendrier des Devoirs reste accessible à côté de la liste du jour ;
+  le mois consulté est conservé lorsque la fenêtre change de largeur.
+- Les Cours affichent plusieurs journées côte à côte ; les Documents et
+  Actualités passent en plusieurs colonnes selon la place disponible.
+- Les Messages affichent la liste des fils et la conversation sélectionnée
+  côte à côte sur les fenêtres larges, avec une bordure sur le fil actif.
+- Une navigation latérale remplace la barre basse sur les fenêtres larges.
+  Les détails et formulaires gardent une largeur de lecture confortable.
+- Les dispositions suivent la largeur de la fenêtre et la taille de police,
+  avec une présentation compacte en écran partagé étroit.
+
 ## [0.9.12] — 2026-10-06
 
 Version stable après la bêta 0.9.12-beta.2, acceptée par l'utilisateur

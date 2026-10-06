@@ -61,18 +61,16 @@ internal fun CalendrierDevoirs(
     aujourdhui: LocalDate,
     étatsJours: Map<LocalDate, ÉtatJour>,
     onChoisirJour: (LocalDate) -> Unit,
+    moisAffiché: String,
+    onChangerMois: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // Browsing does not change the selected day; restore both independently.
-    var moisAffiché by rememberSaveable(jourChoisi) {
-        mutableStateOf(YearMonth.from(jourChoisi).toString())
-    }
     val mois = YearMonth.parse(moisAffiché)
     val accent = RegistreTheme.accent
     Surface(modifier = modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large, color = RegistreTheme.colors.page) {
         Column(Modifier.padding(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = { moisAffiché = mois.minusMonths(1).toString() }) {
+                IconButton(onClick = { onChangerMois(mois.minusMonths(1).toString()) }) {
                     Icon(Icons.Rounded.ChevronLeft, "Mois précédent", tint = RegistreTheme.colors.ink)
                 }
                 Text(
@@ -81,7 +79,7 @@ internal fun CalendrierDevoirs(
                     style = MaterialTheme.typography.titleLarge,
                     color = RegistreTheme.colors.ink,
                 )
-                IconButton(onClick = { moisAffiché = mois.plusMonths(1).toString() }) {
+                IconButton(onClick = { onChangerMois(mois.plusMonths(1).toString()) }) {
                     Icon(Icons.Rounded.ChevronRight, "Mois suivant", tint = RegistreTheme.colors.ink)
                 }
             }
@@ -152,7 +150,7 @@ internal fun CalendrierDevoirs(
                     color = RegistreTheme.colors.chalk,
                 )
                 TextButton(onClick = {
-                    moisAffiché = YearMonth.from(aujourdhui).toString()
+                    onChangerMois(YearMonth.from(aujourdhui).toString())
                     onChoisirJour(aujourdhui)
                 }) { Text("Aujourd'hui", color = accent.teinte) }
             }
@@ -174,6 +172,10 @@ internal fun CalendrierDevoirs(
 private fun CalendrierDevoirsPreview() {
     GwsPlusTheme {
         val jour = LocalDate.of(2026, 10, 5)
-        CalendrierDevoirs(jour, jour, mapOf(jour to ÉtatJour.Rouge, jour.plusDays(2) to ÉtatJour.Orange), {})
+        var mois by rememberSaveable { mutableStateOf("2026-10") }
+        CalendrierDevoirs(
+            jour, jour, mapOf(jour to ÉtatJour.Rouge, jour.plusDays(2) to ÉtatJour.Orange), {},
+            moisAffiché = mois, onChangerMois = { mois = it },
+        )
     }
 }

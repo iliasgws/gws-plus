@@ -4,11 +4,13 @@ import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -72,6 +74,7 @@ fun MessagesScreen(
     padding: PaddingValues,
     onOuvrirConversation: (String) -> Unit,
     onNouveauMessage: () -> Unit,
+    conversationSélectionnée: String? = null,
 ) {
     val vm: MessagesViewModel = viewModel { MessagesViewModel(container) }
     val état by vm.état.collectAsStateWithLifecycle()
@@ -155,6 +158,7 @@ fun MessagesScreen(
                         CarteConversation(
                             conversation = conversation,
                             onOuvrir = { onOuvrirConversation(conversation.id) },
+                            sélectionnée = conversation.id == conversationSélectionnée,
                         )
                     }
                     état.contact?.let { contact ->
@@ -196,10 +200,12 @@ fun MessagesScreen(
 private fun CarteConversation(
     conversation: Conversation,
     onOuvrir: () -> Unit,
+    sélectionnée: Boolean = false,
 ) {
     val dernier = conversation.messages.lastOrNull()
 
     GwsCard(
+        bordure = if (sélectionnée) BorderStroke(2.dp, RegistreTheme.accent.teinte) else null,
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onOuvrir),
@@ -274,7 +280,10 @@ private fun CarteContact(
                     color = RegistreTheme.colors.chalk,
                 )
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
                 PuceAction(
                     label = "Écrire",
                     icone = Icons.AutoMirrored.Rounded.Send,

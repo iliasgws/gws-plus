@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -98,6 +97,8 @@ import school.greenwood.plus.ui.components.HauteurBannièreRéduite
 import school.greenwood.plus.ui.components.Puce
 import school.greenwood.plus.ui.components.SectionLabel
 import school.greenwood.plus.ui.components.SqueletteRegistre
+import school.greenwood.plus.ui.components.DispositionAdaptative
+import school.greenwood.plus.ui.components.cartesEnColonnes
 import school.greenwood.plus.ui.theme.AnnotationShape
 import school.greenwood.plus.ui.theme.ControlShape
 import school.greenwood.plus.ui.theme.GwsAccent
@@ -183,6 +184,8 @@ fun RegistreScreen(
         action()
     }
 
+    DispositionAdaptative { largeur ->
+    val colonnes = if (largeur >= 760.dp) 2 else 1
     ModalNavigationDrawer(
         drawerState = tiroir,
         drawerContent = {
@@ -296,6 +299,9 @@ fun RegistreScreen(
                 registre.entrees.filterIsInstance<EntreeRegistre.Actualite>().map { it.post.id }.toSet()
             }
             val derniereActu = état.derniereActualite?.takeIf { it.id !in idPostsAujourdhui }
+            val registreCeSoir = registre.copy(ceSoir = registre.ceSoir.map { devoir ->
+                faitsLocaux?.let { devoir.copy(faitLocal = devoir.id in it) } ?: devoir
+            })
 
             LazyColumn(
                 state = liste,
@@ -346,16 +352,37 @@ fun RegistreScreen(
                     }
                 }
 
-                item(key = "ce-soir") {
+                if (colonnes == 2) item(key = "accueil-large") {
+                    Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
+                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            CarteCeSoir(registre = registreCeSoir, ouvrirDevoirs = ouvrirDevoirs)
+                            if (derniereActu != null) {
+                                SectionAccèsRapides(ouvrirEmploi = ouvrirEmploi, ouvrirRepas = ouvrirRepas)
+                            }
+                        }
+                        Column(Modifier.weight(1f)) {
+                            if (derniereActu != null) SectionActualitéUne(
+                                post = derniereActu,
+                                ouvrirPost = ouvrirPost,
+                                ouvrirActualités = ouvrirActualités,
+                                surApercu = {
+                                    apercu = ApercuOuverte(
+                                        contenu = apercuDe(derniereActu),
+                                        action = ActionComplète("Lire l'actualité") { ouvrirPost(derniereActu.id) },
+                                    )
+                                },
+                            ) else SectionAccèsRapides(ouvrirEmploi = ouvrirEmploi, ouvrirRepas = ouvrirRepas)
+                        }
+                    }
+                }
+                if (colonnes == 1) item(key = "ce-soir") {
                     CarteCeSoir(
-                        registre = registre.copy(ceSoir = registre.ceSoir.map { devoir ->
-                            faitsLocaux?.let { devoir.copy(faitLocal = devoir.id in it) } ?: devoir
-                        }),
+                        registre = registreCeSoir,
                         ouvrirDevoirs = ouvrirDevoirs,
                     )
                 }
 
-                if (derniereActu != null) {
+                if (colonnes == 1 && derniereActu != null) {
                     item(key = "derniere-actu") {
                         SectionActualitéUne(
                             post = derniereActu,
@@ -373,7 +400,7 @@ fun RegistreScreen(
                     }
                 }
 
-                item(key = "acces-rapides") {
+                if (colonnes == 1) item(key = "acces-rapides") {
                     SectionAccèsRapides(ouvrirEmploi = ouvrirEmploi, ouvrirRepas = ouvrirRepas)
                 }
 
@@ -388,7 +415,7 @@ fun RegistreScreen(
                     }
                 }
 
-                itemsIndexed(registre.entrees, key = { _, entrée -> entrée.id }) { index, entrée ->
+                cartesEnColonnes(registre.entrees.withIndex().toList(), colonnes, clé = { it.value.id }) { (index, entrée) ->
                     val délai = (index * 40).coerceAtMost(400)
                     androidx.compose.animation.AnimatedVisibility(
                         visible = cascade.value,
@@ -442,6 +469,7 @@ fun RegistreScreen(
         )
     }
     }
+}
 }
 
 @Composable

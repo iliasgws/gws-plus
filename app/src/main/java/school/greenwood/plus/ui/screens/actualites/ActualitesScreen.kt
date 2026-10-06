@@ -39,6 +39,8 @@ import school.greenwood.plus.ui.components.AperçuImage
 import school.greenwood.plus.ui.components.AperçuImageRapide
 import school.greenwood.plus.ui.components.BandeauErreur
 import school.greenwood.plus.ui.components.EcranBanniere
+import school.greenwood.plus.ui.components.DispositionAdaptative
+import school.greenwood.plus.ui.components.cartesEnColonnes
 import school.greenwood.plus.ui.components.CarteActualité
 import school.greenwood.plus.ui.components.EmptyState
 import school.greenwood.plus.ui.components.GwsLoadingIndicator
@@ -86,6 +88,8 @@ fun ActualitesScreen(
     var visualisation: VisualisationImage? by remember { mutableStateOf(null) }
     var aperçu: AperçuImage? by remember { mutableStateOf(null) }
 
+    DispositionAdaptative { largeur ->
+    val colonnes = (largeur.value / 360f).toInt().coerceIn(1, 3)
     EcranBanniere(
         image = R.drawable.actualites_banner,
         activée = bannièreActivée,
@@ -146,7 +150,7 @@ fun ActualitesScreen(
                 }
 
                 else -> {
-                        items(état.liste, key = { it.id }) { post ->
+                         cartesEnColonnes(état.liste, colonnes, clé = { it.id }) { post ->
                             CarteActualité(
                                 post = post,
                                 onClick = { ouvrirPost(post.id) },
@@ -175,6 +179,7 @@ fun ActualitesScreen(
                         }
                 }
             }
+    }
     }
 
     // Surfaces plein écran, rendues au-dessus de tout l'écran.

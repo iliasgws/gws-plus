@@ -29,6 +29,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -38,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import java.time.LocalDate
+import java.time.YearMonth
 import school.greenwood.plus.AppContainer
 import school.greenwood.plus.R
 import school.greenwood.plus.model.Devoir
@@ -48,6 +52,7 @@ import school.greenwood.plus.ui.components.EmptyState
 import school.greenwood.plus.ui.components.ErrorInline
 import school.greenwood.plus.ui.components.GwsCard
 import school.greenwood.plus.ui.components.EcranBanniere
+import school.greenwood.plus.ui.components.DispositionAdaptative
 import school.greenwood.plus.ui.components.Puce
 import school.greenwood.plus.ui.components.SqueletteDevoirs
 import school.greenwood.plus.ui.theme.AnnotationShape
@@ -106,7 +111,26 @@ fun DevoirsScreen(
         it.dateRemise == état.jourChoisi || (it.dateRemise == null && état.jourChoisi == aujourdhui)
     }
 
-    EcranBanniere(R.drawable.devoirs_banner, bannièreActivée, padding, liste) {
+    // The month belongs to the screen, not to either responsive placement.
+    var moisAffiché by rememberSaveable(état.jourChoisi) {
+        mutableStateOf(YearMonth.from(état.jourChoisi).toString())
+    }
+    val calendrier: @Composable () -> Unit = {
+        CalendrierDevoirs(
+            jourChoisi = état.jourChoisi,
+            aujourdhui = aujourdhui,
+            étatsJours = étatsJours,
+            onChoisirJour = vm::choisirJour,
+            moisAffiché = moisAffiché,
+            onChangerMois = { moisAffiché = it },
+        )
+    }
+    DispositionAdaptative { largeur ->
+    val deuxPanneaux = largeur >= 760.dp
+    EcranBanniere(
+        R.drawable.devoirs_banner, bannièreActivée, padding, liste,
+        panneauLatéral = if (deuxPanneaux) calendrier else null,
+    ) {
         item(key = "titre") {
             Column {
                 Text(
@@ -130,14 +154,7 @@ fun DevoirsScreen(
                 )
             }
         }
-        item(key = "calendrier") {
-            CalendrierDevoirs(
-                jourChoisi = état.jourChoisi,
-                aujourdhui = aujourdhui,
-                étatsJours = étatsJours,
-                onChoisirJour = vm::choisirJour,
-            )
-        }
+        if (!deuxPanneaux) item(key = "calendrier") { calendrier() }
         item(key = "proposer") {
             Button(
                 onClick = onProposerDevoirManquant,
@@ -239,6 +256,7 @@ fun DevoirsScreen(
                 }
             }
         }
+    }
     }
 }
 
