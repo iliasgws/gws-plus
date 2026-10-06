@@ -44,7 +44,7 @@ Current contents (update this section whenever files are added or removed):
 | `app/src/main/java/school/greenwood/plus/` | Sources — key entries below |
 | `…/GwsApplication.kt` | Manual DI container (`AppContainer`), including homework refresh signals |
 | `…/MainActivity.kt` | Single activity, edge-to-edge, Compose |
-| `…/ui/AppNav.kt` | Root state (onboarding → connexion → registre) + 6-tab shell (Registre, Cours, Devoirs, Documents, Messages, Plus — secondary sections live under Plus), back-stack contract; shared paper destination surfaces with seekable rounded/fading/scaled back exits and explicit linear predictive-pop callbacks (issue #124); per-entry accents preserve each predictive preview's section color (issue #127) |
+| `…/ui/AppNav.kt` | Root state (onboarding → connexion → registre) + 6-tab adaptive bottom-bar/tab-rail shell (#134: Registre, Cours, Devoirs, Documents, Messages, Plus — secondary sections live under Plus), back-stack contract; shared paper destination surfaces with seekable rounded/fading/scaled back exits and explicit linear predictive-pop callbacks (issue #124); per-entry accents preserve each predictive preview's section color (issue #127) |
 | `…/ui/screens/LoginScreen.kt` | Login form with the existing app icon beside the GWS+ title; header and form use 78%-opaque theme surfaces over the supplied illustration |
 | `app/src/main/res/drawable-nodpi/login_background.png` | Supplied school illustration used as the login background, cropped to fill the screen |
 | `app/src/main/res/drawable-nodpi/registre_banner.png` | Supplied school entrance illustration for the Registre banner |

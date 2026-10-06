@@ -99,7 +99,9 @@ raw probe responses stay out of the repository (personal data).
       testDebugUnitTest and assembleRelease pass; French accents and scope audited.
 - [ ] Verify tablet portrait/landscape, compact split-screen, enlarged text,
       conversation drafts on resizing and predictive-back cancellation on device.
-- [ ] Publish 0.9.13-beta.1 (versionCode 112) from the feature branch.
+- [x] Publish 0.9.13-beta.1 (versionCode 112) from commit `3056020` on
+      `feat/tablet-space-134`, PR #135. The APK certificate matches previous
+      releases; the GitHub prerelease flag, release notes and APK asset are verified.
 - [ ] User will install and test the beta later (explicitly deferred agent-side
       device checks); wait for that feedback before preparing a stable release.
 
