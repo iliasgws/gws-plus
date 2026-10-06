@@ -16,6 +16,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.NavigationRail
+import androidx.compose.material3.NavigationRailItem
+import androidx.compose.material3.NavigationRailItemDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -54,6 +61,37 @@ private val HauteurBarre = 64.dp
 
 /** Sous cette largeur d'entrée, la barre passe en gabarit serré. */
 private val SeuilSerré = 60.dp
+
+/** The same destinations and callbacks as the compact bar; no separate stack. */
+@Composable
+internal fun RailOnglets(
+    onglets: List<Onglet>,
+    routeSélectionnée: String?,
+    accents: Map<String, GwsAccent>,
+    onOnglet: (String) -> Unit,
+) {
+    NavigationRail(
+        modifier = Modifier.width(104.dp).fillMaxHeight().verticalScroll(rememberScrollState()),
+        containerColor = RegistreTheme.colors.page,
+    ) {
+        onglets.forEach { onglet ->
+            val accent = accents.getValue(onglet.route)
+            NavigationRailItem(
+                selected = routeSélectionnée == onglet.route,
+                onClick = { onOnglet(onglet.route) },
+                icon = { Icon(onglet.icone, contentDescription = null) },
+                label = { Text(onglet.label, style = MaterialTheme.typography.labelSmall) },
+                colors = NavigationRailItemDefaults.colors(
+                    selectedIconColor = accent.surConteneur,
+                    selectedTextColor = accent.teinte,
+                    indicatorColor = accent.conteneur,
+                    unselectedIconColor = RegistreTheme.colors.chalk,
+                    unselectedTextColor = RegistreTheme.colors.chalk,
+                ),
+            )
+        }
+    }
+}
 
 @Composable
 fun BarreOnglets(

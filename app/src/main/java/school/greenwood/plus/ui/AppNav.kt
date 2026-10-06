@@ -15,6 +15,10 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.ui.Alignment
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.MenuBook
@@ -54,6 +58,9 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import school.greenwood.plus.AppContainer
 import school.greenwood.plus.ui.components.BarreOnglets
+import school.greenwood.plus.ui.components.RailOnglets
+import school.greenwood.plus.ui.components.DispositionAdaptative
+import school.greenwood.plus.ui.components.EmptyState
 import school.greenwood.plus.ui.screens.LoginScreen
 import school.greenwood.plus.ui.screens.OnboardingScreen
 import school.greenwood.plus.ui.screens.boutique.BoutiqueHistoriqueScreen
@@ -227,25 +234,30 @@ fun Shell(container: AppContainer) {
     }
 
     CompositionLocalProvider(LocalGwsAccent provides accentAnimé) {
+        DispositionAdaptative { largeur ->
+        val rail = largeur >= 840.dp
+        val choisirOnglet: (String) -> Unit = { route ->
+            if (quizEnJeu) ongletEnAttente = route
+            else navController.allerÀLOnglet(route)
+        }
         Scaffold(
             containerColor = RegistreTheme.colors.paper,
             bottomBar = {
-                BarreOnglets(
+                if (!rail) BarreOnglets(
                     onglets = Onglets,
                     routeSélectionnée = ongletActif,
                     accents = couleurs.accents,
-                    onOnglet = { route ->
-                        if (quizEnJeu) ongletEnAttente = route
-                        else navController.allerÀLOnglet(route)
-                    },
+                    onOnglet = choisirOnglet,
                 )
             },
         ) { padding ->
+        Row(Modifier.fillMaxSize()) {
+        if (rail) RailOnglets(Onglets, ongletActif, couleurs.accents, choisirOnglet)
         NavHost(
             navController = navController,
             startDestination = RouteDépart,
             modifier = Modifier
-                .fillMaxSize()
+                .weight(1f).fillMaxSize()
                 .background(RegistreTheme.colors.paper),
             enterTransition = { fadeIn(tween(180)) + slideInVertically(tween(220)) { it / 24 } },
             exitTransition = { fadeOut(tween(140)) },
@@ -370,20 +382,55 @@ fun Shell(container: AppContainer) {
                 )
             }
             écran("messages") {
+                DispositionAdaptative { largeurMessages ->
+                val deuxPanneaux = largeurMessages >= 760.dp
+                Row(Modifier.fillMaxSize()) {
+                Box(if (deuxPanneaux) Modifier.width(320.dp) else Modifier.weight(1f)) {
                 MessagesScreen(
                     container = container,
                     padding = padding,
                     onOuvrirConversation = { id -> navController.allerDétail("conversation/$id") },
                     onNouveauMessage = { navController.allerDétail("nouveau-message") },
                 )
+                }
+                if (deuxPanneaux) Box(Modifier.weight(1f).fillMaxSize(), contentAlignment = Alignment.Center) {
+                    EmptyState(
+                        titre = "Vos échanges avec l'école",
+                        message = "Choisissez une conversation pour la lire ici.",
+                    )
+                }
+                }
+                }
             }
             écran("conversation/{conversationId}") { entrée ->
+                val id = entrée.arguments?.getString("conversationId") ?: ""
+                DispositionAdaptative { largeurConversation ->
+                val deuxPanneaux = largeurConversation >= 760.dp
+                Row(Modifier.fillMaxSize()) {
+                if (deuxPanneaux) Box(Modifier.width(320.dp)) {
+                    MessagesScreen(
+                        container = container,
+                        padding = padding,
+                        onOuvrirConversation = { autreId ->
+                            if (autreId != id) navController.navigate("conversation/$autreId") {
+                                popUpTo(entrée.destination.id) { inclusive = true }
+                                launchSingleTop = true
+                            }
+                        },
+                        onNouveauMessage = { navController.allerDétail("nouveau-message") },
+                        conversationSélectionnée = id,
+                    )
+                }
+                Box(Modifier.weight(1f)) {
                 ConversationScreen(
                     container = container,
                     padding = padding,
-                    conversationId = entrée.arguments?.getString("conversationId") ?: "",
+                    conversationId = id,
                     retour = { navController.popBackStack() },
                 )
+                }
+                }
+                }
             }
             écran("nouveau-message") {
                 NouveauMessageScreen(
@@ -432,6 +479,7 @@ fun Shell(container: AppContainer) {
             }
         }
         }
+        }
 
         // Sortie d'un quiz en jeu confirmée : on dépille le quiz sans
         // sauvegarde puis l'onglet demandé est suivi (le modèle de piles
@@ -445,6 +493,7 @@ fun Shell(container: AppContainer) {
                     navController.allerÀLOnglet(cible)
                 },
             )
+        }
         }
     }
 }
@@ -472,8 +521,13 @@ private fun NavGraphBuilder.écran(
                         clip = true
                     }
                     .background(RegistreTheme.colors.paper),
+                contentAlignment = Alignment.TopCenter,
             ) {
-                content(entrée)
+                val lecture = route.startsWith("post/") || route.startsWith("devoir/") ||
+                    route.startsWith("quiz/") || route == "nouveau-message" || route == "parametres"
+                Box(if (lecture) Modifier.widthIn(max = 840.dp).fillMaxSize() else Modifier.fillMaxSize()) {
+                    content(entrée)
+                }
             }
         }
     }

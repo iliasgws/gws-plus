@@ -76,6 +76,35 @@ raw probe responses stay out of the repository (personal data).
       heading each minute while resumed and immediately on foreground return.
 - [x] Preserve the next-school-day homework window and existing navigation.
 
+## Tablet space (issue #134)
+
+- [x] Use allocated window/pane width adjusted for enlarged text, rather than
+      device detection. At 840 readable dp the shell uses a scrollable tab rail;
+      the same controller, tab callbacks and quiz-exit confirmation remain active.
+- [x] At 760 readable dp, show the Registre focal card/quick links beside the
+      latest news and render today's feed in two columns. Show the homework
+      calendar beside the selected-day list, with independently scrollable panes
+      and the browsed month hoisted above the responsive placement.
+- [x] Render Cours days in 320-dp-minimum columns (up to four), Documents in
+      440-dp-minimum columns (up to three), and Actualités in 360-dp-minimum
+      columns (up to three), preserving grouping, pagination and existing actions.
+- [x] Show Messages list/selection beside its conversation at 760 readable dp.
+      Selection remains a real conversation destination: system back pops it,
+      width changes do not navigate, and the conversation VM retains its draft.
+      A sidebar selection replaces the current conversation entry, so back goes
+      to the original caller rather than every previous sidebar selection.
+- [x] Cap post/homework/quiz details, new-message forms and settings at 840 dp;
+      allow contact actions to wrap within the narrower message list.
+- [x] Build 0.9.13-beta.1 (versionCode 112): assembleDebug,
+      testDebugUnitTest and assembleRelease pass; French accents and scope audited.
+- [ ] Verify tablet portrait/landscape, compact split-screen, enlarged text,
+      conversation drafts on resizing and predictive-back cancellation on device.
+- [x] Publish 0.9.13-beta.1 (versionCode 112) from commit `3056020` on
+      `feat/tablet-space-134`, PR #135. The APK certificate matches previous
+      releases; the GitHub prerelease flag, release notes and APK asset are verified.
+- [ ] User will install and test the beta later (explicitly deferred agent-side
+      device checks); wait for that feedback before preparing a stable release.
+
 ## Rounded predictive back (issue #124)
 
 - [x] Wrap shell destinations in paper surfaces with animated 0–28 dp clipping;

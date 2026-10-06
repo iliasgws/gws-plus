@@ -86,6 +86,23 @@ quittables — rien à perdre.
 le geste système prédit le retour sur tous les écrans. **À ne pas régresser**
 — c'est le point de vigilance n°1 des revues.
 
+## Adaptive tablet layout (issue #134)
+
+The shell changes its navigation presentation at 840 readable dp of allocated
+width: the tab rail and bottom bar call the same `allerÀLOnglet` callback and
+share quiz-exit confirmation. Width changes never navigate or recreate a second
+controller. Readable width is actual pane width divided by font scale (minimum
+1), so enlarged text falls back to fewer columns.
+
+Messages uses a 320-dp list beside the conversation at 760 readable dp of content
+width. The selected conversation remains a real back-stack destination, including
+when opened from the Registre. Selecting a different sidebar conversation replaces
+that detail entry, keeping its original caller below it; back returns there.
+The right-hand conversation stays at the same composition call site during a
+width change, preserving its ViewModel and draft. Compact windows show only the
+conversation. Post, homework and quiz details, the new-message form and settings
+are centered at a maximum width of 840 dp.
+
 ## Rounded destination exits (issue #124)
 
 All shell destinations use the shared `écran` wrapper in `AppNav.kt`. Its

@@ -63,6 +63,8 @@ import school.greenwood.plus.ui.components.HauteurBannièreComplète
 import school.greenwood.plus.ui.components.HauteurBannièreRéduite
 import school.greenwood.plus.ui.components.SectionLabel
 import school.greenwood.plus.ui.components.SqueletteCours
+import school.greenwood.plus.ui.components.DispositionAdaptative
+import school.greenwood.plus.ui.components.cartesEnColonnes
 import school.greenwood.plus.ui.theme.AnnotationShape
 import school.greenwood.plus.ui.theme.ControlShape
 import school.greenwood.plus.ui.theme.RegistreTheme
@@ -110,6 +112,8 @@ fun CoursScreen(
         "${lundi.frenchShort()} – ${lundi.plusDays(6).frenchShort()}"
     }
 
+    DispositionAdaptative { largeur ->
+    val colonnes = (largeur.value / 320f).toInt().coerceIn(1, 4)
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -248,7 +252,7 @@ fun CoursScreen(
                         ?: semaine.journées.firstOrNull()
 
                         // Le résumé de la semaine : une puce par jour, avec son nombre de cours.
-                        item(key = "jours") {
+                         if (colonnes == 1) item(key = "jours") {
                             LazyRow(
                                 contentPadding = PaddingValues(horizontal = 16.dp),
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -271,7 +275,22 @@ fun CoursScreen(
                             }
                         }
 
-                        if (journée == null || journée.créneaux.isEmpty()) {
+                         if (colonnes > 1 && semaine.journées.isNotEmpty()) {
+                             cartesEnColonnes(semaine.journées, colonnes, clé = { "jour-${it.jour}" }) { jour ->
+                                 Column(
+                                     Modifier.padding(horizontal = 8.dp),
+                                     verticalArrangement = Arrangement.spacedBy(12.dp),
+                                 ) {
+                                     PuceJourCours(jour, jour.jour == journée?.jour) { vm.choisirJour(jour.jour) }
+                                     if (jour.créneaux.isEmpty()) Text(
+                                         semaine.aucunCours ?: "Aucun cours",
+                                         style = MaterialTheme.typography.bodySmall,
+                                         color = RegistreTheme.colors.chalk,
+                                     )
+                                     jour.créneaux.forEach { CarteCréneau(it) }
+                                 }
+                             }
+                         } else if (journée == null || journée.créneaux.isEmpty()) {
                             item(key = "vide-jour") {
                                 Column(Modifier.padding(horizontal = 16.dp)) {
                                     Spacer(Modifier.height(8.dp))
@@ -301,6 +320,7 @@ fun CoursScreen(
         }
         }
     }
+}
 }
 
 /** Puce d'un jour de la semaine : lettre, date courte et nombre de cours. */

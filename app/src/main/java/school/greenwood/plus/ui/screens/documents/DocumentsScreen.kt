@@ -59,6 +59,8 @@ import school.greenwood.plus.ui.components.ErrorInline
 import school.greenwood.plus.ui.components.GwsCard
 import school.greenwood.plus.ui.components.GwsLoadingIndicator
 import school.greenwood.plus.ui.components.EcranBanniere
+import school.greenwood.plus.ui.components.DispositionAdaptative
+import school.greenwood.plus.ui.components.cartesEnColonnes
 import school.greenwood.plus.ui.components.Puce
 import school.greenwood.plus.ui.components.SectionLabel
 import school.greenwood.plus.ui.components.SqueletteDocuments
@@ -92,6 +94,8 @@ fun DocumentsScreen(
     val bannièreActivée by container.session.bannièreDocumentsActivée.collectAsStateWithLifecycle(initialValue = true)
     val liste = rememberLazyListState()
     val context = LocalContext.current
+    DispositionAdaptative { largeur ->
+    val colonnes = (largeur.value / 440f).toInt().coerceIn(1, 3)
     EcranBanniere(R.drawable.documents_banner, bannièreActivée, padding, liste) {
         item(key = "entete") {
         Column {
@@ -197,8 +201,10 @@ fun DocumentsScreen(
                                 item(key = "section-$matiere") {
                                     SectionLabel(matiere)
                                 }
-                                groupesFiches[matiere].orEmpty().forEach { fiche ->
-                                    item(key = "fiche-$matiere-${fiche.id}") {
+                                cartesEnColonnes(
+                                    groupesFiches[matiere].orEmpty(), colonnes,
+                                    clé = { "fiche-$matiere-${it.id}" },
+                                ) { fiche ->
                                         LigneFiche(
                                             fiche,
                                             enCours = état.téléchargementsFiche[fiche.id] == true,
@@ -215,15 +221,13 @@ fun DocumentsScreen(
                                                 }
                                             },
                                         )
-                                    }
                                 }
-                                val items = groupesRessources[matiere].orEmpty()
-                                items(
-                                    items.size,
-                                    key = { i -> "$matiere-${items[i].id}-$i" },
-                                ) { i ->
+                                cartesEnColonnes(
+                                    groupesRessources[matiere].orEmpty().withIndex().toList(), colonnes,
+                                    clé = { "ressource-$matiere-${it.value.id}-${it.index}" },
+                                ) { (_, ressource) ->
                                     LigneRessource(
-                                        items[i],
+                                        ressource,
                                         ouvrirQuiz = onOuvrirQuiz,
                                     )
                                 }
@@ -231,6 +235,7 @@ fun DocumentsScreen(
                     }
             }
         }
+    }
     }
 }
 

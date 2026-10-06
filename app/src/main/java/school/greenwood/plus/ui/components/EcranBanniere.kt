@@ -6,6 +6,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -36,10 +41,12 @@ internal fun EcranBanniere(
     liste: LazyListState,
     rafraîchissement: Boolean = false,
     surActualiser: (() -> Unit)? = null,
+    panneauLatéral: (@Composable () -> Unit)? = null,
     content: LazyListScope.() -> Unit,
 ) {
     val activité = LocalContext.current as? ComponentActivity
     val pageClaire = RegistreTheme.colors.page.luminance() > 0.5f
+    val largeurCalendrier = 360.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)
     val seuil = with(LocalDensity.current) {
         (HauteurBannièreComplète - HauteurBannièreRéduite).roundToPx()
     }
@@ -78,7 +85,18 @@ internal fun EcranBanniere(
                 },
             )
         }
-        Box(Modifier.fillMaxSize().padding(top = padding.calculateTopPadding())) {
+        Row(Modifier.fillMaxSize().padding(top = padding.calculateTopPadding())) {
+            if (panneauLatéral != null) {
+                Column(
+                    Modifier.width(largeurCalendrier).verticalScroll(rememberScrollState()).padding(
+                        start = 16.dp,
+                        top = if (activée) HauteurBannièreComplète + 12.dp else 12.dp,
+                        bottom = padding.calculateBottomPadding() + 24.dp,
+                    ),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) { panneauLatéral() }
+            }
+            Box(Modifier.weight(1f)) {
             if (surActualiser != null) {
                 GwsPullToRefreshBox(
                     isRefreshing = rafraîchissement,
@@ -87,6 +105,7 @@ internal fun EcranBanniere(
                     indicatorTopInset = if (activée) HauteurBannièreComplète else 0.dp,
                 ) { flux() }
             } else flux()
+            }
         }
     }
 }
