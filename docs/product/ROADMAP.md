@@ -8,6 +8,16 @@ raw probe responses stay out of the repository (personal data).
 
 `[x]` done · `[~]` in progress · `[ ]` todo · `(!)` needs a decision or a real-device check
 
+## Security hardening (issues #136–#141)
+
+- [x] Exclude session DataStore and private document files from Android cloud backup/device transfer (#137).
+- [x] Encrypt persisted Boti, community, and AI secrets with Android Keystore, migrating legacy plaintext on startup (#138).
+- [x] Bound private/public document downloads (100 MiB) and APK downloads (250 MiB), including unknown-length streams; add a unit test (#141).
+- [ ] (!): Release signing still uses the original debug certificate intentionally: replacing it would break updates for existing users. Define a continuity/migration plan before #136.
+- [ ] (!): Confirm server/UI semantics of « Rester connecté » before changing token persistence (#140).
+- [ ] (!): Community identity persists across school logout by design (#88); decide shared-device privacy behavior before changing token lifecycle (#139).
+- [ ] Run assembleDebug, testDebugUnitTest and real-device backup, login, download and update checks before merge. No beta or stable release authorized by this branch work.
+
 ## Shared Material 3 Expressive loading animation
 
 - [x] User approved stable promotion after 0.9.12-beta.2; merge feature PR #132
