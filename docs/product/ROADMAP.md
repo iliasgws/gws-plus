@@ -32,9 +32,9 @@ raw probe responses stay out of the repository (personal data).
       debug certificate until a continuity/migration plan exists — a key
       change would break in-place updates. No key change on this branch.
 - [x] assembleDebug and testDebugUnitTest pass (285 unit tests); instrumented
-      Keystore/SessionStore tests compile (`assembleDebugAndroidTest`). A beta
-      (`--prerelease`) from this branch is user-authorized; merge to main and
-      any stable still require explicit user confirmation.
+      Keystore/SessionStore tests compile (`assembleDebugAndroidTest`). Merged
+      to main via PR #142 and released as stable 0.9.13 (user-authorized) after
+      beta v0.9.13-beta.2; on-device instrumented execution remains a follow-up.
 
 ## Shared Material 3 Expressive loading animation
 
