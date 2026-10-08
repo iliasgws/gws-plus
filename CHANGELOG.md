@@ -4,6 +4,19 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [Non publié] — renforcement de sécurité
+
+### Sécurité
+
+- Les jetons de session Boti et communautaire ainsi que la clé du fournisseur IA sont chiffrés avec Android Keystore ; les anciennes valeurs sont migrées automatiquement.
+- Les sessions, clés et documents privés sont exclus des sauvegardes et transferts Android.
+- Les téléchargements de documents et d'APK sont limités en taille, y compris lorsque le serveur ne fournit pas de taille fiable.
+
+### À décider
+
+- Conserver la signature historique des APK pour permettre les mises à jour sans désinstallation ; une migration de signature nécessite un plan séparé (#136).
+- Préciser les règles « Rester connecté » (#140) et le cycle de vie du compte communautaire indépendant (#139) avant de modifier leur comportement.
+
 ## [0.9.12] — 2026-10-06
 
 Version stable après la bêta 0.9.12-beta.2, acceptée par l'utilisateur
