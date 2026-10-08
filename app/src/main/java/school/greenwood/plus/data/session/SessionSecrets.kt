@@ -18,6 +18,7 @@ internal class SessionSecrets {
     private val alias = "gws_plus_session_v1"
     private val prefix = "enc:v1:"
 
+    @Synchronized
     private fun key(): SecretKey {
         val store = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
         (store.getKey(alias, null) as? SecretKey)?.let { return it }
