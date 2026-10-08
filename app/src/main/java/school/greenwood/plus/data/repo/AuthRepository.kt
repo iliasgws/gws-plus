@@ -23,6 +23,15 @@ class AuthRepository(
     private val purgeMedias: suspend () -> Unit = {},
 ) {
 
+    /**
+     * Connexion (issues #138/#140). [retenir] coché : le jeton est scellé
+     * sur disque (Keystore) et la reconnexion est automatique au prochain
+     * démarrage. Décoché : le jeton ne quitte jamais la mémoire du
+     * processus — un redémarrage de l'application impose une nouvelle
+     * connexion, quoi que fasse le serveur. Le champ `remembreMe` du
+     * protocole Boti retransmet le choix, sans jamais affaiblir la
+     * garantie locale.
+     */
     suspend fun connexion(
         téléphone: String,
         motDePasse: String,

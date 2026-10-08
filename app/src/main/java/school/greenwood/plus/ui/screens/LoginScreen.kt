@@ -170,11 +170,19 @@ fun LoginScreen(
                             ),
                         )
                         Text(
-                            text = "Retenir ma session",
+                            text = "Rester connecté",
                             style = MaterialTheme.typography.bodySmall,
                             color = RegistreTheme.colors.ink,
                         )
                     }
+
+                    Text(
+                        text = "Sans cela, la session vit jusqu'à la fermeture de " +
+                            "l'application : une prochaine ouverture redemandera une connexion.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = RegistreTheme.colors.chalk,
+                        modifier = Modifier.padding(start = 12.dp),
+                    )
 
                     Button(
                         onClick = vm::seConnecter,

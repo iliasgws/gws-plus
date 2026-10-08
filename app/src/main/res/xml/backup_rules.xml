@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Legacy (API ≤ 30) Auto Backup rules. The session DataStore holds the
+     Boti token, the community identity and (encrypted) AI credentials —
+     never restorable. The document cache and the public-download registry
+     describe private school files; they stay out too. Everything else
+     (nonsecret app preferences) remains restorable. -->
 <full-backup-content>
     <exclude domain="file" path="datastore/gws_session.preferences_pb" />
     <exclude domain="file" path="documents/" />
+    <exclude domain="file" path="telechargements-publics.json" />
 </full-backup-content>

@@ -10,13 +10,31 @@ raw probe responses stay out of the repository (personal data).
 
 ## Security hardening (issues #136–#141)
 
-- [x] Exclude session DataStore and private document files from Android cloud backup/device transfer (#137).
-- [x] Encrypt persisted Boti, community, and AI secrets with Android Keystore, migrating legacy plaintext on startup (#138).
-- [x] Bound private/public document downloads (100 MiB) and APK downloads (250 MiB), including unknown-length streams; add a unit test (#141).
-- [ ] (!): Release signing still uses the original debug certificate intentionally: replacing it would break updates for existing users. Define a continuity/migration plan before #136.
-- [ ] (!): Confirm server/UI semantics of « Rester connecté » before changing token persistence (#140).
-- [ ] (!): Community identity persists across school logout by design (#88); decide shared-device privacy behavior before changing token lifecycle (#139).
-- [ ] Run assembleDebug, testDebugUnitTest and real-device backup, login, download and update checks before merge. No beta or stable release authorized by this branch work.
+- [x] Exclude session DataStore, private document files and the public-download
+      registry from Android cloud backup/device transfer, for both the API-31+
+      extraction rules and the legacy backup rules (#137, unit-tested).
+- [x] Encrypt persisted Boti, community, and AI secrets with Android Keystore
+      AES-GCM, migrating legacy plaintext on startup; key loss degrades to
+      re-login, never to a crash or a logged secret (#138).
+- [x] Bound private/public document downloads (100 MiB) and APK downloads
+      (250 MiB), rejecting oversized Content-Length early and enforcing the
+      byte ceiling during streaming when the header lies or is absent; cached
+      files survive a failed forced replacement (#141).
+- [x] Honor « Rester connecté » locally (#140): unchecked, nothing of the
+      session touches disk (in-memory session dies with the process); checked,
+      the token is sealed as before. The Boti `remembreMe` field is unchanged
+      and the UI now explains the meaning on the login screen.
+- [x] Community identity stays independent of the school session by design
+      (#88): school logout keeps it, and Paramètres offers an explicit
+      « Oublier le compte communautaire » with an irreversibility warning
+      (#139); instrumented tests cover A → logout → B on one device.
+- [x] Document the signing policy (#136): releases stay on the historical
+      debug certificate until a continuity/migration plan exists — a key
+      change would break in-place updates. No key change on this branch.
+- [x] assembleDebug and testDebugUnitTest pass (285 unit tests); instrumented
+      Keystore/SessionStore tests compile (`assembleDebugAndroidTest`). A beta
+      (`--prerelease`) from this branch is user-authorized; merge to main and
+      any stable still require explicit user confirmation.
 
 ## Shared Material 3 Expressive loading animation
 

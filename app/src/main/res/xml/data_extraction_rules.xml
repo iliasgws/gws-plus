@@ -1,12 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- School sessions, community identity, AI keys and downloaded documents are not transferable. -->
+<!-- API 31+ extraction rules. School sessions, community identity, AI keys,
+     downloaded documents and the public-download registry are excluded from
+     both cloud backup and device-to-device transfer (issues #137, #138). -->
 <data-extraction-rules>
     <cloud-backup>
         <exclude domain="file" path="datastore/gws_session.preferences_pb" />
         <exclude domain="file" path="documents/" />
+        <exclude domain="file" path="telechargements-publics.json" />
     </cloud-backup>
     <device-transfer>
         <exclude domain="file" path="datastore/gws_session.preferences_pb" />
         <exclude domain="file" path="documents/" />
+        <exclude domain="file" path="telechargements-publics.json" />
     </device-transfer>
 </data-extraction-rules>

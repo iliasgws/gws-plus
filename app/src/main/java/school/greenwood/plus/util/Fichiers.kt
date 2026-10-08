@@ -51,6 +51,17 @@ object Fichiers {
      *  perdraient l'entrée de l'autre (lecture-écriture non atomique). */
     private val verrou = Mutex()
 
+    /** Plafond des documents téléchargés (100 Mio) — issue #141. */
+    internal const val LIMITE_DOCUMENT = 100L * 1024 * 1024
+
+    /** Plafond des APK (250 Mio) : une mise à jour ne pèse pas plus lourd. */
+    internal const val LIMITE_APK = 250L * 1024 * 1024
+
+    /** Plafond selon le nom souhaité : les APK portent un plafond plus large
+     *  que les documents (issue #141). */
+    internal fun limitePourNom(nomSouhaité: String): Long =
+        if (nomSouhaité.endsWith(".apk", ignoreCase = true)) LIMITE_APK else LIMITE_DOCUMENT
+
     /** Copie bornée même lorsque Content-Length manque ou ment. */
     internal fun copierBorné(entrée: java.io.InputStream, sortie: java.io.OutputStream, limite: Long) {
         require(limite >= 0)
@@ -65,6 +76,35 @@ object Fichiers {
             total += lus
         }
     }
+
+    /**
+     * Exécution annulable : le pont vers l'API asynchrone d'OkHttp ferme le
+     * socket dès l'annulation de la coroutine (execute() bloquant ignorerait
+     * l'interruption du thread) — un téléchargement abandonné s'arrête
+     * vraiment et le temporaire est nettoyé sans attendre un délai de lecture.
+     */
+    private suspend fun exécuter(client: OkHttpClient, req: Request): okhttp3.Response =
+        kotlinx.coroutines.suspendCancellableCoroutine { continuation ->
+            val appel = client.newCall(req)
+            continuation.invokeOnCancellation { appel.cancel() }
+            appel.enqueue(
+                object : okhttp3.Callback {
+                    override fun onFailure(call: okhttp3.Call, e: java.io.IOException) {
+                        continuation.resumeWith(Result.failure(e))
+                    }
+
+                    override fun onResponse(call: okhttp3.Call, réponse: okhttp3.Response) {
+                        if (continuation.isActive) {
+                            // onCancellation : si la coroutine est annulée dans
+                            // la même milliseconde, le corps est refermé.
+                            continuation.resume(réponse) { _, _, _ -> réponse.close() }
+                        } else {
+                            réponse.close() // annulée entre-temps : rien à livrer
+                        }
+                    }
+                },
+            )
+        }
 
     /** Dossier public de l'app dans les Fichiers du téléphone. */
     const val DOSSIER_PUBLIC = "Download/gws-plus"
@@ -119,15 +159,12 @@ object Fichiers {
             .header("User-Agent", "GWSPlus/${BuildConfig.VERSION_NAME}")
             .build()
         try {
-            http.newCall(req).execute().use { resp ->
+            // Exécution annulable : l'annulation ferme le socket et le
+            // finally retire le temporaire sans attendre un délai de lecture.
+            exécuter(http, req).use { resp ->
                 if (!resp.isSuccessful) error("Téléchargement impossible (${resp.code})")
-                // Les APK demandent un plafond plus large que les documents.
                 // La limite est vérifiée aussi pendant le flux (Content-Length peut manquer).
-                val limite = if (nomSouhaité.endsWith(".apk", ignoreCase = true)) {
-                    250L * 1024 * 1024
-                } else {
-                    100L * 1024 * 1024
-                }
+                val limite = limitePourNom(nomSouhaité)
                 val annoncée = resp.body.contentLength()
                 if (annoncée > limite) error("Fichier trop volumineux")
                 resp.body.byteStream().use { entrée ->
@@ -250,12 +287,15 @@ object Fichiers {
                     .url(url)
                     .header("User-Agent", "GWSPlus/${BuildConfig.VERSION_NAME}")
                     .build()
-                httpPublic.newCall(req).execute().use { resp ->
+                // Exécution annulable : l'annulation ferme le socket et le
+                // catch nettoie la ligne en attente sans attendre la fin du flux.
+                exécuter(httpPublic, req).use { resp ->
                     if (!resp.isSuccessful) error("Téléchargement impossible (${resp.code})")
-                    val limite = 100L * 1024 * 1024
-                    if (resp.body.contentLength() > limite) error("Fichier trop volumineux")
+                    if (resp.body.contentLength() > LIMITE_DOCUMENT) error("Fichier trop volumineux")
                     résolveur.openOutputStream(uri)?.use { sortie ->
-                        resp.body.byteStream().use { entrée -> copierBorné(entrée, sortie, limite) }
+                        resp.body.byteStream().use { entrée ->
+                            copierBorné(entrée, sortie, LIMITE_DOCUMENT)
+                        }
                     } ?: error("Sortie indisponible")
                 }
                 val fini = ContentValues().apply { put(MediaStore.MediaColumns.IS_PENDING, 0) }
