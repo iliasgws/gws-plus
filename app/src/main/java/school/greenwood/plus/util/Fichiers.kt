@@ -51,6 +51,21 @@ object Fichiers {
      *  perdraient l'entrée de l'autre (lecture-écriture non atomique). */
     private val verrou = Mutex()
 
+    /** Copie bornée même lorsque Content-Length manque ou ment. */
+    internal fun copierBorné(entrée: java.io.InputStream, sortie: java.io.OutputStream, limite: Long) {
+        require(limite >= 0)
+        val tampon = ByteArray(8192)
+        var total = 0L
+        while (true) {
+            val lus = entrée.read(tampon)
+            if (lus == -1) break
+            if (lus == 0) continue
+            if (lus.toLong() > limite - total) error("Fichier trop volumineux")
+            sortie.write(tampon, 0, lus)
+            total += lus
+        }
+    }
+
     /** Dossier public de l'app dans les Fichiers du téléphone. */
     const val DOSSIER_PUBLIC = "Download/gws-plus"
 
@@ -117,15 +132,7 @@ object Fichiers {
                 if (annoncée > limite) error("Fichier trop volumineux")
                 resp.body.byteStream().use { entrée ->
                     entier.outputStream().use { sortie ->
-                        val tampon = ByteArray(8192)
-                        var total = 0L
-                        while (true) {
-                            val lus = entrée.read(tampon)
-                            if (lus == -1) break
-                            total += lus
-                            if (total > limite) error("Fichier trop volumineux")
-                            sortie.write(tampon, 0, lus)
-                        }
+                        copierBorné(entrée, sortie, limite)
                     }
                 }
             }
@@ -245,8 +252,10 @@ object Fichiers {
                     .build()
                 httpPublic.newCall(req).execute().use { resp ->
                     if (!resp.isSuccessful) error("Téléchargement impossible (${resp.code})")
+                    val limite = 100L * 1024 * 1024
+                    if (resp.body.contentLength() > limite) error("Fichier trop volumineux")
                     résolveur.openOutputStream(uri)?.use { sortie ->
-                        resp.body.byteStream().use { entrée -> entrée.copyTo(sortie) }
+                        resp.body.byteStream().use { entrée -> copierBorné(entrée, sortie, limite) }
                     } ?: error("Sortie indisponible")
                 }
                 val fini = ContentValues().apply { put(MediaStore.MediaColumns.IS_PENDING, 0) }
