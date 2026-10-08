@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- School sessions, community identity, AI keys and downloaded documents are not transferable. -->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="file" path="datastore/gws_session.preferences_pb" />
+        <exclude domain="file" path="documents/" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="file" path="datastore/gws_session.preferences_pb" />
+        <exclude domain="file" path="documents/" />
+    </device-transfer>
+</data-extraction-rules>
