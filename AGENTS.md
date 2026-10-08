@@ -62,7 +62,10 @@ Current contents (update this section whenever files are added or removed):
 | `…/data/api/` | BotiApi/BotiClient (generic GET/POST multipart + envelope), BotiEnvelope, MediaUrls (single-decode), CommunApi (community server client: jeton auth, rate-limit 429, plain-text errors, 10 Ko JSON body cap, multipart homework attachments up to 5 MiB, URL normalization — issues #88/#16 server) |
 | `app/src/main/res/xml/network_security_config.xml` and `app/src/debug/res/xml/network_security_config.xml` | HTTPS-only release network policy and debug-only cleartext access for LAN-hosted community servers (issue #94) |
 | `…/data/ai/ComposeurIA.kt` | AI composer (issue #56): OpenAI-compatible client (BYOK, provider presets), actions/tones with French labels, system-prompt builder |
-| `…/data/session/SessionStore.kt` | DataStore session (keyToken, user, eleves; never passwords) + actualisation-au-retour duration + community account/jeton/mentions + server URL + local vote records (issue #88) |
+| `…/data/session/SessionStore.kt` | DataStore session (encrypted keyToken, user, eleves; never passwords) + actualisation-au-retour duration + community account/jeton/mentions + server URL + local vote records (issue #88) |
+| `…/data/session/SessionSecrets.kt` | Keystore AES-GCM encryption and legacy-secret migration for stored Boti/community/AI credentials |
+| `app/src/main/res/xml/{backup_rules,data_extraction_rules}.xml` | Exclude session secrets and private documents from legacy and Android 12+ backups/transfers |
+| `app/src/test/java/school/greenwood/plus/TéléchargementBornéTest.kt` | Unit tests for bounded download streaming |
 | `…/data/session/CompteCommunautaire.kt` | Community account contract (issue #88): jeton lifecycle, mentions-notice flags |
 | `…/data/session/Veille.kt` | VeilleSession — foreground-return refresh signal (absence ≥ duration chosen in Paramètres) |
 | `…/data/repo/` | Repositories + Normalizers (raw JSON → domain models); `UpdatesRepository.kt` — GitHub Releases update checker (issue #46); `CommunauteRepository.kt` + `CommunauteNormalizers.kt` — community server lists/writes/notice flow (issue #88) |
