@@ -53,6 +53,7 @@ import school.greenwood.plus.ui.ParametresViewModel
 import school.greenwood.plus.ui.RéglagesIAViewModel
 import school.greenwood.plus.ui.components.CarteMiseÀJour
 import school.greenwood.plus.ui.components.DialogueDéconnexion
+import school.greenwood.plus.ui.components.DialogueOublierCompte
 import school.greenwood.plus.ui.components.ErrorInline
 import school.greenwood.plus.ui.components.GwsCard
 import school.greenwood.plus.ui.components.GwsLoadingIndicator
@@ -119,6 +120,9 @@ fun ParametresScreen(
     // Déconnexion (issue #101) : second accès, pour la découvrabilité — le
     // chemin principal reste la pilule profil.
     var déconnexionDemandée by remember { mutableStateOf(false) }
+    // Oubli du compte communautaire (issue #139) : confirmation obligatoire
+    // avant toute destruction d'identité irréversible.
+    var oubliCompteDemandé by remember { mutableStateOf(false) }
     val demandeurNotification = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission(),
     ) { accordé -> notificationsAccordées = accordé }
@@ -272,7 +276,11 @@ fun ParametresScreen(
             Text(
                 text = "La section Communauté échange avec un serveur que tu choisis toi-même : " +
                     "les listes publiques y sont ouvertes à tous, les écritures passent par un " +
-                    "compte anonyme créé sur cet appareil. Sans URL, la section reste fermée.",
+                    "compte anonyme créé sur cet appareil. Ce compte communautaire est " +
+                    "INDÉPENDANT du compte de l'école : il lui survit, y compris si un autre " +
+                    "compte scolaire se connecte ensuite sur cet appareil — il appartient à " +
+                    "l'appareil, jamais à une famille en particulier. Sans URL, la section " +
+                    "reste fermée.",
                 style = MaterialTheme.typography.bodySmall,
                 color = RegistreTheme.colors.chalk,
                 modifier = Modifier.padding(top = 2.dp, start = 4.dp, end = 4.dp, bottom = 6.dp),
@@ -324,20 +332,21 @@ fun ParametresScreen(
                             }
                         }
                     }
-                    // Révocation : DELETE /compte + oubli local (jamais bloqué
-                    // par le réseau — l'appareil s'en sépare quoi qu'il arrive).
+                    // Oubli du compte (issue #139) : JAMAIS silencieux — un
+                    // dialogue avertit de l'irréversibilité avant tout ; DELETE
+                    // /compte + oubli local, jamais bloqué par le réseau.
                     if (état.compteCommunautaire) {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(ControlShape)
-                                .clickable(enabled = !état.révocationEnCours) { vm.révoquerCompteCommunautaire() }
+                                .clickable(enabled = !état.révocationEnCours) { oubliCompteDemandé = true }
                                 .padding(vertical = 6.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(10.dp),
                         ) {
                             Text(
-                                text = if (état.révocationEnCours) "Révocation…" else "Révoquer le compte communautaire",
+                                text = if (état.révocationEnCours) "Suppression…" else "Oublier le compte communautaire",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = RegistreTheme.colors.redPen,
                                 modifier = Modifier.weight(1f),
@@ -368,10 +377,12 @@ fun ParametresScreen(
             }
 
             Text(
-                text = "Le jeton du compte reste dans les préférences de l'app et ne sert " +
-                    "qu'à ce serveur ; aucune donnée personnelle n'y est envoyée " +
-                    "(seul un identifiant pseudonyme accompagne tes contenus). " +
-                    "La révocation supprime le compte côté serveur et tout local.",
+                text = "Le jeton du compte communautaire est conservé chiffré dans les " +
+                    "réglages de l'app et ne sert qu'à ce serveur ; aucune donnée " +
+                    "personnelle n'y est envoyée (seul un identifiant pseudonyme " +
+                    "accompagne tes contenus). Il n'est jamais supprimé par la " +
+                    "déconnexion de l'école — seule l'action « Oublier le compte " +
+                    "communautaire » ci-dessus le détruit, après confirmation.",
                 style = MaterialTheme.typography.bodySmall,
                 color = RegistreTheme.colors.chalk,
                 modifier = Modifier.padding(top = 10.dp, start = 4.dp, end = 4.dp),
@@ -567,12 +578,26 @@ fun ParametresScreen(
 
             Text(
                 text = "La déconnexion purge la session de l'école et les dernières données " +
-                    "affichées ; les réglages de l'app (actualisation, IA, canal bêta) et le " +
-                    "compte communautaire sont conservés.",
+                    "affichées ; les réglages de l'app (actualisation, IA, canal bêta) sont " +
+                    "conservés. Le compte communautaire est INDÉPENDANT du compte de " +
+                    "l'école : il reste sur cet appareil et n'est jamais présenté comme " +
+                    "appartenant au compte scolaire qui s'y connecte — pour le supprimer, " +
+                    "utilise « Oublier le compte communautaire » plus haut.",
                 style = MaterialTheme.typography.bodySmall,
                 color = RegistreTheme.colors.chalk,
                 modifier = Modifier.padding(top = 10.dp, start = 4.dp, end = 4.dp),
             )
+
+            if (oubliCompteDemandé) {
+                DialogueOublierCompte(
+                    enCours = état.révocationEnCours,
+                    onConfirmer = {
+                        oubliCompteDemandé = false
+                        vm.révoquerCompteCommunautaire()
+                    },
+                    onAnnuler = { oubliCompteDemandé = false },
+                )
+            }
 
             if (déconnexionDemandée) {
                 DialogueDéconnexion(

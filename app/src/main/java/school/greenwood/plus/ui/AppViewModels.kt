@@ -76,6 +76,15 @@ class ConnexionViewModel(private val container: AppContainer) : ViewModel() {
     private val _état = MutableStateFlow(ConnexionÉtat())
     val état: StateFlow<ConnexionÉtat> = _état.asStateFlow()
 
+    init {
+        // Le choix « Rester connecté » de la connexion précédente sert de
+        // défaut à la prochaine (issue #140) — il n'est pas un secret.
+        viewModelScope.launch {
+            val retenir = runCatching { container.session.retenir.first() }.getOrDefault(true)
+            _état.update { it.copy(retenir = retenir) }
+        }
+    }
+
     fun modifierTéléphone(valeur: String) = _état.update { it.copy(téléphone = valeur) }
     fun modifierMotDePasse(valeur: String) = _état.update { it.copy(motDePasse = valeur) }
     fun modifierRetenir(valeur: Boolean) = _état.update { it.copy(retenir = valeur) }

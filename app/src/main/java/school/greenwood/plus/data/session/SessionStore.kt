@@ -1,17 +1,25 @@
 package school.greenwood.plus.data.session
 
 import android.content.Context
+import androidx.datastore.preferences.core.MutablePreferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import school.greenwood.plus.data.ai.PresetsFournisseurs
@@ -51,79 +59,157 @@ private data class EleveStocke(
     val img: String? = null,
 )
 
+private object Clefs {
+    val keyToken = stringPreferencesKey("key_token")
+    val userId = stringPreferencesKey("user_id")
+    val parentId = stringPreferencesKey("parent_id")
+    val eleveId = stringPreferencesKey("eleve_id")
+    val role = stringPreferencesKey("role")
+    val parentNom = stringPreferencesKey("parent_nom")
+    val parentImage = stringPreferencesKey("parent_image")
+    val eleves = stringPreferencesKey("eleves_json")
+    val eleveIndex = intPreferencesKey("eleve_index")
+    val retenir = booleanPreferencesKey("retenir")
+    val onboardingVu = booleanPreferencesKey("onboarding_vu")
+
+    val ecritureNouveautes = booleanPreferencesKey("ecriture_nouveautes_activee")
+
+    /** Actualisation au retour : minutes d'absence à partir desquelles les
+     *  écrans se rafraîchissent au retour au premier plan ; 0 = « jamais ».
+     *  Survit à une purge de session (préférence d'app, comme le composeur). */
+    val actualisationRetour = intPreferencesKey("actualisation_retour_minutes")
+    val banniereRegistre = booleanPreferencesKey("banniere_registre_activee")
+    val banniereCours = booleanPreferencesKey("banniere_cours_activee")
+    val banniereDevoirs = booleanPreferencesKey("banniere_devoirs_activee")
+    val banniereDocuments = booleanPreferencesKey("banniere_documents_activee")
+    val banniereActualites = booleanPreferencesKey("banniere_actualites_activee")
+
+    /** Mises à jour (issue #46) : millisecondes du dernier contrôle GitHub,
+     *  canal choisi — stable par défaut, bêtas sur option — et dernière
+     *  publication vue (JSON) pour retrouver la carte après un redémarrage.
+     *  Préférences d'app : survivent à une purge de session. */
+    val majDernièreVérification = longPreferencesKey("maj_derniere_verification")
+    val majCanalBêta = booleanPreferencesKey("maj_canal_beta")
+    val majPublicationStockée = stringPreferencesKey("maj_publication_stockee")
+
+    /** Composeur IA (issue #56) : activation, fournisseur OpenAI-compatible
+     *  (preset ou URL libre), modèle, clé BYOK et ton par défaut. La clé ne
+     *  sort jamais de l'app et n'est jamais loguée (F3). Préférences d'app :
+     *  survivent à une purge de session. */
+    val iaActivé = booleanPreferencesKey("ia_active")
+    val iaBase = stringPreferencesKey("ia_base")
+    val iaModèle = stringPreferencesKey("ia_modele")
+    val iaClé = stringPreferencesKey("ia_cle")
+    val iaTon = stringPreferencesKey("ia_ton")
+
+    /** Marquage « fait pour moi » des devoirs (issue #82) : identifiants des
+     *  devoirs que l'utilisateur a marqués faits pour lui-même — jamais
+     *  envoyés à l'école (JSON, tableau d'ids). Préférence d'app : survit à
+     *  une purge de session, comme le composeur. */
+    val devoirsFaitLocal = stringPreferencesKey("devoirs_fait_local_json")
+
+    /** Serveur communautaire (issue #88) : jeton du compte local (la
+     *  clé vaut le compte — jamais envoyé ailleurs que vers ce serveur),
+     *  version de notice servie / acceptée, URL du serveur (réglable
+     *  dans les Paramètres, vide = non configuré) et votes locaux par
+     *  devoir (JSON, « id » → ±1) affichés en attendant le total serveur.
+     *  Préférences d'app : survivent à une purge de session. */
+    val commJeton = stringPreferencesKey("communautaire_jeton")
+    val commMentionsDemandée = stringPreferencesKey("communautaire_mentions_demandee")
+    val commMentionsAcceptée = stringPreferencesKey("communautaire_mentions_acceptee")
+    val commUrl = stringPreferencesKey("communautaire_url")
+    val commVotes = stringPreferencesKey("communautaire_votes_json")
+}
+
+/**
+ * Purge des champs de session école (issues #139/#140) : appelée à la
+ * déconnexion, à l'expiration de session, et avant une session « ne pas
+ * retenir ». Le jeton Boti, l'identité scolaire et l'index d'enfant partent ;
+ * les préférences d'app (bannières, IA, mises à jour, composeur…) et le
+ * compte communautaire indépendant ne sont JAMAIS touchés ici.
+ * Pur JVM (MutablePreferences) — testable sans Context.
+ */
+internal fun MutablePreferences.purgerSessionÉcole() {
+    listOf(
+        Clefs.keyToken,
+        Clefs.userId,
+        Clefs.parentId,
+        Clefs.eleveId,
+        Clefs.role,
+        Clefs.parentNom,
+        Clefs.parentImage,
+        Clefs.eleves,
+        Clefs.eleveIndex,
+    ).forEach { remove(it) }
+}
+
+/** Écriture persistante d'une session école (jeton déjà scellé). */
+internal fun MutablePreferences.écrireSessionÉcole(
+    keyTokenScellé: String,
+    userId: String,
+    parentId: String,
+    eleveId: String,
+    role: String?,
+    parentNom: String?,
+    parentImage: String?,
+    elevesJson: String,
+    retenir: Boolean,
+) {
+    this[Clefs.keyToken] = keyTokenScellé
+    this[Clefs.userId] = userId
+    this[Clefs.parentId] = parentId
+    this[Clefs.eleveId] = eleveId
+    this[Clefs.role] = role ?: ""
+    this[Clefs.parentNom] = parentNom ?: ""
+    this[Clefs.parentImage] = parentImage ?: ""
+    this[Clefs.eleves] = elevesJson
+    this[Clefs.eleveIndex] = 0
+    this[Clefs.retenir] = retenir
+}
+
 class SessionStore(private val context: Context) : CompteCommunautaire {
 
     private val json = Json { ignoreUnknownKeys = true }
+    private val secrets = SessionSecrets()
 
-    private object Clefs {
-        val keyToken = stringPreferencesKey("key_token")
-        val userId = stringPreferencesKey("user_id")
-        val parentId = stringPreferencesKey("parent_id")
-        val eleveId = stringPreferencesKey("eleve_id")
-        val role = stringPreferencesKey("role")
-        val parentNom = stringPreferencesKey("parent_nom")
-        val parentImage = stringPreferencesKey("parent_image")
-        val eleves = stringPreferencesKey("eleves_json")
-        val eleveIndex = intPreferencesKey("eleve_index")
-        val retenir = booleanPreferencesKey("retenir")
-        val onboardingVu = booleanPreferencesKey("onboarding_vu")
+    /**
+     * Session éphémérique (issue #140) : quand « Rester connecté » est
+     * décoché, le jeton ne quitte jamais la mémoire du processus — rien
+     * n'est écrit sur disque pour une reconnexion automatique, et un
+     * redémarrage de l'application impose une nouvelle connexion.
+     */
+    private val éphémère = MutableStateFlow<SessionState?>(null)
 
-        val ecritureNouveautes = booleanPreferencesKey("ecriture_nouveautes_activee")
-
-        /** Actualisation au retour : minutes d'absence à partir desquelles les
-         *  écrans se rafraîchissent au retour au premier plan ; 0 = « jamais ».
-         *  Survit à une purge de session (préférence d'app, comme le composeur). */
-        val actualisationRetour = intPreferencesKey("actualisation_retour_minutes")
-        val banniereRegistre = booleanPreferencesKey("banniere_registre_activee")
-        val banniereCours = booleanPreferencesKey("banniere_cours_activee")
-        val banniereDevoirs = booleanPreferencesKey("banniere_devoirs_activee")
-        val banniereDocuments = booleanPreferencesKey("banniere_documents_activee")
-        val banniereActualites = booleanPreferencesKey("banniere_actualites_activee")
-
-        /** Mises à jour (issue #46) : millisecondes du dernier contrôle GitHub,
-         *  canal choisi — stable par défaut, bêtas sur option — et dernière
-         *  publication vue (JSON) pour retrouver la carte après un redémarrage.
-         *  Préférences d'app : survivent à une purge de session. */
-        val majDernièreVérification = longPreferencesKey("maj_derniere_verification")
-        val majCanalBêta = booleanPreferencesKey("maj_canal_beta")
-        val majPublicationStockée = stringPreferencesKey("maj_publication_stockee")
-
-        /** Composeur IA (issue #56) : activation, fournisseur OpenAI-compatible
-         *  (preset ou URL libre), modèle, clé BYOK et ton par défaut. La clé ne
-         *  sort jamais de l'app et n'est jamais loguée (F3). Préférences d'app :
-         *  survivent à une purge de session. */
-        val iaActivé = booleanPreferencesKey("ia_active")
-        val iaBase = stringPreferencesKey("ia_base")
-        val iaModèle = stringPreferencesKey("ia_modele")
-        val iaClé = stringPreferencesKey("ia_cle")
-        val iaTon = stringPreferencesKey("ia_ton")
-
-        /** Marquage « fait pour moi » des devoirs (issue #82) : identifiants des
-         *  devoirs que l'utilisateur a marqués faits pour lui-même — jamais
-         *  envoyés à l'école (JSON, tableau d'ids). Préférence d'app : survit à
-         *  une purge de session, comme le composeur. */
-        val devoirsFaitLocal = stringPreferencesKey("devoirs_fait_local_json")
-
-        /** Serveur communautaire (issue #88) : jeton du compte local (la
-         *  clé vaut le compte — jamais envoyé ailleurs que vers ce serveur),
-         *  version de notice servie / acceptée, URL du serveur (réglable
-         *  dans les Paramètres, vide = non configuré) et votes locaux par
-         *  devoir (JSON, « id » → ±1) affichés en attendant le total serveur.
-         *  Préférences d'app : survivent à une purge de session. */
-        val commJeton = stringPreferencesKey("communautaire_jeton")
-        val commMentionsDemandée = stringPreferencesKey("communautaire_mentions_demandee")
-        val commMentionsAcceptée = stringPreferencesKey("communautaire_mentions_acceptee")
-        val commUrl = stringPreferencesKey("communautaire_url")
-        val commVotes = stringPreferencesKey("communautaire_votes_json")
+    init {
+        // Re-encrypt credentials saved by older releases without invalidating sessions.
+        CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
+            runCatching {
+                context.dataStore.edit { p ->
+                    listOf(Clefs.keyToken, Clefs.iaClé, Clefs.commJeton).forEach { key ->
+                        valeurÀMigrer(p[key]) { clair -> secrets.seal(clair) }?.let { scellé ->
+                            p[key] = scellé
+                        }
+                    }
+                }
+            }
+        }
     }
 
     val events = MutableSharedFlow<SessionEvent>(extraBufferCapacity = 4)
 
-    val state: Flow<SessionState?> = context.dataStore.data.map { p ->
-        val key = p[Clefs.keyToken] ?: ""
+    /** État de session : la session mémoire (« ne pas retenir ») prime sur
+     *  la persistée ; déchiffrement déporté sur IO (issue #140). */
+    val state: Flow<SessionState?> = combine(
+        context.dataStore.data.map { p -> sessionPersistante(p) },
+        éphémère,
+    ) { persistante, mémoire -> mémoire ?: persistante }
+        .flowOn(Dispatchers.IO)
+
+    private fun sessionPersistante(p: androidx.datastore.preferences.core.Preferences): SessionState? {
+        val key = secrets.open(p[Clefs.keyToken] ?: "")
         val user = p[Clefs.userId] ?: ""
-        if (key.isBlank() || user.isBlank()) return@map null
-        SessionState(
+        if (key.isBlank() || user.isBlank()) return null
+        return SessionState(
             keyToken = key,
             userId = user,
             parentId = p[Clefs.parentId] ?: "",
@@ -220,18 +306,18 @@ class SessionStore(private val context: Context) : CompteCommunautaire {
             actif = p[Clefs.iaActivé] ?: false,
             base = p[Clefs.iaBase] ?: PresetsFournisseurs.first().base,
             modèle = p[Clefs.iaModèle] ?: "",
-            clé = p[Clefs.iaClé] ?: "",
+            clé = secrets.open(p[Clefs.iaClé] ?: ""),
             ton = p[Clefs.iaTon]?.let { nom -> TonIA.entries.firstOrNull { it.name == nom } }
                 ?: TonIA.AMICAL,
         )
-    }
+    }.flowOn(Dispatchers.IO)
 
     suspend fun définirRéglagesIA(réglages: RéglagesIA) {
         context.dataStore.edit { p ->
             p[Clefs.iaActivé] = réglages.actif
             p[Clefs.iaBase] = réglages.base
             p[Clefs.iaModèle] = réglages.modèle
-            p[Clefs.iaClé] = réglages.clé
+            p[Clefs.iaClé] = secrets.seal(réglages.clé)
             p[Clefs.iaTon] = réglages.ton.name
         }
     }
@@ -271,7 +357,9 @@ class SessionStore(private val context: Context) : CompteCommunautaire {
 
     /** Présence d'un compte (jeton) — observée par les Paramètres. */
     val jetonCommunautaire: Flow<String?> =
-        context.dataStore.data.map { it[Clefs.commJeton]?.takeIf { jeton -> jeton.isNotBlank() } }
+        context.dataStore.data
+            .map { secrets.open(it[Clefs.commJeton] ?: "").takeIf { jeton -> jeton.isNotBlank() } }
+            .flowOn(Dispatchers.IO)
 
     /** Votes locaux ±1 par devoir (affichage immédiat — le total définitif
      *  revient du serveur, jamais incrémenté localement). */
@@ -296,12 +384,13 @@ class SessionStore(private val context: Context) : CompteCommunautaire {
 
     // — CompteCommunautaire (APP.md §2) ------------------------------------
 
-    override suspend fun jeton(): String? =
-        context.dataStore.data.first()[Clefs.commJeton]?.takeIf { it.isNotBlank() }
+    override suspend fun jeton(): String? = kotlinx.coroutines.withContext(Dispatchers.IO) {
+        secrets.open(context.dataStore.data.first()[Clefs.commJeton] ?: "").takeIf { it.isNotBlank() }
+    }
 
     override suspend fun enregistrerJeton(jeton: String, mentionsVersion: String?) {
         context.dataStore.edit { p ->
-            p[Clefs.commJeton] = jeton
+            p[Clefs.commJeton] = secrets.seal(jeton)
             p[Clefs.commMentionsDemandée] = mentionsVersion ?: ""
             p.remove(Clefs.commMentionsAcceptée)
             p.remove(Clefs.commVotes) // identité neuve : les anciens votes ne sont plus à nous
@@ -339,6 +428,14 @@ class SessionStore(private val context: Context) : CompteCommunautaire {
         }
     }
 
+    /**
+     * Enregistre la session (issues #138/#140). « Rester connecté » coché :
+     * jeton scellé sur disque, reconnexion automatique au prochain
+     * démarrage. Décoché : RIEN de la session n'est écrit sur disque — la
+     * session vit uniquement en mémoire du processus ; un redémarrage
+     * d'application (ou un changement d'utilisateur système) impose une
+     * nouvelle connexion.
+     */
     suspend fun enregistrer(
         keyToken: String,
         userId: String,
@@ -349,20 +446,43 @@ class SessionStore(private val context: Context) : CompteCommunautaire {
         eleves: List<Eleve>,
         retenir: Boolean,
     ) {
-        context.dataStore.edit { p ->
-            p[Clefs.keyToken] = keyToken
-            p[Clefs.userId] = userId
-            p[Clefs.parentId] = parentId
-            p[Clefs.eleveId] = eleveId
-            p[Clefs.role] = role ?: ""
-            p[Clefs.parentNom] = parent?.nomComplet ?: ""
-            p[Clefs.parentImage] = parent?.image ?: ""
-            p[Clefs.eleves] = json.encodeToString(
-                eleves.map {
-                    EleveStocke(it.id, it.nomComplet, it.prenom, it.nom, it.niveau, it.image)
-                },
+        val elevesJson = json.encodeToString(
+            eleves.map {
+                EleveStocke(it.id, it.nomComplet, it.prenom, it.nom, it.niveau, it.image)
+            },
+        )
+        if (retenir) {
+            // Une éventuelle session mémoire précédente meurt ici.
+            éphémère.value = null
+            context.dataStore.edit { p ->
+                p.écrireSessionÉcole(
+                    keyTokenScellé = secrets.seal(keyToken),
+                    userId = userId,
+                    parentId = parentId,
+                    eleveId = eleveId,
+                    role = role,
+                    parentNom = parent?.nomComplet,
+                    parentImage = parent?.image,
+                    elevesJson = elevesJson,
+                    retenir = true,
+                )
+            }
+        } else {
+            // Session éphémère : purge de toute trace persistée (y compris
+            // d'une session retenue antérieure), la session reste en mémoire.
+            context.dataStore.edit { p ->
+                p.purgerSessionÉcole()
+                p[Clefs.retenir] = false
+            }
+            éphémère.value = SessionState(
+                keyToken = keyToken,
+                userId = userId,
+                parentId = parentId,
+                eleveId = eleveId,
+                role = role,
+                parent = parent,
+                eleves = eleves,
             )
-            p[Clefs.retenir] = retenir
         }
     }
 
@@ -374,17 +494,15 @@ class SessionStore(private val context: Context) : CompteCommunautaire {
         context.dataStore.edit { it[Clefs.onboardingVu] = true }
     }
 
-    /** Purge complète — session tuée ou déconnexion. */
+    /**
+     * Purge complète — session tuée ou déconnexion (issues #139/#140) :
+     * la session mémoire meurt en même temps que la persistée ; le compte
+     * communautaire indépendant et les préférences d'app sont conservés.
+     */
     suspend fun effacer() {
+        éphémère.value = null
         context.dataStore.edit { p ->
-            p.remove(Clefs.keyToken)
-            p.remove(Clefs.userId)
-            p.remove(Clefs.parentId)
-            p.remove(Clefs.eleveId)
-            p.remove(Clefs.role)
-            p.remove(Clefs.parentNom)
-            p.remove(Clefs.parentImage)
-            p.remove(Clefs.eleves)
+            p.purgerSessionÉcole()
             p[Clefs.onboardingVu] = true
         }
     }

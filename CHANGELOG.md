@@ -4,6 +4,39 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [0.9.13-beta.2] — 2026-10-08
+
+### Préversion (bêta)
+
+### Sécurité
+
+- Les jetons de session Boti et communautaire ainsi que la clé du fournisseur
+  IA sont chiffrés avec Android Keystore (AES-GCM) ; les anciennes valeurs en
+  clair sont migrées automatiquement au démarrage (#138).
+- La session école, ses clés et les documents privés — ainsi que le registre
+  des téléchargements publics — sont exclus des sauvegardes et transferts
+  Android, sur Android 12+ comme sur les sauvegardes historiques (#137).
+- Les téléchargements de documents (100 Mo) et d'APK (250 Mo) sont bornés,
+  y compris lorsque le serveur ment ou omet la taille ; un fichier déjà en
+  cache survit à un remplacement raté (#141).
+
+### Ajouté
+
+- « Rester connecté » : décocher la case n'écrit plus rien de la session sur
+  disque — la session vit en mémoire et un redémarrage de l'application impose
+  une nouvelle connexion. La signification de la case est expliquée sur
+  l'écran de connexion (#140).
+- Paramètres → compte communautaire : « Oublier le compte communautaire »
+  supprime le jeton et l'historique local de votes après confirmation, avec
+  avertissement d'irréversibilité (#139). La déconnexion de l'école conserve
+  le compte communautaire, indépendant par conception.
+
+### Documentation
+
+- La politique de signature des APK est documentée (#136) : la release
+  conserve le certificat historique tant que le plan de migration n'existe
+  pas — le changer casserait les mises à jour sans désinstallation.
+
 ## [0.9.12] — 2026-10-06
 
 Version stable après la bêta 0.9.12-beta.2, acceptée par l'utilisateur

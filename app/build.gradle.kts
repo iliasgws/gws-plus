@@ -12,8 +12,9 @@ android {
         applicationId = "school.greenwood.plus"
         minSdk = 26
         targetSdk = 36
-        versionCode = 111
-        versionName = "0.9.12"
+        versionCode = 113
+        versionName = "0.9.13-beta.2"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     signingConfigs {
@@ -77,4 +78,10 @@ dependencies {
     implementation("io.coil-kt.coil3:coil-network-okhttp:3.6.3")
 
     testImplementation("junit:junit:4.13.2")
+    // Serveur HTTP local pour les tests de téléchargement (issues #141).
+    testImplementation("com.squareup.okhttp3:mockwebserver:5.5.0")
+    // Tests instrumentés : Keystore, DataStore de session (issues #138–#140).
+    androidTestImplementation("androidx.test.ext:junit:1.3.0")
+    androidTestImplementation("androidx.test:runner:1.7.0")
+    androidTestImplementation("androidx.test:core:1.7.0")
 }

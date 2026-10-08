@@ -8,6 +8,34 @@ raw probe responses stay out of the repository (personal data).
 
 `[x]` done · `[~]` in progress · `[ ]` todo · `(!)` needs a decision or a real-device check
 
+## Security hardening (issues #136–#141)
+
+- [x] Exclude session DataStore, private document files and the public-download
+      registry from Android cloud backup/device transfer, for both the API-31+
+      extraction rules and the legacy backup rules (#137, unit-tested).
+- [x] Encrypt persisted Boti, community, and AI secrets with Android Keystore
+      AES-GCM, migrating legacy plaintext on startup; key loss degrades to
+      re-login, never to a crash or a logged secret (#138).
+- [x] Bound private/public document downloads (100 MiB) and APK downloads
+      (250 MiB), rejecting oversized Content-Length early and enforcing the
+      byte ceiling during streaming when the header lies or is absent; cached
+      files survive a failed forced replacement (#141).
+- [x] Honor « Rester connecté » locally (#140): unchecked, nothing of the
+      session touches disk (in-memory session dies with the process); checked,
+      the token is sealed as before. The Boti `remembreMe` field is unchanged
+      and the UI now explains the meaning on the login screen.
+- [x] Community identity stays independent of the school session by design
+      (#88): school logout keeps it, and Paramètres offers an explicit
+      « Oublier le compte communautaire » with an irreversibility warning
+      (#139); instrumented tests cover A → logout → B on one device.
+- [x] Document the signing policy (#136): releases stay on the historical
+      debug certificate until a continuity/migration plan exists — a key
+      change would break in-place updates. No key change on this branch.
+- [x] assembleDebug and testDebugUnitTest pass (285 unit tests); instrumented
+      Keystore/SessionStore tests compile (`assembleDebugAndroidTest`). A beta
+      (`--prerelease`) from this branch is user-authorized; merge to main and
+      any stable still require explicit user confirmation.
+
 ## Shared Material 3 Expressive loading animation
 
 - [x] User approved stable promotion after 0.9.12-beta.2; merge feature PR #132

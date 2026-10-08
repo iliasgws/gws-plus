@@ -89,3 +89,32 @@ device's IP, like any HTTP client. APK downloads come from the release's
 direct `browser_download_url`. `REQUEST_INSTALL_PACKAGES` is declared for
 that single flow; `POST_NOTIFICATIONS` is runtime-requested from Paramètres
 only. Everything else in the permission list is still intentionally absent.
+
+## GWS+ note — release signing policy (issue #136, added 2026-10-08)
+
+Every APK ever distributed — every GitHub Release — is signed with the same
+debug-keystore certificate (SHA-256 starts `775498f7…`, recorded in
+`AGENTS.md`). `app/build.gradle.kts` deliberately points
+`release.signingConfig` at the debug signing config: Android only replaces
+an installed app when the new APK carries the same certificate, so swapping
+keys would force every existing user to uninstall first and lose local
+state. **No key change is made or planned until a continuity/migration
+plan exists** (issue #136); the "replace the debug key" recommendation is
+acknowledged and consciously deferred for this reason.
+
+Before any future migration, all of the following must be true:
+
+- The fingerprint of every shipped artifact is verified (`apksigner
+  verify --print-certs`) and continuity with the historical certificate is
+  recorded.
+- A migration release mechanism exists that does not rely on in-place
+  upgrade across certificates (Android cannot install a differently-signed
+  update over an existing app): e.g. a final legacy-signed version whose
+  updater side-loads the first new-certificate build with user consent.
+- The new private key lives in hardware-backed or offline storage; neither
+  the key nor its passwords are ever committed. Release signing stays a
+  dedicated identity, separate from debug builds, once migrated.
+
+The current debug key's exposure is not treated as an authorization
+boundary: updates are trusted via the GitHub Releases source, and the
+certificate only establishes install-chain continuity.
