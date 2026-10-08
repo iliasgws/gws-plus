@@ -7,6 +7,10 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -54,6 +58,7 @@ private data class EleveStocke(
 class SessionStore(private val context: Context) : CompteCommunautaire {
 
     private val json = Json { ignoreUnknownKeys = true }
+    private val secrets = SessionSecrets()
 
     private object Clefs {
         val keyToken = stringPreferencesKey("key_token")
@@ -117,10 +122,25 @@ class SessionStore(private val context: Context) : CompteCommunautaire {
         val commVotes = stringPreferencesKey("communautaire_votes_json")
     }
 
+    init {
+        // Re-encrypt credentials saved by older releases without invalidating sessions.
+        CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
+            runCatching {
+                context.dataStore.edit { p ->
+                    listOf(Clefs.keyToken, Clefs.iaClé, Clefs.commJeton).forEach { key ->
+                        p[key]?.takeIf { it.isNotEmpty() && !secrets.encrypted(it) }?.let {
+                            p[key] = secrets.seal(it)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     val events = MutableSharedFlow<SessionEvent>(extraBufferCapacity = 4)
 
     val state: Flow<SessionState?> = context.dataStore.data.map { p ->
-        val key = p[Clefs.keyToken] ?: ""
+        val key = secrets.open(p[Clefs.keyToken] ?: "")
         val user = p[Clefs.userId] ?: ""
         if (key.isBlank() || user.isBlank()) return@map null
         SessionState(
@@ -220,7 +240,7 @@ class SessionStore(private val context: Context) : CompteCommunautaire {
             actif = p[Clefs.iaActivé] ?: false,
             base = p[Clefs.iaBase] ?: PresetsFournisseurs.first().base,
             modèle = p[Clefs.iaModèle] ?: "",
-            clé = p[Clefs.iaClé] ?: "",
+            clé = secrets.open(p[Clefs.iaClé] ?: ""),
             ton = p[Clefs.iaTon]?.let { nom -> TonIA.entries.firstOrNull { it.name == nom } }
                 ?: TonIA.AMICAL,
         )
@@ -231,7 +251,7 @@ class SessionStore(private val context: Context) : CompteCommunautaire {
             p[Clefs.iaActivé] = réglages.actif
             p[Clefs.iaBase] = réglages.base
             p[Clefs.iaModèle] = réglages.modèle
-            p[Clefs.iaClé] = réglages.clé
+            p[Clefs.iaClé] = secrets.seal(réglages.clé)
             p[Clefs.iaTon] = réglages.ton.name
         }
     }
@@ -271,7 +291,7 @@ class SessionStore(private val context: Context) : CompteCommunautaire {
 
     /** Présence d'un compte (jeton) — observée par les Paramètres. */
     val jetonCommunautaire: Flow<String?> =
-        context.dataStore.data.map { it[Clefs.commJeton]?.takeIf { jeton -> jeton.isNotBlank() } }
+        context.dataStore.data.map { secrets.open(it[Clefs.commJeton] ?: "").takeIf { jeton -> jeton.isNotBlank() } }
 
     /** Votes locaux ±1 par devoir (affichage immédiat — le total définitif
      *  revient du serveur, jamais incrémenté localement). */
@@ -297,11 +317,11 @@ class SessionStore(private val context: Context) : CompteCommunautaire {
     // — CompteCommunautaire (APP.md §2) ------------------------------------
 
     override suspend fun jeton(): String? =
-        context.dataStore.data.first()[Clefs.commJeton]?.takeIf { it.isNotBlank() }
+        secrets.open(context.dataStore.data.first()[Clefs.commJeton] ?: "").takeIf { it.isNotBlank() }
 
     override suspend fun enregistrerJeton(jeton: String, mentionsVersion: String?) {
         context.dataStore.edit { p ->
-            p[Clefs.commJeton] = jeton
+            p[Clefs.commJeton] = secrets.seal(jeton)
             p[Clefs.commMentionsDemandée] = mentionsVersion ?: ""
             p.remove(Clefs.commMentionsAcceptée)
             p.remove(Clefs.commVotes) // identité neuve : les anciens votes ne sont plus à nous
@@ -350,7 +370,7 @@ class SessionStore(private val context: Context) : CompteCommunautaire {
         retenir: Boolean,
     ) {
         context.dataStore.edit { p ->
-            p[Clefs.keyToken] = keyToken
+            p[Clefs.keyToken] = secrets.seal(keyToken)
             p[Clefs.userId] = userId
             p[Clefs.parentId] = parentId
             p[Clefs.eleveId] = eleveId
