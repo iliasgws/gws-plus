@@ -106,8 +106,27 @@ object Fichiers {
         try {
             http.newCall(req).execute().use { resp ->
                 if (!resp.isSuccessful) error("Téléchargement impossible (${resp.code})")
+                // Les APK demandent un plafond plus large que les documents.
+                // La limite est vérifiée aussi pendant le flux (Content-Length peut manquer).
+                val limite = if (nomSouhaité.endsWith(".apk", ignoreCase = true)) {
+                    250L * 1024 * 1024
+                } else {
+                    100L * 1024 * 1024
+                }
+                val annoncée = resp.body.contentLength()
+                if (annoncée > limite) error("Fichier trop volumineux")
                 resp.body.byteStream().use { entrée ->
-                    entier.outputStream().use { sortie -> entrée.copyTo(sortie) }
+                    entier.outputStream().use { sortie ->
+                        val tampon = ByteArray(8192)
+                        var total = 0L
+                        while (true) {
+                            val lus = entrée.read(tampon)
+                            if (lus == -1) break
+                            total += lus
+                            if (total > limite) error("Fichier trop volumineux")
+                            sortie.write(tampon, 0, lus)
+                        }
+                    }
                 }
             }
             // rename(2) remplace la cible existante : ne jamais l'effacer
