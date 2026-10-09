@@ -1,5 +1,8 @@
 package school.greenwood.plus.data.repo
 
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import school.greenwood.plus.data.api.BotiClient
 import school.greenwood.plus.data.cache.CachesSession
 import school.greenwood.plus.data.session.SessionStore
@@ -15,7 +18,8 @@ import java.time.LocalDate
  * Le registre du jour (docs/product/DESIGN.md §2) : le flux chronologique de ce qui s'est
  * passé aujourd'hui, avec la carte « Ce soir » en tête. Une seule classe
  * agrège les quatre sources (nouveautes, devoirs, absences, messages) — l'UI
- * ne connaît que le registre.
+ * ne connaît que le registre. Les quatre requêtes partent en parallèle
+ * (issue #145) : aucune n'attend l'autre, chacune tolère son propre échec.
  */
 
 sealed interface EntreeRegistre {
@@ -60,36 +64,17 @@ class RegistreRepository(
     private val absences = AbsencesRepository(client)
     private val messagesRepo = MessagesRepository(client, session, caches)
 
-    suspend fun charger(aujourdhui: LocalDate = LocalDate.now()): RegistreDuJour {
-        val tousLesDevoirs = runCatching { devoirs.liste() }.getOrDefault(emptyList())
-        val ceSoir = CeSoir.devoirsDuSoir(tousLesDevoirs, aujourdhui)
-
-        val posts = runCatching { nouveautes.liste() }.getOrDefault(emptyList())
-        val bilans = runCatching { absences.liste() }.getOrDefault(BilanAbsences())
-        val messages = runCatching { messagesRepo.conversations().conversations }.getOrDefault(emptyList())
-
-        val entrees = buildList {
-            posts.filter { it.date?.toLocalDate() == aujourdhui }
-                .forEach { add(EntreeRegistre.Actualite(it)) }
-            tousLesDevoirs.filter { it.publication?.toLocalDate() == aujourdhui }
-                .forEach { add(EntreeRegistre.DevoirDonné(it)) }
-            (bilans.justifiees + bilans.nonJustifiees)
-                .filter { it.du == aujourdhui || it.au == aujourdhui }
-                .forEach { add(EntreeRegistre.AbsenceNotée(it)) }
-            messages.filter { m -> m.dernierDate?.toLocalDate()?.let { it == aujourdhui || it.isAfter(aujourdhui) } == true }
-                .forEach { conversation -> add(EntreeRegistre.MessageReçu(conversation)) }
-        }.sortedByDescending { it.horodatage ?: java.time.LocalDateTime.MAX }
-
-        return RegistreDuJour(
-            date = aujourdhui,
-            ceSoir = ceSoir,
-            horizonCeSoir = CeSoir.prochaineRentree(aujourdhui),
-            entrees = entrees,
+    suspend fun charger(aujourdhui: LocalDate = LocalDate.now()): RegistreDuJour =
+        chargerRegistre(
+            aujourdhui = aujourdhui,
+            devoirs = { devoirs.liste() },
+            posts = { nouveautes.liste() },
+            absences = { absences.liste() },
+            messages = { messagesRepo.conversations().conversations },
         ).also { jour ->
             // Dernier registre connu (issue #21), estampillé session.
             caches.clé()?.let { clé -> caches.registre.écrire(clé, jour) }
         }
-    }
 
     /** Dernier registre construit, estampillé session — null si rien en cache
      *  ou si la session a changé depuis l'écriture. */
@@ -97,6 +82,63 @@ class RegistreRepository(
         val clé = caches.clé() ?: return null
         return caches.registre.lire(clé)
     }
+}
+
+/*
+ * Les quatre sources du registre sont indépendantes : elles partent ensemble
+ * (issue #145) et chacune tolère son propre échec. Fonction pure — testable
+ * sans Android, sans réseau et sans session (`RegistreParallèleTest`).
+ */
+internal suspend fun chargerRegistre(
+    aujourdhui: LocalDate,
+    devoirs: suspend () -> List<Devoir>,
+    posts: suspend () -> List<Post>,
+    absences: suspend () -> BilanAbsences,
+    messages: suspend () -> List<Conversation>,
+): RegistreDuJour = coroutineScope {
+    val devoirsChargés = async { enTolérance({ devoirs() }, emptyList<Devoir>()) }
+    val postsChargés = async { enTolérance({ posts() }, emptyList<Post>()) }
+    val bilansChargés = async { enTolérance({ absences() }, BilanAbsences()) }
+    val messagesChargés = async { enTolérance({ messages() }, emptyList<Conversation>()) }
+
+    val tousLesDevoirs = devoirsChargés.await()
+    val listePosts = postsChargés.await()
+    val bilans = bilansChargés.await()
+    val listeMessages = messagesChargés.await()
+
+    val ceSoir = CeSoir.devoirsDuSoir(tousLesDevoirs, aujourdhui)
+    val entrees = buildList {
+        listePosts.filter { it.date?.toLocalDate() == aujourdhui }
+            .forEach { add(EntreeRegistre.Actualite(it)) }
+        tousLesDevoirs.filter { it.publication?.toLocalDate() == aujourdhui }
+            .forEach { add(EntreeRegistre.DevoirDonné(it)) }
+        (bilans.justifiees + bilans.nonJustifiees)
+            .filter { it.du == aujourdhui || it.au == aujourdhui }
+            .forEach { add(EntreeRegistre.AbsenceNotée(it)) }
+        listeMessages.filter { m -> m.dernierDate?.toLocalDate()?.let { it == aujourdhui || it.isAfter(aujourdhui) } == true }
+            .forEach { conversation -> add(EntreeRegistre.MessageReçu(conversation)) }
+    }.sortedByDescending { it.horodatage ?: java.time.LocalDateTime.MAX }
+
+    RegistreDuJour(
+        date = aujourdhui,
+        ceSoir = ceSoir,
+        horizonCeSoir = CeSoir.prochaineRentree(aujourdhui),
+        entrees = entrees,
+    )
+}
+
+/**
+ * Une panne serveur rend sa section vide sans masquer les autres — le
+ * comportement de `runCatching`… sauf qu'une annulation (changement de
+ * session, sortie d'écran) n'est pas une panne : elle reprend son chemin
+ * et arrête le chargement plutôt que d'afficher un registre à moitié vide.
+ */
+private suspend fun <T> enTolérance(bloc: suspend () -> T, défaut: T): T = try {
+    bloc()
+} catch (annulation: CancellationException) {
+    throw annulation
+} catch (_: Exception) {
+    défaut
 }
 
 class AbsencesRepository(private val client: BotiClient) {
