@@ -4,6 +4,21 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [0.9.14-beta.1] — 2026-10-09
+
+### Préversion (bêta)
+
+### Changé
+
+- Le Registre charge ses quatre sources (devoirs, actualités, absences,
+  messages) en parallèle au lieu de les appeler l'une après l'autre : le
+  contenu complet apparaît au rythme de la requête la plus lente, pas de la
+  somme des quatre (#145). Un endpoint en panne ne masque plus les autres
+  sections, et une annulation (changement de compte ou d'enfant) interrompt
+  le chargement au lieu d'afficher un registre à moitié vide.
+- La validation de session (`acces_check`) garde sa place en tête : les
+  requêtes de données attendent sa clé rafraîchie, sans course.
+
 ## [0.9.13] — 2026-10-08
 
 Version stable après la bêta 0.9.13-beta.2 (renforcement de sécurité,

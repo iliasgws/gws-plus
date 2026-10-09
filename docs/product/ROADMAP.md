@@ -8,6 +8,50 @@ raw probe responses stay out of the repository (personal data).
 
 `[x]` done · `[~]` in progress · `[ ]` todo · `(!)` needs a decision or a real-device check
 
+## Registre startup performance (issue #145)
+
+- [x] Parallel load: the four independent registre sources (devoirs, nouveautes,
+      absences, messages) start together in `RegistreRepository.charger()` via the
+      pure `chargerRegistre()` orchestrator (structured coroutines —
+      `coroutineScope` + `async`). Each source keeps its own failure tolerance:
+      a failing endpoint leaves its section empty and the others still render.
+      `CancellationException` is rethrown instead of being swallowed as a server
+      failure (`enTolérance`), so a session switch or screen exit cancels the
+      load instead of posting a half-empty registre.
+- [x] Session validation (`acces_check`) stays strictly before the data
+      requests: they carry the refreshed key and must not race it — no
+      change to `RegistreViewModel.charger()` ordering, login/logout/child
+      switching and silent refresh keep their current behaviour.
+- [x] Measured in a repeatable JVM benchmark (`RegistreParallèleTest`, 120 ms
+      simulated latency per source, same machine): sequential reference
+      481 ms vs parallel 121 ms — the saving is ≈ 3 × per-source latency.
+      Unauthenticated request samples to `boti.education` from the dev machine
+      were 68–162 ms each (TLS handshake included), so a cold start should
+      recover roughly 200–450 ms of network wait on top of the `acces_check`
+      round trip. The benchmark also pins the overlap (4 requests in flight,
+      never 1) and both isolation rules with tests.
+- [x] `NouveautesRepository.dernière()` already reuses the first-page posts
+      cache (`listeEnCache()` first, network only as fallback) — the registre's
+      « Dernière actualité » card normally costs no extra request. No change.
+- [x] Decision — no persistent dashboard snapshot (deliverable 3): writing
+      homework, messages and posts to disk would put school/family content
+      outside the session-sealed storage built in #137/#138 and add
+      purge-on-logout and cross-account isolation as new invariants to prove.
+      The session-stamped memory cache (#21) plus the now-parallel network
+      refresh gives most of the win at a fraction of the risk. Revisit only
+      with a measured cold-start need and an encrypted, purge-guaranteed design.
+- [x] Startup work reviewed, left alone on evidence: the app container builds
+      no I/O at construction, the registre banner is a local drawable, and the
+      GitHub Releases check (`vérifierAuBesoin`) runs in a `LaunchedEffect`
+      without blocking content on a different host than the API. Baseline /
+      Startup Profiles deferred until a device benchmark shows process start
+      dominating time-to-content.
+- [ ] On-device measurement still open: this environment has no logged-in test
+      device, so the 2.1 s figure in the issue remains a video estimate.
+      Cold/warm/hot starts and time-to-full-content (`am start -W`, screen
+      recording) must be captured on the test device before the stable
+      promotion, and the numbers above re-measured there.
+
 ## Security hardening (issues #136–#141)
 
 - [x] Exclude session DataStore, private document files and the public-download
