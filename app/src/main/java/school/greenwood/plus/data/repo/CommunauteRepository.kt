@@ -7,6 +7,8 @@ import school.greenwood.plus.data.api.CommunApi
 import school.greenwood.plus.data.api.CommunErreur
 import school.greenwood.plus.data.api.CommunParams
 import school.greenwood.plus.data.api.JetonRévoqué
+import school.greenwood.plus.data.api.Lecture
+import school.greenwood.plus.data.cache.CachesSession
 import school.greenwood.plus.data.session.CompteCommunautaire
 import school.greenwood.plus.model.CibleSignalement
 import school.greenwood.plus.model.CorrectionHoraire
@@ -44,6 +46,8 @@ private const val LIMITE_MATIÈRE = 60
 class CommunauteRepository(
     private val api: CommunApi,
     private val compte: CompteCommunautaire,
+    /** Hors-ligne (optionnel) : les listes publiques déjà vues. */
+    private val caches: CachesSession? = null,
 ) {
 
     // — Notices légales ----------------------------------------------------
@@ -129,12 +133,22 @@ class CommunauteRepository(
             "devoirs",
             CommunParams.listes(tri = tri.param, matière = matière, offset = offset, limite = limite),
         )
-        return PageCommunautaire(
-            éléments = CommunNormalizers.liste(réponse.corps, CommunNormalizers::devoirSuggéré)
-                .map { devoir -> devoir.copy(piècesJointes = urlsComplètes(devoir.piècesJointes)) },
-            total = réponse.total,
-        )
+        if (offset == 0 && matière == null) {
+            caches?.écrireDisque("commu-devoirs-$tri", enveloppe(réponse))
+        }
+        return pageDevoirs(réponse.corps, réponse.total)
     }
+
+    private suspend fun pageDevoirs(corps: kotlinx.serialization.json.JsonElement, total: Int?) =
+        PageCommunautaire(
+            éléments = CommunNormalizers.liste(corps, CommunNormalizers::devoirSuggéré)
+                .map { devoir -> devoir.copy(piècesJointes = urlsComplètes(devoir.piècesJointes)) },
+            total = total,
+        )
+
+    /** Première page déjà vue, relu hors connexion. */
+    suspend fun devoirsEnCache(tri: TriDevoirs = TriDevoirs.Votes): PageCommunautaire<DevoirSuggéré>? =
+        deEnvelope("commu-devoirs-$tri")?.let { (corps, total) -> pageDevoirs(corps, total) }
 
     suspend fun problèmes(
         filtre: FiltreHoraire = FiltreHoraire.Tous,
@@ -145,11 +159,21 @@ class CommunauteRepository(
             "edt/problemes",
             CommunParams.listes(état = filtre.param, offset = offset, limite = limite),
         )
+        if (offset == 0) caches?.écrireDisque("commu-problemes-$filtre", enveloppe(réponse))
         return PageCommunautaire(
             éléments = CommunNormalizers.liste(réponse.corps, CommunNormalizers::problèmeHoraire),
             total = réponse.total,
         )
     }
+
+    /** Première page déjà vue, relu hors connexion. */
+    suspend fun problèmesEnCache(filtre: FiltreHoraire = FiltreHoraire.Tous): PageCommunautaire<ProblèmeHoraire>? =
+        deEnvelope("commu-problemes-$filtre")?.let { (corps, total) ->
+            PageCommunautaire(
+                éléments = CommunNormalizers.liste(corps, CommunNormalizers::problèmeHoraire),
+                total = total,
+            )
+        }
 
     suspend fun corrections(
         problèmeId: Long? = null,
@@ -160,16 +184,49 @@ class CommunauteRepository(
             "edt/corrections",
             CommunParams.listes(problèmeId = problèmeId, offset = offset, limite = limite),
         )
+        if (offset == 0 && problèmeId == null) caches?.écrireDisque("commu-corrections", enveloppe(réponse))
         return PageCommunautaire(
             éléments = CommunNormalizers.liste(réponse.corps, CommunNormalizers::correctionHoraire),
             total = réponse.total,
         )
     }
 
+    /** Première page déjà vue, relu hors connexion. */
+    suspend fun correctionsEnCache(): PageCommunautaire<CorrectionHoraire>? =
+        deEnvelope("commu-corrections")?.let { (corps, total) ->
+            PageCommunautaire(
+                éléments = CommunNormalizers.liste(corps, CommunNormalizers::correctionHoraire),
+                total = total,
+            )
+        }
+
     /** Signalements d'abus — liste publique SANS pagination (APP.md §3). */
     suspend fun signalements(): List<SignalementAbus> {
         val réponse = api.lecture("signalements")
+        caches?.écrireDisque("commu-abus", enveloppe(réponse))
         return CommunNormalizers.liste(réponse.corps, CommunNormalizers::signalementAbus)
+    }
+
+    /** Liste déjà vue, relu hors connexion. */
+    suspend fun signalementsEnCache(): List<SignalementAbus>? =
+        deEnvelope("commu-abus")?.let { (corps, _) ->
+            CommunNormalizers.liste(corps, CommunNormalizers::signalementAbus)
+        }
+
+    // — Hors-ligne ---------------------------------------------------------
+
+    /** Enveloppe disque : corps brut + total serveur. */
+    private fun enveloppe(réponse: Lecture): kotlinx.serialization.json.JsonElement =
+        kotlinx.serialization.json.buildJsonObject {
+            put("corps", réponse.corps)
+            réponse.total?.let { put("total", kotlinx.serialization.json.JsonPrimitive(it)) }
+        }
+
+    private suspend fun deEnvelope(nom: String): Pair<kotlinx.serialization.json.JsonElement, Int?>? {
+        val brut = runCatching { caches?.lireDisque(nom) }.getOrNull() as? JsonObject ?: return null
+        val corps = brut["corps"] ?: return null
+        val total = (brut["total"] as? JsonPrimitive)?.content?.toIntOrNull()
+        return corps to total
     }
 
     // — Écritures de contenu -----------------------------------------------

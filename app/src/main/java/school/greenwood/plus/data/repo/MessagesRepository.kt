@@ -57,24 +57,33 @@ class MessagesRepository(
         val maintenant = System.currentTimeMillis()
         if (!fraîche && cache != null && maintenant - cacheÉpoque < TtlCacheMs) return cache
         val rep = client.get("messages", mapOf("page" to "1"))
-        return MessagesPage(
-            conversations = Normalizers.arr(rep, "data")
-                .mapNotNull { (it as? JsonObject)?.let(Normalizers::conversation) }
-                .filter { it.messages.isNotEmpty() }
-                .sortedByDescending { it.dernierDate ?: LocalDateTime.MIN },
-            themes = Normalizers.themes(rep),
-        ).also { page ->
+        return parserPage(rep).also { page ->
             clé?.let { caches.messages.écrire(it, page) }
+            caches.écrireDisque("messages", rep)
             cacheÉpoque = maintenant
         }
     }
+
+    /** Réponse brute `GET messages` → page normalisée (fils + thèmes). */
+    private fun parserPage(rep: JsonObject) = MessagesPage(
+        conversations = Normalizers.arr(rep, "data")
+            .mapNotNull { (it as? JsonObject)?.let(Normalizers::conversation) }
+            .filter { it.messages.isNotEmpty() }
+            .sortedByDescending { it.dernierDate ?: LocalDateTime.MIN },
+        themes = Normalizers.themes(rep),
+    )
 
     /** Dernière page connue, estampillée session, SANS condition de TTL —
      *  pour servir du contenu malgré un échec serveur au lieu d'un mur
      *  d'erreur (lecture « stale-while-revalidate »). */
     suspend fun conversationsEnCache(): MessagesPage? {
         val clé = caches.clé() ?: return null
-        return caches.messages.lire(clé)
+        caches.messages.lire(clé)?.let { return it }
+        // Redémarrage hors connexion : la page scellée repeuple la mémoire.
+        val brut = caches.lireDisque("messages") as? JsonObject ?: return null
+        val page = parserPage(brut)
+        caches.messages.écrire(clé, page)
+        return page
     }
 
     /** Un fil de la dernière page connue (sans refetch) — null sinon. */
@@ -198,6 +207,7 @@ class MessagesRepository(
 
     suspend fun contact(): ContactEcole {
         val rep = client.get("contact")
+        caches.écrireDisque("contact", rep)
         return ContactEcole(
             titre = Normalizers.str(rep, "title"),
             texte = Normalizers.str(rep, "text"),
@@ -207,6 +217,28 @@ class MessagesRepository(
             logo = Normalizers.str(rep, "logo"),
             socials = Normalizers.arr(rep, "socials").mapNotNull { s ->
                 (s as? JsonObject)?.let {
+                    val url = Normalizers.str(it, "link") ?: return@mapNotNull null
+                    SocialLink(
+                        label = Normalizers.str(it, "icone")?.removePrefix("logo-") ?: url,
+                        url = url,
+                    )
+                }
+            },
+        )
+    }
+
+    /** Contact de l'école déjà vu, relu hors connexion. */
+    suspend fun contactEnCache(): ContactEcole? {
+        val brut = caches.lireDisque("contact") as? JsonObject ?: return null
+        return ContactEcole(
+            titre = Normalizers.str(brut, "title"),
+            texte = Normalizers.str(brut, "text"),
+            tel = Normalizers.str(brut, "tel"),
+            siteWeb = Normalizers.str(brut, "website"),
+            facebook = Normalizers.str(brut, "facebook"),
+            logo = Normalizers.str(brut, "logo"),
+            socials = Normalizers.arr(brut, "socials").mapNotNull { e ->
+                (e as? JsonObject)?.let {
                     val url = Normalizers.str(it, "link") ?: return@mapNotNull null
                     SocialLink(
                         label = Normalizers.str(it, "icone")?.removePrefix("logo-") ?: url,
@@ -241,19 +273,28 @@ class DemandesRepository(
 
     suspend fun liste(): List<Demande> {
         val rep = client.get("demandes", mapOf("page" to "1"))
-        val résultat = Normalizers.arr(rep, "data")
-            .mapNotNull { (it as? JsonObject)?.let(Normalizers::demande) }
-            .sortedByDescending { it.dateCreation ?: LocalDateTime.MIN }
+        val résultat = parserListe(rep)
         // Dernière liste connue (issue #21) — une liste vide est un état valide.
         caches.clé()?.let { clé -> caches.demandes.écrire(clé, résultat) }
+        caches.écrireDisque("demandes", rep)
         return résultat
     }
+
+    private fun parserListe(rep: JsonObject): List<Demande> =
+        Normalizers.arr(rep, "data")
+            .mapNotNull { (it as? JsonObject)?.let(Normalizers::demande) }
+            .sortedByDescending { it.dateCreation ?: LocalDateTime.MIN }
 
     /** Dernière liste connue, estampillée session — null si rien en cache ou
      *  si la session a changé depuis l'écriture. */
     suspend fun listeEnCache(): List<Demande>? {
         val clé = caches.clé() ?: return null
-        return caches.demandes.lire(clé)
+        caches.demandes.lire(clé)?.let { return it }
+        // Redémarrage hors connexion : la réponse scellée repeuple la mémoire.
+        val brut = caches.lireDisque("demandes") as? JsonObject ?: return null
+        val liste = parserListe(brut)
+        caches.demandes.écrire(clé, liste)
+        return liste
     }
 }
 
@@ -277,6 +318,7 @@ class DocumentsRepository(
             .mapNotNull { (it as? JsonObject)?.let(Normalizers::ressource) }
         if (recherche == null) {
             caches.clé()?.let { clé -> caches.documents.écrire(clé, résultat) }
+            caches.écrireDisque("documents", rep)
         }
         return résultat
     }
@@ -285,7 +327,13 @@ class DocumentsRepository(
      *  cache ou si la session a changé depuis l'écriture. */
     suspend fun ressourcesEnCache(): List<school.greenwood.plus.model.Ressource>? {
         val clé = caches.clé() ?: return null
-        return caches.documents.lire(clé)
+        caches.documents.lire(clé)?.let { return it }
+        // Redémarrage hors connexion : la réponse scellée repeuple la mémoire.
+        val brut = caches.lireDisque("documents") as? JsonObject ?: return null
+        val liste = Normalizers.arr(brut, "data")
+            .mapNotNull { (it as? JsonObject)?.let(Normalizers::ressource) }
+        caches.documents.écrire(clé, liste)
+        return liste
     }
 
     /** Bibliothèque — documents mis en ligne par les enseignants, rangés en
@@ -300,12 +348,40 @@ class DocumentsRepository(
     suspend fun bibliotheque(): List<school.greenwood.plus.model.FicheBibliotheque> {
         val unites = unitesBibliotheque()
         if (unites.isEmpty()) return emptyList()
-        val fiches = unites.map { unite ->
-            runCatching { fichesDeUnite(unite.id, unite.label) }.getOrElse { emptyList() }
+        val brutes: List<BruteBibliotheque> = unites.map { unite ->
+            runCatching { fichesBrutes(unite) }.getOrElse { emptyList() }
         }.flatten()
+        val fiches = brutes.mapNotNull { b ->
+            Normalizers.ficheBibliotheque(b.objet, b.uniteId, b.matiere)
+        }
         caches.clé()?.let { clé -> caches.bibliotheque.écrire(clé, fiches) }
+        caches.écrireDisque("bibliotheque", enveloppeBibliotheque(brutes))
         return fiches
     }
+
+    /** Une fiche brute, avec l'unité qui la porte — ce qu'il faut pour
+     *  reconstruire la liste depuis le disque sans re-appeler le serveur. */
+    private data class BruteBibliotheque(val uniteId: String, val matiere: String, val objet: JsonObject)
+
+    private suspend fun fichesBrutes(unite: school.greenwood.plus.model.UniteBibliotheque): List<BruteBibliotheque> {
+        val rep = client.get("bibliotheque", mapOf("unite" to unite.id))
+        return Normalizers.arr(rep, "data")
+            .filterIsInstance<JsonObject>()
+            .map { BruteBibliotheque(unite.id, unite.label, it) }
+    }
+
+    private fun enveloppeBibliotheque(brutes: List<BruteBibliotheque>): kotlinx.serialization.json.JsonElement =
+        kotlinx.serialization.json.buildJsonObject {
+            put("fiches", kotlinx.serialization.json.buildJsonArray {
+                brutes.forEach { b ->
+                    add(kotlinx.serialization.json.buildJsonObject {
+                        put("u", kotlinx.serialization.json.JsonPrimitive(b.uniteId))
+                        put("m", kotlinx.serialization.json.JsonPrimitive(b.matiere))
+                        put("f", b.objet)
+                    })
+                }
+            })
+        }
 
     /** Les matières de la Bibliothèque — sert aussi à l'UI pour compter les
      *  unités vides. */
@@ -319,7 +395,19 @@ class DocumentsRepository(
      *  cache ou si la session a changé depuis l'écriture (issue #21). */
     suspend fun bibliothequeEnCache(): List<school.greenwood.plus.model.FicheBibliotheque>? {
         val clé = caches.clé() ?: return null
-        return caches.bibliotheque.lire(clé)
+        caches.bibliotheque.lire(clé)?.let { return it }
+        // Redémarrage hors connexion : les fiches scellées repeuplent la mémoire.
+        val brut = caches.lireDisque("bibliotheque") as? JsonObject ?: return null
+        val liste = (brut["fiches"] as? kotlinx.serialization.json.JsonArray)
+            ?.filterIsInstance<JsonObject>()
+            ?.mapNotNull { e ->
+                val uniteId = (e["u"] as? kotlinx.serialization.json.JsonPrimitive)?.content ?: return@mapNotNull null
+                val matiere = (e["m"] as? kotlinx.serialization.json.JsonPrimitive)?.content ?: return@mapNotNull null
+                (e["f"] as? JsonObject)?.let { Normalizers.ficheBibliotheque(it, uniteId, matiere) }
+            }
+            ?: return null
+        caches.bibliotheque.écrire(clé, liste)
+        return liste
     }
 
     suspend fun fichesDeUnite(uniteId: String, matiere: String): List<school.greenwood.plus.model.FicheBibliotheque> {
@@ -332,7 +420,14 @@ class DocumentsRepository(
      *  signée (le `file.link` de la liste n'est qu'un nom de fichier). */
     suspend fun détailFiche(ressourceId: String): school.greenwood.plus.model.FicheBibliothequeDetail? {
         val rep = client.get("ressource_details", mapOf("ressource" to ressourceId))
+        caches.écrireDisque("fiche-$ressourceId", rep)
         return Normalizers.détailBibliotheque(rep)
+    }
+
+    /** Détail déjà vu, relu hors connexion (URLs signées comprises). */
+    suspend fun détailFicheEnCache(ressourceId: String): school.greenwood.plus.model.FicheBibliothequeDetail? {
+        val brut = caches.lireDisque("fiche-$ressourceId") as? JsonObject ?: return null
+        return Normalizers.détailBibliotheque(brut)
     }
 
     /**

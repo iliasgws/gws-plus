@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.first
 import school.greenwood.plus.data.api.BotiClient
 import school.greenwood.plus.data.api.BotiHttp
 import school.greenwood.plus.data.api.CommunApi
+import school.greenwood.plus.data.cache.CacheDisque
 import school.greenwood.plus.data.cache.CachesSession
 import school.greenwood.plus.data.cache.PurgeMedias
 import school.greenwood.plus.data.cache.SnapshotsRegistre
@@ -36,8 +37,9 @@ class AppContainer(context: Context) {
     private val api = BotiHttp.api()
     private val client = BotiClient(api, session)
 
-    // Caches de dernière donnée connue, isolés par session (issue #21).
-    val caches = CachesSession(session)
+    // Caches de dernière donnée connue, isolés par session (issue #21) :
+    // mémoire + dernière réponse JSON scellée sur disque (hors-ligne).
+    val caches = CachesSession(session, CacheDisque(context))
 
     // Signal « un quiz est en cours de jeu » (issue #17) : piloté par le
     // QuizViewModel, observé par la coquille — sortie d'un quiz en jeu
@@ -71,22 +73,26 @@ class AppContainer(context: Context) {
     val messages = MessagesRepository(client, session, caches)
     val demandes = DemandesRepository(client, caches)
     val documents = DocumentsRepository(client, session, caches)
-    val boutique = BoutiqueRepository(client, session)
+    val boutique = BoutiqueRepository(client, session, caches)
 
     // Chauffage des caches (prefetch) : à l'ouverture et à chaque
     // actualisation, toutes les sections se rafraîchissent en arrière-plan
     // — réglage des Paramètres, activé par défaut.
-    val chauffage = ChauffageTout(context, session, cours, devoirs, documents, demandes, messages, nouveautes)
-
-    // Mises à jour de l'app — GitHub Releases, sans serveur (issue #46).
-    val misesÀJour = UpdatesRepository(context, session)
-
     // Serveur communautaire (issue #88) — URL réglée dans les Paramètres,
     // relue à chaque appel ; le jeton du compte vit dans la session.
     val communaute = CommunauteRepository(
         CommunApi(base = { session.urlCommunautaire.first() }),
         session,
+        caches,
     )
+
+    val chauffage = ChauffageTout(
+        context, session, cours, devoirs, documents, demandes, messages, nouveautes,
+        boutique = boutique, communaute = communaute,
+    )
+
+    // Mises à jour de l'app — GitHub Releases, sans serveur (issue #46).
+    val misesÀJour = UpdatesRepository(context, session)
 }
 
 class GwsApplication : Application() {

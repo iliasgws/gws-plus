@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.serialization.json.JsonObject
 import school.greenwood.plus.data.api.BotiClient
+import school.greenwood.plus.data.cache.CachesSession
 import school.greenwood.plus.data.session.SessionStore
 import school.greenwood.plus.model.CantineJour
 import school.greenwood.plus.model.CommandeBoutique
@@ -45,6 +46,7 @@ data class CatalogueBoutique(
 class BoutiqueRepository(
     private val client: BotiClient,
     private val session: SessionStore,
+    private val caches: CachesSession,
 ) {
 
     /**
@@ -67,16 +69,25 @@ class BoutiqueRepository(
                 "search" to recherche,
             ),
         )
-        return CatalogueBoutique(
-            produits = Normalizers.arr(rep, "products")
-                .mapNotNull { (it as? JsonObject)?.let(Normalizers::produitCatalogue) },
-            rubriques = Normalizers.arr(rep, "rubriques")
-                .mapNotNull { (it as? JsonObject)?.let(Normalizers::rubrique) },
-            compteurPanier = Normalizers.int(rep, "cart_count") ?: 0,
-            cantines = Normalizers.arr(rep, "cantines")
-                .mapNotNull { (it as? JsonObject)?.let(Normalizers::cantine) },
-        )
+        // Une recherche saisie n'est pas un état durable : seul le catalogue
+        // d'une rubrique est mis en cache (« Repas invité » = rubrique « 2 »).
+        if (recherche.isEmpty()) caches.écrireDisque("shop-$rubrique", rep)
+        return parserCatalogue(rep)
     }
+
+    private fun parserCatalogue(rep: JsonObject) = CatalogueBoutique(
+        produits = Normalizers.arr(rep, "products")
+            .mapNotNull { (it as? JsonObject)?.let(Normalizers::produitCatalogue) },
+        rubriques = Normalizers.arr(rep, "rubriques")
+            .mapNotNull { (it as? JsonObject)?.let(Normalizers::rubrique) },
+        compteurPanier = Normalizers.int(rep, "cart_count") ?: 0,
+        cantines = Normalizers.arr(rep, "cantines")
+            .mapNotNull { (it as? JsonObject)?.let(Normalizers::cantine) },
+    )
+
+    /** Catalogue déjà vu, relu hors connexion. */
+    suspend fun catalogueEnCache(rubrique: String = "-1"): CatalogueBoutique? =
+        (caches.lireDisque("shop-$rubrique") as? JsonObject)?.let(::parserCatalogue)
 
     /** Détail d'un produit ; [commandeId] le passe en mode modification d'une
      *  commande existante (le serveur renvoie alors `commande{size,qte,comment}`). */
@@ -88,8 +99,13 @@ class BoutiqueRepository(
                 commandeId?.let { put("commande", it) }
             },
         )
+        caches.écrireDisque("produit-$produitId", rep)
         return Normalizers.produitDétail(rep) ?: error("Produit illisible")
     }
+
+    /** Détail produit déjà vu, relu hors connexion. */
+    suspend fun détailEnCache(produitId: String): ProduitDétail? =
+        (caches.lireDisque("produit-$produitId") as? JsonObject)?.let(Normalizers::produitDétail)
 
     /**
      * Passer commande — le POST crée la commande immédiatement (sonde du
@@ -157,9 +173,17 @@ class BoutiqueRepository(
     /** Historique des commandes, la plus récente d'abord (GET `new_history`). */
     suspend fun historique(): List<CommandeBoutique> {
         val rep = client.get("shop", mapOf("new_history" to "true"))
-        return Normalizers.arr(rep, "products")
-            .mapNotNull { (it as? JsonObject)?.let(Normalizers::commande) }
+        caches.écrireDisque("shop-historique", rep)
+        return parserHistorique(rep)
     }
+
+    private fun parserHistorique(rep: JsonObject): List<CommandeBoutique> =
+        Normalizers.arr(rep, "products")
+            .mapNotNull { (it as? JsonObject)?.let(Normalizers::commande) }
+
+    /** Historique déjà vu, relu hors connexion. */
+    suspend fun historiqueEnCache(): List<CommandeBoutique>? =
+        (caches.lireDisque("shop-historique") as? JsonObject)?.let(::parserHistorique)
 
     /**
      * Suppression d'une commande — entière, ou d'un seul article avec

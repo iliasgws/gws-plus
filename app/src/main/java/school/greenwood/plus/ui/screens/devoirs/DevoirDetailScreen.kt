@@ -678,6 +678,10 @@ class DevoirDetailViewModel(
                 val tous = runCatching { container.devoirs.liste() }.getOrDefault(emptyList())
                 _devoir.value = tous.firstOrNull { it.id == devoirId }
             }
+            // Détail déjà vu : il réapparaît tout de suite, même hors connexion.
+            runCatching { container.devoirs.détailEnCache(devoirId) }.getOrNull()?.let { infos ->
+                _détail.value = infos
+            }
             // Payload détail (issue #68) : pièces jointes réelles + droits +
             // état de soumission — la liste seule ne porte rien de tout cela.
             runCatching { container.devoirs.détail(devoirId) }.onSuccess { infos ->

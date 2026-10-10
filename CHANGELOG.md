@@ -6,6 +6,30 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
 
 ## [Non publié]
 
+## [0.10.0-beta.2] — 2026-10-10
+
+### Préversion (bêta)
+
+### Ajouté
+
+- L'application s'ouvre hors connexion (#145) : chaque section conserve sur
+  disque sa dernière réponse utile — Cours, Devoirs, Documents,
+  Bibliothèque, Demandes, Messages, Actualités, Boutique, Repas invité,
+  Historique des commandes, contact de l'école et listes communautaires —
+  ainsi que les écrans déjà ouverts (fil de discussion, actualité, devoir,
+  fiche de bibliothèque, produit). Après un redémarrage sans réseau, tous
+  les onglets s'ouvrent remplis avec le contenu déjà vu, et le contenu neuf
+  reste — comme toujours — soumis au réseau avec son « Réessayer ». Les
+  fichiers sont chiffrés au Keystore, hors des sauvegardes Android, limités
+  au compte et à l'enfant actuels, purgés à la connexion comme à la
+  déconnexion ; rien n'est écrit quand « Rester connecté » est décoché.
+  Le chauffage global couvre aussi la Boutique, le Repas invité,
+  l'historique, le contact et les listes communautaires.
+
+## [0.10.0-beta.1] — 2026-10-10
+
+### Préversion (bêta)
+
 ### Ajouté
 
 - Le chauffage global des caches : dès l'ouverture de l'application (et à

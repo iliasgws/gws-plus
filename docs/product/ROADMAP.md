@@ -101,6 +101,42 @@ raw probe responses stay out of the repository (personal data).
       an app preference (survives logout), effective immediately (turning it
       off cancels the running warm-up).
 
+## Offline persistence (whole-app disk cache)
+
+- [x] Every section keeps its last useful response on disk so the app opens
+      fully usable offline after a reconnect-then-lose-network cycle
+      (issue #145): Cours, Devoirs, Documents, Bibliothèque (including its
+      per-unit fiches, rebuilt from a stored raw envelope), Demandes,
+      Messages page 1, Actualités page 1, Boutique catalogue per rubrique,
+      Repas invité (rubrique « 2 »), order history, the contact card, and
+      the community first pages (devoirs/problems/corrections/abuse).
+      Each repo writes the raw server JSON (models are not `@Serializable`)
+      through `CachesSession.écrireDisque`, and its `…EnCache()` reads it
+      back through the same normalizers, repopulating the session-stamped
+      memory cache on the way.
+- [x] Already-opened details reopen offline too: conversation (via the page
+      cache), actuality (`post-<id>`), homework (`devoir-<id>`), library
+      sheet (`fiche-<id>` — its signed media URL still resolves from the
+      binary cache of issue #108), product (`produit-<id>`). ViewModels
+      prefill silently before their network call and keep the usual
+      non-blocking « Réessayer » banner on failure.
+- [x] `data/cache/CacheDisque.kt` carries the same guarantees as the
+      registre snapshot: `noBackupFilesDir`, `SessionSecrets` sealing,
+      session key embedded in the envelope (cross-account reads are null),
+      a nominal+session check on read, atomic writes, corrupt/failed reads
+      degrade to null, purged at login and logout via `CachesSession.vider()`,
+      and **never written when « Rester connecté » is off** (issue #140).
+      Guarded by `CacheDisqueTest` (11 tests: round-trip, missing name,
+      cross-session, restart via a second instance, corrupt file, purge,
+      no plaintext on disk, unsafe characters, filename collision, config
+      guard on `noBackupFilesDir`).
+- [x] Warm-up also refreshes boutique, repas, history, contact and the
+      community first pages (12 sources total) so those tabs are warm at
+      first open, not only after a visit.
+- Honest limits (unchanged): sending, quiz play, account operations and any
+  content newer than the last visit still need the network — failures stay
+  announced, never faked.
+
 ## Security hardening (issues #136–#141)
 
 - [x] Exclude session DataStore, private document files and the public-download

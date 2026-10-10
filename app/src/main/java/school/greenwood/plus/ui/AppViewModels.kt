@@ -603,7 +603,9 @@ class DocumentsViewModel(private val container: AppContainer) : ViewModel() {
         viewModelScope.launch {
             _état.update { it.copy(téléchargementsFiche = it.téléchargementsFiche + (fiche.id to true)) }
             val fichier = try {
-                val détail = container.documents.détailFiche(fiche.id)
+                // Hors connexion : le détail déjà vu porte encore l'URL signée.
+                val détail = runCatching { container.documents.détailFiche(fiche.id) }.getOrNull()
+                    ?: container.documents.détailFicheEnCache(fiche.id)
                 val pièce = détail?.fichiers?.firstOrNull() ?: error("aucune pièce jointe signée")
                 school.greenwood.plus.util.Fichiers.télécharger(context, pièce.url, pièce.name)
             } catch (err: Exception) {
@@ -881,6 +883,11 @@ class MessagesViewModel(private val container: AppContainer) : ViewModel() {
                             conversations = if (st.conversations.isEmpty()) enCache.conversations else st.conversations,
                             themes = st.themes.ifEmpty { enCache.themes },
                         )
+                    }
+                }
+                if (_état.value.contact == null) {
+                    runCatching { container.messages.contactEnCache() }.getOrNull()?.let { contact ->
+                        _état.update { it.copy(contact = contact) }
                     }
                 }
             }
@@ -1548,6 +1555,12 @@ class PostDetailViewModel(
 
     fun charger() {
         viewModelScope.launch {
+            // Article déjà vu : il réapparaît tout de suite, même hors connexion.
+            if (_état.value.detail == null) {
+                runCatching { container.nouveautes.détailEnCache(postId) }.getOrNull()?.let { détail ->
+                    _état.update { it.copy(detail = détail) }
+                }
+            }
             _état.update { it.copy(chargement = it.detail == null, rafraîchissement = it.detail != null) }
             try {
                 val detail = container.nouveautes.détail(postId)
@@ -2037,6 +2050,19 @@ class BoutiqueViewModel(private val container: AppContainer) : ViewModel() {
 
     fun charger(force: Boolean = false) {
         viewModelScope.launch {
+            // Catalogue déjà vu : la boutique s'ouvre remplie hors connexion.
+            if (_état.value.produits.isEmpty()) {
+                runCatching { container.boutique.catalogueEnCache(_état.value.rubriqueActive) }
+                    .getOrNull()?.let { page ->
+                        _état.update {
+                            it.copy(
+                                produits = page.produits,
+                                rubriques = page.rubriques,
+                                cantines = page.cantines,
+                            )
+                        }
+                    }
+            }
             _état.update {
                 it.copy(
                     chargement = it.produits.isEmpty(),
@@ -2159,6 +2185,12 @@ class ProduitViewModel(
 
     fun charger() {
         viewModelScope.launch {
+            // Détail déjà vu : il réapparaît tout de suite, même hors connexion.
+            if (_état.value.produit == null) {
+                runCatching { container.boutique.détailEnCache(produitId) }.getOrNull()?.let { produit ->
+                    _état.update { it.copy(produit = produit) }
+                }
+            }
             _état.update { it.copy(chargement = it.produit == null, erreur = null) }
             try {
                 val produit = container.boutique.détail(produitId, commandeId)
@@ -2270,6 +2302,12 @@ class HistoriqueViewModel(private val container: AppContainer) : ViewModel() {
                     erreur = if (force) it.erreur else null,
                 )
             }
+            // Historique déjà vu : il s'ouvre rempli hors connexion.
+            if (_état.value.commandes.isEmpty()) {
+                runCatching { container.boutique.historiqueEnCache() }.getOrNull()?.let { commandes ->
+                    _état.update { it.copy(commandes = commandes) }
+                }
+            }
             try {
                 val commandes = container.boutique.historique()
                 _état.update {
@@ -2332,6 +2370,12 @@ class RepasViewModel(private val container: AppContainer) : ViewModel() {
     fun charger(force: Boolean = false) {
         viewModelScope.launch {
             _état.update { it.copy(chargement = it.jours.isEmpty()) }
+            // Planning déjà vu : il s'ouvre rempli hors connexion.
+            if (_état.value.jours.isEmpty()) {
+                runCatching { container.boutique.catalogueEnCache("2") }.getOrNull()?.let { page ->
+                    _état.update { it.copy(jours = page.cantines) }
+                }
+            }
             try {
                 val page = container.boutique.catalogue(rubrique = "2", recherche = "")
                 _état.update {
@@ -2504,6 +2548,8 @@ class CommunauteViewModel(private val container: AppContainer) : ViewModel() {
     /** Rafraîchissement complet de l'onglet courant (première page). */
     fun charger(force: Boolean = false) {
         viewModelScope.launch {
+            // Listes déjà vues : l'onglet s'ouvre rempli hors connexion.
+            if (!force) préremplirDepuisDisque()
             _état.update { st ->
                 st.copy(
                     chargement = !force && st.vide(st.onglet),
@@ -2550,6 +2596,47 @@ class CommunauteViewModel(private val container: AppContainer) : ViewModel() {
                     it.copy(chargement = false, rafraîchissement = false, erreur = messageDe(err))
                 }
             }
+        }
+    }
+
+        /** Onglet courant rempli depuis le disque — lecture silencieuse, jamais
+     *  un faux succès : le rafraîchissement réseau suit et l'échec reste
+     *  signalé (bandeau « Réessayer », issue #21). */
+    private suspend fun préremplirDepuisDisque() {
+        when (_état.value.onglet) {
+            OngletCommunautaire.Devoirs ->
+                if (_état.value.devoirs.isEmpty()) {
+                    runCatching { container.communaute.devoirsEnCache(_état.value.tri) }
+                        .getOrNull()?.let { page ->
+                            _état.update { it.copy(devoirs = page.éléments, totalDevoirs = page.total) }
+                        }
+                }
+            OngletCommunautaire.EmploiDuTemps -> {
+                if (_état.value.problèmes.isEmpty()) {
+                    runCatching { container.communaute.problèmesEnCache(_état.value.filtre) }
+                        .getOrNull()?.let { page ->
+                            _état.update { it.copy(problèmes = page.éléments, totalProblèmes = page.total) }
+                        }
+                }
+                if (_état.value.corrections.isEmpty()) {
+                    runCatching { container.communaute.correctionsEnCache() }
+                        .getOrNull()?.let { page ->
+                            _état.update { it.copy(corrections = page.éléments, totalCorrections = page.total) }
+                        }
+                }
+            }
+            OngletCommunautaire.Abus ->
+                if (_état.value.abus.isEmpty()) {
+                    runCatching { container.communaute.signalementsEnCache() }
+                        .getOrNull()?.let { abus ->
+                            _état.update { st ->
+                                st.copy(
+                                    abus = abus,
+                                    signalés = st.signalés + abus.map { s -> "${s.cible}:${s.cibleId}" },
+                                )
+                            }
+                        }
+                }
         }
     }
 

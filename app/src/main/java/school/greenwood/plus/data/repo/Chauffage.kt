@@ -41,6 +41,9 @@ class ChauffageTout(
     private val demandes: DemandesRepository,
     private val messages: MessagesRepository,
     private val nouveautes: NouveautesRepository,
+    private val boutique: BoutiqueRepository,
+    /** Serveur communautaire — null : la source est simplement sautée. */
+    private val communaute: CommunauteRepository? = null,
 ) {
     private val portée = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var enCours: Job? = null
@@ -66,6 +69,19 @@ class ChauffageTout(
                 demandes = { demandes.liste() },
                 conversations = { messages.conversations().conversations },
                 posts = { nouveautes.liste() },
+                boutique = { boutique.catalogue("-1") },
+                repas = { boutique.catalogue("2") },
+                historique = { boutique.historique() },
+                contact = { messages.contact() },
+                communaute = {
+                    // URL non réglée : rien à tenter (sinon appels inutiles).
+                    if (session.urlCommunautaire.first().isNotBlank()) {
+                        communaute?.devoirs()
+                        communaute?.problèmes()
+                        communaute?.corrections()
+                        communaute?.signalements()
+                    }
+                },
             )
             préparerMédias(données)
         }
@@ -141,7 +157,7 @@ internal fun Chauffé.voixÀPréparer(): List<String> =
     }.distinct().take(LIMITE_VOIX)
 
 /*
- * Les sept listes se rafraîchissent ensemble : une source en panne laisse sa
+ * Les douze sources se rafraîchissent ensemble : une source en panne laisse sa
  * section en cache tel quel, une annulation (déconnexion, réglage coupé)
  * arrête tout — jamais de faux succès, jamais d'erreur projetée (issue #21).
  */
@@ -153,6 +169,11 @@ internal suspend fun chaufferSections(
     demandes: suspend () -> Unit,
     conversations: suspend () -> List<Conversation>,
     posts: suspend () -> List<Post>,
+    boutique: suspend () -> Unit = {},
+    repas: suspend () -> Unit = {},
+    historique: suspend () -> Unit = {},
+    contact: suspend () -> Unit = {},
+    communaute: suspend () -> Unit = {},
 ): Chauffé = coroutineScope {
     val postsChargés = async { auSource({ posts() }, emptyList<Post>()) }
     val conversationsChargées = async { auSource({ conversations() }, emptyList<Conversation>()) }
@@ -162,6 +183,11 @@ internal suspend fun chaufferSections(
         async { auSource({ documents() }, Unit) },
         async { auSource({ bibliotheque() }, Unit) },
         async { auSource({ demandes() }, Unit) },
+        async { auSource({ boutique() }, Unit) },
+        async { auSource({ repas() }, Unit) },
+        async { auSource({ historique() }, Unit) },
+        async { auSource({ contact() }, Unit) },
+        async { auSource({ communaute() }, Unit) },
     )
     autres.awaitAll()
     Chauffé(

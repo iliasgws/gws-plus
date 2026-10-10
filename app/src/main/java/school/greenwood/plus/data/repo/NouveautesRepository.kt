@@ -38,13 +38,19 @@ class NouveautesRepository(
         val résultat = Normalizers.listePosts(rep)
         if (départ == 0) {
             caches.clé()?.let { clé -> caches.posts.écrire(clé, résultat) }
+            caches.écrireDisque("posts", rep)
         }
         return résultat
     }
 
     suspend fun listeEnCache(): List<Post>? {
         val clé = caches.clé() ?: return null
-        return caches.posts.lire(clé)
+        caches.posts.lire(clé)?.let { return it }
+        // Redémarrage hors connexion : la réponse scellée repeuple la mémoire.
+        val brut = caches.lireDisque("posts") as? kotlinx.serialization.json.JsonObject ?: return null
+        val liste = Normalizers.listePosts(brut)
+        caches.posts.écrire(clé, liste)
+        return liste
     }
 
     suspend fun épinglés(): List<Post> {
@@ -64,6 +70,10 @@ class NouveautesRepository(
         }.getOrNull()
 
         val parsed = repDetail?.let { Normalizers.postDetail(it) }
+
+        if (parsed != null) {
+            repDetail?.let { caches.écrireDisque("post-$postId", it) }
+        }
 
         if (parsed != null && !parsed.descriptionHtml.isNullOrBlank()) {
             return parsed
@@ -103,6 +113,12 @@ class NouveautesRepository(
             title = "Actualité",
             descriptionHtml = corpsRepli,
         )
+    }
+
+    /** Article déjà vu, relu hors connexion. */
+    suspend fun détailEnCache(postId: String): PostDetail? {
+        val brut = caches.lireDisque("post-$postId") as? JsonObject ?: return null
+        return Normalizers.postDetail(brut)
     }
 
     /**

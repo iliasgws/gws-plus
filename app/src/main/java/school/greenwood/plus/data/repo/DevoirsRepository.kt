@@ -38,7 +38,15 @@ class DevoirsRepository(
 
     suspend fun liste(): List<Devoir> {
         val rep = client.get("devoirs", mapOf("start" to "0", "limit" to "60"))
+        val avecLocal = avecFaitLocal(parserListe(rep), session.devoirsFaitLocal.first())
+        // Dernière liste connue (issue #21) — une liste vide est un état valide.
+        caches.clé()?.let { clé -> caches.devoirs.écrire(clé, avecLocal) }
+        caches.écrireDisque("devoirs", rep)
+        return avecLocal
+    }
 
+    /** Réponse brute `GET devoirs` → liste fusionnée des trois seaux. */
+    private fun parserListe(rep: JsonObject): List<Devoir> {
         val brutes = publicationParId(rep)
         val parsés: List<JsonObject> = buildList {
             rep["devoirs_remettre"]?.let { addAll((it as? JsonArray)?.filterIsInstance<JsonObject>() ?: emptyList()) }
@@ -47,7 +55,7 @@ class DevoirsRepository(
         val bruts: List<JsonObject> =
             (rep["data"] as? JsonArray)?.filterIsInstance<JsonObject>() ?: emptyList()
 
-        val résultat = if (parsés.isNotEmpty()) {
+        return if (parsés.isNotEmpty()) {
             parsés.mapNotNull { o ->
                 Normalizers.devoir(o, brutes[Normalizers.str(o, "id")])
             }.distinctBy { it.id }
@@ -59,17 +67,18 @@ class DevoirsRepository(
                 }
             }.distinctBy { it.id }
         }
-        // Dernière liste connue (issue #21) — une liste vide est un état valide.
-        val avecLocal = avecFaitLocal(résultat, session.devoirsFaitLocal.first())
-        caches.clé()?.let { clé -> caches.devoirs.écrire(clé, avecLocal) }
-        return avecLocal
     }
 
     /** Dernière liste connue, estampillée session — null si rien en cache ou
      *  si la session a changé depuis l'écriture. */
     suspend fun listeEnCache(): List<Devoir>? {
         val clé = caches.clé() ?: return null
-        val liste = caches.devoirs.lire(clé) ?: return null
+        val mémoire = caches.devoirs.lire(clé)
+        // Redémarrage hors connexion : la réponse scellée repeuple la mémoire.
+        val liste = mémoire ?: (caches.lireDisque("devoirs") as? JsonObject)
+            ?.let { brut ->
+                parserListe(brut).also { caches.devoirs.écrire(clé, it) }
+            } ?: return null
         // On réapplique le marquage local (issue #82) : les caches écrits avant
         // cette fonctionnalité ne le portent pas encore.
         return avecFaitLocal(liste, session.devoirsFaitLocal.first())
@@ -84,7 +93,16 @@ class DevoirsRepository(
     suspend fun détail(id: String): DevoirDétail? {
         val rep = client.get("devoirs", mapOf("devoir" to id))
         if (Normalizers.str(rep, "id") == null) return null
+        caches.écrireDisque("devoir-$id", rep)
         val infos = Normalizers.devoirDétail(rep) ?: return null
+        val ids = session.devoirsFaitLocal.first()
+        return if (id in ids) infos.copy(devoir = infos.devoir.copy(faitLocal = true)) else infos
+    }
+
+    /** Détail déjà vu, relu hors connexion (pièces jointes signées comprises). */
+    suspend fun détailEnCache(id: String): DevoirDétail? {
+        val brut = caches.lireDisque("devoir-$id") as? JsonObject ?: return null
+        val infos = Normalizers.devoirDétail(brut) ?: return null
         val ids = session.devoirsFaitLocal.first()
         return if (id in ids) infos.copy(devoir = infos.devoir.copy(faitLocal = true)) else infos
     }
