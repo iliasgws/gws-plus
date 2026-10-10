@@ -1543,3 +1543,97 @@ already offers this since issue #85.
 - [ ] On-device check: copy from a loaded note, button disabled while the
       skeleton is showing, paste the result elsewhere, TalkBack announces
       « Copier l'actualité ».
+
+## Open in ChatGPT (issue #150, branch `feat/ouvrir-chatgpt-150`, stacked on #149)
+
+The Copy button has a neighbour, and the issue was rewritten (v2,
+2026-10-10) into a much larger contract: the share is no longer « whatever
+Copy copies » but a **built prompt** — verified school profile, the selected
+item in full, **complete indexes** of every other accessible homework and of
+every actualité, real attachment streams, and instructions forbidding ChatGPT
+to invent anything from titles. Nothing is ever sent automatically, and Copy
+keeps its exact behaviour.
+
+- [x] `util/TexteChatGPT.kt`: the pure prompt builder (JVM-tested) —
+      `PROFIL_ÉCOLE_CHATGPT` restricted to facts checked on
+      https://greenwoodschool.ma/ (Bouskoura/Casablanca, maternelle → lycée,
+      trilingue arabe/français/anglais, pédagogie de projet + PET®) plus the
+      real role of GWS Plus as the family's Android companion app; the
+      selected item (type, metadata, body, known and actually attached file
+      names); `AUTRES DEVOIRS DISPONIBLES — INDEX COMPLET (métadonnées
+      seulement)` and `ACTUALITÉS DE L'ÉCOLE — INDEX COMPLET (titres
+      seulement)` — bodies never enter an index; then the `INSTRUCTIONS`
+      block (catalogue ≠ contenu, ask the user to open + share the specific
+      item, never infer from titles, use supported rich UI, promise no
+      particular component). Written in French, the app's language.
+- [x] Honest sizing: `[LIMITE_TEXTE_CHATGPT]` (48 k) — indexes lose their
+      tail lines first (never the selected item), every truncation is spelled
+      out in the prompt and flips the index to `PARTIEL`; if that still isn't
+      enough the item body is halved with an explicit « CORPS TRONQUÉ ». A
+      cache-only or page-capped index is labelled PARTIEL too — no silent
+      « complete » claim, no fabricated entry.
+- [x] `data/repo/ChatGPTRepository.kt`: builds the prompt at share time from
+      what the student may actually see — homework list (network, session
+      cache fallback), actualités paginated with the verified 1-based start
+      (`start = taille + 1`), 20 × 10 page ceiling, deduped by id, newest
+      first; up to 4 attachments downloaded through the bounded
+      `Fichiers.télécharger` so they travel as streams, not as names.
+- [x] `util/OuvrirChatGPT.kt`: `ACTION_SEND` + `EXTRA_STREAM` for one file,
+      `ACTION_SEND_MULTIPLE` for several, MIME from the content resolver or
+      the extension, `FLAG_GRANT_READ_URI_PERMISSION`, `EXTRA_TEXT` carrying
+      the prompt; ChatGPT package first (`com.openai.chatgpt`, the ADB-tested
+      integration), system share sheet as fallback, returning `CHATGPT` /
+      `PARTAGE` / `ÉCHEC` to the caller — no toast inside the util.
+- [x] `BoutonOuvrirChatGPT`: builds on tap with the shared morphing loader,
+      disabled while building or while the item is still loading; toasts
+      « Préparation du partage impossible », « ChatGPT n'est pas installé »
+      and « Impossible d'ouvrir ChatGPT ». Both call sites (homework detail
+      #85, news detail #148) group the two buttons and leave Copy untouched.
+- [x] Tests: `ChatGPTTexteTest` (8 tests: section order, full item + attached
+      file names, no-file honesty, PARTIEL labelling, index truncation,
+      explicit body truncation, compact index lines, verified profile) —
+      `:app:assembleDebug` + `:app:testDebugUnitTest` green
+
+A third rewrite of the issue (v3, 2026-10-10) added image discovery and
+stronger UI instructions:
+
+- [x] `util/MediasPartagés.kt` (new): the **union** of an actualité's media —
+      explicit `files` attachments, cover `image`, gallery `images`, and every
+      `<img src>` in the HTML body. URL handling: absolute kept as-is,
+      protocol-relative → https, root/path-relative resolved against the API
+      origin, `data:image/...;base64` kept for local decode;
+      `javascript:`/`about:`/`blob:`/empty dropped. Deduplicated by
+      `IdentiteMedias.clé` (issue #108) so the same photo under two signed
+      tokens is attached once; server names are kept, discovered images are
+      named from the URL path. Scope per the issue: the **selected actualité**
+      only — the all-actualités index stays headings + dates, never media.
+- [x] Honest failures: every media that cannot be joined (download failure,
+      unresolvable URL, data URI over the 4 MiB base64 cap, the 4-file
+      ceiling) is listed in the prompt as « Fichiers NON joints (…) » and a
+      dedicated instruction tells ChatGPT those files were not seen — never
+      silently claimed as sent. Data URIs are decoded into a
+      FileProvider-visible file; no raw `https://` is ever passed as
+      `EXTRA_STREAM`.
+- [x] `ClipData` now carries every `content://` URI next to `EXTRA_STREAM`, so
+      multi-URI read grants actually reach the ChatGPT app.
+- [x] Instructions block upgraded (issue section E): strongly prefer
+      intelligent, interactive, visually organized UI (quizzes, flashcards,
+      guided exercises, progress checklists, timelines, comparisons, tables),
+      prefer an engaging study interface over prose for homework, Markdown
+      structured fallback, and an explicit « jamais une garantie de rendu ».
+      Headers are honest too: a PARTIAL index is titled `INDEX PARTIEL`,
+      never `INDEX COMPLET`.
+- [x] Tests: `MediasPartagésTest` (8 tests covering fixtures a–e: inline-only
+      image with no attachment record, attachment-only, same image inline +
+      attached → one copy, several inline images + a PDF, authenticated
+      remote URL, cover/gallery union, relative resolution, HTML dedupe) plus
+      4 new `ChatGPTTexteTest` cases (fixture f: failed download announced,
+      PARTIEL header, UI instructions) — 340 tests green.
+- [ ] On device (this environment has no logged-in device): ChatGPT opens with
+      the prompt prefilled and nothing sent; one attachment arrives, and
+      several must too (`ACTION_SEND_MULTIPLE`); ChatGPT missing → toast +
+      share sheet keeping text and files; TalkBack announces « Ouvrir dans
+      ChatGPT »; Copy unchanged.
+- [ ] `ACTION_SEND_MULTIPLE` against the ChatGPT app is the one integration
+      the issue asked to test that no ADB sample covers — confirm it before
+      the stable release.

@@ -15,6 +15,7 @@ import school.greenwood.plus.data.cache.fabriquerChargeur
 import school.greenwood.plus.data.repo.AuthRepository
 import school.greenwood.plus.data.repo.BoutiqueRepository
 import school.greenwood.plus.data.repo.ChauffageTout
+import school.greenwood.plus.data.repo.ChatGPTRepository
 import school.greenwood.plus.data.repo.CommunauteRepository
 import school.greenwood.plus.data.repo.CoursRepository
 import school.greenwood.plus.data.repo.DevoirsRepository
@@ -90,6 +91,11 @@ class AppContainer(context: Context) {
         context, session, cours, devoirs, documents, demandes, messages, nouveautes,
         boutique = boutique, communaute = communaute,
     )
+
+    // Partage vers ChatGPT (issue #150) : prompt bâti à la volée (élément
+    // complet + index complets) et pièces jointes téléchargées pour partir
+    // en flux Android.
+    val chatgpt = ChatGPTRepository(context.applicationContext, devoirs, nouveautes)
 
     // Mises à jour de l'app — GitHub Releases, sans serveur (issue #46).
     val misesÀJour = UpdatesRepository(context, session)

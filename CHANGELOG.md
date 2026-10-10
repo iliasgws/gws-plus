@@ -6,6 +6,50 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
 
 ## [Non publié]
 
+## [0.10.1-beta.4] — 2026-10-10
+
+### Préversion (bêta)
+
+### Ajouté
+
+- ChatGPT : les images d'une actualité partent vraiment (#150) — à côté des
+  pièces jointes déclarées par l'école, les images intégrées au texte
+  (`<img>`), la couverture et la galerie sont téléchargées et jointes au
+  partage, sans jamais envoyer deux fois la même photo. Ce qui n'a pas pu
+  être joint (téléchargement, URL, limite) est annoncé « NON joints » dans
+  le prompt. Le message demande aussi fortement une interface interactive
+  (quiz, cartes mémoire, tableaux) avec repli Markdown, sans en promettre
+  le rendu.
+
+## [0.10.1-beta.3] — 2026-10-10
+
+### Préversion (bêta)
+
+### Ajouté
+
+- ChatGPT : le partage « Ouvrir dans ChatGPT » devient un vrai prompt (#150) —
+  profil vérifié de l'école, élément ouvert en entier, index complet des autres
+  devoirs (métadonnées seulement) et de toutes les actualités (titres
+  seulement), plus les pièces jointes téléchargées et jointes au partage.
+  L'index tronqué pour la taille est annoncé « PARTIEL » dans le prompt, jamais
+  présenté comme complet ; ChatGPT reçoit pour consigne de demander
+  l'élément complet dans GWS Plus plutôt que d'inventer à partir des titres.
+
+## [0.10.1-beta.2] — 2026-10-10
+
+### Préversion (bêta)
+
+### Ajouté
+
+- Détails de devoir et d'actualité : bouton **« Ouvrir dans ChatGPT »** à côté
+  de « Copier » (#150) — le même texte part en prompt pré-rempli dans l'app
+  ChatGPT Android, jamais envoyé. Sans ChatGPT installé, la feuille de partage
+  système prend le relais avec un message ; « Copier » reste inchangé.
+
+## [0.10.1-beta.1] — 2026-10-10
+
+### Préversion (bêta)
+
 ### Ajouté
 
 - Actualités : bouton **Copier** dans le détail d'une note d'information (#148) —

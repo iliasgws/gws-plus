@@ -61,6 +61,7 @@ import school.greenwood.plus.model.Attachment
 import school.greenwood.plus.model.Devoir
 import school.greenwood.plus.model.DevoirDétail
 import school.greenwood.plus.model.SoumissionDétail
+import school.greenwood.plus.ui.components.BoutonOuvrirChatGPT
 import school.greenwood.plus.ui.components.GwsCard
 import school.greenwood.plus.ui.components.GwsLoadingIndicator
 import school.greenwood.plus.ui.components.Puce
@@ -141,32 +142,50 @@ fun DevoirDetailScreen(
             // Issue #85 : bouton de copie — titre, matière, enseignant(e),
             // état « fait », pièces jointes et corps du devoir dans le
             // presse-papiers. Inactif tant que le devoir n'est pas chargé.
-            val pressePapiers = LocalClipboardManager.current
-            IconButton(
-                onClick = {
-                    devoir?.let { d ->
-                        pressePapiers.setText(
-                            AnnotatedString(
-                                devoirTexteÀCopier(
-                                    // L'état peut venir du détail (plus frais que le cache).
-                                    d.copy(fait = détail?.devoir?.fait ?: d.fait),
-                                    LocalDate.now(),
-                                )
-                            )
-                        )
-                        Toast.makeText(
-                            context,
-                            "Informations du devoir copiées",
-                            Toast.LENGTH_SHORT,
-                        ).show()
-                    }
-                },
-                enabled = devoir != null,
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                Icon(
-                    imageVector = Icons.Rounded.ContentCopy,
-                    contentDescription = "Copier les informations du devoir",
-                    tint = RegistreTheme.colors.ink,
+                val pressePapiers = LocalClipboardManager.current
+                val texteÀCopier = devoir?.let { d ->
+                    devoirTexteÀCopier(
+                        // L'état peut venir du détail (plus frais que le cache).
+                        d.copy(fait = détail?.devoir?.fait ?: d.fait),
+                        LocalDate.now(),
+                    )
+                }
+                IconButton(
+                    onClick = {
+                        texteÀCopier?.let { texte ->
+                            pressePapiers.setText(AnnotatedString(texte))
+                            Toast.makeText(
+                                context,
+                                "Informations du devoir copiées",
+                                Toast.LENGTH_SHORT,
+                            ).show()
+                        }
+                    },
+                    enabled = texteÀCopier != null,
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.ContentCopy,
+                        contentDescription = "Copier les informations du devoir",
+                        tint = RegistreTheme.colors.ink,
+                    )
+                }
+                // Issue #150 : le prompt part avec le devoir en entier, les
+                // index complets des autres devoirs et des actualités, et les
+                // pièces jointes téléchargées — jamais envoyé automatiquement.
+                BoutonOuvrirChatGPT(
+                    actif = devoir != null,
+                    préparer = {
+                        devoir?.let { d ->
+                            container.chatgpt.préparerDevoir(
+                                // L'état peut venir du détail (plus frais que le cache).
+                                d.copy(fait = détail?.devoir?.fait ?: d.fait),
+                            )
+                        }
+                    },
                 )
             }
         }
