@@ -28,6 +28,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Description
+import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.Logout
 import androidx.compose.material.icons.rounded.Menu
 import androidx.compose.material.icons.rounded.Settings
@@ -42,6 +43,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Text
+import androidx.compose.material3.Surface
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -330,6 +332,15 @@ fun RegistreScreen(
                     }
                 }
 
+                // Instantané disque (issue #145) : ce qui s'affiche vient du
+                // dernier affichage, pas du réseau — annoncé tel quel pendant
+                // l'actualisation, jamais présenté comme frais.
+                if (état.restauréDuDisque && état.rafraîchissement) {
+                    item(key = "disque") {
+                        BandeauInstantané()
+                    }
+                }
+
                 // Mise à jour de l'app (issue #46) — visible tant qu'une
                 // publication plus récente attend, ou qu'un téléchargement
                 // est en cours.
@@ -441,6 +452,38 @@ fun RegistreScreen(
             onAnnuler = { déconnexionDemandée = false },
         )
     }
+    }
+}
+
+/**
+ * Le contenu vient du dernier affichage relu sur disque (issue #145) : il
+ * remplace le squelette dès la première image et reste explicitement marqué
+ * comme non rafraîchi tant que le réseau n'a pas répondu.
+ */
+@Composable
+private fun BandeauInstantané() {
+    Surface(
+        shape = ControlShape,
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.History,
+                contentDescription = null,
+                tint = RegistreTheme.colors.chalk,
+                modifier = Modifier.size(18.dp),
+            )
+            Text(
+                text = "Contenu du dernier affichage — actualisation en cours…",
+                style = MaterialTheme.typography.labelMedium,
+                color = RegistreTheme.colors.ink,
+            )
+        }
     }
 }
 

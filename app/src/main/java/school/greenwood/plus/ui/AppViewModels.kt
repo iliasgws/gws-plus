@@ -18,6 +18,7 @@ import school.greenwood.plus.data.api.BotiErreur
 import school.greenwood.plus.data.api.CommunErreur
 import school.greenwood.plus.data.api.DépassementDébit
 import school.greenwood.plus.data.api.JetonRévoqué
+import school.greenwood.plus.data.cache.SnapshotRegistre
 import school.greenwood.plus.data.repo.NoticeRequise
 import school.greenwood.plus.data.repo.SensSemaine
 import school.greenwood.plus.data.repo.RegistreDuJour
@@ -149,6 +150,10 @@ data class RegistreÉtat(
     val derniereActualite: Post? = null,
     /** Un rafraîchissement réseau tourne pendant que le contenu connu reste affiché. */
     val rafraîchissement: Boolean = false,
+    /** Contenu relu sur disque au démarrage (issue #145) : affiché dès la
+     *  première image puis remplacé par le réseau — jamais présenté comme
+     *  frais, l'écran l'annonce tant que l'actualisation n'a pas abouti. */
+    val restauréDuDisque: Boolean = false,
     /** Déconnexion en cours (issue #101) : l'action reste désactivée jusqu'à
      *  la purge de session — jamais deux appels de suite. */
     val déconnexionEnCours: Boolean = false,
@@ -221,7 +226,28 @@ class RegistreViewModel(private val container: AppContainer) : ViewModel() {
                         st.copy(
                             registre = st.registre ?: enCache,
                             derniereActualite = st.derniereActualite ?: derniereCache,
+                            // Mémoire = déjà affiché cette session : rien à signaler.
+                            restauréDuDisque = false,
                         )
+                    }
+                }
+                // Mémoire vide (redémarrage du processus) : l'instantané disque
+                // (issue #145) ouvre l'accueil sans attendre le réseau. La clé de
+                // session y est portée — un autre compte ou un autre enfant le
+                // rend introuvable, comme le cache mémoire (issue #21).
+                if (_état.value.registre == null) {
+                    val instantané = runCatching { container.caches.clé() }.getOrNull()
+                        ?.let { clé -> runCatching { container.snapshots.lire(clé) }.getOrNull() }
+                    val jour = instantané?.let { runCatching { it.versRegistre() }.getOrNull() }
+                    if (jour != null) {
+                        _état.update { st ->
+                            st.copy(
+                                registre = st.registre ?: jour,
+                                derniereActualite =
+                                    st.derniereActualite ?: instantané?.versDerniereActualite(),
+                                restauréDuDisque = st.registre == null,
+                            )
+                        }
                     }
                 }
             }
@@ -243,14 +269,31 @@ class RegistreViewModel(private val container: AppContainer) : ViewModel() {
                 if (container.session.state.first() == null) return@launch
                 val registre = container.registre.charger()
                 val derniere = runCatching { container.nouveautes.dernière() }.getOrNull()
+                val àMontrer = derniere ?: _état.value.derniereActualite
                 _état.update {
                     it.copy(
                         chargement = false,
                         rafraîchissement = false,
                         registre = registre,
-                        derniereActualite = derniere ?: it.derniereActualite,
+                        derniereActualite = àMontrer,
+                        // Réseau à jour : ce qui s'affiche est frais.
+                        restauréDuDisque = false,
                         erreur = null,
                     )
+                }
+                // Instantané du résultat frais (issue #145) — jamais quand
+                // « Rester connecté » est décoché : la session ne touche alors
+                // rien du disque (issue #140). Échec = silencieux, le cache
+                // mémoire et la prochaine ouverture suffiront.
+                val retenir = runCatching { container.session.retenir.first() }.getOrDefault(true)
+                if (retenir) {
+                    runCatching {
+                        container.caches.clé()?.let { clé ->
+                            container.snapshots.écrire(
+                                SnapshotRegistre.de(registre, clé, àMontrer),
+                            )
+                        }
+                    }
                 }
             } catch (err: BotiErreur) {
                 // Échec : le contenu connu reste affiché, l'erreur est toujours

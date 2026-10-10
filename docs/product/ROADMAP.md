@@ -33,13 +33,25 @@ raw probe responses stay out of the repository (personal data).
 - [x] `NouveautesRepository.dernière()` already reuses the first-page posts
       cache (`listeEnCache()` first, network only as fallback) — the registre's
       « Dernière actualité » card normally costs no extra request. No change.
-- [x] Decision — no persistent dashboard snapshot (deliverable 3): writing
-      homework, messages and posts to disk would put school/family content
-      outside the session-sealed storage built in #137/#138 and add
-      purge-on-logout and cross-account isolation as new invariants to prove.
-      The session-stamped memory cache (#21) plus the now-parallel network
-      refresh gives most of the win at a fraction of the risk. Revisit only
-      with a measured cold-start need and an encrypted, purge-guaranteed design.
+- [x] Persistent dashboard snapshot (deliverable 3, designed + implemented):
+      the last rendered registre is written to a single file
+      `registre-instantane.enc` in `context.noBackupFilesDir` (excluded from
+      Android backup/transfer by construction), sealed with `SessionSecrets`
+      (Keystore AES-GCM; a JVM-testable injectable `Chiffreur`), stamped with
+      the `userId/eleveId` session key embedded in the payload (a mismatch
+      reads as null), versioned (`VERSION_SNAPSHOT`) so an unknown format is
+      ignored rather than misparsed, written atomically (temp file + rename),
+      and purged at login and logout next to the media/data caches
+      (`AuthRepository.purgeSnapshots`, called on both paths). It is never
+      written when « Rester connecté » is off, any read failure degrades to
+      null, and only an identifier-sized preview of conversations is kept.
+      On warm start the ViewModel prefills from it (no skeleton) and the
+      Registre shows a non-blocking « Contenu du dernier affichage —
+      actualisation en cours… » banner until the network refresh lands.
+      Guarded by `SnapshotRegistreTest` (round-trip of all four entry types,
+      cross-account/cross-child isolation, corrupt file, lost Keystore key,
+      unknown version, purge, plus config guards on `noBackupFilesDir` and
+      the two purge call sites).
 - [x] Startup work reviewed, left alone on evidence: the app container builds
       no I/O at construction, the registre banner is a local drawable, and the
       GitHub Releases check (`vérifierAuBesoin`) runs in a `LaunchedEffect`

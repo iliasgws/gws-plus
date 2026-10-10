@@ -9,6 +9,7 @@ import school.greenwood.plus.data.api.BotiHttp
 import school.greenwood.plus.data.api.CommunApi
 import school.greenwood.plus.data.cache.CachesSession
 import school.greenwood.plus.data.cache.PurgeMedias
+import school.greenwood.plus.data.cache.SnapshotsRegistre
 import school.greenwood.plus.data.cache.fabriquerChargeur
 import school.greenwood.plus.data.repo.AuthRepository
 import school.greenwood.plus.data.repo.BoutiqueRepository
@@ -55,7 +56,13 @@ class AppContainer(context: Context) {
     // remise à zéro.
     val veille = VeilleSession()
 
-    val auth = AuthRepository(client, session, caches) { PurgeMedias(context).purger() }
+    // Instantané disque du registre (issue #145) : dernier écran affiché,
+    // chiffré, hors sauvegardes, purgé comme les caches de session.
+    internal val snapshots = SnapshotsRegistre(context)
+
+    val auth = AuthRepository(client, session, caches, { PurgeMedias(context).purger() }) {
+        snapshots.vider()
+    }
     val registre = RegistreRepository(client, session, caches)
     val cours = CoursRepository(client, caches)
     val devoirs = DevoirsRepository(client, caches, session)
