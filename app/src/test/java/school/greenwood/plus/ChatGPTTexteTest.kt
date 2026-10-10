@@ -138,4 +138,46 @@ class ChatGPTTexteTest {
         assertTrue(texte.contains("PET"))
         assertTrue(texte.contains("GWS Plus est l'application Android officielle de l'école"))
     }
+
+    @Test
+    fun `(f) téléchargement échoué — le prompt l'annonce, le texte survit`() {
+        val texte = texteChatGPT(
+            item.copy(
+                piècesJointes = listOf("énoncé.pdf", "photo.jpg"),
+                fichiersPartagés = listOf("énoncé.pdf"),
+                piècesNonJointes = listOf("photo.jpg"),
+            ),
+            emptyList(),
+            emptyList(),
+            synchronisation,
+        )
+        assertTrue(texte.contains("Fichiers joints à ce message : énoncé.pdf"))
+        assertTrue(texte.contains("Fichiers NON joints (téléchargement impossible"))
+        assertTrue(texte.contains("photo.jpg"))
+        assertTrue(texte.contains("Faire les exercices 1 à 5 page 42."))
+    }
+
+    @Test
+    fun `index partiel — le titre de section dit PARTIEL, pas COMPLET`() {
+        val texte = texteChatGPT(
+            item = item,
+            devoirs = listOf(LigneDevoir(titre = "Devoir", matière = "Français")),
+            actualités = listOf(LigneActualité(titre = "Sortie")),
+            synchronisation = synchronisation,
+            completudeDevoirs = Completude.PARTIELLE,
+            completudeActualités = Completude.PARTIELLE,
+        )
+        assertTrue(texte.contains("AUTRES DEVOIRS DISPONIBLES — INDEX PARTIEL (métadonnées seulement)"))
+        assertTrue(texte.contains("ACTUALITÉS DE L'ÉCOLE — INDEX PARTIEL (titres seulement)"))
+    }
+
+    @Test
+    fun `instructions — UI intelligente fortement préférée, sans promesse de rendu`() {
+        val texte = texteChatGPT(item, emptyList(), emptyList(), synchronisation)
+        assertTrue(texte.contains("quiz"))
+        assertTrue(texte.contains("cartes mémoire"))
+        assertTrue(texte.contains("Markdown clair"))
+        assertTrue(texte.contains("jamais une garantie de rendu"))
+        assertTrue(texte.contains("NON joints plus haut"))
+    }
 }

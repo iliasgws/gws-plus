@@ -1592,7 +1592,43 @@ keeps its exact behaviour.
 - [x] Tests: `ChatGPTTexteTest` (8 tests: section order, full item + attached
       file names, no-file honesty, PARTIEL labelling, index truncation,
       explicit body truncation, compact index lines, verified profile) —
-      `:app:assembleDebug` + `:app:testDebugUnitTest` green (329 tests)
+      `:app:assembleDebug` + `:app:testDebugUnitTest` green
+
+A third rewrite of the issue (v3, 2026-10-10) added image discovery and
+stronger UI instructions:
+
+- [x] `util/MediasPartagés.kt` (new): the **union** of an actualité's media —
+      explicit `files` attachments, cover `image`, gallery `images`, and every
+      `<img src>` in the HTML body. URL handling: absolute kept as-is,
+      protocol-relative → https, root/path-relative resolved against the API
+      origin, `data:image/...;base64` kept for local decode;
+      `javascript:`/`about:`/`blob:`/empty dropped. Deduplicated by
+      `IdentiteMedias.clé` (issue #108) so the same photo under two signed
+      tokens is attached once; server names are kept, discovered images are
+      named from the URL path. Scope per the issue: the **selected actualité**
+      only — the all-actualités index stays headings + dates, never media.
+- [x] Honest failures: every media that cannot be joined (download failure,
+      unresolvable URL, data URI over the 4 MiB base64 cap, the 4-file
+      ceiling) is listed in the prompt as « Fichiers NON joints (…) » and a
+      dedicated instruction tells ChatGPT those files were not seen — never
+      silently claimed as sent. Data URIs are decoded into a
+      FileProvider-visible file; no raw `https://` is ever passed as
+      `EXTRA_STREAM`.
+- [x] `ClipData` now carries every `content://` URI next to `EXTRA_STREAM`, so
+      multi-URI read grants actually reach the ChatGPT app.
+- [x] Instructions block upgraded (issue section E): strongly prefer
+      intelligent, interactive, visually organized UI (quizzes, flashcards,
+      guided exercises, progress checklists, timelines, comparisons, tables),
+      prefer an engaging study interface over prose for homework, Markdown
+      structured fallback, and an explicit « jamais une garantie de rendu ».
+      Headers are honest too: a PARTIAL index is titled `INDEX PARTIEL`,
+      never `INDEX COMPLET`.
+- [x] Tests: `MediasPartagésTest` (8 tests covering fixtures a–e: inline-only
+      image with no attachment record, attachment-only, same image inline +
+      attached → one copy, several inline images + a PDF, authenticated
+      remote URL, cover/gallery union, relative resolution, HTML dedupe) plus
+      4 new `ChatGPTTexteTest` cases (fixture f: failed download announced,
+      PARTIEL header, UI instructions) — 340 tests green.
 - [ ] On device (this environment has no logged-in device): ChatGPT opens with
       the prompt prefilled and nothing sent; one attachment arrives, and
       several must too (`ACTION_SEND_MULTIPLE`); ChatGPT missing → toast +

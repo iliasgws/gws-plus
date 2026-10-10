@@ -9,12 +9,14 @@ import school.greenwood.plus.model.Post
 import school.greenwood.plus.model.PostDetail
 import school.greenwood.plus.util.Completude
 import school.greenwood.plus.util.Fichiers
+import school.greenwood.plus.util.IdentiteMedias
 import school.greenwood.plus.util.ItemPartagé
 import school.greenwood.plus.util.LigneActualité
 import school.greenwood.plus.util.LigneDevoir
 import school.greenwood.plus.util.frenchFull
 import school.greenwood.plus.util.frenchNumeric
 import school.greenwood.plus.util.htmlToPlainMultiline
+import school.greenwood.plus.util.médiasÀPartager
 import school.greenwood.plus.util.texteChatGPT
 
 /*
@@ -26,6 +28,13 @@ import school.greenwood.plus.util.texteChatGPT
  *
  * Honnêteté (imposée par l'issue) : un index qui n'est pas complet est marqué
  * « PARTIEL » dans le prompt — jamais un « toutes les actualités » mensonger.
+ * Un média qu'on n'a pas pu joindre est annoncé « NON joints » — jamais
+ * laissé croire qu'il part.
+ *
+ * Images (v3 de l'issue) : pour l'actualité sélectionnée, on ne s'arrête pas
+ * aux pièces jointes du serveur — `<img src>` du HTML, couverture et galerie
+ * entrent dans l'union dédupliquée (util/MediasPartagés.kt). L'index des
+ * actualités, lui, reste titres et dates.
  */
 
 /** Ce qui part réellement dans l'intention Android. */
@@ -46,7 +55,7 @@ class ChatGPTRepository(
     suspend fun préparerDevoir(devoir: Devoir): PartageChatGPT {
         val (listeDevoirs, complétudeDevoirs) = chargerDevoirs()
         val (listeActualités, complétudeActualités) = chargerActualités()
-        val fichiers = téléchargerPièces(devoir.attachments)
+        val (fichiers, nonJointes) = téléchargerMédias(devoir.attachments)
         val item = ItemPartagé(
             type = "Devoir",
             titre = devoir.title,
@@ -61,6 +70,7 @@ class ChatGPTRepository(
             corps = devoir.description?.takeIf { it.isNotBlank() }?.htmlToPlainMultiline(),
             piècesJointes = devoir.attachments.map { it.name },
             fichiersPartagés = fichiers.map { it.name },
+            piècesNonJointes = nonJointes,
         )
         return PartageChatGPT(
             texte = texteChatGPT(
@@ -81,7 +91,16 @@ class ChatGPTRepository(
     suspend fun préparerActualité(post: PostDetail): PartageChatGPT {
         val (listeDevoirs, complétudeDevoirs) = chargerDevoirs()
         val (listeActualités, complétudeActualités) = chargerActualités()
-        val fichiers = téléchargerPièces(post.files)
+        // Images de l'actualité SÉLECTIONNÉE : pièces jointes explicites +
+        // couverture + galerie + `<img src>` du corps HTML, dédupliquées
+        // (issue #150 v3). L'index des actualités, lui, reste titres/dates.
+        val médias = médiasÀPartager(
+            pièces = post.files,
+            html = post.descriptionHtml,
+            imageCouverture = post.image,
+            galerie = post.images,
+        )
+        val (fichiers, nonJointes) = téléchargerMédias(médias)
         val item = ItemPartagé(
             type = "Actualité",
             titre = post.title,
@@ -92,8 +111,10 @@ class ChatGPTRepository(
                 add("Identifiant : ${post.id}")
             },
             corps = post.descriptionHtml?.takeIf { it.isNotBlank() }?.htmlToPlainMultiline(),
-            piècesJointes = post.files.map { it.name },
+            // L'union dédupliquée est le catalogue complet des médias candidats.
+            piècesJointes = médias.map { it.name },
             fichiersPartagés = fichiers.map { it.name },
+            piècesNonJointes = nonJointes,
         )
         return PartageChatGPT(
             texte = texteChatGPT(
@@ -148,11 +169,50 @@ class ChatGPTRepository(
         }
     }
 
-    /** Téléchargement borné des pièces jointes à joindre au partage. */
-    private suspend fun téléchargerPièces(pièces: List<Attachment>): List<File> =
-        pièces.take(PIÈCES_MAX).mapNotNull { pièce ->
-            runCatching { Fichiers.télécharger(contexte, pièce.url, pièce.name) }.getOrNull()
+    /**
+     * Téléchargement borné des médias à joindre. Les échecs ne sont JAMAIS
+     * perdus : un fichier qu'on n'a pas pu joindre (réseau, URL, data URI
+     * trop grosse, plafond atteint) est renvoyé pour être annoncé « NON joints »
+     * dans le prompt — jamais laissé croire qu'il part.
+     */
+    private suspend fun téléchargerMédias(médias: List<Attachment>): Pair<List<File>, List<String>> {
+        val fichiers = mutableListOf<File>()
+        val nonJointes = mutableListOf<String>()
+        for (média in médias) {
+            if (fichiers.size >= PIÈCES_MAX) {
+                nonJointes += média.name
+                continue
+            }
+            val fichier = téléchargerMédia(média)
+            if (fichier != null) fichiers += fichier else nonJointes += média.name
         }
+        return fichiers to nonJointes
+    }
+
+    private suspend fun téléchargerMédia(média: Attachment): File? =
+        if (média.url.startsWith("data:", ignoreCase = true)) {
+            runCatching { décoderDataURL(média.url, média.name) }.getOrNull()
+        } else {
+            runCatching { Fichiers.télécharger(contexte, média.url, média.name) }.getOrNull()
+        }
+
+    /**
+     * `data:image/…;base64,…` → fichier dans le dossier FileProvider. Borné :
+     * au-delà de [TAILLE_DATA_MAX] de base64, l'image est refusée et annoncée.
+     */
+    private fun décoderDataURL(url: String, nom: String): File {
+        val virgule = url.indexOf(',')
+        require(virgule > 0 && url.substring(0, virgule).contains(";base64")) { "data URI non base64" }
+        val brut = url.substring(virgule + 1)
+        require(brut.length <= TAILLE_DATA_MAX) { "data URI trop volumineuse" }
+        val octets = java.util.Base64.getDecoder().decode(brut)
+        val cible = File(
+            Fichiers.dossierDocuments(contexte),
+            IdentiteMedias.fichierÀEmpreinte(nom, IdentiteMedias.clé(url)),
+        )
+        cible.outputStream().use { it.write(octets) }
+        return cible
+    }
 
     private fun ligneDevoir(d: Devoir) = LigneDevoir(
         titre = d.title,
@@ -180,5 +240,7 @@ class ChatGPTRepository(
         const val PAR_PAGE = 10
         const val PAGES_MAX = 20
         const val PIÈCES_MAX = 4
+        /** Data URIs acceptées : 4 Mo de base64 (~3 Mo décodés). */
+        const val TAILLE_DATA_MAX = 4 * 1024 * 1024
     }
 }

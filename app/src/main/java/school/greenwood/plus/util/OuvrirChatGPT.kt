@@ -1,6 +1,7 @@
 package school.greenwood.plus.util
 
 import android.content.ActivityNotFoundException
+import android.content.ClipData
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -67,6 +68,13 @@ fun intentionPartage(texte: String, fichiers: List<Pair<Uri, String>>): Intent {
         when {
             uris.size == 1 -> putExtra(Intent.EXTRA_STREAM, uris.first())
             uris.size > 1 -> putParcelableArrayListExtra(Intent.EXTRA_STREAM, ArrayList(uris))
+        }
+        // Les URI multiples ne sont lues qu'à travers le ClipData pour
+        // l'accord de lecture de chacun (issue #150 v3).
+        if (uris.isNotEmpty()) {
+            clipData = ClipData.newRawUri("pièces jointes", uris.first()).apply {
+                uris.drop(1).forEach { addItem(ClipData.Item(it)) }
+            }
         }
         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
     }

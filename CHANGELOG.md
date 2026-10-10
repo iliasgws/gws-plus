@@ -6,6 +6,17 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
 
 ## [Non publié]
 
+### Ajouté
+
+- ChatGPT : les images d'une actualité partent vraiment (#150) — à côté des
+  pièces jointes déclarées par l'école, les images intégrées au texte
+  (`<img>`), la couverture et la galerie sont téléchargées et jointes au
+  partage, sans jamais envoyer deux fois la même photo. Ce qui n'a pas pu
+  être joint (téléchargement, URL, limite) est annoncé « NON joints » dans
+  le prompt. Le message demande aussi fortement une interface interactive
+  (quiz, cartes mémoire, tableaux) avec repli Markdown, sans en promettre
+  le rendu.
+
 ## [0.10.1-beta.3] — 2026-10-10
 
 ### Préversion (bêta)

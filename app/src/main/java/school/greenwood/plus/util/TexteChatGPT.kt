@@ -70,9 +70,11 @@ data class ItemPartagé(
     val piècesJointes: List<String> = emptyList(),
     /** Noms des fichiers réellement joints à l'intention Android. */
     val fichiersPartagés: List<String> = emptyList(),
+    /** Noms des fichiers qui ont ÉCHOUÉ (téléchargement, URL, limite) — jamais dissimulés. */
+    val piècesNonJointes: List<String> = emptyList(),
 )
 
-/** Instructions finales — catalogue ≠ contenu, rien d'inventé, UI riche si utile. */
+/** Instructions finales — catalogue ≠ contenu, rien d'inventé, UI riche (v3 de l'issue). */
 private val INSTRUCTIONS_CHATGPT = """
 INSTRUCTIONS
 - Aide pour l'élément sélectionné en utilisant son contenu complet et les
@@ -83,10 +85,17 @@ INSTRUCTIONS
   puis de le copier ou de le partager dans cette conversation.
 - N'invente jamais un détail à partir des seuls titres (consignes de travail,
   règlement, annonces non ouvertes : inconnus tant qu'ils ne sont pas partagés).
-- Quand c'est utile, appuie-toi des interfaces riches prises en charge :
-  sections structurées, tableaux, listes de contrôle, chronologies. Ne promets
-  aucun composant interactif en particulier.
-- Reste clair et orienté aide aux apprentissages.
+- Un fichier listé en NON joints plus haut ne fait pas partie de ce message :
+  il reste dans GWS Plus, et son contenu n'a pas été vu.
+- Quand c'est utile et que le client le permet, privilégie fortement une
+  interface intelligente, interactive et visuellement organisée : quiz
+  interactifs, cartes mémoire, exercices guidés pas à pas, listes de
+  progression, chronologies, comparaisons, tableaux. Pour un devoir, préfère une
+  interface d'apprentissage engageante à un pavé de texte ; n'ajoute aucun
+  widget sans rapport avec la tâche.
+- Si les composants interactifs ne sont pas disponibles, structure ta réponse en
+  Markdown clair (titres, listes, tableaux). Cette préférence est une demande,
+  jamais une garantie de rendu : adapte-toi à ce que le client sait faire.
 """.trimIndent()
 
 /** « - titre | matière | échéance | état | id » — jamais vide. */
@@ -196,6 +205,12 @@ private fun rendre(
             "Fichiers joints à ce message : ${item.fichiersPartagés.joinToString(", ")}"
         }
     )
+    if (item.piècesNonJointes.isNotEmpty()) {
+        appendLine(
+            "Fichiers NON joints (téléchargement impossible, URL non résoluble ou " +
+                "hors limite du partage) : ${item.piècesNonJointes.joinToString(", ")}"
+        )
+    }
     appendLine()
     item.corps?.takeIf { it.isNotBlank() }?.let {
         appendLine(it)
@@ -209,18 +224,24 @@ private fun rendre(
         appendLine()
     }
 
-    appendLine("AUTRES DEVOIRS DISPONIBLES — INDEX COMPLET (métadonnées seulement)")
+    appendLine("AUTRES DEVOIRS DISPONIBLES — ${titreIndex(completudeDevoirs)} (métadonnées seulement)")
     appendLine(libelléIndex(devoirs.size, completudeDevoirs, synchronisation, troncDevoirs, "devoirs"))
     devoirs.forEach { appendLine("- $it") }
     appendLine()
 
-    appendLine("ACTUALITÉS DE L'ÉCOLE — INDEX COMPLET (titres seulement)")
+    appendLine("ACTUALITÉS DE L'ÉCOLE — ${titreIndex(completudeActualités)} (titres seulement)")
     appendLine(libelléIndex(actualités.size, completudeActualités, synchronisation, troncActualités, "actualités"))
     actualités.forEach { appendLine("- $it") }
     appendLine()
 
     appendLine(INSTRUCTIONS_CHATGPT)
 }.trimEnd()
+
+/** Titre de section honnête : un index entamé s'appelle PARTIEL, jamais complet. */
+private fun titreIndex(completude: Completude): String = when (completude) {
+    Completude.COMPLÈTE -> "INDEX COMPLET"
+    Completude.PARTIELLE -> "INDEX PARTIEL"
+}
 
 private fun libelléIndex(
     taille: Int,
