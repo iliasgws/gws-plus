@@ -1520,3 +1520,26 @@ so the back-stack contract (`docs/development/NAVIGATION.md`) is untouched.
 - [ ] On-device check: tap → viewer → pinch → swipe → close, long-press
       preview → « Agrandir », 1 image / several images / missing image /
       slow network, and the Android back gesture from the viewer
+
+## Copy a news note (issue #148, branch `feat/copier-actualite-148`)
+
+The detail of an actualité (the school's note d'information) was readable but
+not copyable — the text had to be selected by hand. The homework detail
+already offers this since issue #85.
+
+- [x] `util/TexteActualite.kt`: `postTexteÀCopier(post)` — a pure builder,
+      outside Compose so it stays unit-testable: title (with the « Actualité »
+      fallback), category, date (`frenchFull()`), author, then a blank line and
+      the HTML body flattened by `htmlToPlainMultiline()`. Blank fields are
+      skipped and a blank body leaves no trailing paragraph.
+- [x] `PostDetailScreen`: a copy `IconButton` at the right end of the top row
+      (back button on the left, `Arrangement.SpaceBetween`), disabled while the
+      post is not loaded, writing through `LocalClipboardManager` and confirming
+      with the « Actualité copiée » toast — the same pattern as
+      `DevoirDetailScreen` (issue #85).
+- [x] Tests: `ActualitesTexteÀCopierTest` (4 tests: full post, minimal post,
+      fallback label + blank fields, blank body) — `:app:assembleDebug` +
+      `:app:testDebugUnitTest` green (321 tests)
+- [ ] On-device check: copy from a loaded note, button disabled while the
+      skeleton is showing, paste the result elsewhere, TalkBack announces
+      « Copier l'actualité ».
