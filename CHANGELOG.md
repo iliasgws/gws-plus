@@ -6,6 +6,13 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
 
 ## [Non publié]
 
+### Ajouté
+
+- Actualités : bouton **Copier** dans le détail d'une note d'information (#148) —
+  titre, catégorie, date, auteur et texte de l'annonce (HTML retiré) partent
+  d'un seul geste dans le presse-papiers, avec la confirmation « Actualité
+  copiée ». Le bouton reste inactif tant que l'annonce n'est pas chargée.
+
 ## [0.10.0] — 2026-10-10
 
 Version stable après les bêtas 0.9.14-beta.1 à 0.9.14-beta.3 et

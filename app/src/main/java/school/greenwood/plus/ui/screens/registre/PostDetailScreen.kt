@@ -1,6 +1,7 @@
 package school.greenwood.plus.ui.screens.registre
 
 import android.content.Context
+import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -28,6 +29,7 @@ import androidx.compose.material.icons.rounded.Attachment
 import androidx.compose.material.icons.rounded.Bookmark
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.RadioButtonChecked
 import androidx.compose.material.icons.rounded.RadioButtonUnchecked
@@ -52,7 +54,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -85,6 +89,7 @@ import school.greenwood.plus.util.Fichiers
 import school.greenwood.plus.util.frenchFull
 import school.greenwood.plus.util.frenchShort
 import school.greenwood.plus.util.htmlToPlainMultiline
+import school.greenwood.plus.util.postTexteÀCopier
 
 /**
  * Détail d'une actualité (GET `post_view?post=<id>`).
@@ -126,11 +131,32 @@ fun PostDetailScreen(
                 .fillMaxWidth()
                 .padding(vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             IconButton(onClick = retour) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
                     contentDescription = "Retour",
+                    tint = RegistreTheme.colors.ink,
+                )
+            }
+            // Issue #148 : bouton de copie — titre, catégorie, date, auteur et
+            // corps aplati de la note d'information dans le presse-papiers.
+            // Inactif tant que le post n'est pas chargé.
+            val pressePapiers = LocalClipboardManager.current
+            val actualité = état.detail
+            IconButton(
+                onClick = {
+                    actualité?.let { post ->
+                        pressePapiers.setText(AnnotatedString(postTexteÀCopier(post)))
+                        Toast.makeText(context, "Actualité copiée", Toast.LENGTH_SHORT).show()
+                    }
+                },
+                enabled = actualité != null,
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.ContentCopy,
+                    contentDescription = "Copier l'actualité",
                     tint = RegistreTheme.colors.ink,
                 )
             }
