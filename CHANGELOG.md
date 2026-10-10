@@ -4,6 +4,20 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [0.9.14-beta.2] — 2026-10-10
+
+### Préversion (bêta)
+
+### Ajouté
+
+- Le Registre retrouve instantanément le dernier écran affiché au
+  redémarrage de l'application (#145) : le contenu est relu d'un instantané
+  disque chiffré (Keystore), hors des sauvegardes Android, purgé à la
+  connexion comme à la déconnexion et strictement limité au compte et à
+  l'enfant actuels. Tant que le réseau n'a pas répondu, un bandeau explicite
+  annonce « Contenu du dernier affichage — actualisation en cours… » : rien
+  n'est présenté comme frais tant qu'il n'est pas rafraîchi.
+
 ## [0.9.14-beta.1] — 2026-10-09
 
 ### Préversion (bêta)
