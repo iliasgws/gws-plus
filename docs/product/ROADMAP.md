@@ -58,6 +58,20 @@ raw probe responses stay out of the repository (personal data).
       without blocking content on a different host than the API. Baseline /
       Startup Profiles deferred until a device benchmark shows process start
       dominating time-to-content.
+- [x] Offline / total failure is announced, never passed off as content
+      (issue #21, found while testing beta.1): with all four sources failing
+      together (airplane mode, unreachable server), `chargerRegistre()` used
+      to return an *empty* registre — `charger()` treated it as a success, so
+      the Registre wiped the known content (« 0 devoir », no entries) and
+      showed no banner. It now throws `BotiErreur(« Connexion impossible —
+      vérifie ta connexion internet »)`, which keeps the prefilled
+      memory/snapshot content on screen and puts the usual non-blocking
+      « Réessayer » banner over it. A **partial** failure (one endpoint down)
+      keeps the section it failed on from vanishing: that section inherits
+      the already-displayed content of the same day, and the banner says
+      which sections could not be refreshed (« Actualisation incomplète —
+      sections non actualisées : … »). Both rules live in the pure
+      `chargerRegistre()` and are pinned by `RegistreParallèleTest`.
 - [ ] On-device measurement still open: this environment has no logged-in test
       device, so the 2.1 s figure in the issue remains a video estimate.
       Cold/warm/hot starts and time-to-full-content (`am start -W`, screen

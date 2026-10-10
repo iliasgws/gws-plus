@@ -4,6 +4,18 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [Non publié]
+
+### Corrigé
+
+- Hors ligne, le Registre disait qu'il était à jour : les quatre sources
+  échouant ensemble rendaient un registre vide que l'application prenait pour
+  un succès — le contenu connu disparaissait (« 0 devoir ») sans aucun
+  avertissement (#145). Désormais un échec total affiche « Connexion
+  impossible — vérifie ta connexion internet » avec « Réessayer » par-dessus
+  le contenu déjà affiché, et une source qui tombe seule conserve ses
+  entrées connues tout en signalant les sections non actualisées.
+
 ## [0.9.14-beta.2] — 2026-10-10
 
 ### Préversion (bêta)

@@ -9,6 +9,9 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import school.greenwood.plus.data.api.BotiErreur
+import school.greenwood.plus.data.repo.EntreeRegistre
+import school.greenwood.plus.data.repo.RegistreDuJour
 import school.greenwood.plus.data.repo.chargerRegistre
 import school.greenwood.plus.model.Absence
 import school.greenwood.plus.model.BilanAbsences
@@ -210,5 +213,74 @@ class RegistreParallèleTest {
             }
         }
         assertTrue("une annulation remonte, jamais avalée", issue.exceptionOrNull() is CancellationException)
+    }
+
+    @Test
+    fun `les quatre sources qui tombent ensemble annoncent la panne, pas un registre vide`() {
+        // Hors ligne : les quatre GET échouent ensemble. Avant le correctif,
+        // chacune rendait son défaut, le registre « réussissait » vide et
+        // l'écran n'affichait aucun avertissement.
+        val issue = runCatching {
+            runBlocking {
+                chargerRegistre(
+                    aujourdhui = aujourdhui,
+                    devoirs = { error("hors ligne") },
+                    posts = { error("hors ligne") },
+                    absences = { error("hors ligne") },
+                    messages = { error("hors ligne") },
+                )
+            }
+        }
+        val erreur = issue.exceptionOrNull()
+        assertTrue("l'échec total remonte, jamais un registre vide", erreur is BotiErreur)
+        assertTrue(
+            "le message annonce la connexion, obtenu : ${(erreur as BotiErreur).messageUtilisateur}",
+            erreur.messageUtilisateur.contains("Connexion impossible"),
+        )
+    }
+
+    @Test
+    fun `une section en échec retrouve le contenu déjà connu au lieu de se vider`() {
+        val connu = RegistreDuJour(
+            date = aujourdhui,
+            ceSoir = listOf(devoirDuJour()),
+            horizonCeSoir = aujourdhui.plusDays(5),
+            entrees = listOf(
+                EntreeRegistre.Actualite(postDuJour()),
+                EntreeRegistre.DevoirDonné(devoirDuJour()),
+            ),
+        )
+        var signalés = emptyList<String>()
+        val jour = runBlocking {
+            chargerRegistre(
+                aujourdhui = aujourdhui,
+                devoirs = { error("panne serveur sur devoirs") },
+                posts = { listOf(postDuJour()) },
+                absences = { BilanAbsences() },
+                messages = { emptyList() },
+                connu = connu,
+                surÉchecs = { signalés = it },
+            )
+        }
+        assertEquals(listOf("devoirs"), signalés)
+        assertEquals("carte « Ce soir » héritée", listOf("d1"), jour.ceSoir.map { it.id })
+        assertTrue("devoir connu conservé", jour.entrees.any { it.id == "devoir-d1" })
+        assertTrue("actualité fraîche, pas en double", jour.entrees.count { it.id == "post-p1" } == 1)
+    }
+
+    @Test
+    fun `tout réussit, rien n'est signalé à l'écran`() {
+        var appelé = false
+        runBlocking {
+            chargerRegistre(
+                aujourdhui = aujourdhui,
+                devoirs = { listOf(devoirDuJour()) },
+                posts = { listOf(postDuJour()) },
+                absences = { BilanAbsences() },
+                messages = { emptyList() },
+                surÉchecs = { appelé = true },
+            )
+        }
+        assertTrue("aucun échec, aucun avertissement", !appelé)
     }
 }

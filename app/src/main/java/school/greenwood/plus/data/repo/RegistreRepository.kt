@@ -4,6 +4,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import school.greenwood.plus.data.api.BotiClient
+import school.greenwood.plus.data.api.BotiErreur
 import school.greenwood.plus.data.cache.CachesSession
 import school.greenwood.plus.data.session.SessionStore
 import school.greenwood.plus.logic.CeSoir
@@ -19,7 +20,8 @@ import java.time.LocalDate
  * passé aujourd'hui, avec la carte « Ce soir » en tête. Une seule classe
  * agrège les quatre sources (nouveautes, devoirs, absences, messages) — l'UI
  * ne connaît que le registre. Les quatre requêtes partent en parallèle
- * (issue #145) : aucune n'attend l'autre, chacune tolère son propre échec.
+ * (issue #145) : aucune n'attend l'autre, chacune tolère son propre échec —
+ * sans qu'un échec total ou partiel passe pour un contenu à jour.
  */
 
 sealed interface EntreeRegistre {
@@ -64,13 +66,23 @@ class RegistreRepository(
     private val absences = AbsencesRepository(client)
     private val messagesRepo = MessagesRepository(client, session, caches)
 
-    suspend fun charger(aujourdhui: LocalDate = LocalDate.now()): RegistreDuJour =
+    suspend fun charger(
+        aujourdhui: LocalDate = LocalDate.now(),
+        // Dernier registre affiché : une section qui échoue retrouve son
+        // contenu connu au lieu de se vider sous les yeux de l'utilisateur.
+        connu: RegistreDuJour? = null,
+        // Sections qui n'ont pas répondu (« devoirs », « actualités »…) —
+        // vide quand tout a réussi. L'écran en a besoin pour prévenir.
+        surÉchecs: (List<String>) -> Unit = {},
+    ): RegistreDuJour =
         chargerRegistre(
             aujourdhui = aujourdhui,
             devoirs = { devoirs.liste() },
             posts = { nouveautes.liste() },
             absences = { absences.liste() },
             messages = { messagesRepo.conversations().conversations },
+            connu = connu,
+            surÉchecs = surÉchecs,
         ).also { jour ->
             // Dernier registre connu (issue #21), estampillé session.
             caches.clé()?.let { clé -> caches.registre.écrire(clé, jour) }
@@ -88,6 +100,15 @@ class RegistreRepository(
  * Les quatre sources du registre sont indépendantes : elles partent ensemble
  * (issue #145) et chacune tolère son propre échec. Fonction pure — testable
  * sans Android, sans réseau et sans session (`RegistreParallèleTest`).
+ *
+ * Deux règles d'honnêteté (issue #21) encadrent cette tolérance :
+ * - les quatre tombent ensemble (hors ligne, serveur injoignable) → c'est une
+ *   panne, pas un registre vide : [BotiErreur] remonte et l'écran garde ce
+ *   qu'il affichait déjà ;
+ * - une seule tombe → sa section retrouve le contenu déjà connu du même jour
+ *   ([connu]) et [surÉchecs] les liste, pour que l'écran prévienne.
+ * Une annulation (changement de session, sortie d'écran) n'est pas une panne :
+ * elle reprend son chemin et arrête le chargement.
  */
 internal suspend fun chargerRegistre(
     aujourdhui: LocalDate,
@@ -95,18 +116,44 @@ internal suspend fun chargerRegistre(
     posts: suspend () -> List<Post>,
     absences: suspend () -> BilanAbsences,
     messages: suspend () -> List<Conversation>,
+    connu: RegistreDuJour? = null,
+    surÉchecs: (List<String>) -> Unit = {},
 ): RegistreDuJour = coroutineScope {
-    val devoirsChargés = async { enTolérance({ devoirs() }, emptyList<Devoir>()) }
-    val postsChargés = async { enTolérance({ posts() }, emptyList<Post>()) }
-    val bilansChargés = async { enTolérance({ absences() }, BilanAbsences()) }
-    val messagesChargés = async { enTolérance({ messages() }, emptyList<Conversation>()) }
+    val devoirsChargés = async { auSource({ devoirs() }, emptyList<Devoir>()) }
+    val postsChargés = async { auSource({ posts() }, emptyList<Post>()) }
+    val bilansChargés = async { auSource({ absences() }, BilanAbsences()) }
+    val messagesChargés = async { auSource({ messages() }, emptyList<Conversation>()) }
 
-    val tousLesDevoirs = devoirsChargés.await()
-    val listePosts = postsChargés.await()
-    val bilans = bilansChargés.await()
-    val listeMessages = messagesChargés.await()
+    val sourceDevoirs = devoirsChargés.await()
+    val sourcePosts = postsChargés.await()
+    val sourceBilans = bilansChargés.await()
+    val sourceMessages = messagesChargés.await()
 
-    val ceSoir = CeSoir.devoirsDuSoir(tousLesDevoirs, aujourdhui)
+    val enÉchec = buildList {
+        if (sourceDevoirs.enÉchec) add("devoirs")
+        if (sourcePosts.enÉchec) add("actualités")
+        if (sourceBilans.enÉchec) add("absences")
+        if (sourceMessages.enÉchec) add("messages")
+    }
+    if (enÉchec.size == 4) {
+        throw BotiErreur("Connexion impossible — vérifie ta connexion internet")
+    }
+    if (enÉchec.isNotEmpty()) surÉchecs(enÉchec)
+
+    val tousLesDevoirs = sourceDevoirs.valeur
+    val listePosts = sourcePosts.valeur
+    val bilans = sourceBilans.valeur
+    val listeMessages = sourceMessages.valeur
+
+    // Section en échec : le contenu déjà affiché du même jour tient lieu de
+    // résultat — rien ne disparaît de l'écran sous prétexte que le réseau a
+    // lâché sur une seule source.
+    val héritage = connu?.takeIf { it.date == aujourdhui && enÉchec.isNotEmpty() }
+    val ceSoir = if (héritage != null && "devoirs" in enÉchec) {
+        héritage.ceSoir
+    } else {
+        CeSoir.devoirsDuSoir(tousLesDevoirs, aujourdhui)
+    }
     val entrees = buildList {
         listePosts.filter { it.date?.toLocalDate() == aujourdhui }
             .forEach { add(EntreeRegistre.Actualite(it)) }
@@ -117,6 +164,9 @@ internal suspend fun chargerRegistre(
             .forEach { add(EntreeRegistre.AbsenceNotée(it)) }
         listeMessages.filter { m -> m.dernierDate?.toLocalDate()?.let { it == aujourdhui || it.isAfter(aujourdhui) } == true }
             .forEach { conversation -> add(EntreeRegistre.MessageReçu(conversation)) }
+        héritage?.entrees?.forEach { entrée ->
+            if (entrée.section() in enÉchec) add(entrée)
+        }
     }.sortedByDescending { it.horodatage ?: java.time.LocalDateTime.MAX }
 
     RegistreDuJour(
@@ -127,18 +177,29 @@ internal suspend fun chargerRegistre(
     )
 }
 
+/** La section dont une entrée provient — le nom rapporté à l'écran. */
+private fun EntreeRegistre.section(): String = when (this) {
+    is EntreeRegistre.Actualite -> "actualités"
+    is EntreeRegistre.DevoirDonné -> "devoirs"
+    is EntreeRegistre.AbsenceNotée -> "absences"
+    is EntreeRegistre.MessageReçu -> "messages"
+}
+
+/** Une source : sa valeur, et si elle a dû se rabattre sur son défaut. */
+private class Source<T>(val valeur: T, val enÉchec: Boolean)
+
 /**
- * Une panne serveur rend sa section vide sans masquer les autres — le
- * comportement de `runCatching`… sauf qu'une annulation (changement de
- * session, sortie d'écran) n'est pas une panne : elle reprend son chemin
- * et arrête le chargement plutôt que d'afficher un registre à moitié vide.
+ * Le comportement de `runCatching`, mais honnête : l'échec est retenu au lieu
+ * d'être confondu avec « la section est vide », et une annulation (changement
+ * de session, sortie d'écran) n'est pas une panne — elle reprend son chemin et
+ * arrête le chargement plutôt que d'afficher un registre à moitié vide.
  */
-private suspend fun <T> enTolérance(bloc: suspend () -> T, défaut: T): T = try {
-    bloc()
+private suspend fun <T> auSource(bloc: suspend () -> T, défaut: T): Source<T> = try {
+    Source(bloc(), enÉchec = false)
 } catch (annulation: CancellationException) {
     throw annulation
 } catch (_: Exception) {
-    défaut
+    Source(défaut, enÉchec = true)
 }
 
 class AbsencesRepository(private val client: BotiClient) {

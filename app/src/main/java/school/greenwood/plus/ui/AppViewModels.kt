@@ -267,7 +267,14 @@ class RegistreViewModel(private val container: AppContainer) : ViewModel() {
                     appliquerSession(s, _état.value.eleve?.id ?: s.eleveId)
                 }
                 if (container.session.state.first() == null) return@launch
-                val registre = container.registre.charger()
+                // Une section hors ligne garde son contenu connu (le registre
+                // le signale) : l'écran doit le dire plutôt que laisser croire
+                // que tout est à jour.
+                var sectionsEnÉchec: List<String> = emptyList()
+                val registre = container.registre.charger(
+                    connu = _état.value.registre,
+                    surÉchecs = { sectionsEnÉchec = it },
+                )
                 val derniere = runCatching { container.nouveautes.dernière() }.getOrNull()
                 val àMontrer = derniere ?: _état.value.derniereActualite
                 _état.update {
@@ -278,7 +285,12 @@ class RegistreViewModel(private val container: AppContainer) : ViewModel() {
                         derniereActualite = àMontrer,
                         // Réseau à jour : ce qui s'affiche est frais.
                         restauréDuDisque = false,
-                        erreur = null,
+                        erreur = if (sectionsEnÉchec.isEmpty()) {
+                            null
+                        } else {
+                            "Actualisation incomplète — sections non actualisées : " +
+                                sectionsEnÉchec.joinToString(", ")
+                        },
                     )
                 }
                 // Instantané du résultat frais (issue #145) — jamais quand
