@@ -1543,3 +1543,32 @@ already offers this since issue #85.
 - [ ] On-device check: copy from a loaded note, button disabled while the
       skeleton is showing, paste the result elsewhere, TalkBack announces
       « Copier l'actualité ».
+
+## Open in ChatGPT (issue #150, branch `feat/ouvrir-chatgpt-150`, stacked on #149)
+
+The Copy button now has a neighbour: one tap moves the very same text into the
+ChatGPT Android app as a prefilled prompt — nothing is ever sent automatically
+and Copy keeps its exact behaviour.
+
+- [x] `util/OuvrirChatGPT.kt`: `intentionChatGPT(texte)` builds `ACTION_SEND`
+      `text/plain` + `EXTRA_TEXT` restricted to the `com.openai.chatgpt`
+      package (the ADB-tested integration confirmed in the issue);
+      `ouvrirChatGPT(context, texte)` returns `CHATGPT` / `PARTAGE` / `ÉCHEC` —
+      no widget Context and no toast inside the util, so the caller owns the
+      wording and a launch failure can never crash a screen.
+- [x] `ui/components/BoutonOuvrirChatGPT.kt`: shared `IconButton`
+      (`Icons.Rounded.AutoAwesome`, TalkBack label « Ouvrir dans ChatGPT »),
+      disabled while the text is null; it toasts « ChatGPT n'est pas installé »
+      when the system share sheet takes over and « Impossible d'ouvrir ChatGPT »
+      when nothing can open the text.
+- [x] Both Copy call sites (homework detail #85, news detail #148) group the two
+      buttons at the right of the top row; the copied string is built once and
+      handed to both, so Copy and ChatGPT always carry identical content —
+      Copy's labels, toast and behaviour are unchanged.
+- [ ] No new JVM test on purpose: an `Intent` cannot be instantiated on the
+      mocked android.jar; the shared text builders stay covered by
+      `DevoirsTexteÀCopierTest` and `ActualitesTexteÀCopierTest`.
+- [ ] On-device check: ChatGPT installed → text prefilled in the composer and
+      never sent; ChatGPT missing → toast + share sheet; nothing able to open
+      → failure toast with Copy still working; TalkBack announces
+      « Ouvrir dans ChatGPT ».

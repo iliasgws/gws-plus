@@ -72,6 +72,7 @@ import school.greenwood.plus.ui.PostDetailViewModel
 import school.greenwood.plus.ui.components.AperçuImage
 import school.greenwood.plus.ui.components.AperçuImageRapide
 import school.greenwood.plus.ui.components.BandeauErreur
+import school.greenwood.plus.ui.components.BoutonOuvrirChatGPT
 import school.greenwood.plus.ui.components.GwsAvatar
 import school.greenwood.plus.ui.components.GwsCard
 import school.greenwood.plus.ui.components.GwsLoadingIndicator
@@ -143,22 +144,29 @@ fun PostDetailScreen(
             // Issue #148 : bouton de copie — titre, catégorie, date, auteur et
             // corps aplati de la note d'information dans le presse-papiers.
             // Inactif tant que le post n'est pas chargé.
-            val pressePapiers = LocalClipboardManager.current
-            val actualité = état.detail
-            IconButton(
-                onClick = {
-                    actualité?.let { post ->
-                        pressePapiers.setText(AnnotatedString(postTexteÀCopier(post)))
-                        Toast.makeText(context, "Actualité copiée", Toast.LENGTH_SHORT).show()
-                    }
-                },
-                enabled = actualité != null,
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                Icon(
-                    imageVector = Icons.Rounded.ContentCopy,
-                    contentDescription = "Copier l'actualité",
-                    tint = RegistreTheme.colors.ink,
-                )
+                val pressePapiers = LocalClipboardManager.current
+                val texteÀCopier = état.detail?.let { postTexteÀCopier(it) }
+                IconButton(
+                    onClick = {
+                        texteÀCopier?.let { texte ->
+                            pressePapiers.setText(AnnotatedString(texte))
+                            Toast.makeText(context, "Actualité copiée", Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    enabled = texteÀCopier != null,
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.ContentCopy,
+                        contentDescription = "Copier l'actualité",
+                        tint = RegistreTheme.colors.ink,
+                    )
+                }
+                // Issue #150 : même texte, pré-rempli dans ChatGPT (jamais envoyé).
+                BoutonOuvrirChatGPT(texte = texteÀCopier)
             }
         }
 
