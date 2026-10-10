@@ -6,6 +6,17 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
 
 ## [Non publié]
 
+## [0.10.0] — 2026-10-10
+
+Version stable après les bêtas 0.9.14-beta.1 à 0.9.14-beta.3 et
+0.10.0-beta.1 à 0.10.0-beta.2, acceptée par l'utilisateur avec sa demande
+de publication stable et de fusion du PR #146. Elle regroupe le
+chargement parallèle des sources du Registre (#145), l'instantané disque
+du dernier écran affiché, l'honnêteté hors ligne (panne annoncée, jamais
+un contenu effacé), le chauffage global des caches avec son réglage dans
+Paramètres, et l'ouverture hors ligne de toutes les sections et des
+écrans déjà ouverts. Voir les sections bêta ci-dessous pour le détail.
+
 ## [0.10.0-beta.2] — 2026-10-10
 
 ### Préversion (bêta)
