@@ -78,6 +78,29 @@ raw probe responses stay out of the repository (personal data).
       recording) must be captured on the test device before the stable
       promotion, and the numbers above re-measured there.
 
+## Global cache warm-up (prefetch)
+
+- [x] Every section's list is fetched in the background at app open and on
+      any screen refresh (registre load, pull-to-refresh on Registre/Cours/
+      Actualités, foreground-return refresh), so a tab that was never opened
+      already has content from its session-stamped cache (issue #21). Driven
+      by `ChauffageTout` (`data/repo/Chauffage.kt`): an app-lifetime
+      `SupervisorJob` scope, one in-flight warm-up at a time (relaunch
+      cancels the previous), per-source failure tolerance reusing the shared
+      `auSource` helper, and cancellation on session purge (logout) — no
+      error is ever projected into the UI.
+- [x] Visible media is prefetched into the existing binary caches, under the
+      stable identity keys of issue #108: post covers via the singleton Coil
+      loader, message/post attachments via the bounded private
+      `Fichiers.télécharger`, voice messages via `CacheAudio.préparer`. Bounded
+      (12 images / 24 files / 12 voice clips per pass), deduplicated, never
+      into the public Download folder. Bibliothèque and homework attachments
+      need per-id detail calls and stay out of the warm-up.
+- [x] Settings switch « Actualiser toutes les sections en arrière-plan »
+      (Paramètres → Actualisation des données), on by default, persisted as
+      an app preference (survives logout), effective immediately (turning it
+      off cancels the running warm-up).
+
 ## Security hardening (issues #136–#141)
 
 - [x] Exclude session DataStore, private document files and the public-download

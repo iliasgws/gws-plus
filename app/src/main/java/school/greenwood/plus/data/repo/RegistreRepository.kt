@@ -186,7 +186,7 @@ private fun EntreeRegistre.section(): String = when (this) {
 }
 
 /** Une source : sa valeur, et si elle a dû se rabattre sur son défaut. */
-private class Source<T>(val valeur: T, val enÉchec: Boolean)
+internal class Source<T>(val valeur: T, val enÉchec: Boolean)
 
 /**
  * Le comportement de `runCatching`, mais honnête : l'échec est retenu au lieu
@@ -194,7 +194,7 @@ private class Source<T>(val valeur: T, val enÉchec: Boolean)
  * de session, sortie d'écran) n'est pas une panne — elle reprend son chemin et
  * arrête le chargement plutôt que d'afficher un registre à moitié vide.
  */
-private suspend fun <T> auSource(bloc: suspend () -> T, défaut: T): Source<T> = try {
+internal suspend fun <T> auSource(bloc: suspend () -> T, défaut: T): Source<T> = try {
     Source(bloc(), enÉchec = false)
 } catch (annulation: CancellationException) {
     throw annulation

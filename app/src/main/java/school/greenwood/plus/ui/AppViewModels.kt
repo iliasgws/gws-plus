@@ -293,6 +293,11 @@ class RegistreViewModel(private val container: AppContainer) : ViewModel() {
                         },
                     )
                 }
+                // Toutes les sections se rafraîchissent en arrière-plan :
+                // ouvrir l'application (ou tirer vers le bas) remplit les
+                // caches de tous les onglets, réglage des Paramètres.
+                container.chauffage.chauffer()
+
                 // Instantané du résultat frais (issue #145) — jamais quand
                 // « Rester connecté » est décoché : la session ne touche alors
                 // rien du disque (issue #140). Échec = silencieux, le cache
@@ -1495,6 +1500,7 @@ class ActualitesViewModel(private val container: AppContainer) : ViewModel() {
                         erreur = null,
                     )
                 }
+                container.chauffage.chauffer()
             } catch (err: BotiErreur) {
                 _état.update { it.copy(rafraîchissement = false, erreur = err.messageUtilisateur) }
             } catch (err: Exception) {
@@ -1737,7 +1743,10 @@ class CoursViewModel(private val container: AppContainer) : ViewModel() {
         }
     }
 
-    fun rafraîchir() = charger(force = true)
+    fun rafraîchir() {
+        container.chauffage.chauffer()
+        charger(force = true)
+    }
 
     fun choisirJour(jour: Int) {
         _état.update { it.copy(jourChoisi = jour) }
@@ -1803,6 +1812,9 @@ data class ParamètresÉtat(
     val testRéussi: Boolean? = null,
     val révocationEnCours: Boolean = false,
 
+    /** Chauffage global des caches : toutes les sections en arrière-plan. */
+    val chauffageToutActivé: Boolean = true,
+
     /** Déconnexion (issue #101) : second accès, depuis les Paramètres. */
     val déconnexionEnCours: Boolean = false,
 )
@@ -1812,6 +1824,11 @@ class ParametresViewModel(private val container: AppContainer) : ViewModel() {
     val état: StateFlow<ParamètresÉtat> = _état.asStateFlow()
 
     init {
+        viewModelScope.launch {
+            container.session.chauffageToutActivé.collect { actif ->
+                _état.update { it.copy(chauffageToutActivé = actif) }
+            }
+        }
         viewModelScope.launch {
             container.session.bannièreRegistreActivée.collect { actif ->
                 _état.update { it.copy(bannièreRegistreActivée = actif) }
@@ -1857,6 +1874,14 @@ class ParametresViewModel(private val container: AppContainer) : ViewModel() {
     fun choisirDurée(minutes: Int) {
         viewModelScope.launch {
             container.session.définirActualisationRetour(minutes)
+        }
+    }
+
+    fun définirChauffageTout(actif: Boolean) {
+        viewModelScope.launch {
+            container.session.définirChauffageTout(actif)
+            // Coupé en cours de route : le chauffage s'arrête net.
+            if (!actif) container.chauffage.annuler()
         }
     }
 

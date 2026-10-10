@@ -13,6 +13,7 @@ import school.greenwood.plus.data.cache.SnapshotsRegistre
 import school.greenwood.plus.data.cache.fabriquerChargeur
 import school.greenwood.plus.data.repo.AuthRepository
 import school.greenwood.plus.data.repo.BoutiqueRepository
+import school.greenwood.plus.data.repo.ChauffageTout
 import school.greenwood.plus.data.repo.CommunauteRepository
 import school.greenwood.plus.data.repo.CoursRepository
 import school.greenwood.plus.data.repo.DevoirsRepository
@@ -71,6 +72,11 @@ class AppContainer(context: Context) {
     val demandes = DemandesRepository(client, caches)
     val documents = DocumentsRepository(client, session, caches)
     val boutique = BoutiqueRepository(client, session)
+
+    // Chauffage des caches (prefetch) : à l'ouverture et à chaque
+    // actualisation, toutes les sections se rafraîchissent en arrière-plan
+    // — réglage des Paramètres, activé par défaut.
+    val chauffage = ChauffageTout(context, session, cours, devoirs, documents, demandes, messages, nouveautes)
 
     // Mises à jour de l'app — GitHub Releases, sans serveur (issue #46).
     val misesÀJour = UpdatesRepository(context, session)

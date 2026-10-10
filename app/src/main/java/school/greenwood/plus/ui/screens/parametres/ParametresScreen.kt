@@ -267,6 +267,22 @@ fun ParametresScreen(
                 modifier = Modifier.padding(top = 10.dp, start = 4.dp, end = 4.dp),
             )
 
+            RéglageBannière(
+                "Actualiser toutes les sections en arrière-plan",
+                état.chauffageToutActivé,
+                vm::définirChauffageTout,
+            )
+            Text(
+                text = "Dès que l'application s'ouvre ou qu'un écran est actualisé, les autres " +
+                    "sections (Cours, Devoirs, Documents, Messages, Demandes, Actualités) se " +
+                    "rafraîchissent aussi, et leurs images et pièces jointes entrent dans le " +
+                    "cache. Chaque onglet s'ouvre alors déjà rempli. Désactivé, seul l'écran " +
+                    "que tu consultes se rafraîchit.",
+                style = MaterialTheme.typography.bodySmall,
+                color = RegistreTheme.colors.chalk,
+                modifier = Modifier.padding(top = 6.dp, start = 4.dp, end = 4.dp),
+            )
+
             SectionLabel("Assistant IA")
 
             SectionIA(vmIA = vmIA)
