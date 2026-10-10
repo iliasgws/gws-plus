@@ -6,6 +6,16 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
 
 ## [Non publié]
 
+### Ajouté
+
+- ChatGPT : le partage « Ouvrir dans ChatGPT » devient un vrai prompt (#150) —
+  profil vérifié de l'école, élément ouvert en entier, index complet des autres
+  devoirs (métadonnées seulement) et de toutes les actualités (titres
+  seulement), plus les pièces jointes téléchargées et jointes au partage.
+  L'index tronqué pour la taille est annoncé « PARTIEL » dans le prompt, jamais
+  présenté comme complet ; ChatGPT reçoit pour consigne de demander
+  l'élément complet dans GWS Plus plutôt que d'inventer à partir des titres.
+
 ## [0.10.1-beta.2] — 2026-10-10
 
 ### Préversion (bêta)

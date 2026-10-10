@@ -173,8 +173,20 @@ fun DevoirDetailScreen(
                         tint = RegistreTheme.colors.ink,
                     )
                 }
-                // Issue #150 : même texte, pré-rempli dans ChatGPT (jamais envoyé).
-                BoutonOuvrirChatGPT(texte = texteÀCopier)
+                // Issue #150 : le prompt part avec le devoir en entier, les
+                // index complets des autres devoirs et des actualités, et les
+                // pièces jointes téléchargées — jamais envoyé automatiquement.
+                BoutonOuvrirChatGPT(
+                    actif = devoir != null,
+                    préparer = {
+                        devoir?.let { d ->
+                            container.chatgpt.préparerDevoir(
+                                // L'état peut venir du détail (plus frais que le cache).
+                                d.copy(fait = détail?.devoir?.fait ?: d.fait),
+                            )
+                        }
+                    },
+                )
             }
         }
 

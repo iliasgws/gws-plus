@@ -165,8 +165,15 @@ fun PostDetailScreen(
                         tint = RegistreTheme.colors.ink,
                     )
                 }
-                // Issue #150 : même texte, pré-rempli dans ChatGPT (jamais envoyé).
-                BoutonOuvrirChatGPT(texte = texteÀCopier)
+                // Issue #150 : le prompt part avec l'actualité en entier, les
+                // index complets des devoirs et des actualités, et les pièces
+                // jointes téléchargées — jamais envoyé automatiquement.
+                BoutonOuvrirChatGPT(
+                    actif = état.detail != null,
+                    préparer = {
+                        état.detail?.let { post -> container.chatgpt.préparerActualité(post) }
+                    },
+                )
             }
         }
 

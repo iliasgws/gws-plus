@@ -1546,29 +1546,58 @@ already offers this since issue #85.
 
 ## Open in ChatGPT (issue #150, branch `feat/ouvrir-chatgpt-150`, stacked on #149)
 
-The Copy button now has a neighbour: one tap moves the very same text into the
-ChatGPT Android app as a prefilled prompt — nothing is ever sent automatically
-and Copy keeps its exact behaviour.
+The Copy button has a neighbour, and the issue was rewritten (v2,
+2026-10-10) into a much larger contract: the share is no longer « whatever
+Copy copies » but a **built prompt** — verified school profile, the selected
+item in full, **complete indexes** of every other accessible homework and of
+every actualité, real attachment streams, and instructions forbidding ChatGPT
+to invent anything from titles. Nothing is ever sent automatically, and Copy
+keeps its exact behaviour.
 
-- [x] `util/OuvrirChatGPT.kt`: `intentionChatGPT(texte)` builds `ACTION_SEND`
-      `text/plain` + `EXTRA_TEXT` restricted to the `com.openai.chatgpt`
-      package (the ADB-tested integration confirmed in the issue);
-      `ouvrirChatGPT(context, texte)` returns `CHATGPT` / `PARTAGE` / `ÉCHEC` —
-      no widget Context and no toast inside the util, so the caller owns the
-      wording and a launch failure can never crash a screen.
-- [x] `ui/components/BoutonOuvrirChatGPT.kt`: shared `IconButton`
-      (`Icons.Rounded.AutoAwesome`, TalkBack label « Ouvrir dans ChatGPT »),
-      disabled while the text is null; it toasts « ChatGPT n'est pas installé »
-      when the system share sheet takes over and « Impossible d'ouvrir ChatGPT »
-      when nothing can open the text.
-- [x] Both Copy call sites (homework detail #85, news detail #148) group the two
-      buttons at the right of the top row; the copied string is built once and
-      handed to both, so Copy and ChatGPT always carry identical content —
-      Copy's labels, toast and behaviour are unchanged.
-- [ ] No new JVM test on purpose: an `Intent` cannot be instantiated on the
-      mocked android.jar; the shared text builders stay covered by
-      `DevoirsTexteÀCopierTest` and `ActualitesTexteÀCopierTest`.
-- [ ] On-device check: ChatGPT installed → text prefilled in the composer and
-      never sent; ChatGPT missing → toast + share sheet; nothing able to open
-      → failure toast with Copy still working; TalkBack announces
-      « Ouvrir dans ChatGPT ».
+- [x] `util/TexteChatGPT.kt`: the pure prompt builder (JVM-tested) —
+      `PROFIL_ÉCOLE_CHATGPT` restricted to facts checked on
+      https://greenwoodschool.ma/ (Bouskoura/Casablanca, maternelle → lycée,
+      trilingue arabe/français/anglais, pédagogie de projet + PET®) plus the
+      real role of GWS Plus as the family's Android companion app; the
+      selected item (type, metadata, body, known and actually attached file
+      names); `AUTRES DEVOIRS DISPONIBLES — INDEX COMPLET (métadonnées
+      seulement)` and `ACTUALITÉS DE L'ÉCOLE — INDEX COMPLET (titres
+      seulement)` — bodies never enter an index; then the `INSTRUCTIONS`
+      block (catalogue ≠ contenu, ask the user to open + share the specific
+      item, never infer from titles, use supported rich UI, promise no
+      particular component). Written in French, the app's language.
+- [x] Honest sizing: `[LIMITE_TEXTE_CHATGPT]` (48 k) — indexes lose their
+      tail lines first (never the selected item), every truncation is spelled
+      out in the prompt and flips the index to `PARTIEL`; if that still isn't
+      enough the item body is halved with an explicit « CORPS TRONQUÉ ». A
+      cache-only or page-capped index is labelled PARTIEL too — no silent
+      « complete » claim, no fabricated entry.
+- [x] `data/repo/ChatGPTRepository.kt`: builds the prompt at share time from
+      what the student may actually see — homework list (network, session
+      cache fallback), actualités paginated with the verified 1-based start
+      (`start = taille + 1`), 20 × 10 page ceiling, deduped by id, newest
+      first; up to 4 attachments downloaded through the bounded
+      `Fichiers.télécharger` so they travel as streams, not as names.
+- [x] `util/OuvrirChatGPT.kt`: `ACTION_SEND` + `EXTRA_STREAM` for one file,
+      `ACTION_SEND_MULTIPLE` for several, MIME from the content resolver or
+      the extension, `FLAG_GRANT_READ_URI_PERMISSION`, `EXTRA_TEXT` carrying
+      the prompt; ChatGPT package first (`com.openai.chatgpt`, the ADB-tested
+      integration), system share sheet as fallback, returning `CHATGPT` /
+      `PARTAGE` / `ÉCHEC` to the caller — no toast inside the util.
+- [x] `BoutonOuvrirChatGPT`: builds on tap with the shared morphing loader,
+      disabled while building or while the item is still loading; toasts
+      « Préparation du partage impossible », « ChatGPT n'est pas installé »
+      and « Impossible d'ouvrir ChatGPT ». Both call sites (homework detail
+      #85, news detail #148) group the two buttons and leave Copy untouched.
+- [x] Tests: `ChatGPTTexteTest` (8 tests: section order, full item + attached
+      file names, no-file honesty, PARTIEL labelling, index truncation,
+      explicit body truncation, compact index lines, verified profile) —
+      `:app:assembleDebug` + `:app:testDebugUnitTest` green (329 tests)
+- [ ] On device (this environment has no logged-in device): ChatGPT opens with
+      the prompt prefilled and nothing sent; one attachment arrives, and
+      several must too (`ACTION_SEND_MULTIPLE`); ChatGPT missing → toast +
+      share sheet keeping text and files; TalkBack announces « Ouvrir dans
+      ChatGPT »; Copy unchanged.
+- [ ] `ACTION_SEND_MULTIPLE` against the ChatGPT app is the one integration
+      the issue asked to test that no ADB sample covers — confirm it before
+      the stable release.
