@@ -4,6 +4,19 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [Non publié]
+
+### Ajouté
+
+- Le chauffage global des caches : dès l'ouverture de l'application (et à
+  chaque actualisation d'un écran), toutes les sections — Cours, Devoirs,
+  Documents, Bibliothèque, Demandes, Messages, Actualités — se rafraîchissent
+  en arrière-plan, et leurs images, pièces jointes et messages vocaux déjà
+  visibles entrent dans les caches binaires. Chaque onglet s'ouvre donc déjà
+  rempli, même s'il n'a jamais été ouvert. Un interrupteur dans Paramètres
+  (« Actualiser toutes les sections en arrière-plan ») coupe ou réactive le
+  chauffage immédiatement — activé par défaut.
+
 ## [0.9.14-beta.3] — 2026-10-10
 
 ### Préversion (bêta)
