@@ -6,6 +6,10 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
 
 ## [Non publié]
 
+## [0.10.1-beta.3] — 2026-10-10
+
+### Préversion (bêta)
+
 ### Ajouté
 
 - ChatGPT : le partage « Ouvrir dans ChatGPT » devient un vrai prompt (#150) —
