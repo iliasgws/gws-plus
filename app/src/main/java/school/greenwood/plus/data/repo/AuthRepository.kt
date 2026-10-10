@@ -21,6 +21,9 @@ class AuthRepository(
     // Médias binaires de la session : mêmes moments de purge que les caches de
     // données (issue #108).
     private val purgeMedias: suspend () -> Unit = {},
+    // Instantané disque du registre (issue #145) : même moments de purge,
+    // pour qu'aucun contenu d'une famille ne survive à un changement de compte.
+    private val purgeSnapshots: suspend () -> Unit = {},
 ) {
 
     /**
@@ -65,6 +68,7 @@ class AuthRepository(
         // pour les médias binaires (issue #108).
         caches.vider()
         purgeMedias()
+        purgeSnapshots()
         session.enregistrer(
             keyToken = keyToken,
             userId = userId,
@@ -90,6 +94,7 @@ class AuthRepository(
         runCatching { client.post("logout") }
         caches.vider()
         purgeMedias()
+        purgeSnapshots()
         session.effacer()
     }
 

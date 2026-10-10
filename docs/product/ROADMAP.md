@@ -8,6 +8,135 @@ raw probe responses stay out of the repository (personal data).
 
 `[x]` done · `[~]` in progress · `[ ]` todo · `(!)` needs a decision or a real-device check
 
+## Registre startup performance (issue #145)
+
+- [x] Parallel load: the four independent registre sources (devoirs, nouveautes,
+      absences, messages) start together in `RegistreRepository.charger()` via the
+      pure `chargerRegistre()` orchestrator (structured coroutines —
+      `coroutineScope` + `async`). Each source keeps its own failure tolerance:
+      a failing endpoint leaves its section empty and the others still render.
+      `CancellationException` is rethrown instead of being swallowed as a server
+      failure (`enTolérance`), so a session switch or screen exit cancels the
+      load instead of posting a half-empty registre.
+- [x] Session validation (`acces_check`) stays strictly before the data
+      requests: they carry the refreshed key and must not race it — no
+      change to `RegistreViewModel.charger()` ordering, login/logout/child
+      switching and silent refresh keep their current behaviour.
+- [x] Measured in a repeatable JVM benchmark (`RegistreParallèleTest`, 120 ms
+      simulated latency per source, same machine): sequential reference
+      481 ms vs parallel 121 ms — the saving is ≈ 3 × per-source latency.
+      Unauthenticated request samples to `boti.education` from the dev machine
+      were 68–162 ms each (TLS handshake included), so a cold start should
+      recover roughly 200–450 ms of network wait on top of the `acces_check`
+      round trip. The benchmark also pins the overlap (4 requests in flight,
+      never 1) and both isolation rules with tests.
+- [x] `NouveautesRepository.dernière()` already reuses the first-page posts
+      cache (`listeEnCache()` first, network only as fallback) — the registre's
+      « Dernière actualité » card normally costs no extra request. No change.
+- [x] Persistent dashboard snapshot (deliverable 3, designed + implemented):
+      the last rendered registre is written to a single file
+      `registre-instantane.enc` in `context.noBackupFilesDir` (excluded from
+      Android backup/transfer by construction), sealed with `SessionSecrets`
+      (Keystore AES-GCM; a JVM-testable injectable `Chiffreur`), stamped with
+      the `userId/eleveId` session key embedded in the payload (a mismatch
+      reads as null), versioned (`VERSION_SNAPSHOT`) so an unknown format is
+      ignored rather than misparsed, written atomically (temp file + rename),
+      and purged at login and logout next to the media/data caches
+      (`AuthRepository.purgeSnapshots`, called on both paths). It is never
+      written when « Rester connecté » is off, any read failure degrades to
+      null, and only an identifier-sized preview of conversations is kept.
+      On warm start the ViewModel prefills from it (no skeleton) and the
+      Registre shows a non-blocking « Contenu du dernier affichage —
+      actualisation en cours… » banner until the network refresh lands.
+      Guarded by `SnapshotRegistreTest` (round-trip of all four entry types,
+      cross-account/cross-child isolation, corrupt file, lost Keystore key,
+      unknown version, purge, plus config guards on `noBackupFilesDir` and
+      the two purge call sites).
+- [x] Startup work reviewed, left alone on evidence: the app container builds
+      no I/O at construction, the registre banner is a local drawable, and the
+      GitHub Releases check (`vérifierAuBesoin`) runs in a `LaunchedEffect`
+      without blocking content on a different host than the API. Baseline /
+      Startup Profiles deferred until a device benchmark shows process start
+      dominating time-to-content.
+- [x] Offline / total failure is announced, never passed off as content
+      (issue #21, found while testing beta.1): with all four sources failing
+      together (airplane mode, unreachable server), `chargerRegistre()` used
+      to return an *empty* registre — `charger()` treated it as a success, so
+      the Registre wiped the known content (« 0 devoir », no entries) and
+      showed no banner. It now throws `BotiErreur(« Connexion impossible —
+      vérifie ta connexion internet »)`, which keeps the prefilled
+      memory/snapshot content on screen and puts the usual non-blocking
+      « Réessayer » banner over it. A **partial** failure (one endpoint down)
+      keeps the section it failed on from vanishing: that section inherits
+      the already-displayed content of the same day, and the banner says
+      which sections could not be refreshed (« Actualisation incomplète —
+      sections non actualisées : … »). Both rules live in the pure
+      `chargerRegistre()` and are pinned by `RegistreParallèleTest`.
+- [ ] On-device measurement still open: this environment has no logged-in test
+      device, so the 2.1 s figure in the issue remains a video estimate.
+      Cold/warm/hot starts and time-to-full-content (`am start -W`, screen
+      recording) must be captured on the test device before the stable
+      promotion, and the numbers above re-measured there.
+
+## Global cache warm-up (prefetch)
+
+- [x] Every section's list is fetched in the background at app open and on
+      any screen refresh (registre load, pull-to-refresh on Registre/Cours/
+      Actualités, foreground-return refresh), so a tab that was never opened
+      already has content from its session-stamped cache (issue #21). Driven
+      by `ChauffageTout` (`data/repo/Chauffage.kt`): an app-lifetime
+      `SupervisorJob` scope, one in-flight warm-up at a time (relaunch
+      cancels the previous), per-source failure tolerance reusing the shared
+      `auSource` helper, and cancellation on session purge (logout) — no
+      error is ever projected into the UI.
+- [x] Visible media is prefetched into the existing binary caches, under the
+      stable identity keys of issue #108: post covers via the singleton Coil
+      loader, message/post attachments via the bounded private
+      `Fichiers.télécharger`, voice messages via `CacheAudio.préparer`. Bounded
+      (12 images / 24 files / 12 voice clips per pass), deduplicated, never
+      into the public Download folder. Bibliothèque and homework attachments
+      need per-id detail calls and stay out of the warm-up.
+- [x] Settings switch « Actualiser toutes les sections en arrière-plan »
+      (Paramètres → Actualisation des données), on by default, persisted as
+      an app preference (survives logout), effective immediately (turning it
+      off cancels the running warm-up).
+
+## Offline persistence (whole-app disk cache)
+
+- [x] Every section keeps its last useful response on disk so the app opens
+      fully usable offline after a reconnect-then-lose-network cycle
+      (issue #145): Cours, Devoirs, Documents, Bibliothèque (including its
+      per-unit fiches, rebuilt from a stored raw envelope), Demandes,
+      Messages page 1, Actualités page 1, Boutique catalogue per rubrique,
+      Repas invité (rubrique « 2 »), order history, the contact card, and
+      the community first pages (devoirs/problems/corrections/abuse).
+      Each repo writes the raw server JSON (models are not `@Serializable`)
+      through `CachesSession.écrireDisque`, and its `…EnCache()` reads it
+      back through the same normalizers, repopulating the session-stamped
+      memory cache on the way.
+- [x] Already-opened details reopen offline too: conversation (via the page
+      cache), actuality (`post-<id>`), homework (`devoir-<id>`), library
+      sheet (`fiche-<id>` — its signed media URL still resolves from the
+      binary cache of issue #108), product (`produit-<id>`). ViewModels
+      prefill silently before their network call and keep the usual
+      non-blocking « Réessayer » banner on failure.
+- [x] `data/cache/CacheDisque.kt` carries the same guarantees as the
+      registre snapshot: `noBackupFilesDir`, `SessionSecrets` sealing,
+      session key embedded in the envelope (cross-account reads are null),
+      a nominal+session check on read, atomic writes, corrupt/failed reads
+      degrade to null, purged at login and logout via `CachesSession.vider()`,
+      and **never written when « Rester connecté » is off** (issue #140).
+      Guarded by `CacheDisqueTest` (11 tests: round-trip, missing name,
+      cross-session, restart via a second instance, corrupt file, purge,
+      no plaintext on disk, unsafe characters, filename collision, config
+      guard on `noBackupFilesDir`).
+- [x] Warm-up also refreshes boutique, repas, history, contact and the
+      community first pages (12 sources total) so those tabs are warm at
+      first open, not only after a visit.
+- Honest limits (unchanged): sending, quiz play, account operations and any
+  content newer than the last visit still need the network — failures stay
+  announced, never faked.
+
 ## Security hardening (issues #136–#141)
 
 - [x] Exclude session DataStore, private document files and the public-download

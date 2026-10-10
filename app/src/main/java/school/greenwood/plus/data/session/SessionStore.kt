@@ -90,6 +90,11 @@ private object Clefs {
      *  Préférences d'app : survivent à une purge de session. */
     val majDernièreVérification = longPreferencesKey("maj_derniere_verification")
     val majCanalBêta = booleanPreferencesKey("maj_canal_beta")
+
+    /** Chauffage global des caches (prefetch) : toutes les sections se
+     *  rafraîchissent en arrière-plan à l'ouverture et à chaque actualisation.
+     *  Préférence d'app : survit à une purge de session. */
+    val chauffageTout = booleanPreferencesKey("chauffage_cache_active")
     val majPublicationStockée = stringPreferencesKey("maj_publication_stockee")
 
     /** Composeur IA (issue #56) : activation, fournisseur OpenAI-compatible
@@ -283,6 +288,15 @@ class SessionStore(private val context: Context) : CompteCommunautaire {
 
     suspend fun définirMajDernièreVérification(millis: Long) {
         context.dataStore.edit { it[Clefs.majDernièreVérification] = millis }
+    }
+
+    /** Chauffage global des caches : activé par défaut ; coupé, chaque écran
+     *  ne rafraîchit que ce qu'il affiche. */
+    val chauffageToutActivé: Flow<Boolean> =
+        context.dataStore.data.map { it[Clefs.chauffageTout] ?: true }
+
+    suspend fun définirChauffageTout(actif: Boolean) {
+        context.dataStore.edit { it[Clefs.chauffageTout] = actif }
     }
 
     /** Canal de mise à jour : stable par défaut, bêtas sur option (issue #46). */

@@ -4,6 +4,86 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
+## [Non publié]
+
+## [0.10.0-beta.2] — 2026-10-10
+
+### Préversion (bêta)
+
+### Ajouté
+
+- L'application s'ouvre hors connexion (#145) : chaque section conserve sur
+  disque sa dernière réponse utile — Cours, Devoirs, Documents,
+  Bibliothèque, Demandes, Messages, Actualités, Boutique, Repas invité,
+  Historique des commandes, contact de l'école et listes communautaires —
+  ainsi que les écrans déjà ouverts (fil de discussion, actualité, devoir,
+  fiche de bibliothèque, produit). Après un redémarrage sans réseau, tous
+  les onglets s'ouvrent remplis avec le contenu déjà vu, et le contenu neuf
+  reste — comme toujours — soumis au réseau avec son « Réessayer ». Les
+  fichiers sont chiffrés au Keystore, hors des sauvegardes Android, limités
+  au compte et à l'enfant actuels, purgés à la connexion comme à la
+  déconnexion ; rien n'est écrit quand « Rester connecté » est décoché.
+  Le chauffage global couvre aussi la Boutique, le Repas invité,
+  l'historique, le contact et les listes communautaires.
+
+## [0.10.0-beta.1] — 2026-10-10
+
+### Préversion (bêta)
+
+### Ajouté
+
+- Le chauffage global des caches : dès l'ouverture de l'application (et à
+  chaque actualisation d'un écran), toutes les sections — Cours, Devoirs,
+  Documents, Bibliothèque, Demandes, Messages, Actualités — se rafraîchissent
+  en arrière-plan, et leurs images, pièces jointes et messages vocaux déjà
+  visibles entrent dans les caches binaires. Chaque onglet s'ouvre donc déjà
+  rempli, même s'il n'a jamais été ouvert. Un interrupteur dans Paramètres
+  (« Actualiser toutes les sections en arrière-plan ») coupe ou réactive le
+  chauffage immédiatement — activé par défaut.
+
+## [0.9.14-beta.3] — 2026-10-10
+
+### Préversion (bêta)
+
+### Corrigé
+
+- Hors ligne, le Registre disait qu'il était à jour : les quatre sources
+  échouant ensemble rendaient un registre vide que l'application prenait pour
+  un succès — le contenu connu disparaissait (« 0 devoir ») sans aucun
+  avertissement (#145). Désormais un échec total affiche « Connexion
+  impossible — vérifie ta connexion internet » avec « Réessayer » par-dessus
+  le contenu déjà affiché, et une source qui tombe seule conserve ses
+  entrées connues tout en signalant les sections non actualisées.
+
+## [0.9.14-beta.2] — 2026-10-10
+
+### Préversion (bêta)
+
+### Ajouté
+
+- Le Registre retrouve instantanément le dernier écran affiché au
+  redémarrage de l'application (#145) : le contenu est relu d'un instantané
+  disque chiffré (Keystore), hors des sauvegardes Android, purgé à la
+  connexion comme à la déconnexion et strictement limité au compte et à
+  l'enfant actuels. Tant que le réseau n'a pas répondu, un bandeau explicite
+  annonce « Contenu du dernier affichage — actualisation en cours… » : rien
+  n'est présenté comme frais tant qu'il n'est pas rafraîchi.
+
+## [0.9.14-beta.1] — 2026-10-09
+
+### Préversion (bêta)
+
+### Changé
+
+- Le Registre charge ses quatre sources (devoirs, actualités, absences,
+  messages) en parallèle au lieu de les appeler l'une après l'autre : le
+  contenu complet apparaît au rythme de la requête la plus lente, pas de la
+  somme des quatre (#145). Un endpoint en panne ne masque plus les autres
+  sections, et une annulation (changement de compte ou d'enfant) interrompt
+  le chargement au lieu d'afficher un registre à moitié vide.
+- La validation de session (`acces_check`) garde sa place en tête : les
+  requêtes de données attendent sa clé rafraîchie, sans course.
+
 ## [0.9.13] — 2026-10-08
 
 Version stable après la bêta 0.9.13-beta.2 (renforcement de sécurité,

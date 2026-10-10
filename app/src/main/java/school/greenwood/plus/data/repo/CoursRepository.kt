@@ -29,6 +29,7 @@ class CoursRepository(
         // ciblées ne polluent pas le cache (issue #21).
         if (sens == null && semaine != null) {
             caches.clé()?.let { clé -> caches.cours.écrire(clé, semaine) }
+            caches.écrireDisque("cours", rep)
         }
         return semaine
     }
@@ -36,7 +37,12 @@ class CoursRepository(
     /** Dernière semaine connue, pour l'ouverture à chaud (issue #21). */
     suspend fun semaineEnCache(): SemaineCours? {
         val clé = caches.clé() ?: return null
-        return caches.cours.lire(clé)
+        caches.cours.lire(clé)?.let { return it }
+        // Redémarrage hors connexion : la réponse scellée repeuple la mémoire.
+        val brut = caches.lireDisque("cours") as? kotlinx.serialization.json.JsonObject ?: return null
+        val semaine = Normalizers.semaineCours(brut) ?: return null
+        caches.cours.écrire(clé, semaine)
+        return semaine
     }
 }
 
