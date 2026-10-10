@@ -6,6 +6,10 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
 
 ## [Non publié]
 
+## [0.10.1-beta.4] — 2026-10-10
+
+### Préversion (bêta)
+
 ### Ajouté
 
 - ChatGPT : les images d'une actualité partent vraiment (#150) — à côté des
