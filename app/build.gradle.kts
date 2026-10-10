@@ -12,8 +12,8 @@ android {
         applicationId = "school.greenwood.plus"
         minSdk = 26
         targetSdk = 36
-        versionCode = 116
-        versionName = "0.9.14-beta.2"
+        versionCode = 117
+        versionName = "0.9.14-beta.3"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
