@@ -6,17 +6,27 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
 
 ## [Non publié]
 
+## [0.10.1-beta.2] — 2026-10-10
+
+### Préversion (bêta)
+
+### Ajouté
+
+- Détails de devoir et d'actualité : bouton **« Ouvrir dans ChatGPT »** à côté
+  de « Copier » (#150) — le même texte part en prompt pré-rempli dans l'app
+  ChatGPT Android, jamais envoyé. Sans ChatGPT installé, la feuille de partage
+  système prend le relais avec un message ; « Copier » reste inchangé.
+
+## [0.10.1-beta.1] — 2026-10-10
+
+### Préversion (bêta)
+
 ### Ajouté
 
 - Actualités : bouton **Copier** dans le détail d'une note d'information (#148) —
   titre, catégorie, date, auteur et texte de l'annonce (HTML retiré) partent
   d'un seul geste dans le presse-papiers, avec la confirmation « Actualité
   copiée ». Le bouton reste inactif tant que l'annonce n'est pas chargée.
-
-- Détails de devoir et d'actualité : bouton **« Ouvrir dans ChatGPT »** à côté
-  de « Copier » (#150) — le même texte part en prompt pré-rempli dans l'app
-  ChatGPT Android, jamais envoyé. Sans ChatGPT installé, la feuille de partage
-  système prend le relais avec un message ; « Copier » reste inchangé.
 
 ## [0.10.0] — 2026-10-10
 
