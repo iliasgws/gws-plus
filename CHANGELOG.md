@@ -6,6 +6,17 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
 
 ## [Non publié]
 
+### Corrigé
+
+- Tout téléchargement de fichier expirait devant un serveur ou un lien lent
+  (#152) : le chemin privé — pièces jointes de messages, documents de la
+  Bibliothèque, mises à jour et préchargement — utilisait les délais par
+  défaut d'OkHttp (10 s de lecture). Tous les téléchargements portent
+  désormais la même recette que les devoirs : connexion 20 s,
+  lecture/écriture 60 s. Un transfert qui progresse, aussi lent soit-il, a
+  le temps de finir ; seule une pause sans octet reste un échec — net,
+  sans fichier entamé.
+
 ## [0.10.0] — 2026-10-10
 
 Version stable après les bêtas 0.9.14-beta.1 à 0.9.14-beta.3 et
