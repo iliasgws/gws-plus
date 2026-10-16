@@ -6,6 +6,10 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
 
 ## [Non publié]
 
+## [0.10.1-beta.5] — 2026-10-16
+
+### Préversion (bêta)
+
 ### Corrigé
 
 - Tout téléchargement de fichier expirait devant un serveur ou un lien lent
