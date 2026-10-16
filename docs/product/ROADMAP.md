@@ -8,6 +8,33 @@ raw probe responses stay out of the repository (personal data).
 
 `[x]` done · `[~]` in progress · `[ ]` todo · `(!)` needs a decision or a real-device check
 
+## Download timeouts (issue #152, branch `fix/telechargements-delais-152`)
+
+- [x] Symptom: every file download could time out in front of a slow server
+      or link. The private download client (`Fichiers.http` — message
+      attachments, Bibliothèque sheets, APK updates, warm-up prefetch) was a
+      bare `OkHttpClient()` carrying OkHttp's defaults: 10 s of read timeout,
+      no global call timeout. The public client (homework pieces into
+      `Download/gws-plus`) and the voice cache already had explicit delays
+      (20/60/60 s), which is exactly why the devoirs path could succeed
+      where Messages/Bibliothèque/mise à jour failed.
+- [x] One shared recipe — `Fichiers.nouveauClientTéléchargement()`: 20 s
+      connect, 60 s read/write — now builds both clients. The public one
+      keeps its 120 s global call timeout (it holds the MediaStore lock, see
+      the `verrou` doc); the private one deliberately has none: a 250 MiB
+      APK on a slow link takes longer than two minutes, only a 60 s read
+      silence must fail.
+- [x] Guarded by `TéléchargementHttpTest`: both production clients carry the
+      explicit delays (connect 20 s, read/write 60 s — never the 10 s
+      default; `callTimeout` 0 private vs 120 s public), and a server that
+      goes silent after the headers is aborted by the read timeout with a
+      clean failure (`SocketTimeoutException` in bounded time, via the same
+      recipe at test scale).
+- Failure honesty is unchanged and already covered: a failed or timed-out
+  download leaves no `.part` nor half-written MediaStore row
+  (`TéléchargementHttpTest`, `TéléchargementBornéTest`), and every caller
+  turns the failure into its existing UI state (« Réessayer » pattern).
+
 ## Registre startup performance (issue #145)
 
 - [x] Parallel load: the four independent registre sources (devoirs, nouveautes,

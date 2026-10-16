@@ -31,19 +31,36 @@ import java.io.File
  */
 object Fichiers {
 
-    private val http = OkHttpClient()
-
-    /** Client des téléchargements publics : délais explicites (le défaut
-     *  d'OkHttp, 10 s de lecture, laisse un lot « sans fin » sur une pièce
-     *  lente ou muette). */
-    private val httpPublic = OkHttpClient.Builder()
-        .connectTimeout(java.time.Duration.ofSeconds(20))
-        .readTimeout(java.time.Duration.ofSeconds(60))
-        .writeTimeout(java.time.Duration.ofSeconds(60))
-        // Limite globale : le verrou du parcours public ne doit jamais être
-        // retenu indéfiniment par un serveur qui coule les octets.
-        .callTimeout(java.time.Duration.ofSeconds(120))
+    /** Recette commune des téléchargements (issue #152) : le défaut d'OkHttp
+     *  (10 s de lecture) faisait échouer tout fichier devant un serveur ou
+     *  un lien lent — le même maillage que le cache voix (issue #108) :
+     *  connexion 20 s, lecture/écriture 60 s. Une pause de plus de 60 s sans
+     *  un seul octet reste un échec ; un transfert qui progresse, aussi
+     *  lent soit-il, a le temps de finir. */
+    internal fun nouveauClientTéléchargement(
+        connexion: java.time.Duration = java.time.Duration.ofSeconds(20),
+        lecture: java.time.Duration = java.time.Duration.ofSeconds(60),
+        écriture: java.time.Duration = java.time.Duration.ofSeconds(60),
+        appelGlobal: java.time.Duration? = null,
+    ): OkHttpClient = OkHttpClient.Builder()
+        .connectTimeout(connexion)
+        .readTimeout(lecture)
+        .writeTimeout(écriture)
+        .apply { if (appelGlobal != null) callTimeout(appelGlobal) }
         .build()
+
+    /** Client des téléchargements privés (pièces jointes, bibliothèque,
+     *  APK de mise à jour, préchargement) : sans délai d'appel global —
+     *  un APK de 250 Mio sur un lien lent dépasse largement deux minutes,
+     *  seule une pause de lecture sans octet doit échouer. */
+    internal val http = nouveauClientTéléchargement()
+
+    /** Client des téléchargements publics : délai d'appel global —
+     *  le verrou du parcours public ne doit jamais être retenu
+     *  indéfiniment par un serveur qui coule les octets. */
+    internal val httpPublic = nouveauClientTéléchargement(
+        appelGlobal = java.time.Duration.ofSeconds(120),
+    )
 
     /** Verrou du parcours public : la lecture du registre, le choix du nom,
      *  l'insertion, le téléchargement et l'écriture du registre forment une

@@ -6,6 +6,7 @@ import java.io.File
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import okhttp3.Request
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.mockwebserver.SocketPolicy
@@ -18,6 +19,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import school.greenwood.plus.util.Fichiers
+import java.net.SocketTimeoutException
+import java.time.Duration
 import java.util.concurrent.TimeUnit
 
 /*
@@ -189,5 +192,42 @@ class TéléchargementHttpTest {
         assertEquals(Fichiers.LIMITE_APK, Fichiers.limitePourNom("maj.apk"))
         assertEquals(Fichiers.LIMITE_DOCUMENT, Fichiers.limitePourNom("bulletin.pdf"))
         assertNotEquals(Fichiers.LIMITE_APK, Fichiers.LIMITE_DOCUMENT)
+    }
+
+    /*
+     * Délais (issue #152) : les deux clients portent la recette explicite —
+     * plus jamais les 10 s de lecture par défaut d'OkHttp, qui faisaient
+     * échouer tout fichier devant un serveur lent.
+     */
+
+    @Test
+    fun `les deux clients portent des delais explicites - jamais les 10 s par defaut`() {
+        for (client in listOf(Fichiers.http, Fichiers.httpPublic)) {
+            assertEquals(TimeUnit.SECONDS.toMillis(20), client.connectTimeoutMillis.toLong())
+            assertEquals(TimeUnit.SECONDS.toMillis(60), client.readTimeoutMillis.toLong())
+            assertEquals(TimeUnit.SECONDS.toMillis(60), client.writeTimeoutMillis.toLong())
+        }
+        // Privé : aucun plafond global (un APK lent finit, seul un silence
+        // de lecture échoue) ; public : 120 s, pour libérer le verrou.
+        assertEquals(0, Fichiers.http.callTimeoutMillis)
+        assertEquals(TimeUnit.SECONDS.toMillis(120), Fichiers.httpPublic.callTimeoutMillis.toLong())
+    }
+
+    @Test
+    fun `serveur muet apres les en-tetes - la lecture expire en temps voulu`() {
+        // La même recette, à l'échelle de la seconde : la constante de test
+        // tient, la mécanique (délai appliqué, échec net) est la même.
+        val client = Fichiers.nouveauClientTéléchargement(lecture = Duration.ofMillis(300))
+        serveur.enqueue(MockResponse().setSocketPolicy(SocketPolicy.NO_RESPONSE))
+
+        val début = System.nanoTime()
+        val échec = runCatching {
+            client.newCall(Request.Builder().url(serveur.url("/muet.pdf")).build()).execute()
+        }
+        val écouléMs = (System.nanoTime() - début) / 1_000_000
+
+        assertTrue(échec.isFailure)
+        assertTrue(échec.exceptionOrNull() is SocketTimeoutException)
+        assertTrue("échec après $écouléMs ms", écouléMs < 5_000)
     }
 }
