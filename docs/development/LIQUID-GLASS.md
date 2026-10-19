@@ -130,3 +130,9 @@ The release asset's SHA-256 is
 `86176051aca2ff731bb130dc4be322f4f0bb7285361e92619b00f4ea42b6f263`.
 Keep an encrypted off-machine backup of `~/.android/debug.keystore` to preserve
 this beta's signing identity; never commit the key or its backup.
+
+Beta.2: <https://github.com/iliasgws/gws-plus/releases/tag/v0.10.2-beta.2>, built
+from `8177aa1`, versionCode 127. Signature matches beta.1, so no uninstall is
+needed to update that version. Signed release installation/cold launch on the
+regular API 36 emulator passes. APK SHA-256:
+`541a4f07e0e6f3729686af2d022ae3add078ae4b46cfb50bbd63120c1e46d46a`.

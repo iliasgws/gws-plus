@@ -19,7 +19,9 @@ raw probe responses stay out of the repository (personal data).
 - [x] Prepare `0.10.2-beta.2` (versionCode 127), retaining beta.1's signing key.
 - [x] 321 JVM tests and 10 glass UI checks, including fixed chrome and reachable
       last actions; rendered fixture captures on a regular API 36 AOSP emulator.
-- [ ] Verify and publish beta.2; real-handset visual review remains required.
+- [x] Publish beta.2 from `8177aa1` with the same beta.1 certificate; debug and
+      signed release builds, 321 JVM tests and 10 UI tests pass. The signed APK
+      installs/cold-launches on API 36. Real-handset visual review remains required.
 
 - [x] Pin Kyant Backdrop 1.0.0 and Capsule 2.1.1; vendor the actual liquid
       button/tab/toggle examples and interaction helpers with Apache-2.0 license
