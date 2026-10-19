@@ -6,6 +6,14 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
 
 ## [Non publié]
 
+### Changé
+
+- La barre des six onglets adopte une surface arrondie translucide à reflet
+  lumineux, liseré discret et capsule d'accent dégradée. Un appui comprime
+  brièvement le contenu de l'onglet avant le rebond ; les libellés, les
+  accents, les zones tactiles et la navigation Android sont conservés.
+  Cet effet visuel ne réalise pas encore le flou ni la réfraction du fond.
+
 ## [0.10.0] — 2026-10-10
 
 Version stable après les bêtas 0.9.14-beta.1 à 0.9.14-beta.3 et
