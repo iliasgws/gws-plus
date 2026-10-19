@@ -100,3 +100,10 @@ configuration is unchanged. The user explicitly authorized using the local
 from the historical `775498f7…` certificate. This beta cannot update versions
 signed with another key: uninstalling the previous app deletes its local session
 and caches. This exception does not authorize merging or a stable release.
+
+Published beta: <https://github.com/iliasgws/gws-plus/releases/tag/v0.10.2-beta.1>,
+built from `602a43b` and installed/cold-launched on the API 36 test emulator.
+The release asset's SHA-256 is
+`86176051aca2ff731bb130dc4be322f4f0bb7285361e92619b00f4ea42b6f263`.
+Keep an encrypted off-machine backup of `~/.android/debug.keystore` to preserve
+this beta's signing identity; never commit the key or its backup.

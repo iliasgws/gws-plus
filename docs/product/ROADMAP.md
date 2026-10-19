@@ -35,8 +35,10 @@ raw probe responses stay out of the repository (personal data).
       overriding the historical-key requirement for this publication only.
       Clearly warn that other signatures require uninstalling first (local
       session/cache loss); no stable release or merge is authorized.
-- [ ] Publish `0.10.2-beta.1` as a prerelease after verifying its signature,
-      version and checksum, with the incompatibility warning in release notes.
+- [x] Publish `0.10.2-beta.1` as a prerelease from commit `602a43b`, after
+      verifying its signature, version, alignment and checksum; install and
+      cold-launch the signed release on the API 36 emulator. Release notes warn
+      prominently about signature incompatibility and local session/cache loss.
 
 ## Registre startup performance (issue #145)
 
