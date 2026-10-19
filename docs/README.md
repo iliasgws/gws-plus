@@ -19,6 +19,7 @@ la racine reste la porte d'entrée ; tout le reste vit ici.
 | [`development/ARCHITECTURE.md`](development/ARCHITECTURE.md) | Couches (UI → ViewModel → Repository → BotiClient), session, médias signés |
 | [`development/NAVIGATION.md`](development/NAVIGATION.md) | Le contrat de navigation : onglets, piles, retour prédictif |
 | [`development/REGISTRE-BANNER.md`](development/REGISTRE-BANNER.md) | Fonctionnement de la bannière : défilement, seuil d'épinglage, fondu et barre d'état |
+| [`development/LIQUID-GLASS.md`](development/LIQUID-GLASS.md) | Liquid Glass : couches de rendu, contrôles partagés, compatibilité et vérification |
 
 ## Boti API research — le protocole reconstitué
 

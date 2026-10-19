@@ -6,6 +6,26 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
 
 ## [Non publié]
 
+## [0.10.2-beta.1] — 2026-10-19
+
+### Préversion (bêta) — préparation
+
+Publication en attente du keystore historique (`775498f7…`) : ne pas publier
+avec le certificat différent disponible sur cette machine. Cette branche part
+de la version stable 0.10.0 ; elle n’intègre pas les changements non fusionnés
+des bêtas 0.10.1 (Copier, ChatGPT et correctif des délais de téléchargement).
+
+### Modifié
+
+- Interface Liquid Glass (#155) : cartes, actions, barre à six onglets,
+  interrupteurs, dialogues et menus utilisent de vrais fonds échantillonnés
+  avec Kyant Backdrop ; les accents de chaque section sont conservés. Le choix
+  du délai d’actualisation se déploie avec un ressort et se referme par Retour.
+  Les surfaces restent plus opaques avant Android 12 ; l’effet de lentille
+  nécessite Android 13. Les actions scolaires, les piles de navigation et la
+  confirmation de sortie du quiz sont conservées. Validation sur téléphone
+  encore requise avant publication.
+
 ## [0.10.0] — 2026-10-10
 
 Version stable après les bêtas 0.9.14-beta.1 à 0.9.14-beta.3 et

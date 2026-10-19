@@ -22,12 +22,12 @@ import androidx.compose.material.icons.rounded.Attachment
 import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
-import androidx.compose.material3.Button
+import school.greenwood.plus.ui.components.GlassButton as Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import school.greenwood.plus.ui.components.GlassIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
+import school.greenwood.plus.ui.components.GlassSurface as Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -385,7 +385,7 @@ private fun BulleEnvoi(
                         style = MaterialTheme.typography.labelSmall,
                         color = RegistreTheme.colors.redPen,
                     )
-                    androidx.compose.material3.TextButton(onClick = onRelancer) {
+                    school.greenwood.plus.ui.components.GlassTextButton(onClick = onRelancer) {
                         Text(
                             text = "Réessayer",
                             style = MaterialTheme.typography.labelSmall,

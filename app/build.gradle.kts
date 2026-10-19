@@ -12,8 +12,8 @@ android {
         applicationId = "school.greenwood.plus"
         minSdk = 26
         targetSdk = 36
-        versionCode = 120
-        versionName = "0.10.0"
+        versionCode = 126
+        versionName = "0.10.2-beta.1"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -56,6 +56,8 @@ dependencies {
 
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-tooling-preview")
+    implementation("io.github.kyant0:backdrop:1.0.0")
+    implementation("io.github.kyant0:capsule:2.1.1")
     // Expressive loading indicators are not exposed by the stable BOM version.
     implementation("androidx.compose.material3:material3:1.5.0-alpha29")
     // Icônes : ensemble étendu, gelé par AndroidX depuis 1.7.8 — hors BOM.
@@ -84,4 +86,9 @@ dependencies {
     androidTestImplementation("androidx.test.ext:junit:1.3.0")
     androidTestImplementation("androidx.test:runner:1.7.0")
     androidTestImplementation("androidx.test:core:1.7.0")
+    androidTestImplementation(composeBom)
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4")
+    debugImplementation("androidx.compose.ui:ui-test-manifest")
+    // Keep the tested app's strict runtime constraints compatible with AndroidX Test 1.7.
+    debugImplementation("androidx.concurrent:concurrent-futures:1.2.0")
 }

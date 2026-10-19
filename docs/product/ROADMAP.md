@@ -8,6 +8,32 @@ raw probe responses stay out of the repository (personal data).
 
 `[x]` done · `[~]` in progress · `[ ]` todo · `(!)` needs a decision or a real-device check
 
+## Liquid Glass interface (issue #155)
+
+- [x] Pin Kyant Backdrop 1.0.0 and Capsule 2.1.1; vendor the actual liquid
+      button/tab/toggle examples and interaction helpers with Apache-2.0 license
+      and revision/adaptation notes.
+- [x] Separate per-entry gradient sampling from screen capture for bottom tabs;
+      create owner-local scenes in dialogs, sheets and popups; retain per-entry
+      predictive-back accents and the six-tab navigation contract.
+- [x] Integrate shared glass cards/actions/header icons, composer and AI surfaces,
+      confirmation dialogs, menus, settings switches and spring-expanding refresh
+      picker across the app. Preserve the actual actions, disabled states and
+      non-blocking retry errors; no Buds commands or unused sliders.
+- [x] Add API-gated opacity/blur/lens policy tests and instrumented component
+      checks (disabled input, fresh callbacks, switch semantics, picker Back,
+      external tab selection and cross-window dialog action).
+- [ ] (!) Real-handset visual/accessibility/performance review and authenticated
+      navigation/quiz/composer smoke checks before merge; see
+      `docs/development/LIQUID-GLASS.md`. No stable release is authorized by this work.
+- [x] Prepare requested `0.10.2-beta.1` (versionCode 126) on the feature branch.
+- [x] Debug assembly, 320 JVM tests and eight glass UI tests (API 36 emulator).
+      Lint is blocked by four existing API errors in the untouched community
+      API/download code; full instrumentation also finds the existing
+      `SessionStoreTest.étatNeuf()` non-void `@Before` initialization error.
+- [ ] Publish the beta only after restoring/verifying the historical `775498f7…`
+      signing key; the machine's local key does not match. No incompatible APK.
+
 ## Registre startup performance (issue #145)
 
 - [x] Parallel load: the four independent registre sources (devoirs, nouveautes,

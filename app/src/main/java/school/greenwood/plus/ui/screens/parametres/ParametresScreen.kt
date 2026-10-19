@@ -22,12 +22,12 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.ErrorOutline
 import androidx.compose.material.icons.rounded.Logout
-import androidx.compose.material3.Surface
+import school.greenwood.plus.ui.components.GlassSurface as Surface
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import school.greenwood.plus.ui.components.GlassIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.Switch
+import school.greenwood.plus.ui.components.GlassSwitch as Switch
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -56,6 +56,8 @@ import school.greenwood.plus.ui.components.DialogueDéconnexion
 import school.greenwood.plus.ui.components.DialogueOublierCompte
 import school.greenwood.plus.ui.components.ErrorInline
 import school.greenwood.plus.ui.components.GwsCard
+import school.greenwood.plus.ui.components.GlassPicker
+import androidx.compose.foundation.selection.selectable
 import school.greenwood.plus.ui.components.GwsLoadingIndicator
 import school.greenwood.plus.ui.components.SectionLabel
 import school.greenwood.plus.ui.theme.AnnotationShape
@@ -227,14 +229,22 @@ fun ParametresScreen(
             RéglageBannière("Bannière des Actualités", état.bannièreActualitésActivée, vm::définirBannièreActualités)
             SectionLabel("Actualisation des données")
 
-            GwsCard(modifier = Modifier.fillMaxWidth()) {
+            GlassPicker(
+                title = "Actualiser au retour · " + (OptionsActualisation.firstOrNull { it.minutes == état.minutesRetour }?.libellé
+                    ?: "${état.minutesRetour} minutes"),
+                modifier = Modifier.fillMaxWidth(),
+            ) { fermer ->
                 Column(modifier = Modifier.padding(vertical = 4.dp)) {
                     OptionsActualisation.forEach { option ->
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(ControlShape)
-                                .clickable { vm.choisirDurée(option.minutes) }
+                                .selectable(
+                                    selected = état.minutesRetour == option.minutes,
+                                    role = Role.RadioButton,
+                                    onClick = { vm.choisirDurée(option.minutes); fermer() },
+                                )
                                 .padding(horizontal = 14.dp, vertical = 12.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(10.dp),
