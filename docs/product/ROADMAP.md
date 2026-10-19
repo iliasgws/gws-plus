@@ -31,8 +31,12 @@ raw probe responses stay out of the repository (personal data).
       Lint is blocked by four existing API errors in the untouched community
       API/download code; full instrumentation also finds the existing
       `SessionStoreTest.étatNeuf()` non-void `@Before` initialization error.
-- [ ] Publish the beta only after restoring/verifying the historical `775498f7…`
-      signing key; the machine's local key does not match. No incompatible APK.
+- [x] User explicitly authorizes the local `4ff056a3…` certificate for this beta,
+      overriding the historical-key requirement for this publication only.
+      Clearly warn that other signatures require uninstalling first (local
+      session/cache loss); no stable release or merge is authorized.
+- [ ] Publish `0.10.2-beta.1` as a prerelease after verifying its signature,
+      version and checksum, with the incompatibility warning in release notes.
 
 ## Registre startup performance (issue #145)
 

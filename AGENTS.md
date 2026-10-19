@@ -128,6 +128,12 @@ latest beta, publish another beta before preparing the stable. A hotfix
 request starts with `X.Y.Z-beta.1`; publishing the beta does not authorize
 publishing the stable or merging its PR.
 
+**Scoped exception (2026-10-19):** the user explicitly authorized a different
+signature for `0.10.2-beta.1` in PR #156 after the historical-key mismatch was
+reported. This beta may use the local `4ff056a3…` certificate, with a prominent
+uninstall/local-session-and-cache-loss warning. This is not blanket permission
+to change future signing keys, merge the PR, or publish a stable release.
+
 ```bash
 # 1. Version bump on a feature branch + PR titled « Préparer la version X.Y.Z »
 #    (versionCode increment, versionName, CHANGELOG's « Non publié » section

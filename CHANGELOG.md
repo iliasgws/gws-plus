@@ -8,10 +8,13 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
 
 ## [0.10.2-beta.1] — 2026-10-19
 
-### Préversion (bêta) — préparation
+### Préversion (bêta)
 
-Publication en attente du keystore historique (`775498f7…`) : ne pas publier
-avec le certificat différent disponible sur cette machine. Cette branche part
+Exception de signature explicitement autorisée par l’utilisateur : cette bêta
+utilise le certificat local `4ff056a3…`, différent du certificat historique
+`775498f7…` et de celui de la 0.10.1-beta.5 (`5680e661…`). Elle ne s’installe
+pas au-dessus de ces versions : il faut désinstaller l’application précédente,
+ce qui supprime sa session et ses caches locaux. Cette branche part
 de la version stable 0.10.0 ; elle n’intègre pas les changements non fusionnés
 des bêtas 0.10.1 (Copier, ChatGPT et correctif des délais de téléchargement).
 
@@ -24,7 +27,7 @@ des bêtas 0.10.1 (Copier, ChatGPT et correctif des délais de téléchargement)
   Les surfaces restent plus opaques avant Android 12 ; l’effet de lentille
   nécessite Android 13. Les actions scolaires, les piles de navigation et la
   confirmation de sortie du quiz sont conservées. Validation sur téléphone
-  encore requise avant publication.
+  encore requise avant fusion ou publication stable.
 
 ## [0.10.0] — 2026-10-10
 

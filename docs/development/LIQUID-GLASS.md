@@ -86,7 +86,7 @@ instrumented suite additionally exposes an existing `SessionStoreTest`
 initialization failure: its `@Before` method `étatNeuf()` is not JVM-void.
 These unrelated findings are not suppressed or repaired in this UI change.
 
-Before merging/releasing, check a real handset with school content: every tab
+Before merging or publishing a stable release, check a real handset with school content: every tab
 and detail, cancellation/completion of predictive Back, returning from Devoirs,
 quiz exit confirmation, login/logout, composing/attachments, dialogs, scroll
 performance, dark/light themes, TalkBack, large fonts and 320 dp width. Automated
@@ -95,6 +95,8 @@ performance have been verified. A beta must precede any later stable release;
 this UI change itself does not authorize a stable publication.
 The user's subsequent release request prepares `0.10.2-beta.1`, versionCode 126,
 from this branch (stable 0.10.0 base, not the unmerged 0.10.1 beta stack). Signing
-configuration is unchanged. Publication is blocked until the historical
-`775498f7…` signing keystore is restored: the local key has a different
-certificate and must not be used for a release.
+configuration is unchanged. The user explicitly authorized using the local
+`4ff056a3…` signing certificate for this beta after being informed that it differs
+from the historical `775498f7…` certificate. This beta cannot update versions
+signed with another key: uninstalling the previous app deletes its local session
+and caches. This exception does not authorize merging or a stable release.
