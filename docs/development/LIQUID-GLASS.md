@@ -136,3 +136,12 @@ from `8177aa1`, versionCode 127. Signature matches beta.1, so no uninstall is
 needed to update that version. Signed release installation/cold launch on the
 regular API 36 emulator passes. APK SHA-256:
 `541a4f07e0e6f3729686af2d022ae3add078ae4b46cfb50bbd63120c1e46d46a`.
+
+Beta.3: <https://github.com/iliasgws/gws-plus/releases/tag/v0.10.2-beta.3>,
+versionCode 128, same certificate. Dialog/dropdown backdrops are clipped to
+their surface shape (no square corners), the local-done toggle is a fixed
+40 dp glass circle, the tab bar drops chromatic aberration, uses 6 dp blur,
+and flips its icons/labels to a light tint via `GlassBackdropProbe` (≤8 tiny
+GPU readbacks/s while STARTED, per-region 9×9 probe, partial dark coverage
+counts). APK SHA-256:
+`923d7d979e989fd54ddeb2c3e90d6742442c6de2b98e114a9995f899c464d18d`.
