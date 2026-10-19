@@ -6,6 +6,20 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
 
 ## [Non publié]
 
+## [0.10.2-beta.3] — 2026-10-20
+
+### Préversion (bêta)
+
+Même certificat `4ff056a3…` que les bêtas 1 et 2 : mise à jour directe,
+sans désinstallation.
+
+### Corrigé
+
+- Dialogue : le fond dégradé du verre est découpé sur la forme arrondie —
+  plus de coins blancs carrés autour de la bulle.
+- Devoirs : la bascule « fait pour moi » redevient un cercle de verre net
+  de 40 dp, ni débordant ni rogné par la carte.
+
 ### Changé
 
 - Barre d’onglets : disparition de l’aberration chromatique, flou porté à
@@ -13,10 +27,6 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
   au clair dès qu’un contenu sombre touche leur zone, même partiellement.
 - Pilule profil : bénéficie du même étirement au glisser que les boutons
   de verre.
-- Dialogue : le fond dégradé est désormais découpé sur la forme arrondie —
-  plus de coins blancs carrés autour de la bulle.
-- Devoirs : la bascule « fait pour moi » redevient un cercle de verre net
-  de 40 dp, ni débordant ni rogné par la carte.
 
 ## [0.10.2-beta.2] — 2026-10-19
 
