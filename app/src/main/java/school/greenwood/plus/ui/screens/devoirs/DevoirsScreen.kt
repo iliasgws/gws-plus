@@ -21,6 +21,7 @@ import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.RadioButtonUnchecked
 import school.greenwood.plus.ui.components.GlassButton as Button
+import school.greenwood.plus.ui.components.GlassSurface
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import school.greenwood.plus.ui.components.GlassIconButton as IconButton
@@ -32,6 +33,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.dp
@@ -278,34 +280,38 @@ private fun CarteDevoir(
     ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                if (devoir.matiere.isNotBlank()) Puce(devoir.matiere)
-                devoir.categorie?.takeIf { it.isNotBlank() }?.let { Puce(it) }
+                if (devoir.matiere.isNotBlank()) Puce(devoir.matiere, Modifier.weight(1f, fill = false))
+                devoir.categorie?.takeIf { it.isNotBlank() }?.let { Puce(it, Modifier.weight(1f, fill = false)) }
                 Spacer(Modifier.weight(1f))
                 // Bascule « fait pour moi » (issue #82) : local, réversible
                 // d'un clic, invisible pour l'école. Orange quand le travail
                 // est fait pour soi mais pas encore pour l'école ; vert
                 // Greenwood quand l'école le sait aussi.
-                IconButton(
+                GlassSurface(
                     onClick = onBasculerFaitLocal,
-                    modifier = Modifier.size(28.dp),
+                    modifier = Modifier.size(40.dp),
+                    shape = CircleShape,
+                    floating = true,
                 ) {
-                    Icon(
-                        imageVector = if (devoir.faitLocal) Icons.Rounded.CheckCircle
-                        else Icons.Rounded.RadioButtonUnchecked,
-                        contentDescription = if (devoir.faitLocal)
-                            "Retirer le marquage « fait pour moi »"
-                        else "Marquer fait pour moi (local, invisible à l'école)",
-                        tint = when {
-                            devoir.faitLocal && devoir.fait ->
-                                RegistreTheme.colors.accents.getValue("registre").teinte
-                            devoir.faitLocal -> RegistreTheme.colors.signetVif
-                            else -> RegistreTheme.colors.chalk
-                        },
-                        modifier = Modifier.size(22.dp),
-                    )
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = if (devoir.faitLocal) Icons.Rounded.CheckCircle
+                            else Icons.Rounded.RadioButtonUnchecked,
+                            contentDescription = if (devoir.faitLocal)
+                                "Retirer le marquage « fait pour moi »"
+                            else "Marquer fait pour moi (local, invisible à l'école)",
+                            tint = when {
+                                devoir.faitLocal && devoir.fait ->
+                                    RegistreTheme.colors.accents.getValue("registre").teinte
+                                devoir.faitLocal -> RegistreTheme.colors.signetVif
+                                else -> RegistreTheme.colors.chalk
+                            },
+                            modifier = Modifier.size(24.dp),
+                        )
+                    }
                 }
             }
             Text(

@@ -35,6 +35,7 @@ import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.tanh
+import school.greenwood.plus.ui.components.glassDeformation
 
 @Composable
 fun LiquidButton(
@@ -70,28 +71,14 @@ fun LiquidButton(
                 },
                 layerBlock = if (isInteractive && enabled) {
                     {
-                        val width = size.width
-                        val height = size.height
-
-                        val progress = interactiveHighlight.pressProgress
-                        val scale = lerp(1f, 1f + 4f.dp.toPx() / size.height, progress)
-
-                        val maxOffset = size.minDimension
-                        val initialDerivative = 0.05f
-                        val offset = interactiveHighlight.offset
-                        translationX = maxOffset * tanh(initialDerivative * offset.x / maxOffset)
-                        translationY = maxOffset * tanh(initialDerivative * offset.y / maxOffset)
-
-                        val maxDragScale = 4f.dp.toPx() / size.height
-                        val offsetAngle = atan2(offset.y, offset.x)
-                        scaleX =
-                            scale +
-                                    maxDragScale * abs(cos(offsetAngle) * offset.x / size.maxDimension) *
-                                    (width / height).fastCoerceAtMost(1f)
-                        scaleY =
-                            scale +
-                                    maxDragScale * abs(sin(offsetAngle) * offset.y / size.maxDimension) *
-                                    (height / width).fastCoerceAtMost(1f)
+                        val motion = glassDeformation(
+                            interactiveHighlight.offset.x, interactiveHighlight.offset.y,
+                            size.width, size.height, interactiveHighlight.pressProgress, density,
+                        )
+                        translationX = motion.x
+                        translationY = motion.y
+                        scaleX = motion.scaleX
+                        scaleY = motion.scaleY
                     }
                 } else {
                     null

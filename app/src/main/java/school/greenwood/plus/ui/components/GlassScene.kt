@@ -9,7 +9,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalView
@@ -29,13 +31,17 @@ internal val LocalScreenBackdrop = staticCompositionLocalOf<Backdrop?> { null }
 
 /** Only the sibling gradient is recorded. Controls can never sample themselves. */
 @Composable
-fun GlassScene(modifier: Modifier = Modifier, content: @Composable BoxScope.() -> Unit) {
+fun GlassScene(
+    modifier: Modifier = Modifier,
+    shape: Shape = RectangleShape,
+    content: @Composable BoxScope.() -> Unit,
+) {
     val backdrop = rememberLayerBackdrop()
     val colors = RegistreTheme.colors
     val accent = RegistreTheme.accent
     Box(modifier) {
         Box(
-            Modifier.matchParentSize().layerBackdrop(backdrop).background(
+            Modifier.matchParentSize().clip(shape).layerBackdrop(backdrop).background(
                 Brush.linearGradient(listOf(colors.paper, accent.conteneur, colors.page, colors.paper)),
             ),
         )

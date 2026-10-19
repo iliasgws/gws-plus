@@ -224,7 +224,7 @@ fun GlassAlertDialog(
     properties: DialogProperties = DialogProperties(),
 ) {
     BasicAlertDialog(onDismissRequest = onDismissRequest, modifier = modifier, properties = properties) {
-        GlassScene {
+        GlassScene(shape = shape) {
             GlassSurface(shape = shape, contentColor = RegistreTheme.colors.ink) {
                 Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     title?.let { ProvideTextStyle(MaterialTheme.typography.headlineSmall) { it() } }
@@ -303,7 +303,7 @@ fun GlassDropdownMenu(
         containerColor = Color.Transparent,
         shadowElevation = 0.dp,
     ) {
-        GlassScene {
+        GlassScene(shape = ContinuousRoundedRectangle(24.dp)) {
             GlassSurface { Column(content = content) }
         }
     }

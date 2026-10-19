@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -154,7 +155,7 @@ internal fun EnTêteRegistre(
             }
             Spacer(Modifier.weight(1f))
             // La pilule profil : discrète, jamais dominante, cible 48 dp.
-            élèveBloc(
+            ProfilÉlève(
                 eleve = eleve,
                 onClick = surOuvrirFeuille,
             )
@@ -204,7 +205,7 @@ internal fun EnTêteRegistre(
  *  prénom revit dans la feuille « Mon compte ». Le prénom reste annoncé aux
  *  lecteurs d'écran, et la cible tactile reste de 48 dp. */
 @Composable
-private fun élèveBloc(
+internal fun ProfilÉlève(
     eleve: Eleve?,
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
@@ -212,18 +213,14 @@ private fun élèveBloc(
     val identité = eleve
         ?.let { listOfNotNull(it.prenom ?: it.nomComplet, it.niveau).joinToString(", ") }
         ?.takeIf { it.isNotBlank() }
-    Row(
+    TextButton(
+        onClick = onClick,
         modifier = modifier
             .heightIn(min = 48.dp)
-            .clip(PiluleShape)
-            .background(RegistreTheme.colors.page)
-            .clickable(onClick = onClick)
             .semantics {
                 contentDescription = identité?.let { "Compte de $it" } ?: "Compte"
-            }
-            .padding(start = 6.dp, end = 8.dp, top = 5.dp, bottom = 5.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+            },
+        contentPadding = PaddingValues(start = 6.dp, end = 8.dp, top = 5.dp, bottom = 5.dp),
     ) {
         GwsAvatar(
             initiales = eleve?.initiales ?: "·",

@@ -16,6 +16,12 @@ raw probe responses stay out of the repository (personal data).
       post/homework/product actions stay pinned above their scrolling content.
       The viewer's fixed close button samples its own pager and uses dark tint
       behind the white cross. No whole-header/footer opaque bands in these views.
+- [x] Screenshot-driven follow-up: dialog backdrop clipped to its rounded
+      shape (no square white corners), compact 40 dp local-done toggle that no
+      longer overflows its card, profile pill gets the shared drag-stretch, and
+      the tab bar drops chromatic aberration, uses 6 dp blur and flips icons to
+      a light tint when dark content touches even part of their region
+      (GlassBackdropProbe, ≤8 readbacks/s while STARTED).
 - [x] Prepare `0.10.2-beta.2` (versionCode 127), retaining beta.1's signing key.
 - [x] 321 JVM tests and 10 glass UI checks, including fixed chrome and reachable
       last actions; rendered fixture captures on a regular API 36 AOSP emulator.
