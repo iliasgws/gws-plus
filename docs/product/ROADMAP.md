@@ -10,6 +10,17 @@ raw probe responses stay out of the repository (personal data).
 
 ## Liquid Glass interface (issue #155)
 
+- [x] Screenshot-driven beta.2 refinements: 0.75 dp chrome blur, 16% chrome
+      tint (reading cards retain 80%), stronger lensing with chromatic edges;
+      floating shop search/categories/history sample the actual grid, and
+      post/homework/product actions stay pinned above their scrolling content.
+      The viewer's fixed close button samples its own pager and uses dark tint
+      behind the white cross. No whole-header/footer opaque bands in these views.
+- [x] Prepare `0.10.2-beta.2` (versionCode 127), retaining beta.1's signing key.
+- [x] 321 JVM tests and 10 glass UI checks, including fixed chrome and reachable
+      last actions; rendered fixture captures on a regular API 36 AOSP emulator.
+- [ ] Verify and publish beta.2; real-handset visual review remains required.
+
 - [x] Pin Kyant Backdrop 1.0.0 and Capsule 2.1.1; vendor the actual liquid
       button/tab/toggle examples and interaction helpers with Apache-2.0 license
       and revision/adaptation notes.

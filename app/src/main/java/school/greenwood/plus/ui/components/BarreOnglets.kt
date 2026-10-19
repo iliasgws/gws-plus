@@ -45,7 +45,7 @@ fun BarreOnglets(
             backdrop = LocalScreenBackdrop.current ?: LocalGlassScene.current!!.backdrop,
             tabsCount = onglets.size,
             modifier = Modifier.fillMaxWidth(),
-            containerColor = RegistreTheme.colors.page.copy(alpha = glassPolicy(Build.VERSION.SDK_INT).surfaceOpacity),
+            containerColor = RegistreTheme.colors.page.copy(alpha = glassPolicy(Build.VERSION.SDK_INT).chromeOpacity),
             accentColor = RegistreTheme.accent.teinte,
         ) {
             onglets.forEachIndexed { i, onglet ->

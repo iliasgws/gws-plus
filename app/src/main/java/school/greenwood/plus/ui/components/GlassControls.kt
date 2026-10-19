@@ -75,11 +75,13 @@ fun GlassSurface(
     contentColor: Color = contentColorFor(color),
     border: BorderStroke? = null,
     shadowElevation: Dp = 0.dp,
+    floating: Boolean = false,
     content: @Composable () -> Unit,
 ): Unit = WithGlassScene {
     val backdrop = LocalGlassScene.current!!.backdrop
     val glassShape = continuousShape(shape)
-    val tint = color.copy(alpha = color.alpha * glassPolicy(Build.VERSION.SDK_INT).surfaceOpacity)
+    val policy = glassPolicy(Build.VERSION.SDK_INT)
+    val tint = color.copy(alpha = color.alpha * if (floating) policy.chromeOpacity else policy.surfaceOpacity)
     androidx.compose.material3.Surface(
         modifier = modifier.glassChrome(backdrop, glassShape, tint),
         shape = glassShape,
@@ -101,15 +103,17 @@ fun GlassSurface(
     contentColor: Color = contentColorFor(color),
     border: BorderStroke? = null,
     shadowElevation: Dp = 0.dp,
+    floating: Boolean = false,
     content: @Composable () -> Unit,
 ): Unit = WithGlassScene {
     val glassShape = continuousShape(shape)
+    val policy = glassPolicy(Build.VERSION.SDK_INT)
     androidx.compose.material3.Surface(
         onClick = onClick,
         enabled = enabled,
         modifier = modifier.glassChrome(
             LocalGlassScene.current!!.backdrop, glassShape,
-            color.copy(alpha = color.alpha * glassPolicy(Build.VERSION.SDK_INT).surfaceOpacity),
+            color.copy(alpha = color.alpha * if (floating) policy.chromeOpacity else policy.surfaceOpacity),
         ),
         shape = glassShape,
         color = Color.Transparent,
@@ -128,7 +132,7 @@ fun GlassButton(
     shape: Shape = ContinuousCapsule,
     colors: ButtonColors = ButtonDefaults.buttonColors(),
     contentPadding: PaddingValues = ButtonDefaults.ContentPadding,
-    blurRadius: Dp = 2.dp,
+    blurRadius: Dp = GlassBlurDp.dp,
     content: @Composable RowScope.() -> Unit,
 ): Unit = WithGlassScene {
     CompositionLocalProvider(
@@ -158,12 +162,12 @@ fun GlassTextButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     contentPadding: PaddingValues = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
-    blurRadius: Dp = 2.dp,
+    blurRadius: Dp = GlassBlurDp.dp,
     content: @Composable RowScope.() -> Unit,
 ): Unit = GlassButton(
     onClick, modifier, enabled,
     colors = ButtonDefaults.buttonColors(
-        containerColor = RegistreTheme.colors.page.copy(alpha = 0.55f),
+        containerColor = RegistreTheme.colors.page.copy(alpha = glassPolicy(Build.VERSION.SDK_INT).chromeOpacity),
         contentColor = MaterialTheme.colorScheme.primary,
         disabledContainerColor = RegistreTheme.colors.page.copy(alpha = 0.35f),
         disabledContentColor = RegistreTheme.colors.chalk.copy(alpha = 0.5f),
@@ -178,6 +182,7 @@ fun GlassIconButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    containerColor: Color = RegistreTheme.colors.page.copy(alpha = glassPolicy(Build.VERSION.SDK_INT).chromeOpacity),
     content: @Composable () -> Unit,
 ): Unit = WithGlassScene {
     androidx.compose.material3.IconButton(
@@ -185,8 +190,7 @@ fun GlassIconButton(
         enabled = enabled,
         modifier = modifier.glassChrome(
             LocalGlassScene.current!!.backdrop, CircleShape,
-            RegistreTheme.colors.page.copy(alpha = if (Build.VERSION.SDK_INT >= 31) 0.72f else 0.97f),
-            blurDp = 4f,
+            containerColor,
         ),
         content = content,
     )

@@ -5,6 +5,8 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import school.greenwood.plus.ui.components.glassPolicy
+import school.greenwood.plus.ui.components.GlassBlurDp
+import school.greenwood.plus.ui.components.GlassRefractionDp
 
 class GlassPolicyTest {
     @Test fun olderDevicesKeepLegibleOpaqueSurfaces() {
@@ -13,6 +15,7 @@ class GlassPolicyTest {
             assertFalse(policy.blur)
             assertFalse(policy.lens)
             assertEquals(0.97f, policy.surfaceOpacity, 0f)
+            assertEquals(0.97f, policy.chromeOpacity, 0f)
         }
     }
 
@@ -22,6 +25,7 @@ class GlassPolicyTest {
             assertTrue(policy.blur)
             assertFalse(policy.lens)
             assertEquals(0.80f, policy.surfaceOpacity, 0f)
+            assertEquals(0.16f, policy.chromeOpacity, 0f)
         }
     }
 
@@ -31,6 +35,13 @@ class GlassPolicyTest {
             assertTrue(policy.blur)
             assertTrue(policy.lens)
             assertEquals(0.80f, policy.surfaceOpacity, 0f)
+            assertEquals(0.16f, policy.chromeOpacity, 0f)
         }
+    }
+
+    @Test fun chromeIsClearerWithStrongerRefraction() {
+        assertTrue(GlassBlurDp < 1f)
+        assertTrue(GlassRefractionDp > 24f)
+        assertTrue(glassPolicy(33).chromeOpacity < glassPolicy(33).surfaceOpacity)
     }
 }

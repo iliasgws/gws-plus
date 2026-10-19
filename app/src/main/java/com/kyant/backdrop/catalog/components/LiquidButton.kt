@@ -44,7 +44,7 @@ fun LiquidButton(
     isInteractive: Boolean = true,
     enabled: Boolean = true,
     shape: Shape = ContinuousCapsule,
-    blurRadius: Dp = 2.dp,
+    blurRadius: Dp = 0.75.dp,
     contentPadding: PaddingValues = PaddingValues(horizontal = 16.dp),
     tint: Color = Color.Unspecified,
     surfaceColor: Color = Color.Unspecified,
@@ -66,7 +66,7 @@ fun LiquidButton(
                 effects = {
                     vibrancy()
                     blur(blurRadius.toPx())
-                    lens(12f.dp.toPx(), 24f.dp.toPx())
+                    lens(18f.dp.toPx(), 48f.dp.toPx(), chromaticAberration = true)
                 },
                 layerBlock = if (isInteractive && enabled) {
                     {

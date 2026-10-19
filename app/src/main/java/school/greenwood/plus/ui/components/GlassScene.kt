@@ -59,7 +59,7 @@ internal fun Modifier.glassChrome(
     backdrop: Backdrop,
     shape: Shape,
     tint: Color,
-    blurDp: Float = 5f,
+    blurDp: Float = GlassBlurDp,
 ): Modifier = drawBackdrop(
     backdrop = backdrop,
     shape = { shape },
@@ -69,7 +69,7 @@ internal fun Modifier.glassChrome(
             blur(blurDp.dp.toPx())
         }
         if (glassPolicy(Build.VERSION.SDK_INT).lens) {
-            lens(12.dp.toPx(), 24.dp.toPx(), depthEffect = true)
+            lens(18.dp.toPx(), GlassRefractionDp.dp.toPx(), depthEffect = true, chromaticAberration = true)
         }
     },
     onDrawSurface = { drawRect(tint) },

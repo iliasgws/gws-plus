@@ -54,6 +54,7 @@ Current contents (update this section whenever files are added or removed):
 | `…/ui/components/EcranBanniere.kt` | Shared collapsing-banner list viewport for Devoirs, Documents, and Actualités; optional pull-to-refresh and status-bar appearance lifecycle |
 | `…/ui/components/GwsLoadingIndicator.kt` | Shared official AndroidX Material 3 Expressive morphing loader for circular loading states; `GwsPullToRefreshBox` uses the native expressive refresh indicator, including drag-driven morphing, offset below enabled banners; Apache-2.0 dependency, no Metrolist source copied |
 | `…/ui/components/GlassScene.kt`, `GlassControls.kt`, `GlassPolicy.kt` | Liquid Glass (issue #155): owner-local sibling-gradient sampling, shared surfaces/actions/dialogs/menus/picker and API fallback; shell screen capture is sampled only by the external bottom tabs |
+| `…/ui/components/GlassFloatingScaffold.kt` | Fixed transparent chrome above a separately recorded scrolling sibling; measured header insets belong inside scroll content, preserving live refraction and reachable final actions in Boutique and post/homework/product details |
 | `app/src/main/java/com/kyant/backdrop/catalog/`, `third_party/kyant-backdrop/` | Adapted Kyant liquid buttons/tabs/toggles and interaction utilities; upstream revision, Apache-2.0 license and modifications recorded alongside the vendored sources |
 | `docs/development/LIQUID-GLASS.md`, `app/src/test/java/school/greenwood/plus/GlassPolicyTest.kt`, `app/src/androidTest/java/school/greenwood/plus/GlassControlsTest.kt` | Rendering/interaction contract, API policy tests and Compose component checks; real-handset authenticated smoke review remains required |
 | `…/ui/screens/devoirs/CalendrierDevoirs.kt` | Monday-first monthly homework calendar, due-date status dots, month navigation and today shortcut; grid edge cases covered by `CalendrierDevoirsTest.kt` |
@@ -133,6 +134,8 @@ signature for `0.10.2-beta.1` in PR #156 after the historical-key mismatch was
 reported. This beta may use the local `4ff056a3…` certificate, with a prominent
 uninstall/local-session-and-cache-loss warning. This is not blanket permission
 to change future signing keys, merge the PR, or publish a stable release.
+Follow-up `0.10.2` betas retain this same local identity so they update beta.1
+without another uninstall; this does not authorize any additional key change.
 
 ```bash
 # 1. Version bump on a feature branch + PR titled « Préparer la version X.Y.Z »

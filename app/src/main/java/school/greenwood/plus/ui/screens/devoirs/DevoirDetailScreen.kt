@@ -1,5 +1,7 @@
 package school.greenwood.plus.ui.screens.devoirs
 
+import school.greenwood.plus.ui.components.GlassFloatingScaffold
+
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -117,13 +119,7 @@ fun DevoirDetailScreen(
         if (uri != null) vm.choisirCopie(context, uri)
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(RegistreTheme.colors.paper)
-            .padding(padding)
-            .verticalScroll(rememberScrollState()),
-    ) {
+    GlassFloatingScaffold(padding = padding, header = {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -171,6 +167,11 @@ fun DevoirDetailScreen(
             }
         }
 
+    }) { contentInsets ->
+    Column(
+        modifier = Modifier.fillMaxSize().background(RegistreTheme.colors.paper)
+            .verticalScroll(rememberScrollState()).padding(contentInsets),
+    ) {
         val d = devoir
         if (d == null) {
             // Charge ou introuvable : même écran d'attente dans les deux cas,
@@ -494,6 +495,7 @@ fun DevoirDetailScreen(
         }
 
         Spacer(Modifier.height(16.dp))
+    }
     }
 
     // Confirmation avant le POST définitif (issue #68 : impossible d'annuler).

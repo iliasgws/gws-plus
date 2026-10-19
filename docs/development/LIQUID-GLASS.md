@@ -17,8 +17,19 @@ bottom bar is outside that recorded subtree. Root lists scroll beneath the
 glass, with trailing content padding (and system navigation-bar insets) so the
 last action can always scroll clear of the tabs. Messages and Plus use the same
 trailing-padding contract as the banner-based tabs.
-Header actions sample their entry's gradient; the title/banner layout remains
-the existing one, not a new cross-screen overlay.
+Ordinary content controls sample their entry's gradient. Since beta.2,
+`GlassFloatingScaffold` gives Boutique and post/homework/product details a
+separate scrolling-content layer and a stationary, unpainted header. Its
+search/categories/actions sample that sibling's real content. Header height is
+measured, and initial/trailing padding lives inside the scroll container, not
+outside its viewport. Thus products/posts can pass behind both header controls
+and bottom navigation without leaving the last item inaccessible. This is
+local to the entry, not a cross-screen overlay or a new Back handler.
+
+The fullscreen viewer similarly records its pager in its own dialog window,
+then draws the close button above it. A dark translucent tint preserves the
+white cross on both dark letterboxing and bright images. The pager's zoom,
+pan and swipe never move the close action.
 
 `GlassScene` tracks its `LocalView` owner. `WithGlassScene` creates a fresh scene
 when a control enters another window (dialog, modal sheet or popup), instead of
@@ -50,12 +61,16 @@ callbacks, saved tab stacks and quiz exit guard are unchanged.
 Errors remain non-blocking and visible until resolved; there is intentionally no
 Dismiss action that could conceal a failed/offline refresh. `BandeauErreur`
 announces politely and uses an 8 dp background blur for its retry action (normal
-buttons use 2 dp). Text itself is not frosted.
+buttons use 0.75 dp). Text itself is not frosted.
 
 ## Accessibility and compatibility
 
 - API 26 remains the minimum. Below 31, normal content surfaces use 97% tint;
   API 31+ uses 80% tint and backdrop blur. Lensing is enabled only on API 33+.
+- Beta.2 separates reading-card tint from chrome: floating controls and tabs
+  use only 16% theme tint on API 31+, and retain 97% tint on older systems.
+  Chrome blur is 0.75 dp (previously 4–8 dp), with stronger 48 dp refraction
+  and chromatic edge dispersion. Foreground labels/icons are never blurred.
 - Filled actions keep a stronger tint to preserve foreground contrast.
 - Disabled liquid buttons reject input. Button callbacks come from the current
   composition; remembered drag callbacks use `rememberUpdatedState`.
@@ -85,6 +100,14 @@ calls) and `Fichiers.kt` (`MediaStore.Downloads`, two accesses). The complete
 instrumented suite additionally exposes an existing `SessionStoreTest`
 initialization failure: its `@Before` method `étatNeuf()` is not JVM-void.
 These unrelated findings are not suppressed or repaired in this UI change.
+
+Beta.2 verification adds one JVM policy test (321 total) and two component
+checks (10 total): the floating header stays in place after scrolling, the
+last action clears the bottom inset, and the viewer's close action stays fixed
+while paging. These checks also pass on a regular API 36 AOSP emulator with
+rendering enabled, not just AOSP ATD. Synthetic fixture captures can be enabled
+with the instrumentation argument `captureGlassFixtures=true`; they contain
+no family data. They do not replace a handset review of real school images.
 
 Before merging or publishing a stable release, check a real handset with school content: every tab
 and detail, cancellation/completion of predictive Back, returning from Devoirs,

@@ -1,5 +1,7 @@
 package school.greenwood.plus.ui.screens.boutique
 
+import school.greenwood.plus.ui.components.GlassFloatingScaffold
+
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -81,19 +83,11 @@ fun BoutiqueItemScreen(
     val état by vm.état.collectAsStateWithLifecycle()
     var confirmerOuverte by remember { mutableStateOf(false) }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(RegistreTheme.colors.paper)
-            .padding(padding)
-            .padding(horizontal = 16.dp)
-            .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
+    GlassFloatingScaffold(padding = padding, header = {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 4.dp),
+                .padding(horizontal = 16.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             IconButton(onClick = retour) {
@@ -120,6 +114,12 @@ fun BoutiqueItemScreen(
             }
         }
 
+    }) { contentInsets ->
+    Column(
+        modifier = Modifier.fillMaxSize().background(RegistreTheme.colors.paper)
+            .verticalScroll(rememberScrollState()).padding(contentInsets).padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
         état.erreur?.let { erreur ->
             ErrorInline(message = erreur)
         }
@@ -128,7 +128,7 @@ fun BoutiqueItemScreen(
             état.chargement && état.produit == null -> SquelettePostDetail()
             état.produit == null -> {}
             else -> {
-                val produit = état.produit ?: return
+                val produit = état.produit ?: return@GlassFloatingScaffold
 
                 // La photo du produit : page pleine, fond sage sous l'image.
                 GwsCard(modifier = Modifier.fillMaxWidth()) {
@@ -322,6 +322,7 @@ fun BoutiqueItemScreen(
         }
     }
 
+    }
     // La confirmation avant envoi, puis l'alerte de succès du serveur.
     val produit = état.produit
     if (confirmerOuverte && produit != null) {

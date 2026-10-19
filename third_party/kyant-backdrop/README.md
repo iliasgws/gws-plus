@@ -19,6 +19,8 @@ Modified files retain their upstream names. Local adaptations:
 
 - `LiquidButton`: enabled input handling; customizable shape, padding and blur;
   minimum 48 dp rather than a fixed height, so large text can grow.
+  Beta.2 reduces default blur to 0.75 dp, increases lens strength and enables
+  chromatic edge dispersion, also on the tab shell/selection lens at rest.
 - `LiquidBottomTabs`: theme tint parameters; latest callbacks; geometry-aware
   remember keys; selection changes from navigation animate without issuing a
   second navigation request. A drag requests navigation only on release and

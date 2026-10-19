@@ -6,6 +6,33 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
 
 ## [Non publié]
 
+## [0.10.2-beta.2] — 2026-10-19
+
+### Préversion (bêta)
+
+Même certificat `4ff056a3…` que la 0.10.2-beta.1 : cette mise à jour s’installe
+au-dessus de la bêta 1 sans désinstallation. Les versions signées autrement
+nécessitent toujours une désinstallation préalable, avec perte de la session
+et des caches locaux.
+
+### Corrigé
+
+- Verre nettement moins givré : flou des commandes réduit à 0,75 dp,
+  teinte des commandes flottantes à 16 %, réfraction renforcée et légère
+  aberration chromatique sur les appareils compatibles. Les cartes de lecture
+  restent suffisamment opaques pour préserver la lisibilité.
+- Boutique : suppression des bandes opaques au-dessus et au-dessous de la
+  grille. Recherche, rubriques et historique restent visibles et échantillonnent
+  les produits qui défilent derrière eux ; la dernière ligne peut toujours
+  être dégagée au-dessus des onglets.
+- Retour des actualités, devoirs et produits : commandes fixes au-dessus du
+  contenu défilant, sans panneau d’en-tête opaque. Les piles et le retour
+  prédictif Android restent inchangés.
+- Visualiseur d’images : croix blanche lisible sur un bouton sombre transparent,
+  avec le même flou réduit, réfraction renforcée et aberration chromatique.
+  Le bouton reste fixe au-dessus des images et échantillonne le visualiseur
+  lui-même, jamais un fond clair provenant d’une autre fenêtre.
+
 ## [0.10.2-beta.1] — 2026-10-19
 
 ### Préversion (bêta)
