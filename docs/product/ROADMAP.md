@@ -8,6 +8,18 @@ raw probe responses stay out of the repository (personal data).
 
 `[x]` done · `[~]` in progress · `[ ]` todo · `(!)` needs a decision or a real-device check
 
+## Glass-inspired bottom navigation (2026-10-19)
+
+- [x] Keep the six-tab navigation and its predictive-back contract intact.
+      Style only `BarreOnglets`: rounded translucent surface, rim highlight,
+      gradient active capsule and a spring response on press.
+- [x] Keep navigation-bar inset outside the rounded surface, preserve the
+      existing 320 dp compact typography and active-tab semantics.
+- [ ] True Liquid Glass refraction/backdrop blur requires a separate renderer
+      integration and a deliberate overlay layout. This dependency-free
+      visual pass does **not** capture or refract underlying screen content.
+- [ ] Verify light/dark contrast, TalkBack and back gestures on a device.
+
 ## Registre startup performance (issue #145)
 
 - [x] Parallel load: the four independent registre sources (devoirs, nouveautes,
