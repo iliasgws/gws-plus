@@ -8,6 +8,18 @@ raw probe responses stay out of the repository (personal data).
 
 `[x]` done · `[~]` in progress · `[ ]` todo · `(!)` needs a decision or a real-device check
 
+## Experimental WordCraft viewer (issue #157)
+
+- [x] Default-off Settings beta toggle; route supported attachments through a
+      private offline WebView with a bundled, pinned WordCraft engine.
+- [x] 10 MiB staging limit, DOCX/ODT expanded-archive bounds, strict resource
+      allowlist, no native bridge/network/storage/downloads, external fallback.
+- [x] Explicit format/unsaved-edit limitations; PDF/XLSX/PPTX remain external.
+- [ ] Verify actual DOCX rendering and fallback on Android; upstream web release
+      fails the emulator's 4096 texture limit, so a narrow source adaptation is
+      being built/tested. Do not claim working preview until this passes.
+- [ ] Real-handset large-file, layout, memory and offline review; no school data.
+
 ## Liquid Glass interface (issue #155)
 
 - [x] Publish [0.10.2-beta.5](https://github.com/iliasgws/gws-plus/releases/tag/v0.10.2-beta.5)

@@ -455,6 +455,7 @@ object Fichiers {
     /** Ouvre un fichier déjà enregistré (URI publique ou FileProvider). */
     fun intentionOuvrirUri(context: Context, uri: Uri): Intent? {
         val mime = context.contentResolver.getType(uri) ?: "application/octet-stream"
+        school.greenwood.plus.documents.WordcraftIntents.preview(context, uri, mime)?.let { return it }
         val intent = Intent(Intent.ACTION_VIEW)
             .setDataAndType(uri, mime)
             .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -546,6 +547,7 @@ object Fichiers {
             fichier,
         )
         val mime = context.contentResolver.getType(uri) ?: "application/octet-stream"
+        school.greenwood.plus.documents.WordcraftIntents.preview(context, uri, mime, fichier.name)?.let { return it }
         val intent = Intent(Intent.ACTION_VIEW)
             .setDataAndType(uri, mime)
             .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)

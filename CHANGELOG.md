@@ -4,7 +4,18 @@ Toutes les évolutions notables de Greenwood School + sont listées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/) ; chaque
 version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/releases).
 
-## [Non publié]
+## [0.10.3-beta.1] — 2026-10-20
+
+### Préversion (bêta)
+
+### Ajouté
+
+- Paramètres → Fonctionnalités expérimentales : « Lecteur WordCraft — bêta »,
+  désactivé par défaut. Aperçu local de Word, ODT, RTF et textes dans l’app,
+  sans téléversement ; moteur embarqué, limite de 10 Mo et ouverture externe
+  toujours disponible. PDF, Excel et PowerPoint restent externes.
+- Présentation expérimentale : les modifications dans le lecteur ne sont pas
+  enregistrées ; compatibilité et mise en page variables selon l’appareil.
 
 ## [0.10.2-beta.5] — 2026-10-20
 
