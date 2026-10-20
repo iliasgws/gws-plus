@@ -10,8 +10,9 @@ raw probe responses stay out of the repository (personal data).
 
 ## Liquid Glass interface (issue #155)
 
-- [ ] Publish messaging/account follow-up as `0.10.2-beta.5` (versionCode 130),
-      signed with the same beta.1–4 certificate; no merge or stable release.
+- [x] Publish [0.10.2-beta.5](https://github.com/iliasgws/gws-plus/releases/tag/v0.10.2-beta.5)
+      (versionCode 130) from `3424fe3`, signed with the same beta.1–4 certificate;
+      no merge or stable release.
 - [x] Beta.5 debug/release builds, 324 JVM tests and 11 glass UI checks pass;
       signed release installed/cold-launched on API 36, certificate unchanged.
 

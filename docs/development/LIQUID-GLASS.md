@@ -7,7 +7,9 @@ layers. No earbud-specific code or protocol workarounds belong here.
 
 ## Rendering ownership
 
-Beta.5 (versionCode 130) packages the messaging/account follow-up below. Debug
+Beta.5 (versionCode 130) packages the messaging/account follow-up below:
+<https://github.com/iliasgws/gws-plus/releases/tag/v0.10.2-beta.5>,
+source commit `3424fe3`. Debug
 and signed release builds, 324 JVM tests and 11 glass UI checks pass; signed
 release installation/cold launch on API 36 passes. Certificate remains
 `4ff056a3…`. APK SHA-256:
