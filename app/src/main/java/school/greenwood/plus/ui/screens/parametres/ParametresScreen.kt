@@ -35,6 +35,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
@@ -118,6 +120,9 @@ fun ParametresScreen(
     val majÉtat by container.misesÀJour.état.collectAsStateWithLifecycle()
     val canalBêta by majVm.canalBêta.collectAsStateWithLifecycle()
     val contexte = LocalContext.current
+    var wordcraftActif by remember {
+        mutableStateOf(school.greenwood.plus.documents.WordcraftSettings.enabled(contexte))
+    }
     var notificationsAccordées by remember { mutableStateOf(container.misesÀJour.notificationsAccordées()) }
     // Déconnexion (issue #101) : second accès, pour la découvrabilité — le
     // chemin principal reste la pilule profil.
@@ -168,6 +173,33 @@ fun ParametresScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp),
         ) {
+            SectionLabel("Fonctionnalités expérimentales")
+            GwsCard(modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    Modifier.fillMaxWidth().toggleable(
+                        value = wordcraftActif, role = Role.Switch,
+                        onValueChange = {
+                            wordcraftActif = it
+                            school.greenwood.plus.documents.WordcraftSettings.setEnabled(contexte, it)
+                        },
+                    ).padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text("Lecteur WordCraft — bêta", style = MaterialTheme.typography.titleSmall)
+                        Text(
+                            "Ouvrir Word, ODT, RTF et les textes dans l’app, hors ligne. " +
+                                "Expérimental : présentation variable, 10 Mo maximum, " +
+                                "modifications non enregistrées. PDF, Excel et PowerPoint restent externes.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = RegistreTheme.colors.chalk,
+                        )
+                    }
+                    Switch(checked = wordcraftActif, onCheckedChange = null)
+                }
+            }
+            Spacer(Modifier.height(16.dp))
             SectionLabel("Apparence")
             GwsCard(modifier = Modifier.fillMaxWidth()) {
                 Row(

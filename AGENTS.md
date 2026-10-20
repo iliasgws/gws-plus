@@ -40,6 +40,8 @@ Current contents (update this section whenever files are added or removed):
 | `docs/security/` | `SECURITY-NOTES.md` |
 | `settings.gradle.kts`, `build.gradle.kts`, `gradle.properties`, `gradlew`, `gradle/wrapper/` | Gradle 9.6 build (AGP 9.4.1, Kotlin 2.4.20, built-in Kotlin — no `kotlin.android` plugin) |
 | `app/` | The Android application (`:app` module), namespace `school.greenwood.plus` |
+| `…/documents/Wordcraft{Activity,Intents,Policy,Sandbox,Settings}.kt`, `app/src/main/assets/wordcraft/`, `third_party/wordcraft/` | Default-off WordCraft beta attachment preview; bounded local document, bundled pinned WASM engine, strict offline WebView allowlist and external fallback; upstream licenses/attribution and Android adaptation retained |
+| `docs/development/WORDCRAFT.md`, `app/src/test/java/school/greenwood/plus/WordcraftPolicyTest.kt`, `app/src/androidTest/java/school/greenwood/plus/WordcraftViewerTest.kt` | WordCraft scope/privacy/build contract, routing/allowlist tests and synthetic DOCX Android smoke check |
 | `app/src/main/res/drawable/ic_launcher_monochrome.xml`, `app/src/main/res/mipmap-anydpi-v26/` | Adaptive launcher icons; alpha-only tree, shield and plus for Android 13+ Monet themed icons |
 | `app/src/main/java/school/greenwood/plus/` | Sources — key entries below |
 | `…/GwsApplication.kt` | Manual DI container (`AppContainer`), including homework refresh signals |
