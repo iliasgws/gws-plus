@@ -17,8 +17,10 @@ raw probe responses stay out of the repository (personal data).
       original template deformation on the whole action (including icon buttons
       and profile), float the Demandes header and pin Documents search/filters
       over a full-height scrolling viewport. No navigation/Back changes.
-- [ ] Build and handset-check this follow-up: the current execution environment
-      lacks Java and the Android SDK; no new beta published yet.
+- [x] Verify this follow-up as `0.10.2-beta.4` (versionCode 129): debug/release
+      builds, 324 JVM tests and 10 glass UI checks pass; signed APK installs and
+      cold-launches on API 36 with beta.3's signing identity.
+- [ ] Publish beta.4; real-handset visual review remains required.
 
 - [x] Screenshot-driven beta.2 refinements: 0.75 dp chrome blur, 16% chrome
       tint (reading cards retain 80%), stronger lensing with chromatic edges;

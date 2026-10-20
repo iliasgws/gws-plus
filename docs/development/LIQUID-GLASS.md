@@ -22,8 +22,13 @@ header on `EcranBanniere`: search and filters remain pinned below the reduced
 banner, sample the scrolling sibling, and reserve initial space via list content
 padding. The list viewport extends behind the bottom tabs, with trailing padding
 only inside the scroll container. Other banner screens keep their existing layout.
-These follow-up changes have not been built in the current environment (no JDK
-or Android SDK); beta.3 verification below applies only to the published beta.
+These follow-up changes target beta.4 (versionCode 129). Verification and release
+status are recorded in the roadmap; beta.3 results below describe beta.3 only.
+Beta.4 debug/release builds, 324 JVM tests and 10 glass UI tests pass. The signed
+release installs and cold-launches on the API 36 emulator; its certificate is
+the same `4ff056a3…` as beta.1–3. Authenticated handset visual review is still
+required. APK SHA-256:
+`594da85b1faa53d206879d6711f654a278349f366811f40dfb83c5153c6b69e0`.
 
 `ui/components/GlassScene.kt` records only a theme/accent gradient in a sibling
 Backdrop layer. Cards and controls sample that background, never themselves or
