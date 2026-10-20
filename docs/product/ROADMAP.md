@@ -20,7 +20,8 @@ raw probe responses stay out of the repository (personal data).
 - [x] Verify this follow-up as `0.10.2-beta.4` (versionCode 129): debug/release
       builds, 324 JVM tests and 10 glass UI checks pass; signed APK installs and
       cold-launches on API 36 with beta.3's signing identity.
-- [ ] Publish beta.4; real-handset visual review remains required.
+- [x] Publish [beta.4](https://github.com/iliasgws/gws-plus/releases/tag/v0.10.2-beta.4)
+      from `e05542d`; real-handset visual review remains required.
 
 - [x] Screenshot-driven beta.2 refinements: 0.75 dp chrome blur, 16% chrome
       tint (reading cards retain 80%), stronger lensing with chromatic edges;
