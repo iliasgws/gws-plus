@@ -10,6 +10,9 @@ raw probe responses stay out of the repository (personal data).
 
 ## Liquid Glass interface (issue #155)
 
+- [x] Disable the Registre side drawer's swipe gestures; keep explicit menu
+      activation, outside-tap/Back dismissal and pull-to-refresh unchanged.
+
 - [x] Follow-up to beta.3: remove adaptive icon recoloring/readback, restore
       original template deformation on the whole action (including icon buttons
       and profile), float the Demandes header and pin Documents search/filters

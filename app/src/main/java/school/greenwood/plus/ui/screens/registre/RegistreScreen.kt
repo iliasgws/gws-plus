@@ -187,6 +187,7 @@ fun RegistreScreen(
 
     ModalNavigationDrawer(
         drawerState = tiroir,
+        gesturesEnabled = false,
         drawerContent = {
             ModalDrawerSheet(drawerContainerColor = RegistreTheme.colors.page) {
             Column(

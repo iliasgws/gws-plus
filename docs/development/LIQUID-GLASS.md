@@ -7,6 +7,9 @@ layers. No earbud-specific code or protocol workarounds belong here.
 
 ## Rendering ownership
 
+The Registre drawer disables Material's swipe gestures (`gesturesEnabled=false`).
+Its explicit Menu action, outside-tap/Back dismissal and vertical refresh remain.
+
 Post-beta.3 correction: adaptive icon sampling has been removed, including the
 bitmap probe and its readback loop. Tabs use stable theme/accent colors again.
 `GlassMotion` now uses the original vendored Kyant button deformation on an

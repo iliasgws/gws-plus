@@ -8,6 +8,8 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
 
 ### Corrigé
 
+- Registre : suppression du geste de balayage du menu latéral ; le bouton
+  Menu, le retour Android et l’actualisation par glissement restent disponibles.
 - Boutons, icônes et profil : étirement du modèle Kyant appliqué à toute la
   commande, contenu compris, et non au seul fond de verre.
 - Onglets : suppression de la recoloration adaptative ; retour aux couleurs
