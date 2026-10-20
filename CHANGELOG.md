@@ -6,6 +6,13 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
 
 ## [Non publié]
 
+## [0.10.2-beta.5] — 2026-10-20
+
+### Préversion (bêta)
+
+Même certificat `4ff056a3…` que les bêtas 1 à 4 : mise à jour directe,
+sans désinstallation.
+
 ### Changé
 
 - Messages, conversations et nouveau message : en-têtes transparents fixes,

@@ -7,6 +7,12 @@ layers. No earbud-specific code or protocol workarounds belong here.
 
 ## Rendering ownership
 
+Beta.5 (versionCode 130) packages the messaging/account follow-up below. Debug
+and signed release builds, 324 JVM tests and 11 glass UI checks pass; signed
+release installation/cold launch on API 36 passes. Certificate remains
+`4ff056a3…`. APK SHA-256:
+`b811d8c99822a512fd31dbd312beb30a42483e4f45f3992b594af7c1395a7e71`.
+
 Messaging/account follow-up: `MessagingGlass` scopes background blur to 32 dp
 (versus ordinary 0.75 dp chrome). The effect never touches foreground text or
 icons and retains the existing API fallback. `GlassFloatingScaffold.footer`
