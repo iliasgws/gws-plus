@@ -20,11 +20,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Send
 import androidx.compose.material.icons.rounded.Call
 import androidx.compose.material.icons.rounded.Forum
-import androidx.compose.material3.Button
+import school.greenwood.plus.ui.components.GlassButton as Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
+import school.greenwood.plus.ui.components.GlassSurface as Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -72,17 +72,12 @@ fun MessagesScreen(
     padding: PaddingValues,
     onOuvrirConversation: (String) -> Unit,
     onNouveauMessage: () -> Unit,
-) {
+) = school.greenwood.plus.ui.components.MessagingGlass {
     val vm: MessagesViewModel = viewModel { MessagesViewModel(container) }
     val état by vm.état.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(RegistreTheme.colors.paper)
-            .padding(padding),
-    ) {
+    school.greenwood.plus.ui.components.GlassFloatingScaffold(padding = padding, header = {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -106,11 +101,14 @@ fun MessagesScreen(
             }
         }
 
+    }) { insets ->
+        Box(Modifier.fillMaxSize().background(RegistreTheme.colors.paper)) {
         when {
-            état.chargement -> SqueletteMessages()
+            état.chargement -> Box(Modifier.padding(insets)) { SqueletteMessages() }
             état.erreur != null && état.conversations.isEmpty() -> Column(
                 Modifier
                     .fillMaxWidth()
+                    .padding(insets)
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
@@ -129,7 +127,10 @@ fun MessagesScreen(
             else -> {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+                    contentPadding = PaddingValues(
+                        start = 16.dp, end = 16.dp, top = insets.calculateTopPadding() + 12.dp,
+                        bottom = insets.calculateBottomPadding() + 12.dp,
+                    ),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     // Bandeau discret en tête de liste quand un échec réseau
@@ -188,6 +189,7 @@ fun MessagesScreen(
                     }
                 }
             }
+        }
         }
     }
 }

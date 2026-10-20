@@ -19,6 +19,13 @@ publicitaires via `showSLides`) — GWS+ gagne en enlevant.
 
 ## 2. Direction visuelle : « École vivante »
 
+Depuis l’issue #155, les surfaces partagées adoptent un rendu Liquid Glass
+Android avec Kyant Backdrop : fonds réellement échantillonnés, contours
+continus et interactions à ressort. Les couleurs, la hiérarchie de lecture et
+les contrats de navigation ci-dessous restent la base ; voir
+[`../development/LIQUID-GLASS.md`](../development/LIQUID-GLASS.md) pour les
+couches de rendu, les limites selon Android et les vérifications requises.
+
 L'école est un lieu vivant : la cour, les affiches, les cahiers de matières
 couvertes de couleurs. GWS+ reprend cette énergie — un crème chaud comme
 papier de base, une famille d'accent par onglet (comme les couvertures de

@@ -8,6 +8,87 @@ raw probe responses stay out of the repository (personal data).
 
 `[x]` done · `[~]` in progress · `[ ]` todo · `(!)` needs a decision or a real-device check
 
+## Liquid Glass interface (issue #155)
+
+- [x] Publish [0.10.2-beta.5](https://github.com/iliasgws/gws-plus/releases/tag/v0.10.2-beta.5)
+      (versionCode 130) from `3424fe3`, signed with the same beta.1–4 certificate;
+      no merge or stable release.
+- [x] Beta.5 debug/release builds, 324 JVM tests and 11 glass UI checks pass;
+      signed release installed/cold-launched on API 36, certificate unchanged.
+
+- [x] Messaging follow-up: fixed transparent Messages/conversation/new-thread
+      headers and a measured floating composer footer. Insets stay inside scroll
+      content; keyboard consumption, category validation and send callbacks stay
+      unchanged. Scoped 32 dp background blur for messaging and account controls.
+- [x] Account sheet: window-local rounded glass with spring expansion/corner
+      morphing; retain Material dismissal, Back, child switching and sign-out.
+- [x] Debug build, 324 JVM tests and 11 glass component tests on API 36,
+      including floating-footer stability and last-message clearance.
+- [ ] Verify messaging/account follow-up on a real handset with keyboard, voice,
+      attachments, category retries and large text; no authenticated sends tested.
+
+- [x] Disable the Registre side drawer's swipe gestures; keep explicit menu
+      activation, outside-tap/Back dismissal and pull-to-refresh unchanged.
+
+- [x] Follow-up to beta.3: remove adaptive icon recoloring/readback, restore
+      original template deformation on the whole action (including icon buttons
+      and profile), float the Demandes header and pin Documents search/filters
+      over a full-height scrolling viewport. No navigation/Back changes.
+- [x] Verify this follow-up as `0.10.2-beta.4` (versionCode 129): debug/release
+      builds, 324 JVM tests and 10 glass UI checks pass; signed APK installs and
+      cold-launches on API 36 with beta.3's signing identity.
+- [x] Publish [beta.4](https://github.com/iliasgws/gws-plus/releases/tag/v0.10.2-beta.4)
+      from `e05542d`; real-handset visual review remains required.
+
+- [x] Screenshot-driven beta.2 refinements: 0.75 dp chrome blur, 16% chrome
+      tint (reading cards retain 80%), stronger lensing with chromatic edges;
+      floating shop search/categories/history sample the actual grid, and
+      post/homework/product actions stay pinned above their scrolling content.
+      The viewer's fixed close button samples its own pager and uses dark tint
+      behind the white cross. No whole-header/footer opaque bands in these views.
+- [x] Screenshot-driven follow-up: dialog backdrop clipped to its rounded
+      shape (no square white corners), compact 40 dp local-done toggle that no
+      longer overflows its card, profile pill gets the shared drag-stretch, and
+      the tab bar drops chromatic aberration, uses 6 dp blur and flips icons to
+      a light tint when dark content touches even part of their region
+      (GlassBackdropProbe, ≤8 readbacks/s while STARTED).
+- [x] Prepare `0.10.2-beta.2` (versionCode 127), retaining beta.1's signing key.
+- [x] 321 JVM tests and 10 glass UI checks, including fixed chrome and reachable
+      last actions; rendered fixture captures on a regular API 36 AOSP emulator.
+- [x] Publish beta.2 from `8177aa1` with the same beta.1 certificate; debug and
+      signed release builds, 321 JVM tests and 10 UI tests pass. The signed APK
+      installs/cold-launches on API 36. Real-handset visual review remains required.
+
+- [x] Pin Kyant Backdrop 1.0.0 and Capsule 2.1.1; vendor the actual liquid
+      button/tab/toggle examples and interaction helpers with Apache-2.0 license
+      and revision/adaptation notes.
+- [x] Separate per-entry gradient sampling from screen capture for bottom tabs;
+      create owner-local scenes in dialogs, sheets and popups; retain per-entry
+      predictive-back accents and the six-tab navigation contract.
+- [x] Integrate shared glass cards/actions/header icons, composer and AI surfaces,
+      confirmation dialogs, menus, settings switches and spring-expanding refresh
+      picker across the app. Preserve the actual actions, disabled states and
+      non-blocking retry errors; no Buds commands or unused sliders.
+- [x] Add API-gated opacity/blur/lens policy tests and instrumented component
+      checks (disabled input, fresh callbacks, switch semantics, picker Back,
+      external tab selection and cross-window dialog action).
+- [ ] (!) Real-handset visual/accessibility/performance review and authenticated
+      navigation/quiz/composer smoke checks before merge; see
+      `docs/development/LIQUID-GLASS.md`. No stable release is authorized by this work.
+- [x] Prepare requested `0.10.2-beta.1` (versionCode 126) on the feature branch.
+- [x] Debug assembly, 320 JVM tests and eight glass UI tests (API 36 emulator).
+      Lint is blocked by four existing API errors in the untouched community
+      API/download code; full instrumentation also finds the existing
+      `SessionStoreTest.étatNeuf()` non-void `@Before` initialization error.
+- [x] User explicitly authorizes the local `4ff056a3…` certificate for this beta,
+      overriding the historical-key requirement for this publication only.
+      Clearly warn that other signatures require uninstalling first (local
+      session/cache loss); no stable release or merge is authorized.
+- [x] Publish `0.10.2-beta.1` as a prerelease from commit `602a43b`, after
+      verifying its signature, version, alignment and checksum; install and
+      cold-launch the signed release on the API 36 emulator. Release notes warn
+      prominently about signature incompatibility and local session/cache loss.
+
 ## Registre startup performance (issue #145)
 
 - [x] Parallel load: the four independent registre sources (devoirs, nouveautes,

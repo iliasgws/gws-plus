@@ -65,7 +65,7 @@ fun PlusScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(RegistreTheme.colors.paper)
-            .padding(padding)
+            .padding(top = padding.calculateTopPadding())
             .verticalScroll(rememberScrollState()),
     ) {
         Column(Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
@@ -123,7 +123,7 @@ fun PlusScreen(
                 )
             }
         }
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(padding.calculateBottomPadding() + 24.dp))
     }
 }
 

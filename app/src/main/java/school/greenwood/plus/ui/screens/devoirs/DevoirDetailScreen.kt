@@ -1,5 +1,7 @@
 package school.greenwood.plus.ui.screens.devoirs
 
+import school.greenwood.plus.ui.components.GlassFloatingScaffold
+
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -25,14 +27,14 @@ import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material.icons.rounded.RadioButtonUnchecked
 import androidx.compose.material.icons.rounded.Refresh
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
+import school.greenwood.plus.ui.components.GlassAlertDialog as AlertDialog
+import school.greenwood.plus.ui.components.GlassButton as Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import school.greenwood.plus.ui.components.GlassIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import school.greenwood.plus.ui.components.GlassTextButton as TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
@@ -117,13 +119,7 @@ fun DevoirDetailScreen(
         if (uri != null) vm.choisirCopie(context, uri)
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(RegistreTheme.colors.paper)
-            .padding(padding)
-            .verticalScroll(rememberScrollState()),
-    ) {
+    GlassFloatingScaffold(padding = padding, header = {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -171,6 +167,11 @@ fun DevoirDetailScreen(
             }
         }
 
+    }) { contentInsets ->
+    Column(
+        modifier = Modifier.fillMaxSize().background(RegistreTheme.colors.paper)
+            .verticalScroll(rememberScrollState()).padding(contentInsets),
+    ) {
         val d = devoir
         if (d == null) {
             // Charge ou introuvable : même écran d'attente dans les deux cas,
@@ -494,6 +495,7 @@ fun DevoirDetailScreen(
         }
 
         Spacer(Modifier.height(16.dp))
+    }
     }
 
     // Confirmation avant le POST définitif (issue #68 : impossible d'annuler).
