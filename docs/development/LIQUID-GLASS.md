@@ -7,6 +7,21 @@ layers. No earbud-specific code or protocol workarounds belong here.
 
 ## Rendering ownership
 
+Messaging/account follow-up: `MessagingGlass` scopes background blur to 32 dp
+(versus ordinary 0.75 dp chrome). The effect never touches foreground text or
+icons and retains the existing API fallback. `GlassFloatingScaffold.footer`
+measures the category/composer stack and adds its height to the list's inner
+bottom padding. Messages, conversation and new-message headers are fixed over
+the separately recorded scrolling sibling. The composer consumes shell insets
+before IME padding to avoid counting the keyboard twice. Its attachments, voice,
+AI state and send rules remain in the existing ViewModels/composables.
+
+The account sheet remains a Material modal with the same Back/dismiss/accessibility
+contract. A window-local clipped scene supplies its frosted background; spring
+scale and corner interpolation give the opening/closing a rounded merging-style
+motion. This is not a shared-element transition across windows and does not
+sample family content from another window.
+
 The Registre drawer disables Material's swipe gestures (`gesturesEnabled=false`).
 Its explicit Menu action, outside-tap/Back dismissal and vertical refresh remain.
 

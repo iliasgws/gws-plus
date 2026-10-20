@@ -29,12 +29,14 @@ fun GlassFloatingScaffold(
     padding: PaddingValues,
     header: @Composable () -> Unit,
     modifier: Modifier = Modifier,
+    footer: (@Composable () -> Unit)? = null,
     content: @Composable (PaddingValues) -> Unit,
 ) {
     val backdrop = rememberLayerBackdrop()
     val density = LocalDensity.current
     val direction = LocalLayoutDirection.current
     var headerHeight by remember { mutableIntStateOf(0) }
+    var footerHeight by remember { mutableIntStateOf(0) }
     val left = padding.calculateLeftPadding(direction)
     val right = padding.calculateRightPadding(direction)
     val start = if (direction == androidx.compose.ui.unit.LayoutDirection.Ltr) left else right
@@ -45,7 +47,7 @@ fun GlassFloatingScaffold(
                 start = start,
                 end = end,
                 top = padding.calculateTopPadding() + with(density) { headerHeight.toDp() },
-                bottom = padding.calculateBottomPadding(),
+                bottom = padding.calculateBottomPadding() + with(density) { footerHeight.toDp() },
             ))
         }
         CompositionLocalProvider(LocalGlassScene provides GlassSceneOwner(LocalView.current, backdrop)) {
@@ -55,6 +57,13 @@ fun GlassFloatingScaffold(
                     .onSizeChanged { headerHeight = it.height },
             ) {
                 header()
+            }
+            if (footer != null) {
+                Box(
+                    Modifier.align(Alignment.BottomStart)
+                        .padding(bottom = padding.calculateBottomPadding(), start = start, end = end)
+                        .onSizeChanged { footerHeight = it.height },
+                ) { footer() }
             }
         }
     }

@@ -58,6 +58,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -749,15 +750,29 @@ private fun FeuilleCompte(
     surOuvrirParamètres: () -> Unit,
     surDemanderDéconnexion: () -> Unit,
     surFermer: () -> Unit,
-) {
+) = school.greenwood.plus.ui.components.MessagingGlass {
     val feuille = rememberModalBottomSheetState()
     val portée = rememberCoroutineScope()
+    val fusion by androidx.compose.animation.core.animateFloatAsState(
+        targetValue = if (feuille.targetValue == androidx.compose.material3.SheetValue.Hidden) 0f else 1f,
+        animationSpec = androidx.compose.animation.core.spring(dampingRatio = 0.85f, stiffness = 300f),
+        label = "fusionCompte",
+    )
+    val forme = com.kyant.capsule.ContinuousRoundedRectangle((64f - 40f * fusion).dp)
     ModalBottomSheet(
         onDismissRequest = surFermer,
         sheetState = feuille,
-        containerColor = RegistreTheme.colors.page,
-        shape = PageShape,
+        containerColor = androidx.compose.ui.graphics.Color.Transparent,
+        dragHandle = null,
+        shape = forme,
+        modifier = Modifier.graphicsLayer {
+            transformOrigin = androidx.compose.ui.graphics.TransformOrigin(1f, 0f)
+            scaleX = 0.88f + 0.12f * fusion
+            scaleY = 0.94f + 0.06f * fusion
+        },
     ) {
+        school.greenwood.plus.ui.components.GlassScene(shape = forme) {
+        school.greenwood.plus.ui.components.GlassSurface(shape = forme, floating = true) {
         // Défilable : sur petit écran ou à grosse police, « Se déconnecter »
         // reste atteignable sous le bas de la feuille (jamais masqué).
         Column(
@@ -766,6 +781,9 @@ private fun FeuilleCompte(
                 .verticalScroll(rememberScrollState())
                 .padding(bottom = 24.dp),
         ) {
+            androidx.compose.material3.BottomSheetDefaults.DragHandle(
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+            )
             Text(
                 text = "Mon compte",
                 style = MaterialTheme.typography.titleMedium,
@@ -868,6 +886,8 @@ private fun FeuilleCompte(
                 activé = !déconnexionEnCours,
                 onClick = surDemanderDéconnexion,
             )
+        }
+        }
         }
     }
 }

@@ -83,7 +83,7 @@ fun GlassSurface(
     val policy = glassPolicy(Build.VERSION.SDK_INT)
     val tint = color.copy(alpha = color.alpha * if (floating) policy.chromeOpacity else policy.surfaceOpacity)
     androidx.compose.material3.Surface(
-        modifier = modifier.glassChrome(backdrop, glassShape, tint),
+        modifier = modifier.glassChrome(backdrop, glassShape, tint, LocalGlassBlur.current),
         shape = glassShape,
         color = Color.Transparent,
         contentColor = contentColor,
@@ -114,6 +114,7 @@ fun GlassSurface(
         modifier = modifier.then(rememberGlassStretch(enabled)).glassChrome(
             LocalGlassScene.current!!.backdrop, glassShape,
             color.copy(alpha = color.alpha * if (floating) policy.chromeOpacity else policy.surfaceOpacity),
+            LocalGlassBlur.current,
         ),
         shape = glassShape,
         color = Color.Transparent,
@@ -132,7 +133,7 @@ fun GlassButton(
     shape: Shape = ContinuousCapsule,
     colors: ButtonColors = ButtonDefaults.buttonColors(),
     contentPadding: PaddingValues = ButtonDefaults.ContentPadding,
-    blurRadius: Dp = GlassBlurDp.dp,
+    blurRadius: Dp = LocalGlassBlur.current.dp,
     content: @Composable RowScope.() -> Unit,
 ): Unit = WithGlassScene {
     CompositionLocalProvider(
@@ -162,7 +163,7 @@ fun GlassTextButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     contentPadding: PaddingValues = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
-    blurRadius: Dp = GlassBlurDp.dp,
+    blurRadius: Dp = LocalGlassBlur.current.dp,
     content: @Composable RowScope.() -> Unit,
 ): Unit = GlassButton(
     onClick, modifier, enabled,
@@ -191,6 +192,7 @@ fun GlassIconButton(
         modifier = modifier.then(rememberGlassStretch(enabled)).glassChrome(
             LocalGlassScene.current!!.backdrop, CircleShape,
             containerColor,
+            LocalGlassBlur.current,
         ),
         content = content,
     )

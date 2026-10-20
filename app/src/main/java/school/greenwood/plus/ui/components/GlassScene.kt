@@ -28,6 +28,13 @@ import school.greenwood.plus.ui.theme.RegistreTheme
 internal data class GlassSceneOwner(val view: View, val backdrop: Backdrop)
 internal val LocalGlassScene = staticCompositionLocalOf<GlassSceneOwner?> { null }
 internal val LocalScreenBackdrop = staticCompositionLocalOf<Backdrop?> { null }
+internal val LocalGlassBlur = staticCompositionLocalOf { GlassBlurDp }
+
+/** Strong frosting is scoped to messaging; foreground text/icons are never blurred. */
+@Composable
+internal fun MessagingGlass(content: @Composable () -> Unit) {
+    CompositionLocalProvider(LocalGlassBlur provides 32f, content = content)
+}
 
 /** Only the sibling gradient is recorded. Controls can never sample themselves. */
 @Composable

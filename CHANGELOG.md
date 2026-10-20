@@ -6,6 +6,17 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
 
 ## [Non publié]
 
+### Changé
+
+- Messages, conversations et nouveau message : en-têtes transparents fixes,
+  contenu défilant derrière les commandes et le composeur, sans bandes opaques.
+- Verre très givré dans la messagerie et « Mon compte » : flou de fond de
+  32 dp sur les appareils compatibles, sans flouter le texte ni les icônes.
+- Composeur fixe au-dessus du clavier, avec sa hauteur réservée dans le
+  contenu défilant ; catégories, pièces jointes, vocal et panneau IA conservés.
+- « Mon compte » : feuille en verre arrondi avec ouverture et fermeture
+  souples combinant expansion et transformation de la courbure.
+
 ## [0.10.2-beta.4] — 2026-10-20
 
 ### Préversion (bêta)

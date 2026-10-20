@@ -243,6 +243,39 @@ class GlassControlsTest {
         }
     }
 
+    @Test fun floatingComposerReservesItsHeightWithoutShrinkingScrollViewport() {
+        compose.setContent {
+            GwsPlusTheme { GlassScene {
+                school.greenwood.plus.ui.components.MessagingGlass {
+                    GlassFloatingScaffold(
+                        padding = PaddingValues(top = 24.dp, bottom = 80.dp),
+                        header = { Text("Messages", Modifier.height(48.dp)) },
+                        footer = {
+                            GlassButton(onClick = {}, modifier = Modifier.height(96.dp).testTag("composer")) {
+                                Text("Envoyer")
+                            }
+                        },
+                    ) { insets ->
+                        Column(Modifier.fillMaxSize().testTag("message-list")
+                            .verticalScroll(rememberScrollState()).padding(insets)) {
+                            repeat(20) { Text("Message $it", Modifier.height(100.dp)) }
+                            Text("Dernier message", Modifier.testTag("last-message"))
+                        }
+                    }
+                }
+            } }
+        }
+        val before = compose.onNodeWithTag("composer").fetchSemanticsNode().boundsInRoot
+        compose.onNodeWithTag("last-message").performScrollTo()
+        compose.onNodeWithTag("message-list").performTouchInput { swipeUp() }
+        val composer = compose.onNodeWithTag("composer").fetchSemanticsNode().boundsInRoot
+        val last = compose.onNodeWithTag("last-message").fetchSemanticsNode().boundsInRoot
+        assertEquals(before, composer)
+        assertTrue(last.bottom <= composer.top + 1f)
+        compose.onNodeWithTag("composer").assertIsDisplayed()
+        compose.onNodeWithTag("last-message").assertIsDisplayed()
+    }
+
     private fun saveFixture(node: SemanticsNodeInteraction, name: String) {
         if (InstrumentationRegistry.getArguments().getString("captureGlassFixtures") != "true") return
         val context = InstrumentationRegistry.getInstrumentation().targetContext

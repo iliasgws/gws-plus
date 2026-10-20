@@ -80,7 +80,7 @@ fun Composeur(
     enCours: Boolean = false,
     limitePièces: Boolean = false,
     ia: RéglagesIA? = null,
-) {
+) = school.greenwood.plus.ui.components.MessagingGlass {
     val context = LocalContext.current
     val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
 
@@ -137,6 +137,7 @@ fun Composeur(
         }
 
         Surface(
+            floating = true,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 8.dp),

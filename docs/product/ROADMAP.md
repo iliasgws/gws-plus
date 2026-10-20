@@ -10,6 +10,17 @@ raw probe responses stay out of the repository (personal data).
 
 ## Liquid Glass interface (issue #155)
 
+- [x] Messaging follow-up: fixed transparent Messages/conversation/new-thread
+      headers and a measured floating composer footer. Insets stay inside scroll
+      content; keyboard consumption, category validation and send callbacks stay
+      unchanged. Scoped 32 dp background blur for messaging and account controls.
+- [x] Account sheet: window-local rounded glass with spring expansion/corner
+      morphing; retain Material dismissal, Back, child switching and sign-out.
+- [x] Debug build, 324 JVM tests and 11 glass component tests on API 36,
+      including floating-footer stability and last-message clearance.
+- [ ] Verify messaging/account follow-up on a real handset with keyboard, voice,
+      attachments, category retries and large text; no authenticated sends tested.
+
 - [x] Disable the Registre side drawer's swipe gestures; keep explicit menu
       activation, outside-tap/Back dismissal and pull-to-refresh unchanged.
 

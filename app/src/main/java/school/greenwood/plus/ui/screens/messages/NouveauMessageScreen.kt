@@ -47,7 +47,7 @@ fun NouveauMessageScreen(
     padding: PaddingValues,
     retour: () -> Unit,
     onEnvoyé: () -> Unit,
-) {
+) = school.greenwood.plus.ui.components.MessagingGlass {
     val vm: NouveauMessageViewModel = viewModel { NouveauMessageViewModel(container) }
     val état by vm.état.collectAsStateWithLifecycle()
     // Réglages du composeur IA (issue #56) — null tant que non configuré.
@@ -62,18 +62,25 @@ fun NouveauMessageScreen(
         chargement = état.themesChargement,
     )
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(RegistreTheme.colors.paper)
-            // Le clavier repousse le contenu (composeur visible au-dessus).
-            .padding(padding)
-            // Les insets du Scaffold (barre d'onglets, barre système) sont
-            // consommés : le clavier ne s'ajoute plus par-dessus — le
-            // composeur colle au clavier, sans vide.
-            .consumeWindowInsets(padding)
-            .imePadding(),
-    ) {
+    school.greenwood.plus.ui.components.GlassFloatingScaffold(
+        padding = padding,
+        modifier = Modifier.consumeWindowInsets(padding).imePadding(),
+        footer = {
+            Composeur(
+                texte = état.texte, onTexte = vm::modifierTexte,
+                pièces = état.pièces, onAjouterPièces = vm::ajouterPièces,
+                onRetirerPièce = vm::retirerPièce,
+                audio = état.audio, onRetirerAudio = vm::retirerAudio,
+                enregistre = état.enregistre,
+                onDémarrerEnregistrement = vm::démarrerEnregistrement,
+                onArrêterEnregistrement = vm::arrêterEnregistrement,
+                onAnnulerEnregistrement = vm::annulerEnregistrement,
+                envoiPossible = état.sujet.isNotBlank() && état.texte.isNotBlank() && refusCatégorie == null,
+                onEnvoyer = vm::envoyer, enCours = état.envoi,
+                limitePièces = true, ia = réglagesIA,
+            )
+        },
+        header = {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -95,11 +102,13 @@ fun NouveauMessageScreen(
             )
         }
 
+    }) { insets ->
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
-                .verticalScroll(rememberScrollState()),
+                .fillMaxSize()
+                .background(RegistreTheme.colors.paper)
+                .verticalScroll(rememberScrollState())
+                .padding(insets),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -138,25 +147,6 @@ fun NouveauMessageScreen(
                 }
             }
         }
-
-        Composeur(
-            texte = état.texte,
-            onTexte = vm::modifierTexte,
-            pièces = état.pièces,
-            onAjouterPièces = vm::ajouterPièces,
-            onRetirerPièce = vm::retirerPièce,
-            audio = état.audio,
-            onRetirerAudio = vm::retirerAudio,
-            enregistre = état.enregistre,
-            onDémarrerEnregistrement = vm::démarrerEnregistrement,
-            onArrêterEnregistrement = vm::arrêterEnregistrement,
-            onAnnulerEnregistrement = vm::annulerEnregistrement,
-            envoiPossible = état.sujet.isNotBlank() && état.texte.isNotBlank() && refusCatégorie == null,
-            onEnvoyer = vm::envoyer,
-            enCours = état.envoi,
-            limitePièces = true,
-            ia = réglagesIA,
-        )
 
         // L'envoi réussi rebascule sur la liste (bundle : navigate back).
         LaunchedEffect(état.envoyé) {

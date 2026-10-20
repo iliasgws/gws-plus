@@ -72,17 +72,12 @@ fun MessagesScreen(
     padding: PaddingValues,
     onOuvrirConversation: (String) -> Unit,
     onNouveauMessage: () -> Unit,
-) {
+) = school.greenwood.plus.ui.components.MessagingGlass {
     val vm: MessagesViewModel = viewModel { MessagesViewModel(container) }
     val état by vm.état.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(RegistreTheme.colors.paper)
-            .padding(top = padding.calculateTopPadding()),
-    ) {
+    school.greenwood.plus.ui.components.GlassFloatingScaffold(padding = padding, header = {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -106,11 +101,14 @@ fun MessagesScreen(
             }
         }
 
+    }) { insets ->
+        Box(Modifier.fillMaxSize().background(RegistreTheme.colors.paper)) {
         when {
-            état.chargement -> SqueletteMessages()
+            état.chargement -> Box(Modifier.padding(insets)) { SqueletteMessages() }
             état.erreur != null && état.conversations.isEmpty() -> Column(
                 Modifier
                     .fillMaxWidth()
+                    .padding(insets)
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
@@ -130,8 +128,8 @@ fun MessagesScreen(
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(
-                        start = 16.dp, end = 16.dp, top = 12.dp,
-                        bottom = padding.calculateBottomPadding() + 12.dp,
+                        start = 16.dp, end = 16.dp, top = insets.calculateTopPadding() + 12.dp,
+                        bottom = insets.calculateBottomPadding() + 12.dp,
                     ),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
@@ -191,6 +189,7 @@ fun MessagesScreen(
                     }
                 }
             }
+        }
         }
     }
 }
