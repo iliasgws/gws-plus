@@ -7,6 +7,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import com.kyant.backdrop.catalog.utils.InteractiveHighlight
 import kotlin.math.abs
+import kotlin.math.atan2
+import kotlin.math.cos
+import kotlin.math.sin
 import kotlin.math.tanh
 
 internal data class GlassDeformation(
@@ -25,11 +28,16 @@ internal fun glassDeformation(
     val p = if (pressure.isFinite()) pressure.coerceIn(0f, 1f) else 0f
     val dx = if (x.isFinite()) x else 0f
     val dy = if (y.isFinite()) y else 0f
+    // Original Kyant catalog LiquidButton deformation, shared by all action types.
+    val bound = minOf(width, height)
+    val scale = 1f + 4f * density / height * p
+    val dragScale = 4f * density / height
+    val angle = atan2(dy, dx)
     return GlassDeformation(
-        x = 8f * density * tanh(dx / (width * 0.5f)) * p,
-        y = 8f * density * tanh(dy / (height * 0.5f)) * p,
-        scaleX = 1f + 0.04f * p + 0.12f * abs(tanh(dx / width)) * p,
-        scaleY = 1f + 0.04f * p + 0.12f * abs(tanh(dy / height)) * p,
+        x = bound * tanh(0.05f * dx / bound),
+        y = bound * tanh(0.05f * dy / bound),
+        scaleX = scale + dragScale * abs(cos(angle) * dx / maxOf(width, height)) * minOf(width / height, 1f),
+        scaleY = scale + dragScale * abs(sin(angle) * dy / maxOf(width, height)) * minOf(height / width, 1f),
     )
 }
 
@@ -47,5 +55,5 @@ internal fun rememberGlassStretch(enabled: Boolean): Modifier {
         translationY = motion.y
         scaleX = motion.scaleX
         scaleY = motion.scaleY
-    }.then(highlight.modifier).then(highlight.gestureModifier)
+    }.then(highlight.gestureModifier)
 }

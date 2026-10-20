@@ -92,9 +92,8 @@ fun DocumentsScreen(
     val bannièreActivée by container.session.bannièreDocumentsActivée.collectAsStateWithLifecycle(initialValue = true)
     val liste = rememberLazyListState()
     val context = LocalContext.current
-    EcranBanniere(R.drawable.documents_banner, bannièreActivée, padding, liste) {
-        item(key = "entete") {
-        Column {
+    EcranBanniere(R.drawable.documents_banner, bannièreActivée, padding, liste, fixedHeader = {
+        Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
             Text(
                 text = "Documents",
                 style = MaterialTheme.typography.displayLarge,
@@ -119,8 +118,7 @@ fun DocumentsScreen(
                 onChange = vm::choisirFiltre,
             )
         }
-        }
-
+    }) {
         when {
             état.chargement -> item(key = "chargement") { SqueletteDocuments(défilable = false) }
             état.erreur != null && état.ressources.isEmpty() && état.bibliotheque.isEmpty() -> item(key = "erreur-initiale") { Column(
@@ -263,10 +261,11 @@ private fun PuceFiltre(
 ) {
     val accent = RegistreTheme.accent
     Surface(
+        floating = true,
         shape = ControlShape,
         color = if (sélectionné) accent.conteneur else RegistreTheme.colors.page,
         border = if (sélectionné) null else BorderStroke(1.dp, RegistreTheme.colors.sage),
-        modifier = Modifier.clickable(onClick = onClick),
+        onClick = onClick,
     ) {
         Text(
             text = label,
@@ -284,6 +283,7 @@ private fun ChampRecherche(
     onChange: (String) -> Unit,
 ) {
     Surface(
+        floating = true,
         shape = ControlShape,
         color = RegistreTheme.colors.page,
         border = BorderStroke(1.dp, RegistreTheme.colors.sage),

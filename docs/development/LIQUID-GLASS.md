@@ -7,6 +7,21 @@ layers. No earbud-specific code or protocol workarounds belong here.
 
 ## Rendering ownership
 
+Post-beta.3 correction: adaptive icon sampling has been removed, including the
+bitmap probe and its readback loop. Tabs use stable theme/accent colors again.
+`GlassMotion` now uses the original vendored Kyant button deformation on an
+outer graphics layer: foreground and glass stretch together. Filled/text
+buttons, profile, icon buttons and clickable glass surfaces share it; disabled
+actions do not react. Scrolling parents and navigation still own their gestures.
+
+Demandes now uses `GlassFloatingScaffold`. Documents opts into a fixed transparent
+header on `EcranBanniere`: search and filters remain pinned below the reduced
+banner, sample the scrolling sibling, and reserve initial space via list content
+padding. The list viewport extends behind the bottom tabs, with trailing padding
+only inside the scroll container. Other banner screens keep their existing layout.
+These follow-up changes have not been built in the current environment (no JDK
+or Android SDK); beta.3 verification below applies only to the published beta.
+
 `ui/components/GlassScene.kt` records only a theme/accent gradient in a sibling
 Backdrop layer. Cards and controls sample that background, never themselves or
 their neighboring controls. Each navigation entry owns a scene and its own

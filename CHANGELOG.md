@@ -6,6 +6,16 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
 
 ## [Non publié]
 
+### Corrigé
+
+- Boutons, icônes et profil : étirement du modèle Kyant appliqué à toute la
+  commande, contenu compris, et non au seul fond de verre.
+- Onglets : suppression de la recoloration adaptative ; retour aux couleurs
+  stables du thème, sans lecture de pixels en arrière-plan.
+- Demandes : en-tête transparent fixe au-dessus de la liste, sans bande opaque.
+- Documents : recherche et filtres fixes en haut ; contenu défilant derrière
+  les commandes et les onglets, sans bande de pied de page opaque.
+
 ## [0.10.2-beta.3] — 2026-10-20
 
 ### Préversion (bêta)

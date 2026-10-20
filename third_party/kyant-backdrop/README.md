@@ -19,6 +19,8 @@ Modified files retain their upstream names. Local adaptations:
 
 - `LiquidButton`: enabled input handling; customizable shape, padding and blur;
   minimum 48 dp rather than a fixed height, so large text can grow.
+  Post-beta.3 restores the original catalog deformation via shared `GlassMotion`,
+  applied outside the backdrop so the foreground stretches with the glass.
   Beta.2 reduces default blur to 0.75 dp, increases lens strength and enables
   chromatic edge dispersion, also on the tab shell/selection lens at rest.
 - `LiquidBottomTabs`: theme tint parameters; latest callbacks; geometry-aware

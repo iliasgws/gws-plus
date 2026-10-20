@@ -10,6 +10,13 @@ raw probe responses stay out of the repository (personal data).
 
 ## Liquid Glass interface (issue #155)
 
+- [x] Follow-up to beta.3: remove adaptive icon recoloring/readback, restore
+      original template deformation on the whole action (including icon buttons
+      and profile), float the Demandes header and pin Documents search/filters
+      over a full-height scrolling viewport. No navigation/Back changes.
+- [ ] Build and handset-check this follow-up: the current execution environment
+      lacks Java and the Android SDK; no new beta published yet.
+
 - [x] Screenshot-driven beta.2 refinements: 0.75 dp chrome blur, 16% chrome
       tint (reading cards retain 80%), stronger lensing with chromatic edges;
       floating shop search/categories/history sample the actual grid, and

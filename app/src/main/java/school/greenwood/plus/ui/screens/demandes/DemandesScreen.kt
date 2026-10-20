@@ -40,6 +40,7 @@ import school.greenwood.plus.ui.components.BandeauErreur
 import school.greenwood.plus.ui.components.EmptyState
 import school.greenwood.plus.ui.components.ErrorInline
 import school.greenwood.plus.ui.components.GwsCard
+import school.greenwood.plus.ui.components.GlassFloatingScaffold
 import school.greenwood.plus.ui.components.Puce
 import school.greenwood.plus.ui.components.SqueletteDemandes
 import school.greenwood.plus.ui.theme.AnnotationShape
@@ -63,12 +64,7 @@ fun DemandesScreen(
     val vm: DemandesViewModel = viewModel { DemandesViewModel(container) }
     val état by vm.état.collectAsStateWithLifecycle()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(RegistreTheme.colors.paper)
-            .padding(padding),
-    ) {
+    GlassFloatingScaffold(padding = padding, header = {
         Row(
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -95,11 +91,14 @@ fun DemandesScreen(
             )
         }
 
+    }) { insets ->
+        Box(Modifier.fillMaxSize().background(RegistreTheme.colors.paper)) {
         when {
-            état.chargement -> SqueletteDemandes()
+            état.chargement -> Box(Modifier.padding(insets)) { SqueletteDemandes() }
             état.erreur != null && état.demandes.isEmpty() -> Column(
                 Modifier
                     .fillMaxWidth()
+                    .padding(insets)
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
@@ -115,7 +114,7 @@ fun DemandesScreen(
                     Text("Réessayer")
                 }
             }
-            état.demandes.isEmpty() -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            état.demandes.isEmpty() -> Box(Modifier.fillMaxSize().padding(insets), contentAlignment = Alignment.Center) {
                 EmptyState(
                     titre = "Aucune demande",
                     message = "Tes demandes apparaîtront ici.",
@@ -126,20 +125,24 @@ fun DemandesScreen(
                 // Bandeau discret au-dessus de la liste quand un échec réseau
                 // laisse les demandes connues affichées (issue #21).
                 Column(Modifier.fillMaxSize()) {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(
+                            start = 16.dp, end = 16.dp,
+                            top = insets.calculateTopPadding() + 4.dp,
+                            bottom = insets.calculateBottomPadding() + 16.dp,
+                        ),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
                     état.erreur?.let { message ->
+                        item(key = "erreur") {
                         BandeauErreur(
                             message = message,
                             réessayer = { vm.charger(force = true) },
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                         )
+                        }
                     }
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f),
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                    ) {
                         items(état.demandes, key = { it.id }) { demande ->
                             CarteDemande(demande)
                         }
@@ -155,6 +158,7 @@ fun DemandesScreen(
                     }
                 }
             }
+        }
         }
     }
 }

@@ -13,8 +13,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
@@ -36,11 +34,8 @@ fun BarreOnglets(
     modifier: Modifier = Modifier,
 ): Unit = WithGlassScene {
     val backdrop = LocalScreenBackdrop.current ?: LocalGlassScene.current!!.backdrop
-    // Icons flip to a light tint as soon as dark content touches their own region —
-    // partial coverage counts (GlassBackdropProbe's per-pixel probe, not a bar average).
-    val probe = rememberGlassBackdropProbe(backdrop)
     BoxWithConstraints(
-        modifier.then(probe.modifier).fillMaxWidth()
+        modifier.fillMaxWidth()
             .windowInsetsPadding(WindowInsets.navigationBars)
             .padding(horizontal = 8.dp, vertical = 4.dp),
     ) {
@@ -57,13 +52,7 @@ fun BarreOnglets(
         ) {
             onglets.forEachIndexed { i, onglet ->
                 val accent = accents.getValue(onglet.route)
-                val sombre = probe.lightForeground["onglet-$i"] == true
-                val tint = when {
-                    i == index && sombre -> lerp(accent.teinte, Color.White, 0.45f)
-                    i == index -> accent.teinte
-                    sombre -> RegistreTheme.colors.paper
-                    else -> RegistreTheme.colors.chalk
-                }
+                val tint = if (i == index) accent.teinte else RegistreTheme.colors.chalk
                 LiquidBottomTab(
                     onClick = { onOnglet(onglet.route) },
                     modifier = Modifier.semantics { selected = i == index },
@@ -72,8 +61,7 @@ fun BarreOnglets(
                         onglet.icone,
                         null,
                         tint = tint,
-                        modifier = Modifier.size(if (serré) 22.dp else 24.dp)
-                            .then(probe.track("onglet-$i")),
+                        modifier = Modifier.size(if (serré) 22.dp else 24.dp),
                     )
                     Text(
                         onglet.label,

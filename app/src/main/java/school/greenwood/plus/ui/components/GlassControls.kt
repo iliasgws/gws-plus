@@ -111,7 +111,7 @@ fun GlassSurface(
     androidx.compose.material3.Surface(
         onClick = onClick,
         enabled = enabled,
-        modifier = modifier.glassChrome(
+        modifier = modifier.then(rememberGlassStretch(enabled)).glassChrome(
             LocalGlassScene.current!!.backdrop, glassShape,
             color.copy(alpha = color.alpha * if (floating) policy.chromeOpacity else policy.surfaceOpacity),
         ),
@@ -188,7 +188,7 @@ fun GlassIconButton(
     androidx.compose.material3.IconButton(
         onClick = onClick,
         enabled = enabled,
-        modifier = modifier.glassChrome(
+        modifier = modifier.then(rememberGlassStretch(enabled)).glassChrome(
             LocalGlassScene.current!!.backdrop, CircleShape,
             containerColor,
         ),

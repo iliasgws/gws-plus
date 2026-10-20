@@ -8,8 +8,6 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.ui.graphics.Shape
@@ -21,21 +19,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.util.fastCoerceAtMost
-import androidx.compose.ui.util.lerp
 import com.kyant.backdrop.Backdrop
-import com.kyant.backdrop.catalog.utils.InteractiveHighlight
 import com.kyant.backdrop.drawBackdrop
 import com.kyant.backdrop.effects.blur
 import com.kyant.backdrop.effects.lens
 import com.kyant.backdrop.effects.vibrancy
 import com.kyant.capsule.ContinuousCapsule
-import kotlin.math.abs
-import kotlin.math.atan2
-import kotlin.math.cos
-import kotlin.math.sin
-import kotlin.math.tanh
-import school.greenwood.plus.ui.components.glassDeformation
+import school.greenwood.plus.ui.components.rememberGlassStretch
 
 @Composable
 fun LiquidButton(
@@ -51,16 +41,8 @@ fun LiquidButton(
     surfaceColor: Color = Color.Unspecified,
     content: @Composable RowScope.() -> Unit
 ) {
-    val animationScope = rememberCoroutineScope()
-
-    val interactiveHighlight = remember(animationScope) {
-        InteractiveHighlight(
-            animationScope = animationScope
-        )
-    }
-
     Row(
-        modifier
+        modifier.then(rememberGlassStretch(isInteractive && enabled))
             .drawBackdrop(
                 backdrop = backdrop,
                 shape = { shape },
@@ -68,20 +50,6 @@ fun LiquidButton(
                     vibrancy()
                     blur(blurRadius.toPx())
                     lens(18f.dp.toPx(), 48f.dp.toPx(), chromaticAberration = true)
-                },
-                layerBlock = if (isInteractive && enabled) {
-                    {
-                        val motion = glassDeformation(
-                            interactiveHighlight.offset.x, interactiveHighlight.offset.y,
-                            size.width, size.height, interactiveHighlight.pressProgress, density,
-                        )
-                        translationX = motion.x
-                        translationY = motion.y
-                        scaleX = motion.scaleX
-                        scaleY = motion.scaleY
-                    }
-                } else {
-                    null
                 },
                 onDrawSurface = {
                     if (tint.isSpecified) {
@@ -99,15 +67,6 @@ fun LiquidButton(
                 indication = if (isInteractive) null else LocalIndication.current,
                 role = Role.Button,
                 onClick = onClick
-            )
-            .then(
-                if (isInteractive && enabled) {
-                    Modifier
-                        .then(interactiveHighlight.modifier)
-                        .then(interactiveHighlight.gestureModifier)
-                } else {
-                    Modifier
-                }
             )
             .heightIn(min = 48.dp)
             .padding(contentPadding),
