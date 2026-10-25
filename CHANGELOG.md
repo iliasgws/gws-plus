@@ -16,8 +16,10 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
   accès depuis `/account`. Un lien peut apparaître dans Paramètres
   lorsque `GWS_MCP_PUBLIC_URL` est configuré. Le service reste à valider et
   nécessite une revue sécurité/confidentialité avant déploiement. Il transmet
-  aussi des instructions de sécurité aux agents connectés, signale les données
-  scolaires comme non fiables, clarifie l’identité OAuth affichée et renouvelle
+  aussi aux agents connectés des instructions détaillées (ce qu’est le portail,
+  l’enchaînement des outils, les cas où leur usage est pertinent ou non),
+  signale les données scolaires comme non fiables, clarifie l’identité OAuth
+  affichée et renouvelle
   une session expirée lors d’une lecture. Les connexions et les principaux
   points d’entrée OAuth sont limités par des seuils persistants sans stocker
   directement les adresses IP ; l’hôte et l’origine des requêtes sont aussi

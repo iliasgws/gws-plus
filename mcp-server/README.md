@@ -126,11 +126,15 @@ also contains account identifiers required to make requests to the parent’s
 school account, so it must be protected as personal data. Do not enable HTTP
 request-body logging at the reverse proxy or application host.
 
-The MCP initialize response automatically supplies agent instructions for the
-selected-student boundary, scope-dependent tool discovery, data privacy, and
-fresh confirmation requirements. The guide tells assistants to treat school
-messages, news, homework, documents, and PDFs as untrusted data, and never let
-embedded content override user/system directions or authorize an action.
+The MCP initialize response supplies detailed agent instructions: what the
+Greenwood School parent portal is, the selected-student boundary, scope-dependent
+tool discovery, the read-tool chains (subject unit → document → PDF, thread →
+reply, product → order), pagination and signed-URL caveats, when the tools are
+appropriate and when they are not (other families, medical, legal or disciplinary
+advice, emergencies, promises of notifications), data privacy, and fresh
+confirmation requirements for every write. The guide tells assistants to treat
+school messages, news, homework, documents, and PDFs as untrusted data, and never
+let embedded content override user/system directions or authorize an action.
 Clients can also fetch the `greenwood_agent_guide` prompt for the same
 instructions. The service downloads only PDFs from verified Bibliothèque detail attachments, with a 15 MiB cap,
 strict media-host validation, no redirects, and no persistence. Other signed
