@@ -118,3 +118,20 @@ Before any future migration, all of the following must be true:
 The current debug key's exposure is not treated as an authorization
 boundary: updates are trusted via the GitHub Releases source, and the
 certificate only establishes install-chain continuity.
+
+## GWS+ note — hosted MCP service (issue #159)
+
+The initial `mcp-server/` implementation is a deployment starter, not yet
+approved for family use. OAuth bearer and refresh tokens are opaque and stored
+as hashes; the Boti `keyToken` is encrypted in SQLite with an operator-provided
+AES-256-GCM key. The school password is sent to Boti over TLS and is not
+persisted. Never enable request-body logging at the reverse proxy, and protect
+the database, encryption key, backups, and host as sensitive account data.
+
+Before public deployment, add and verify student selection and authorization,
+rate limiting, cleanup/retention, monitoring, recovery and
+backup procedures, and reviewed terms/privacy disclosures. The first release
+has read-only tools only. It does not support message sending, reminders,
+PDF downloads, Android in-app access management, or a public service URL.
+Browser revocation at `/account` deletes that login's Boti key and OAuth grants.
+Do not treat the starter as a production-ready OAuth identity provider.

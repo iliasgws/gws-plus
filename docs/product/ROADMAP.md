@@ -8,6 +8,28 @@ raw probe responses stay out of the repository (personal data).
 
 `[x]` done · `[~]` in progress · `[ ]` todo · `(!)` needs a decision or a real-device check
 
+## Hosted MCP account access (issue #159)
+
+- [x] Add a separate Node.js Streamable HTTP MCP service with OAuth
+      authorization-code flow, PKCE S256, consent, hashed bearer and refresh
+      tokens, token rotation/revocation, and encrypted Boti session storage.
+- [x] Expose read-only homework and library-document tools. The service does
+      not issue writes or reminders; it does not pass the Boti key to clients.
+- [x] Add a Docker image and deployment configuration example for a future
+      Linux container deployment.
+- [x] Provide a browser-based `/account` page that revokes grants and deletes
+      its encrypted Boti key.
+- [ ] Before deployment: provide a student selector and Android in-app access
+      management,
+      rate limits, expired-record cleanup, operational monitoring, durable
+      encrypted backups, terms/privacy review, and verify parent/student
+      authorization with the school. No public service URL is configured.
+- [ ] Add document download/content delivery, reminders, and approval-gated
+      messaging only after their data, delivery, and human-confirmation
+      contracts are implemented and reviewed.
+- [ ] Add app-side access management once a production service origin and
+      account-management endpoint are available.
+
 ## Registre startup performance (issue #145)
 
 - [x] Parallel load: the four independent registre sources (devoirs, nouveautes,

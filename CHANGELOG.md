@@ -6,6 +6,16 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
 
 ## [Non publié]
 
+### Ajouté
+
+- Première base du serveur MCP hébergé (#159) : service Streamable HTTP
+  séparé, autorisation OAuth avec PKCE et consentement, jetons révocables,
+  stockage chiffré de la session Boti et outils en lecture seule pour les
+  devoirs et les documents de bibliothèque. Image Docker et exemple de
+  configuration inclus ; le service n'est pas encore déployé et nécessite
+  des travaux de sécurité, de confidentialité et de gestion de compte avant
+  une ouverture aux familles.
+
 ## [0.10.0] — 2026-10-10
 
 Version stable après les bêtas 0.9.14-beta.1 à 0.9.14-beta.3 et
