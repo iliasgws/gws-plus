@@ -27,6 +27,8 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
   Le serveur MCP accepte aussi les clients des deux générations de protocole ;
   les sessions héritées sont liées au compte OAuth, et chaque confirmation
   d’action est signée, limitée dans le temps et utilisable une seule fois.
+  Les absences et retards sont accessibles avec un scope dédié, en conservant
+  la réponse source sans supposer la forme des éléments non vérifiés.
 
 ## [0.10.0] — 2026-10-10
 

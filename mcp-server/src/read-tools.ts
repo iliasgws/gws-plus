@@ -4,6 +4,7 @@ import * as z from 'zod/v4';
 type DataParams = Record<string, string>;
 type GetData = (route: string, params?: DataParams) => Promise<unknown>;
 type RequireScope = (scope: string) => void;
+type HasScope = (scope: string) => boolean;
 
 const MAX_RESULT_CHARS = 1_000_000;
 const id = z.string().trim().min(1).max(64);
@@ -12,20 +13,23 @@ const start = z.number().int().min(0).max(10_000).default(0);
 const smallLimit = z.number().int().min(1).max(50).default(10);
 
 /** Register verified, read-only Boti API tools. */
-export function registerReadTools(server: McpServer, getData: GetData, requireScope: RequireScope): void {
+export function registerReadTools(server: McpServer, getData: GetData, requireScope: RequireScope, hasScope: HasScope = () => true): void {
   const register = (
     name: string,
     description: string,
     scope: string,
     inputSchema: Record<string, any>,
     read: (args: Record<string, any>) => Promise<unknown>
-  ) => server.registerTool(name, { description, inputSchema }, async (args) => {
-    requireScope(scope);
-    const result = await read(args as Record<string, any>);
-    const text = JSON.stringify(result ?? null);
-    if (text.length > MAX_RESULT_CHARS) throw new Error(`Read result exceeds ${MAX_RESULT_CHARS} characters`);
-    return { content: [{ type: 'text', text }] };
-  });
+  ) => {
+    if (!hasScope(scope)) return;
+    server.registerTool(name, { description, inputSchema }, async (args) => {
+      requireScope(scope);
+      const result = await read(args as Record<string, any>);
+      const text = JSON.stringify(result ?? null);
+      if (text.length > MAX_RESULT_CHARS) throw new Error(`Read result exceeds ${MAX_RESULT_CHARS} characters`);
+      return { content: [{ type: 'text', text }] };
+    });
+  };
 
   // Existing tools are kept compatible with the original server API.
   register('get_homework', 'Read the authenticated parent’s homework list from Greenwood School.', 'homework:read', {
@@ -49,6 +53,10 @@ export function registerReadTools(server: McpServer, getData: GetData, requireSc
   register('get_homework_details', 'Read one homework item and its attachments/status from the authenticated parent’s account.', 'homework:read', {
     homework_id: id,
   }, ({ homework_id }) => getData('devoirs', { devoir: homework_id }));
+
+  register('list_attendance_records', 'Read the selected student’s raw attendance and lateness response, paged by the school. Item fields have not been verified on a non-empty account; do not assume the response is normalized or complete.', 'attendance:read', {
+    page,
+  }, ({ page }) => getData('absences', { page: String(page) }));
 
   register('get_timetable', 'Read the authenticated student’s weekly class timetable. Supply the server-returned last_week or next_week value to navigate weeks.', 'courses:read', {
     last_week: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),

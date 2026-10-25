@@ -6,6 +6,7 @@ type Params = Record<string, string>;
 type GetData = (route: string, params?: Params) => Promise<unknown>;
 type PostData = (route: string, fields: Params) => Promise<unknown>;
 type RequireScope = (scope: string) => void;
+type HasScope = (scope: string) => boolean;
 type Row = Record<string, any>;
 
 const id = z.string().trim().min(1).max(128);
@@ -23,7 +24,7 @@ function scalar(value: unknown, label: string): string {
 function historyRows(value: unknown): Row[] { return rows(obj(value).products); }
 
 /** Register immediate boutique actions. Each POST is preceded by a fresh human elicitation. */
-export function registerShopWriteTools(server: McpServer, getData: GetData, postData: PostData, requireScope: RequireScope): void {
+export function registerShopWriteTools(server: McpServer, getData: GetData, postData: PostData, requireScope: RequireScope, hasScope: HasScope = () => true): void {
   const gate = () => { requireScope('shop:write'); requireScope('shop:read'); };
 
   const orderInput = {
@@ -100,7 +101,7 @@ export function registerShopWriteTools(server: McpServer, getData: GetData, post
     };
   };
 
-  server.registerTool('place_shop_order', {
+  if (hasScope('shop:read') && hasScope('shop:write')) server.registerTool('place_shop_order', {
     description: 'Create or edit an immediate school shop order. Rechecks current product/variant/price and edit permission. Requires fresh elicitation for the exact action.',
     inputSchema: orderInput,
   }, async (raw, ctx) => {
@@ -130,7 +131,7 @@ export function registerShopWriteTools(server: McpServer, getData: GetData, post
     order_id: id.describe('Order id from get_shop_order_history.'),
     article_id: id.optional().describe('Article id from that order; omit to delete the whole order.'),
   };
-  server.registerTool('delete_shop_order', {
+  if (hasScope('shop:read') && hasScope('shop:write')) server.registerTool('delete_shop_order', {
     description: 'Delete an order or one article from it. Re-fetches order history and checks server can_delete permissions. Requires fresh elicitation.',
     inputSchema: deleteInput,
   }, async (raw, ctx) => {

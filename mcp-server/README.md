@@ -7,9 +7,11 @@ registration, short-lived access tokens, rotating refresh tokens, and token
 revocation. Grants are bound to a student confirmed by the parent. Read tools
 cover homework and details, timetable, interactive resources and quizzes,
 library documents, news, conversations, administrative requests, school
-contact, shop products and history, and guest-meal planning. Absences are
-excluded because their item shape is unverified. `prepare_message` previews a
-text message or reply; `send_message` requires fresh MCP elicitation that
+contact, shop products and history, guest-meal planning, and the raw attendance
+response through `list_attendance_records` under `attendance:read`. Attendance
+item fields have not been verified on a non-empty account, so the service does
+not normalize or claim completeness. `prepare_message` previews a text message
+or reply; `send_message` requires fresh MCP elicitation that
 confirms the exact recipient/thread, subject, category, and text. Attachments
 and voice are not supported. `schedule_reminder`, `list_reminders`,
 `cancel_reminder`, and `complete_reminder` manage encrypted, student-bound

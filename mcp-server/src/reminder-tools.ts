@@ -4,6 +4,7 @@ import { decrypt, db, encrypt, fingerprint, opaque } from './store.js';
 import { actionDigest, actionRequestState, consumeActionConfirmation, discardActionConfirmation } from './action-confirmation.js';
 
 type RequireScope = (scope: string) => void;
+type HasScope = (scope: string) => boolean;
 const timestamp = () => Math.floor(Date.now() / 1000);
 const reminderId = z.string().trim().min(1).max(128);
 const titleSchema = z.string().trim().min(1).max(160);
@@ -30,6 +31,7 @@ export function registerReminderTools(
   studentId: string,
   studentName: string,
   requireScope: RequireScope,
+  hasScope: HasScope = () => true,
 ): void {
   const studentHash = fingerprint(`reminder-student:${accountId}:${studentId}`);
   const load = (id: string): StoredReminder | undefined => db.prepare(`
@@ -37,7 +39,7 @@ export function registerReminderTools(
     FROM reminders WHERE reminder_id=? AND account_id=? AND student_hash=?
   `).get(id, accountId, studentHash) as StoredReminder | undefined;
 
-  server.registerTool('schedule_reminder', {
+  if (hasScope('reminders:write') && hasScope('reminders:read')) server.registerTool('schedule_reminder', {
     description: 'Save a private reminder for the selected student. Requires a fresh human confirmation. It is shown when an agent calls list_reminders; this MCP service does not send push notifications, SMS, email, or proactive alerts.',
     inputSchema: {
       title: titleSchema.describe('Short reminder title.'),
@@ -81,7 +83,7 @@ export function registerReminderTools(
     return { content: [{ type: 'text', text: JSON.stringify({ saved: true, reminder_id: id, title, due_at: new Date(dueAt * 1000).toISOString(), student: studentName, delivery: 'Available when an agent calls list_reminders; no proactive notification is sent.' }) }] };
   });
 
-  server.registerTool('list_reminders', {
+  if (hasScope('reminders:read')) server.registerTool('list_reminders', {
     description: 'List reminders for the selected student in this linked account. Due reminders are marked due; the agent must call this tool to retrieve them because the service has no push-notification channel.',
     inputSchema: {
       view: z.enum(['active', 'due', 'all']).default('active'),
@@ -112,7 +114,7 @@ export function registerReminderTools(
     return { content: [{ type: 'text', text: JSON.stringify({ student: studentName, reminders, limit, offset }) }] };
   });
 
-  server.registerTool('cancel_reminder', {
+  if (hasScope('reminders:write')) server.registerTool('cancel_reminder', {
     description: 'Cancel one active reminder belonging to the selected student.',
     inputSchema: { reminder_id: reminderId.describe('ID from list_reminders.') },
   }, async args => {
@@ -125,7 +127,7 @@ export function registerReminderTools(
     return { content: [{ type: 'text', text: JSON.stringify({ canceled: true, reminder_id: id, title: decrypt(reminder.title_cipher) }) }] };
   });
 
-  server.registerTool('complete_reminder', {
+  if (hasScope('reminders:write')) server.registerTool('complete_reminder', {
     description: 'Mark one due or upcoming reminder complete for the selected student.',
     inputSchema: { reminder_id: reminderId.describe('ID from list_reminders.') },
   }, async args => {

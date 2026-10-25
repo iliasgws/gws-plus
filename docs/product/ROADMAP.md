@@ -14,11 +14,11 @@ raw probe responses stay out of the repository (personal data).
       authorization-code flow, PKCE S256, consent, hashed bearer and refresh
       tokens, token rotation/revocation, and encrypted Boti session storage.
 - [x] Expose bounded read tools for homework/details, timetable, interactive
-      resources, quizzes, library documents and PDF downloads, news,
-      conversations, administrative requests, school contact, shop products/
-      history, and guest-meal planning. Absence records remain excluded because
-      their item shape is unverified. The service never passes the Boti key to
-      clients.
+      resources, quizzes, library documents and PDF downloads, raw attendance,
+      news, conversations, administrative requests, school contact, shop
+      products/history, and guest-meal planning. Attendance uses a dedicated
+      scope and returns the source response without assuming unverified item
+      fields or completeness. The service never passes the Boti key to clients.
 - [x] Add a Docker image and deployment configuration example for a future
       Linux container deployment.
 - [x] Bind each authorization to a parent-confirmed student; encrypt account

@@ -6,6 +6,7 @@ type Params = Record<string, string>;
 type GetData = (route: string, params?: Params) => Promise<unknown>;
 type PostData = (route: string, fields: Params) => Promise<unknown>;
 type RequireScope = (scope: string) => void;
+type HasScope = (scope: string) => boolean;
 type Question = Record<string, any>;
 
 const quizId = z.string().trim().min(1).max(128);
@@ -54,13 +55,13 @@ function parseQuiz(value: unknown): { id: string; title: string; questions: Ques
 }
 
 /** Register a verified quiz attempt tool. Every submission requires fresh client elicitation. */
-export function registerQuizWriteTools(server: McpServer, getData: GetData, postData: PostData, requireScope: RequireScope): void {
+export function registerQuizWriteTools(server: McpServer, getData: GetData, postData: PostData, requireScope: RequireScope, hasScope: HasScope = () => true): void {
   const inputSchema = {
     quiz_id: quizId.describe('Quiz id returned by list_quizzes.'),
     answers: answersSchema.describe('Provide one explicit answer and elapsed time for every question, in question_index order. Answer text must exactly match one of that question’s choices.'),
   };
 
-  server.registerTool('submit_quiz_attempt', {
+  if (hasScope('documents:read') && hasScope('quizzes:write')) server.registerTool('submit_quiz_attempt', {
     description: 'Record one persistent school quiz attempt. Requires explicit answers for all questions and fresh human MCP elicitation showing the exact quiz, questions, choices, and elapsed seconds. Does not calculate or return a score. Clients without elicitation support cannot submit.',
     inputSchema,
   }, async (args, ctx) => {

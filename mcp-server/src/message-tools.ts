@@ -6,6 +6,7 @@ type Params = Record<string, string>;
 type GetData = (route: string, params?: Params) => Promise<unknown>;
 type PostData = (route: string, fields: Params) => Promise<unknown>;
 type RequireScope = (scope: string) => void;
+type HasScope = (scope: string) => boolean;
 type MessageDraft = {
   mode: 'new' | 'reply'; recipient: string; threadId: string | null; subject: string;
   themeId: string; themeLabel: string; text: string; fields: Params;
@@ -39,9 +40,9 @@ function scalar(value: unknown, label: string): string {
 }
 
 /** Register plain-text school messaging. Every send requires a fresh client elicitation. */
-export function registerMessageTools(server: McpServer, getData: GetData, postData: PostData, requireScope: RequireScope): void {
-  const resolve = async (args: Record<string, any>): Promise<MessageDraft> => {
-    requireScope('messages:write');
+export function registerMessageTools(server: McpServer, getData: GetData, postData: PostData, requireScope: RequireScope, hasScope: HasScope = () => true): void {
+  const resolve = async (args: Record<string, any>, writing = false): Promise<MessageDraft> => {
+    if (writing) requireScope('messages:write');
     requireScope('messages:read');
     const text = textSchema.parse(args.text);
     const mode = args.mode as 'new' | 'reply';
@@ -77,7 +78,7 @@ export function registerMessageTools(server: McpServer, getData: GetData, postDa
     };
   };
 
-  server.registerTool('prepare_message', {
+  if (hasScope('messages:read')) server.registerTool('prepare_message', {
     description: 'Preview a plain-text new school message or reply. Does not send anything; use send_message for a separately confirmed send.',
     inputSchema,
   }, async args => {
@@ -85,11 +86,11 @@ export function registerMessageTools(server: McpServer, getData: GetData, postDa
     return { content: [{ type: 'text', text: JSON.stringify({ recipient: draft.recipient, thread_id: draft.threadId, subject: draft.subject, category: draft.themeLabel, category_id: draft.themeId, text: draft.text, sent: false }) }] };
   });
 
-  server.registerTool('send_message', {
+  if (hasScope('messages:read') && hasScope('messages:write')) server.registerTool('send_message', {
     description: 'Send a plain-text school message or reply. Requires fresh human MCP elicitation for the exact recipient, thread, subject, category, and final text. Clients without elicitation support cannot send.',
     inputSchema,
   }, async (args, ctx) => {
-    const draft = await resolve(args as Record<string, any>);
+    const draft = await resolve(args as Record<string, any>, true);
     const digest = actionDigest('send_message', draft);
     const response = inputResponse(ctx.mcpReq.inputResponses, 'send_confirmation');
     if (response.kind === 'elicit' && response.action !== 'accept') {
@@ -104,7 +105,7 @@ export function registerMessageTools(server: McpServer, getData: GetData, postDa
         requestedSchema: confirmationSchema,
       }) }, requestState });
     }
-    const freshDraft = await resolve(args as Record<string, any>);
+    const freshDraft = await resolve(args as Record<string, any>, true);
     if (JSON.stringify(draft) !== JSON.stringify(freshDraft)) throw new Error('The thread, category, or message details changed during confirmation; review and confirm again');
     consumeActionConfirmation(ctx, 'send_message', digest);
     const result = await postData('nouveau-message', freshDraft.fields);

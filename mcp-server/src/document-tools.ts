@@ -3,6 +3,7 @@ import * as z from 'zod/v4';
 
 type GetData = (route: string, params?: Record<string, string>) => Promise<unknown>;
 type RequireScope = (scope: string) => void;
+type HasScope = (scope: string) => boolean;
 
 const MAX_PDF_BYTES = 15 * 1024 * 1024;
 const PDF_HOST = 'media.boti.education';
@@ -94,7 +95,8 @@ async function downloadPdf(url: URL, filename: string, declaredMime?: string): P
 }
 
 /** Register the bounded PDF download tool for verified Bibliothèque resources. */
-export function registerDocumentTools(server: McpServer, getData: GetData, requireScope: RequireScope): void {
+export function registerDocumentTools(server: McpServer, getData: GetData, requireScope: RequireScope, hasScope: HasScope = () => true): void {
+  if (!hasScope('documents:read')) return;
   server.registerTool('download_library_pdf', {
     description: 'Download one verified PDF attachment from a Bibliothèque document. The file is returned as an embedded PDF resource; signed source URLs are never returned.',
     inputSchema: {

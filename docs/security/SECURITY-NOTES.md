@@ -151,6 +151,9 @@ reviewed terms/privacy disclosures; verify parent/student authorization with
 the school. The service has bounded read
 tools and verified PDF download from Bibliothèque attachments (15 MiB maximum;
 strict host validation; no redirects; no persistence).
+`list_attendance_records` is limited by the separate `attendance:read` scope
+and returns the raw school response because non-empty item fields have not
+been verified.
 Text messages, quiz attempts, and shop order create/edit/delete operations each
 require a separate scope and fresh client elicitation showing the exact action;
 clients that cannot elicit cannot write. Confirmation round-trips include
