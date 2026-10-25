@@ -10,15 +10,27 @@ library documents, news, conversations, administrative requests, school
 contact, shop products and history, and guest-meal planning. Absences are
 excluded because their item shape is unverified. `prepare_message` previews a
 text message or reply; `send_message` requires fresh MCP elicitation that
-confirms the exact recipient/thread, subject, category, and text. Attachments,
-voice, and reminder delivery are not supported yet. `download_library_pdf`
+confirms the exact recipient/thread, subject, category, and text. Attachments
+and voice are not supported. `schedule_reminder`, `list_reminders`,
+`cancel_reminder`, and `complete_reminder` manage encrypted, student-bound
+reminders in the MCP service; creation requires fresh elicitation. Reminders
+are returned when an agent checks the list. There is no push, email, SMS, or
+proactive notification delivery. `download_library_pdf`
 returns a verified Bibliothèque PDF as an embedded MCP resource. `submit_quiz_attempt`,
 `place_shop_order`, and `delete_shop_order` each require a distinct write scope
 and a fresh elicitation showing the exact persistent action.
 
-The server follows the official MCP TypeScript SDK's current `McpServer`,
-`createMcpHandler`, and Node adapter APIs. OAuth authorization-server endpoints
-are implemented in this service because the SDK's current server package
+The server uses MCP TypeScript SDK v2 (`@modelcontextprotocol/server`),
+including `McpServer`, `createMcpHandler`, and the Node adapter. It routes the
+2026-07-28 protocol through the SDK handler and serves 2025-era clients through
+sessionful Streamable HTTP transports. Legacy sessions are capped, expire after
+30 minutes idle, and are bound to the OAuth token family, client, account,
+student, resource, and scope; every request still needs a valid bearer token.
+Each write confirmation carries signed, grant-bound, expiring request state and
+a single-use server-side nonce. Declining or canceling a confirmation has no
+side effect. The Express boundary validates the configured public Host and
+allowed Origin headers before requests reach MCP or OAuth routes. OAuth authorization-server endpoints
+are implemented in this service because the SDK's server package
 provides the protected-resource side, while its documentation directs new
 authorization-server deployments to a dedicated identity provider. This
 initial implementation provides a small first-party authorization server for

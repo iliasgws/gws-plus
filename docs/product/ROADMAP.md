@@ -33,6 +33,12 @@ raw probe responses stay out of the repository (personal data).
       a public HTTPS origin is configured at build time.
 - [x] Add persistent, keyed-hash rate limits for school login, OAuth client
       registration, authorization starts, and token requests.
+- [x] Validate Host and Origin headers against the configured public origin and
+      exact allowed browser origins before serving OAuth or MCP requests.
+- [x] Support both modern MCP protocol requests and sessionful 2025-era client
+      requests; bind capped, idle-expiring legacy sessions to the OAuth grant.
+- [x] Bind write confirmations to signed, expiring action state and consume a
+      server-side nonce once before submitting each persistent action.
 - [ ] Before deployment: add operational monitoring, durable encrypted
       backups, terms/privacy review, and verify
       parent/student authorization with the school. No public service URL is
@@ -44,8 +50,12 @@ raw probe responses stay out of the repository (personal data).
 - [ ] Add homework attachments/submission and other writes only after their
       contracts are verified. Administrative request, news, and community writes
       remain excluded until their protocols and safeguards are validated.
-- [ ] Define a delivery and opt-in contract for remote reminders; the mobile
-      app currently has no school-reminder scheduling feature.
+- [x] Add encrypted reminders bound to the selected student and MCP account,
+      with confirmed scheduling, due/upcoming listing, cancel, and complete
+      actions. Agents retrieve due items with `list_reminders`.
+- [ ] Define an opt-in delivery channel for proactive reminder notifications;
+      the MCP service currently stores reminders but does not send alerts, and
+      the mobile app has no school-reminder scheduling feature.
 
 ## Registre startup performance (issue #145)
 

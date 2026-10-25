@@ -70,6 +70,19 @@ CREATE TABLE IF NOT EXISTS rate_limits (
   window_started INTEGER NOT NULL,
   hit_count INTEGER NOT NULL
 );
+CREATE TABLE IF NOT EXISTS reminders (
+  reminder_id TEXT PRIMARY KEY,
+  account_id TEXT NOT NULL,
+  student_hash TEXT NOT NULL,
+  title_cipher TEXT NOT NULL,
+  note_cipher TEXT,
+  due_at INTEGER NOT NULL,
+  created_at INTEGER NOT NULL,
+  completed_at INTEGER,
+  canceled_at INTEGER,
+  FOREIGN KEY(account_id) REFERENCES accounts(account_id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS reminders_owner_due ON reminders(account_id,student_hash,due_at);
 `);
 
 // This service has not been deployed with durable user accounts. The encrypted

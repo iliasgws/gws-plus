@@ -142,6 +142,9 @@ are keyed hashes, not stored IP addresses. Behind a reverse proxy, configure
 `TRUSTED_PROXY_CIDRS` with only the proxy's internal addresses, block direct
 access to the app port, and configure the proxy to replace forwarded-IP
 headers; otherwise requests share the proxy's rate-limit identity.
+The Express boundary also requires the Host header to match `PUBLIC_URL` and
+rejects browser Origins outside that public origin and the exact
+`ALLOWED_ORIGINS` list.
 
 Before public deployment, add monitoring, recovery and backup procedures, and
 reviewed terms/privacy disclosures; verify parent/student authorization with
@@ -150,6 +153,12 @@ tools and verified PDF download from Bibliothèque attachments (15 MiB maximum;
 strict host validation; no redirects; no persistence).
 Text messages, quiz attempts, and shop order create/edit/delete operations each
 require a separate scope and fresh client elicitation showing the exact action;
-clients that cannot elicit cannot write. Attachments and voice messaging,
-reminder delivery, and a configured public service URL are not available. Do
-not treat this implementation as a production-ready OAuth identity provider.
+clients that cannot elicit cannot write. Confirmation round-trips include
+signed state bound to the OAuth grant and action digest; a server-side nonce
+allows one submission only. Declining or canceling has no side effect. MCP
+reminders are encrypted and bound to the selected student and account, and
+creation requires fresh elicitation.
+They are surfaced only when an agent calls `list_reminders`; no push, email,
+SMS, or proactive delivery channel exists. Attachments and voice messaging and
+a configured public service URL are not available. Do not treat this
+implementation as a production-ready OAuth identity provider.

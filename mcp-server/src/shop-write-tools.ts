@@ -1,5 +1,6 @@
-import { acceptedContent, inputRequired, type McpServer } from '@modelcontextprotocol/server';
+import { acceptedContent, inputRequired, inputResponse, type McpServer } from '@modelcontextprotocol/server';
 import * as z from 'zod/v4';
+import { actionDigest, actionRequestState, consumeActionConfirmation, discardActionConfirmation } from './action-confirmation.js';
 
 type Params = Record<string, string>;
 type GetData = (route: string, params?: Params) => Promise<unknown>;
@@ -9,7 +10,7 @@ type Row = Record<string, any>;
 
 const id = z.string().trim().min(1).max(128);
 const comment = z.string().max(1000).default('');
-const confirmationSchema = z.object({ confirmation: z.literal('CONFIRM').describe('Type CONFIRM after reviewing this exact shop action.') });
+const confirmationSchema = z.object({ confirmation: z.enum(['CONFIRM']).describe('Type CONFIRM after reviewing this exact shop action.') });
 
 function obj(value: unknown): Row { return value && typeof value === 'object' && !Array.isArray(value) ? value as Row : {}; }
 function rows(value: unknown): Row[] { return Array.isArray(value) ? value.map(obj) : []; }
@@ -104,13 +105,21 @@ export function registerShopWriteTools(server: McpServer, getData: GetData, post
     inputSchema: orderInput,
   }, async (raw, ctx) => {
     const draft = await resolveOrder(raw as Record<string, any>);
+    const digest = actionDigest('place_shop_order', draft);
+    const confirmationResponse = inputResponse(ctx.mcpReq.inputResponses, 'shop_order_confirmation');
+    if (confirmationResponse.kind === 'elicit' && confirmationResponse.action !== 'accept') {
+      discardActionConfirmation(ctx, 'place_shop_order', digest);
+      return { content: [{ type: 'text', text: 'Confirmation declined or canceled. No order was submitted.' }] };
+    }
+    const requestState = await actionRequestState(ctx, 'place_shop_order', digest);
     const accepted = acceptedContent(ctx.mcpReq.inputResponses, 'shop_order_confirmation', confirmationSchema);
     if (accepted?.confirmation !== 'CONFIRM') return inputRequired({ inputRequests: { shop_order_confirmation: inputRequired.elicit({
       message: `Confirm this ${draft.mode} order?\nProduct: ${draft.label}\nVariant/size: ${draft.size || 'none'}\nQuantity: ${draft.quantity}\nUnit price: ${draft.price}\nComment/day: ${draft.note || 'none'}\nOrder id: ${draft.orderId ?? 'new order'}\nThis action is submitted to the school immediately. Type CONFIRM to proceed.`, requestedSchema: confirmationSchema,
-    }) } });
+    }) }, requestState });
     // Re-fetch after the user's confirmation so stale stock, price, or permission cannot be used.
     const fresh = await resolveOrder(raw as Record<string, any>);
     if (JSON.stringify({ ...draft, fields: undefined }) !== JSON.stringify({ ...fresh, fields: undefined })) throw new Error('The product, price, stock, or order changed during confirmation; refresh and confirm again');
+    consumeActionConfirmation(ctx, 'place_shop_order', digest);
     const result = await postData('shop', fresh.fields);
     const response = obj(result);
     if (response.error === true || response.alert_classe !== 'success_alert_boti') throw new Error('The school did not confirm the order; no success was reported');
@@ -157,12 +166,20 @@ export function registerShopWriteTools(server: McpServer, getData: GetData, post
       };
     }));
     const before = await summary(initial);
+    const digest = actionDigest('delete_shop_order', { orderId, articleId, items: before });
+    const confirmationResponse = inputResponse(ctx.mcpReq.inputResponses, 'shop_delete_confirmation');
+    if (confirmationResponse.kind === 'elicit' && confirmationResponse.action !== 'accept') {
+      discardActionConfirmation(ctx, 'delete_shop_order', digest);
+      return { content: [{ type: 'text', text: 'Confirmation declined or canceled. Nothing was deleted.' }] };
+    }
+    const requestState = await actionRequestState(ctx, 'delete_shop_order', digest);
     const accepted = acceptedContent(ctx.mcpReq.inputResponses, 'shop_delete_confirmation', confirmationSchema);
     if (accepted?.confirmation !== 'CONFIRM') return inputRequired({ inputRequests: { shop_delete_confirmation: inputRequired.elicit({
       message: `Confirm ${articleId ? 'deleting this article' : 'deleting the whole order'}?\nOrder: ${orderId}\nItems: ${JSON.stringify(before)}\nThis deletion is submitted to the school immediately. Type CONFIRM to proceed.`, requestedSchema: confirmationSchema,
-    }) } });
+    }) }, requestState });
     const fresh = await resolveDelete();
     if (JSON.stringify(await summary(fresh)) !== JSON.stringify(before)) throw new Error('The order changed during confirmation; refresh and confirm again');
+    consumeActionConfirmation(ctx, 'delete_shop_order', digest);
     const result = await postData('shop', { commande: orderId, ...(articleId ? { detailsId: articleId } : {}), delete_history: 'true' });
     if (obj(result).error === true) throw new Error('The school reported that deletion failed');
     return { content: [{ type: 'text', text: JSON.stringify({ submitted: true, action: articleId ? 'delete_article' : 'delete_order', order_id: orderId, article_id: articleId ?? null, items: before, result }) }] };

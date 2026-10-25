@@ -20,7 +20,13 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
   scolaires comme non fiables, clarifie l’identité OAuth affichée et renouvelle
   une session expirée lors d’une lecture. Les connexions et les principaux
   points d’entrée OAuth sont limités par des seuils persistants sans stocker
-  directement les adresses IP.
+  directement les adresses IP ; l’hôte et l’origine des requêtes sont aussi
+  contrôlés. Des rappels chiffrés, liés à l’élève et au compte
+  MCP, peuvent être programmés après confirmation puis consultés, annulés ou
+  terminés depuis les outils MCP ; aucune notification proactive n’est envoyée.
+  Le serveur MCP accepte aussi les clients des deux générations de protocole ;
+  les sessions héritées sont liées au compte OAuth, et chaque confirmation
+  d’action est signée, limitée dans le temps et utilisable une seule fois.
 
 ## [0.10.0] — 2026-10-10
 

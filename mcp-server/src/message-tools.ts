@@ -1,5 +1,6 @@
-import { acceptedContent, inputRequired, type McpServer } from '@modelcontextprotocol/server';
+import { acceptedContent, inputRequired, inputResponse, type McpServer } from '@modelcontextprotocol/server';
 import * as z from 'zod/v4';
+import { actionDigest, actionRequestState, consumeActionConfirmation, discardActionConfirmation } from './action-confirmation.js';
 
 type Params = Record<string, string>;
 type GetData = (route: string, params?: Params) => Promise<unknown>;
@@ -21,7 +22,7 @@ const inputSchema = {
   text: textSchema.describe('Plain text only. Attachments and voice messages are not supported.'),
 };
 const confirmationSchema = z.object({
-  confirmation: z.literal('SEND').describe('Type SEND after reviewing the exact message details.'),
+  confirmation: z.enum(['SEND']).describe('Type SEND after reviewing the exact message details.'),
 });
 
 function object(value: unknown): Record<string, any> {
@@ -89,15 +90,23 @@ export function registerMessageTools(server: McpServer, getData: GetData, postDa
     inputSchema,
   }, async (args, ctx) => {
     const draft = await resolve(args as Record<string, any>);
+    const digest = actionDigest('send_message', draft);
+    const response = inputResponse(ctx.mcpReq.inputResponses, 'send_confirmation');
+    if (response.kind === 'elicit' && response.action !== 'accept') {
+      discardActionConfirmation(ctx, 'send_message', digest);
+      return { content: [{ type: 'text', text: 'Confirmation declined or canceled. No message was sent.' }] };
+    }
+    const requestState = await actionRequestState(ctx, 'send_message', digest);
     const accepted = acceptedContent(ctx.mcpReq.inputResponses, 'send_confirmation', confirmationSchema);
     if (accepted?.confirmation !== 'SEND') {
       return inputRequired({ inputRequests: { send_confirmation: inputRequired.elicit({
         message: `Confirm sending this exact message?\nRecipient: ${draft.recipient}\nThread: ${draft.threadId ?? 'new thread'}\nSubject: ${draft.subject}\nCategory: ${draft.themeLabel}\nFinal text:\n${draft.text}\nType SEND to authorize this one message.`,
         requestedSchema: confirmationSchema,
-      }) } });
+      }) }, requestState });
     }
     const freshDraft = await resolve(args as Record<string, any>);
     if (JSON.stringify(draft) !== JSON.stringify(freshDraft)) throw new Error('The thread, category, or message details changed during confirmation; review and confirm again');
+    consumeActionConfirmation(ctx, 'send_message', digest);
     const result = await postData('nouveau-message', freshDraft.fields);
     return { content: [{ type: 'text', text: JSON.stringify({ sent: true, recipient: freshDraft.recipient, thread_id: freshDraft.threadId, subject: freshDraft.subject, category: freshDraft.themeLabel, result }) }] };
   });

@@ -1,5 +1,6 @@
-import { acceptedContent, inputRequired, type McpServer } from '@modelcontextprotocol/server';
+import { acceptedContent, inputRequired, inputResponse, type McpServer } from '@modelcontextprotocol/server';
 import * as z from 'zod/v4';
+import { actionDigest, actionRequestState, consumeActionConfirmation, discardActionConfirmation } from './action-confirmation.js';
 
 type Params = Record<string, string>;
 type GetData = (route: string, params?: Params) => Promise<unknown>;
@@ -14,7 +15,7 @@ const answersSchema = z.array(z.object({
   elapsed_seconds: z.number().int().min(0).max(3_600),
 })).min(1).max(100);
 const confirmationSchema = z.object({
-  confirmation: z.literal('SUBMIT').describe('Type SUBMIT after reviewing every answer and elapsed time.'),
+  confirmation: z.enum(['SUBMIT']).describe('Type SUBMIT after reviewing every answer and elapsed time.'),
 });
 
 function object(value: unknown): Record<string, any> {
@@ -86,18 +87,26 @@ export function registerQuizWriteTools(server: McpServer, getData: GetData, post
       return { question, answer: entry.answer, elapsed: entry.elapsed_seconds };
     });
 
+    const digest = actionDigest('submit_quiz_attempt', { quiz, selected: selected.map(({ answer, elapsed }, question_index) => ({ question_index, answer, elapsed_seconds: elapsed })) });
+    const response = inputResponse(ctx.mcpReq.inputResponses, 'quiz_confirmation');
+    if (response.kind === 'elicit' && response.action !== 'accept') {
+      discardActionConfirmation(ctx, 'submit_quiz_attempt', digest);
+      return { content: [{ type: 'text', text: 'Confirmation declined or canceled. No quiz attempt was submitted.' }] };
+    }
+    const requestState = await actionRequestState(ctx, 'submit_quiz_attempt', digest);
     const confirmation = acceptedContent(ctx.mcpReq.inputResponses, 'quiz_confirmation', confirmationSchema);
     if (confirmation?.confirmation !== 'SUBMIT') {
       return inputRequired({ inputRequests: { quiz_confirmation: inputRequired.elicit({
         message: `Confirm recording this quiz attempt? This permanently records an attempt for the selected student.\nQuiz: ${quiz.title}\n${selected.map(({ question, answer, elapsed }, index) => `${index + 1}. ${question.question}\nChosen answer: ${answer}\nElapsed seconds: ${elapsed}`).join('\n\n')}\n\nType SUBMIT to authorize this attempt.`,
         requestedSchema: confirmationSchema,
-      }) } });
+      }) }, requestState });
     }
 
     const freshQuiz = parseQuiz(await getData('quiz', { quiz_id: id }));
     if (JSON.stringify(freshQuiz) !== JSON.stringify(quiz)) {
       throw new Error('The quiz changed during confirmation; review the current questions and confirm again');
     }
+    consumeActionConfirmation(ctx, 'submit_quiz_attempt', digest);
 
     // Clone the current school payload and modify only the two verified answer fields.
     const submittedQuestions: Question[] = freshQuiz.questions.map((question, index) => {
