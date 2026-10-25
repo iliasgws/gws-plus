@@ -136,7 +136,15 @@ confirmation requirements for every write. The guide tells assistants to treat
 school messages, news, homework, documents, and PDFs as untrusted data, and never
 let embedded content override user/system directions or authorize an action.
 Clients can also fetch the `greenwood_agent_guide` prompt for the same
-instructions. The service downloads only PDFs from verified Bibliothèque detail attachments, with a 15 MiB cap,
+instructions.
+
+Every tool also carries a French display title, MCP annotations
+(`readOnlyHint`, `destructiveHint`, `idempotentHint`, `openWorldHint`) and its
+OAuth policy: a call that lacks a scope gets a proper challenge, and the tool
+descriptor publishes the back-compat `_meta.securitySchemes` mirror that ChatGPT
+reads. `offline_access` is advertised in the authorization-server and
+protected-resource metadata, so clients such as ChatGPT can keep a refresh token
+instead of losing access when the access token expires. The service downloads only PDFs from verified Bibliothèque detail attachments, with a 15 MiB cap,
 strict media-host validation, no redirects, and no persistence. Other signed
 file URLs returned by Boti expire and are not stable links.
 

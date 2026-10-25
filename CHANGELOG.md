@@ -29,6 +29,9 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
   Le serveur MCP accepte aussi les clients des deux générations de protocole ;
   les sessions héritées sont liées au compte OAuth, et chaque confirmation
   d’action est signée, limitée dans le temps et utilisable une seule fois.
+  Les outils exposent un titre, des annotations (lecture seule, destructif,
+  idempotent) et leur politique OAuth ; le serveur annonce `offline_access`
+  pour que les clients comme ChatGPT conservent un jeton de rafraîchissement.
   Les absences et retards sont accessibles avec un scope dédié, en conservant
   la réponse source sans supposer la forme des éléments non vérifiés.
   Le marquage officiel d’un devoir comme fait est proposé sous le scope

@@ -1,5 +1,6 @@
 import { acceptedContent, inputRequired, inputResponse, type McpServer } from '@modelcontextprotocol/server';
 import * as z from 'zod/v4';
+import { writeTool } from './tool-metadata.js';
 import { actionDigest, actionRequestState, consumeActionConfirmation, discardActionConfirmation } from './action-confirmation.js';
 
 type Params = Record<string, string>;
@@ -62,6 +63,7 @@ export function registerQuizWriteTools(server: McpServer, getData: GetData, post
   };
 
   if (hasScope('documents:read') && hasScope('quizzes:write')) server.registerTool('submit_quiz_attempt', {
+    ...writeTool('Enregistrer une tentative de quiz', ['documents:read', 'quizzes:write'], { destructive: true }),
     description: 'Record one persistent school quiz attempt. Requires explicit answers for all questions and fresh human MCP elicitation showing the exact quiz, questions, choices, and elapsed seconds. Does not calculate or return a score. Clients without elicitation support cannot submit.',
     inputSchema,
   }, async (args, ctx) => {

@@ -1,5 +1,6 @@
 import type { McpServer } from '@modelcontextprotocol/server';
 import * as z from 'zod/v4';
+import { readOnlyTool } from './tool-metadata.js';
 
 type GetData = (route: string, params?: Record<string, string>) => Promise<unknown>;
 type RequireScope = (scope: string) => void;
@@ -98,6 +99,7 @@ async function downloadPdf(url: URL, filename: string, declaredMime?: string): P
 export function registerDocumentTools(server: McpServer, getData: GetData, requireScope: RequireScope, hasScope: HasScope = () => true): void {
   if (!hasScope('documents:read')) return;
   server.registerTool('download_library_pdf', {
+    ...readOnlyTool('Télécharger un PDF', ['documents:read']),
     description: 'Download one verified PDF attachment from a Bibliothèque document. The file is returned as an embedded PDF resource; signed source URLs are never returned.',
     inputSchema: {
       resource_id: resourceIdSchema,

@@ -63,7 +63,7 @@ const now = () => Math.floor(Date.now() / 1000);
 const supportedScopes = [
   'homework:read', 'homework:write', 'documents:read', 'courses:read', 'news:read',
   'messages:read', 'messages:write', 'quizzes:write', 'requests:read', 'school:read', 'shop:read', 'shop:write',
-  'attendance:read', 'reminders:read', 'reminders:write',
+  'attendance:read', 'reminders:read', 'reminders:write', 'offline_access',
 ];
 const defaultScopes = ['homework:read', 'documents:read'];
 const agentInstructions = `Greenwood School + connects this conversation to the official parent portal (Boti) of Greenwood School, a French-language school, for exactly one parent account and the one child that parent selected during OAuth consent.
@@ -317,6 +317,7 @@ function renderConsent(res: Response, auth: any, account: ReturnType<typeof acco
     'shop:read': 'Lire le catalogue, les repas invités et l’historique des commandes',
     'reminders:read': 'Consulter les rappels enregistrés pour cet accès MCP',
     'reminders:write': 'Créer, annuler et terminer des rappels (création après confirmation ponctuelle)',
+    'offline_access': 'Renouveler l’accès sans nouvelle connexion (jeton de rafraîchissement)',
   };
   const scopeList = auth.scope.split(' ').map((s: string) => `<li>${labels[s]}</li>`).join('');
   res.send(html('Autoriser Greenwood School +', `<p><strong>${escapeHtml(client.name)}</strong> demande un accès au compte scolaire et aux données de l’élève <strong>${escapeHtml(student.name)}</strong> :</p><ul>${scopeList}</ul><p><strong>Vérifiez la demande :</strong> le nom affiché est fourni par l’application et n’est pas vérifié. N’autorisez l’accès que si vous avez lancé cette connexion vous-même.</p><dl><dt>Identifiant du client</dt><dd><code>${escapeHtml(auth.client_id)}</code></dd><dt>Origine de redirection enregistrée</dt><dd><code>${escapeHtml(redirectOrigin)}</code></dd></dl><p>Votre mot de passe scolaire ne sera pas conservé. Vous pouvez révoquer cet accès sur la page <a href="/account">Gestion des accès MCP</a>.</p><form method="post" action="/consent"><input type="hidden" name="auth_id" value="${auth.auth_id}"><div class="choix"><button name="decision" value="approve">Autoriser</button><button name="decision" value="deny" class="secondaire" formnovalidate>Refuser</button></div></form>`));
@@ -453,6 +454,7 @@ app.get('/account', (req, res) => {
     'reminders:read': 'rappels enregistrés',
     'reminders:write': 'gestion des rappels',
     'school:read': 'coordonnées de l’école', 'shop:read': 'boutique et repas invités',
+    'offline_access': 'renouvellement de l’accès sans nouvelle connexion',
   };
   const list = connections.length
     ? `<ul>${connections.map(c => {

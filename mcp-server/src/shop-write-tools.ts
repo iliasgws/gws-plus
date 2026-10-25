@@ -1,5 +1,6 @@
 import { acceptedContent, inputRequired, inputResponse, type McpServer } from '@modelcontextprotocol/server';
 import * as z from 'zod/v4';
+import { writeTool } from './tool-metadata.js';
 import { actionDigest, actionRequestState, consumeActionConfirmation, discardActionConfirmation } from './action-confirmation.js';
 
 type Params = Record<string, string>;
@@ -102,6 +103,7 @@ export function registerShopWriteTools(server: McpServer, getData: GetData, post
   };
 
   if (hasScope('shop:read') && hasScope('shop:write')) server.registerTool('place_shop_order', {
+    ...writeTool('Commander à la boutique', ['shop:read', 'shop:write'], { destructive: false }),
     description: 'Create or edit an immediate school shop order. Rechecks current product/variant/price and edit permission. Requires fresh elicitation for the exact action.',
     inputSchema: orderInput,
   }, async (raw, ctx) => {
@@ -132,6 +134,7 @@ export function registerShopWriteTools(server: McpServer, getData: GetData, post
     article_id: id.optional().describe('Article id from that order; omit to delete the whole order.'),
   };
   if (hasScope('shop:read') && hasScope('shop:write')) server.registerTool('delete_shop_order', {
+    ...writeTool('Supprimer une commande', ['shop:read', 'shop:write'], { destructive: true }),
     description: 'Delete an order or one article from it. Re-fetches order history and checks server can_delete permissions. Requires fresh elicitation.',
     inputSchema: deleteInput,
   }, async (raw, ctx) => {

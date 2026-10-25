@@ -1,5 +1,6 @@
 import { acceptedContent, inputRequired, inputResponse, type McpServer } from '@modelcontextprotocol/server';
 import * as z from 'zod/v4';
+import { writeTool } from './tool-metadata.js';
 import { actionDigest, actionRequestState, consumeActionConfirmation, discardActionConfirmation } from './action-confirmation.js';
 
 type Params = Record<string, string>;
@@ -55,6 +56,7 @@ function parseHomework(value: unknown, requestedId: string): Homework {
 export function registerHomeworkWriteTools(server: McpServer, getData: GetData, postData: PostData, requireScope: RequireScope, hasScope: HasScope = () => true): void {
   if (!hasScope('homework:read') || !hasScope('homework:write')) return;
   server.registerTool('submit_homework', {
+    ...writeTool('Marquer un devoir comme fait', ['homework:read', 'homework:write'], { destructive: true }),
     description: 'Mark one homework item as officially done for the selected student. This is permanent and visible to the school. Requires fresh human MCP elicitation showing the exact homework, subject, and due date. Attachments and submitted copies are not supported. Clients without elicitation support cannot submit.',
     inputSchema: {
       homework_id: homeworkId.describe('Homework id returned by get_homework or get_homework_details.'),

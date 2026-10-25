@@ -1,5 +1,6 @@
 import { acceptedContent, inputRequired, inputResponse, type McpServer } from '@modelcontextprotocol/server';
 import * as z from 'zod/v4';
+import { readOnlyTool, writeTool } from './tool-metadata.js';
 import { actionDigest, actionRequestState, consumeActionConfirmation, discardActionConfirmation } from './action-confirmation.js';
 
 type Params = Record<string, string>;
@@ -79,6 +80,7 @@ export function registerMessageTools(server: McpServer, getData: GetData, postDa
   };
 
   if (hasScope('messages:read')) server.registerTool('prepare_message', {
+    ...readOnlyTool('Préparer un message', ['messages:read']),
     description: 'Preview a plain-text new school message or reply. Does not send anything; use send_message for a separately confirmed send.',
     inputSchema,
   }, async args => {
@@ -87,6 +89,7 @@ export function registerMessageTools(server: McpServer, getData: GetData, postDa
   });
 
   if (hasScope('messages:read') && hasScope('messages:write')) server.registerTool('send_message', {
+    ...writeTool('Envoyer un message', ['messages:read', 'messages:write'], { destructive: true }),
     description: 'Send a plain-text school message or reply. Requires fresh human MCP elicitation for the exact recipient, thread, subject, category, and final text. Clients without elicitation support cannot send.',
     inputSchema,
   }, async (args, ctx) => {

@@ -1,5 +1,6 @@
 import { acceptedContent, inputRequired, inputResponse, type McpServer } from '@modelcontextprotocol/server';
 import * as z from 'zod/v4';
+import { readOnlyTool, writeTool } from './tool-metadata.js';
 import { decrypt, db, encrypt, fingerprint, opaque } from './store.js';
 import { actionDigest, actionRequestState, consumeActionConfirmation, discardActionConfirmation } from './action-confirmation.js';
 
@@ -40,6 +41,7 @@ export function registerReminderTools(
   `).get(id, accountId, studentHash) as StoredReminder | undefined;
 
   if (hasScope('reminders:write') && hasScope('reminders:read')) server.registerTool('schedule_reminder', {
+    ...writeTool('Programmer un rappel', ['reminders:read', 'reminders:write'], { destructive: false }),
     description: 'Save a private reminder for the selected student. Requires a fresh human confirmation. It is shown when an agent calls list_reminders; this MCP service does not send push notifications, SMS, email, or proactive alerts.',
     inputSchema: {
       title: titleSchema.describe('Short reminder title.'),
@@ -84,6 +86,7 @@ export function registerReminderTools(
   });
 
   if (hasScope('reminders:read')) server.registerTool('list_reminders', {
+    ...readOnlyTool('Rappels', ['reminders:read']),
     description: 'List reminders for the selected student in this linked account. Due reminders are marked due; the agent must call this tool to retrieve them because the service has no push-notification channel.',
     inputSchema: {
       view: z.enum(['active', 'due', 'all']).default('active'),
@@ -115,6 +118,7 @@ export function registerReminderTools(
   });
 
   if (hasScope('reminders:write')) server.registerTool('cancel_reminder', {
+    ...writeTool('Annuler un rappel', ['reminders:write'], { destructive: false, idempotent: true }),
     description: 'Cancel one active reminder belonging to the selected student.',
     inputSchema: { reminder_id: reminderId.describe('ID from list_reminders.') },
   }, async args => {
@@ -128,6 +132,7 @@ export function registerReminderTools(
   });
 
   if (hasScope('reminders:write')) server.registerTool('complete_reminder', {
+    ...writeTool('Terminer un rappel', ['reminders:write'], { destructive: false, idempotent: true }),
     description: 'Mark one due or upcoming reminder complete for the selected student.',
     inputSchema: { reminder_id: reminderId.describe('ID from list_reminders.') },
   }, async args => {
