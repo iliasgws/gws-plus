@@ -60,11 +60,12 @@ app.use((req, res, next) => {
 });
 
 const now = () => Math.floor(Date.now() / 1000);
-const supportedScopes = [
+const resourceScopes = [
   'homework:read', 'homework:write', 'documents:read', 'courses:read', 'news:read',
   'messages:read', 'messages:write', 'quizzes:write', 'requests:read', 'school:read', 'shop:read', 'shop:write',
-  'attendance:read', 'reminders:read', 'reminders:write', 'offline_access',
+  'attendance:read', 'reminders:read', 'reminders:write',
 ];
+const authorizationScopes = [...resourceScopes, 'offline_access'];
 const defaultScopes = ['homework:read', 'documents:read'];
 const agentInstructions = `Greenwood School + connects this conversation to the official parent portal (Boti) of Greenwood School, a French-language school, for exactly one parent account and the one child that parent selected during OAuth consent.
 
@@ -228,10 +229,10 @@ app.get('/.well-known/oauth-authorization-server', (_req, res) => res.json({
   grant_types_supported: ['authorization_code', 'refresh_token'],
   code_challenge_methods_supported: ['S256'],
   token_endpoint_auth_methods_supported: ['none'],
-  scopes_supported: supportedScopes
+  scopes_supported: authorizationScopes
 }));
-app.get('/.well-known/oauth-protected-resource', (_req, res) => res.json({ resource: mcpUrl, authorization_servers: [publicUrl.origin], bearer_methods_supported: ['header'], scopes_supported: supportedScopes }));
-app.get('/.well-known/oauth-protected-resource/mcp', (_req, res) => res.json({ resource: mcpUrl, authorization_servers: [publicUrl.origin], bearer_methods_supported: ['header'], scopes_supported: supportedScopes }));
+app.get('/.well-known/oauth-protected-resource', (_req, res) => res.json({ resource: mcpUrl, authorization_servers: [publicUrl.origin], bearer_methods_supported: ['header'], scopes_supported: resourceScopes }));
+app.get('/.well-known/oauth-protected-resource/mcp', (_req, res) => res.json({ resource: mcpUrl, authorization_servers: [publicUrl.origin], bearer_methods_supported: ['header'], scopes_supported: resourceScopes }));
 
 app.post('/register', rateLimit('client-registration', 30, 60 * 60), (req, res) => {
   const redirects = req.body?.redirect_uris;
@@ -277,7 +278,7 @@ function requestedScope(value: unknown): string | null {
   const raw = string(value).trim();
   if (!raw) return defaultScopes.join(' ');
   const requested = [...new Set(raw.split(/\s+/).filter(Boolean))];
-  if (!requested.length || requested.some(s => !supportedScopes.includes(s))) return null;
+  if (!requested.length || requested.some(s => !authorizationScopes.includes(s))) return null;
   return requested.join(' ');
 }
 function showConsent(res: Response, sessionHash: string, accountId: string, clientId: string, redirect: string, state: string, challenge: string, resource: string, scope: string) {
