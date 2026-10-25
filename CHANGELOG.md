@@ -29,6 +29,9 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
   d’action est signée, limitée dans le temps et utilisable une seule fois.
   Les absences et retards sont accessibles avec un scope dédié, en conservant
   la réponse source sans supposer la forme des éléments non vérifiés.
+  Le marquage officiel d’un devoir comme fait est proposé sous le scope
+  `homework:write`, après une confirmation montrant le titre, la matière et
+  l’échéance ; aucune pièce jointe ni copie n’est envoyée par ce chemin.
 
 ## [0.10.0] — 2026-10-10
 

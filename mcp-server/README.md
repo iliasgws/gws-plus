@@ -10,10 +10,13 @@ library documents, news, conversations, administrative requests, school
 contact, shop products and history, guest-meal planning, and the raw attendance
 response through `list_attendance_records` under `attendance:read`. Attendance
 item fields have not been verified on a non-empty account, so the service does
-not normalize or claim completeness. `prepare_message` previews a text message
+not normalize or claim completeness. `submit_homework` permanently marks one
+homework item as officially done under `homework:write` after fresh MCP
+elicitation shows its title, subject, and due date; it sends no attachment or
+submitted copy. `prepare_message` previews a text message
 or reply; `send_message` requires fresh MCP elicitation that
-confirms the exact recipient/thread, subject, category, and text. Attachments
-and voice are not supported. `schedule_reminder`, `list_reminders`,
+confirms the exact recipient/thread, subject, category, and text. Message
+attachments and voice are not supported. `schedule_reminder`, `list_reminders`,
 `cancel_reminder`, and `complete_reminder` manage encrypted, student-bound
 reminders in the MCP service; creation requires fresh elicitation. Reminders
 are returned when an agent checks the list. There is no push, email, SMS, or

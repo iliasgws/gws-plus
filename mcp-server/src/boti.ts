@@ -144,6 +144,25 @@ export async function sendPlainTextMessage(account: BotiAccount, fields: Record<
   return parseResponse(response);
 }
 
+/** Mark one homework item officially done; identity fields come only from the OAuth grant. */
+export async function markHomeworkDone(account: BotiAccount, homeworkId: string) {
+  if (!/^\d{1,64}$/.test(homeworkId)) throw new Error('Homework id is invalid');
+  const form = new FormData();
+  form.set('devoir', JSON.stringify({ id: homeworkId, files: [] }));
+  form.set('eleve_id', account.studentId);
+  form.set('user_id', account.userId);
+  form.set('parent_id', account.parentId);
+  form.set('key', account.keyToken);
+  form.set('versionCode', process.env.BOTI_APP_VERSION_CODE ?? '24140');
+  form.set('versionNumber', process.env.BOTI_APP_VERSION ?? '2.4.14');
+  form.set('paltform', process.env.BOTI_PLATFORM ?? 'android');
+  form.set('lang', 'fr');
+  const response = await fetch(endpoint('devoirs_date_v2'), {
+    method: 'POST', body: form, headers: botiHeaders, signal: AbortSignal.timeout(60_000),
+  });
+  return parseResponse(response);
+}
+
 /** Submit only the verified quiz and shop multipart contracts. */
 export async function postVerifiedForm(account: BotiAccount, route: 'quiz' | 'shop', fields: Record<string, string>) {
   const allowed = route === 'quiz'

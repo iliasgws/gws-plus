@@ -47,8 +47,12 @@ raw probe responses stay out of the repository (personal data).
       create/edit/delete tools. Each write requires its own scope and fresh MCP
       elicitation that displays the exact action; attachments and voice are
       excluded from messaging.
-- [ ] Add homework attachments/submission and other writes only after their
-      contracts are verified. Administrative request, news, and community writes
+- [x] Add official homework submission as `submit_homework`: it marks one
+      homework item as done through the verified `devoirs_date_v2` contract
+      (bundle-derived fields, exercised on device by the app) behind the
+      dedicated `homework:write` scope and a fresh elicitation showing the
+      title, subject, and due date. It sends no attachment or submitted copy;
+      homework copies, administrative request, news, and community writes
       remain excluded until their protocols and safeguards are validated.
 - [x] Add encrypted reminders bound to the selected student and MCP account,
       with confirmed scheduling, due/upcoming listing, cancel, and complete
