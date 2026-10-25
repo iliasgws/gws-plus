@@ -57,6 +57,12 @@ raw probe responses stay out of the repository (personal data).
 - [x] Add encrypted reminders bound to the selected student and MCP account,
       with confirmed scheduling, due/upcoming listing, cancel, and complete
       actions. Agents retrieve due items with `list_reminders`.
+- [x] Style the browser pages as the app's connexion screen: full-screen school
+      illustration, app icon and `GWS+` wordmark, translucent « liquid glass »
+      panels with backdrop blur, specular sheen and gradient rim, the app's
+      Bricolage Grotesque / Public Sans fonts, light and dark appearance, and
+      reduced-motion support. No script runs; the Content-Security-Policy stays
+      closed by default and the static assets are served from `public/`.
 - [ ] Define an opt-in delivery channel for proactive reminder notifications;
       the MCP service currently stores reminders but does not send alerts, and
       the mobile app has no school-reminder scheduling feature.

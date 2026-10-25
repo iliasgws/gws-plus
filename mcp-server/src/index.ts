@@ -1,4 +1,5 @@
 import { createHash, randomUUID } from 'node:crypto';
+import { fileURLToPath } from 'node:url';
 import express, { type Request, type Response, type NextFunction } from 'express';
 import { createMcpHandler, isInitializeRequest, isJsonContentType, isLegacyRequest, McpServer } from '@modelcontextprotocol/server';
 import { NodeStreamableHTTPServerTransport, toNodeHandler, toWebRequest } from '@modelcontextprotocol/node';
@@ -12,6 +13,7 @@ import { registerDocumentTools } from './document-tools.js';
 import { registerReminderTools } from './reminder-tools.js';
 import { registerHomeworkWriteTools } from './homework-write-tools.js';
 import { verifyActionRequestState } from './action-confirmation.js';
+import { escapeHtml, html } from './pages.js';
 
 const publicUrl = new URL(process.env.PUBLIC_URL ?? 'http://localhost:3000');
 const prod = process.env.NODE_ENV === 'production';
@@ -39,7 +41,7 @@ app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Referrer-Policy', 'no-referrer');
   res.setHeader('Cache-Control', 'no-store');
-  res.setHeader('Content-Security-Policy', "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'");
+  res.setHeader('Content-Security-Policy', "default-src 'none'; style-src 'self'; img-src 'self'; font-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'");
   if (req.get('host')?.toLowerCase() !== publicUrl.host.toLowerCase()) return res.sendStatus(421);
   const origin = req.get('origin');
   // The HTML consent flow is a same-site form flow protected by the SameSite=Lax session cookie.
@@ -85,9 +87,6 @@ function setSession(res: Response, session: string) {
   res.setHeader('Set-Cookie', `${cookieName}=${session}; Path=/; HttpOnly; SameSite=Lax; Max-Age=1800${prod ? '; Secure' : ''}`);
 }
 function clearSession(res: Response) { res.setHeader('Set-Cookie', `${cookieName}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${prod ? '; Secure' : ''}`); }
-function html(title: string, body: string) {
-  return `<!doctype html><html lang="fr"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>${title}</title><style>body{font:16px system-ui;max-width:36rem;margin:3rem auto;padding:0 1rem;color:#24221f}input,button{font:inherit;padding:.65rem;margin:.3rem 0}input{width:100%;box-sizing:border-box}button{cursor:pointer}label{display:block;margin-top:1rem}.card{border:1px solid #ddd;border-radius:12px;padding:1.2rem}small{color:#555}</style><main class="card"><h1>${title}</h1>${body}</main></html>`;
-}
 function rateLimit(action: string, maxHits: number, windowSeconds: number) {
   return (req: Request, res: Response, next: NextFunction) => {
     const address = req.ip || req.socket.remoteAddress || 'unknown';
@@ -136,6 +135,16 @@ app.use((req, _res, next) => {
 });
 
 app.get('/healthz', (_req, res) => res.json({ status: 'ok' }));
+// Browser assets for the OAuth pages: the app's illustration, logo and fonts,
+// plus the stylesheet. Public files only, no directory listing, no fallthrough.
+app.use('/assets', express.static(fileURLToPath(new URL('../public/', import.meta.url)), {
+  index: false,
+  dotfiles: 'ignore',
+  fallthrough: false,
+  etag: true,
+  lastModified: true,
+  setHeaders: res => res.setHeader('Cache-Control', 'public, max-age=600, must-revalidate')
+}));
 app.get('/.well-known/oauth-authorization-server', (_req, res) => res.json({
   issuer: publicUrl.origin,
   authorization_endpoint: new URL('/authorize', publicUrl).href,
@@ -208,9 +217,9 @@ function showConsent(res: Response, sessionHash: string, accountId: string, clie
 }
 function showStudentChoice(res: Response, authorizationId: string, students: BotiStudent[]) {
   const control = students.length === 1
-    ? `<p>Cette autorisation sera liée à l’élève <strong>${escapeHtml(students[0].name)}</strong>.</p><input type="hidden" name="student_id" value="${escapeHtml(students[0].id)}"><label><input type="checkbox" name="confirm_student" value="yes" required> Je confirme cet élève</label>`
+    ? `<p>Cette autorisation sera liée à l’élève <strong>${escapeHtml(students[0].name)}</strong>.</p><input type="hidden" name="student_id" value="${escapeHtml(students[0].id)}"><label class="confirmation"><input type="checkbox" name="confirm_student" value="yes" required> Je confirme cet élève</label>`
     : `<label>Choisir l’élève auquel l’accès sera lié<select name="student_id" required><option value="">Choisir un élève</option>${students.map(student => `<option value="${escapeHtml(student.id)}">${escapeHtml(student.name)}</option>`).join('')}</select></label>`;
-  res.send(html('Choisir un élève', `<p>Choisissez l’élève dont les données pourront être lues par le client MCP.</p><form method="post" action="/student">${control}<input type="hidden" name="auth_id" value="${authorizationId}"><p><button>Continuer</button></p></form>`));
+  res.send(html('Choisir un élève', `<p>Choisissez l’élève dont les données pourront être lues par le client MCP.</p><form method="post" action="/student">${control}<input type="hidden" name="auth_id" value="${authorizationId}"><div class="actions"><button>Continuer</button></div></form>`));
 }
 function renderConsent(res: Response, auth: any, account: ReturnType<typeof accountFor>) {
   if (!account || typeof auth.student_cipher !== 'string') return res.status(400).send(html('Demande expirée', '<p>Relancez la demande depuis le client MCP.</p>'));
@@ -237,14 +246,14 @@ function renderConsent(res: Response, auth: any, account: ReturnType<typeof acco
     'reminders:write': 'Créer, annuler et terminer des rappels (création après confirmation ponctuelle)',
   };
   const scopeList = auth.scope.split(' ').map((s: string) => `<li>${labels[s]}</li>`).join('');
-  res.send(html('Autoriser Greenwood School +', `<p><strong>${escapeHtml(client.name)}</strong> demande un accès au compte scolaire et aux données de l’élève <strong>${escapeHtml(student.name)}</strong> :</p><ul>${scopeList}</ul><p><strong>Vérifiez la demande :</strong> le nom affiché est fourni par l’application et n’est pas vérifié. N’autorisez l’accès que si vous avez lancé cette connexion vous-même.</p><dl><dt>Identifiant du client</dt><dd><code>${escapeHtml(auth.client_id)}</code></dd><dt>Origine de redirection enregistrée</dt><dd><code>${escapeHtml(redirectOrigin)}</code></dd></dl><p>Votre mot de passe scolaire ne sera pas conservé. Vous pouvez révoquer cet accès sur la page <a href="/account">Gestion des accès MCP</a>.</p><form method="post" action="/consent"><input type="hidden" name="auth_id" value="${auth.auth_id}"><button name="decision" value="approve">Autoriser</button> <button name="decision" value="deny" formnovalidate>Refuser</button></form>`));
+  res.send(html('Autoriser Greenwood School +', `<p><strong>${escapeHtml(client.name)}</strong> demande un accès au compte scolaire et aux données de l’élève <strong>${escapeHtml(student.name)}</strong> :</p><ul>${scopeList}</ul><p><strong>Vérifiez la demande :</strong> le nom affiché est fourni par l’application et n’est pas vérifié. N’autorisez l’accès que si vous avez lancé cette connexion vous-même.</p><dl><dt>Identifiant du client</dt><dd><code>${escapeHtml(auth.client_id)}</code></dd><dt>Origine de redirection enregistrée</dt><dd><code>${escapeHtml(redirectOrigin)}</code></dd></dl><p>Votre mot de passe scolaire ne sera pas conservé. Vous pouvez révoquer cet accès sur la page <a href="/account">Gestion des accès MCP</a>.</p><form method="post" action="/consent"><input type="hidden" name="auth_id" value="${auth.auth_id}"><div class="choix"><button name="decision" value="approve">Autoriser</button><button name="decision" value="deny" class="secondaire" formnovalidate>Refuser</button></div></form>`));
 }
 
 app.get('/login', (req, res) => {
   const tx = string(req.query.tx);
   const auth = db.prepare('SELECT * FROM authorizations WHERE auth_id=? AND expires_at>?').get(tx, now()) as any;
   if (!auth) return res.status(400).send(html('Connexion expirée', '<p>Relancez la connexion depuis votre client MCP.</p>'));
-  res.send(html('Connexion à Greenwood School', `<p>Les identifiants sont envoyés à Boti Education pour créer une session de lecture.</p><form method="post" action="/login"><input type="hidden" name="tx" value="${auth.auth_id}"><label>Téléphone ou identifiant<input name="login" autocomplete="username" required maxlength="128"></label><label>Mot de passe<input name="password" type="password" autocomplete="current-password" required maxlength="256"></label><button>Se connecter</button></form><small>Le mot de passe est utilisé uniquement pour cette demande et n’est pas enregistré.</small>`));
+  res.send(html('Connexion — Greenwood School +', `<p>Les identifiants sont envoyés à Boti Education pour créer une session de lecture.</p><form method="post" action="/login"><input type="hidden" name="tx" value="${auth.auth_id}"><label>Téléphone ou identifiant<input name="login" autocomplete="username" required maxlength="128"></label><label>Mot de passe<input name="password" type="password" autocomplete="current-password" required maxlength="256"></label><button>Se connecter</button></form><small>Le mot de passe est utilisé uniquement pour cette demande et n’est pas enregistré.</small>`, 'Connexion à l’espace famille.'));
 });
 app.post('/login', rateLimit('school-login', 8, 15 * 60), async (req, res) => {
   const tx = string(req.body?.tx);
@@ -415,8 +424,6 @@ app.post('/account/revoke', (req, res) => {
   clearSession(res);
   res.send(html('Accès révoqués', '<p>Tous les accès MCP de cette session ont été révoqués et la clé scolaire a été supprimée.</p>'));
 });
-
-function escapeHtml(value: string) { return value.replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]!)); }
 
 type AuthContext = { accountId: string; account: BotiAccount; scopes: string[]; clientId: string };
 const authByToken = db.prepare(`SELECT t.*,a.user_cipher,a.parent_cipher,a.key_cipher,a.students_cipher FROM tokens t JOIN accounts a ON a.account_id=t.account_id WHERE t.token_hash=? AND t.token_type='access' AND t.expires_at>? AND t.revoked=0`);

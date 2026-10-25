@@ -73,6 +73,32 @@ The Docker image listens on port 3000. Mount a durable private volume at
 configuration through the deployment secret manager. `.env.example` contains
 no secret values.
 
+## Browser pages
+
+The login, student-choice, consent, account and error pages share one shell
+(`src/pages.ts`) and the app's « École vivante » design: the supplied school
+illustration as a full-screen background, the app icon and the `GWS+`
+wordmark, and translucent « liquid glass » panels (78 %-opaque surfaces, a
+real backdrop blur, a specular sheen and a gradient rim) using the app's
+colours and its Bricolage Grotesque / Public Sans fonts. Light and dark
+appearance follow `prefers-color-scheme`, and reduced-motion preferences
+disable the entrance and sheen animations.
+
+The shell loads no script: every effect is CSS, so the pages keep a
+`default-src 'none'` Content-Security-Policy with `style-src`, `img-src` and
+`font-src` restricted to this origin. Static files live in `public/` and are
+served under `/assets` with a ten-minute cache and revalidation; nothing else
+is exposed, and directory traversal is rejected.
+
+Deployments must ship `public/` next to `dist/`: the running service resolves
+`../public/` from its compiled entry point. The Docker image copies it, and a
+manual deployment has to copy both directories. When the stylesheet or an
+asset changes, bump `assetVersion` in `src/pages.ts` so returning browsers
+fetch the new file instead of their cached copy.
+
+The fonts are the app's own OFL files; their licences ship with them in
+`public/fonts/`.
+
 ## OAuth and data handling
 
 The service publishes OAuth authorization-server metadata at

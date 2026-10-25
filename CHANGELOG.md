@@ -32,6 +32,12 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
   Le marquage officiel d’un devoir comme fait est proposé sous le scope
   `homework:write`, après une confirmation montrant le titre, la matière et
   l’échéance ; aucune pièce jointe ni copie n’est envoyée par ce chemin.
+  Les pages web du serveur (connexion, choix de l’élève, autorisation,
+  gestion des accès) reprennent l’identité de l’écran de connexion de
+  l’application : illustration de l’école en fond, icône et « GWS+ », panneaux
+  de verre dépoli avec reflet et liseré, polices Bricolage Grotesque et Public
+  Sans, apparence claire ou sombre selon le système. Aucun script n’y est
+  chargé et la politique de sécurité de contenu reste fermée par défaut.
 
 ## [0.10.0] — 2026-10-10
 
