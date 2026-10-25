@@ -31,8 +31,10 @@ raw probe responses stay out of the repository (personal data).
 - [x] Provide `/account` sign-in, parent-account-wide connection review and
       revocation, hourly expired-row cleanup, and an Android Settings link when
       a public HTTPS origin is configured at build time.
-- [ ] Before deployment: add login abuse controls, operational monitoring,
-      durable encrypted backups, terms/privacy review, and verify
+- [x] Add persistent, keyed-hash rate limits for school login, OAuth client
+      registration, authorization starts, and token requests.
+- [ ] Before deployment: add operational monitoring, durable encrypted
+      backups, terms/privacy review, and verify
       parent/student authorization with the school. No public service URL is
       configured.
 - [x] Add text-only message preparation/sending, quiz attempts, and shop order

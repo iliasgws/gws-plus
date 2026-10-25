@@ -136,9 +136,16 @@ Boti login, lists active connections across the same parent account, and
 revokes them together. Expired rows are cleaned hourly. The Android Settings
 link is available only when `GWS_MCP_PUBLIC_URL` is configured at build time.
 
-Before public deployment, add login abuse controls, monitoring, recovery and
-backup procedures, and reviewed terms/privacy disclosures; verify
-parent/student authorization with the school. The service has bounded read
+The service applies persistent rate limits to school login, OAuth client
+registration, authorization starts, and token requests. Rate-limit identities
+are keyed hashes, not stored IP addresses. Behind a reverse proxy, configure
+`TRUSTED_PROXY_CIDRS` with only the proxy's internal addresses, block direct
+access to the app port, and configure the proxy to replace forwarded-IP
+headers; otherwise requests share the proxy's rate-limit identity.
+
+Before public deployment, add monitoring, recovery and backup procedures, and
+reviewed terms/privacy disclosures; verify parent/student authorization with
+the school. The service has bounded read
 tools and verified PDF download from Bibliothèque attachments (15 MiB maximum;
 strict host validation; no redirects; no persistence).
 Text messages, quiz attempts, and shop order create/edit/delete operations each

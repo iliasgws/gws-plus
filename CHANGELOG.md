@@ -18,7 +18,9 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
   nécessite une revue sécurité/confidentialité avant déploiement. Il transmet
   aussi des instructions de sécurité aux agents connectés, signale les données
   scolaires comme non fiables, clarifie l’identité OAuth affichée et renouvelle
-  une session expirée lors d’une lecture.
+  une session expirée lors d’une lecture. Les connexions et les principaux
+  points d’entrée OAuth sont limités par des seuils persistants sans stocker
+  directement les adresses IP.
 
 ## [0.10.0] — 2026-10-10
 

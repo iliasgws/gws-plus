@@ -65,6 +65,11 @@ CREATE TABLE IF NOT EXISTS tokens (
   FOREIGN KEY(client_id) REFERENCES clients(client_id) ON DELETE CASCADE,
   FOREIGN KEY(account_id) REFERENCES accounts(account_id) ON DELETE CASCADE
 );
+CREATE TABLE IF NOT EXISTS rate_limits (
+  key_hash TEXT PRIMARY KEY,
+  window_started INTEGER NOT NULL,
+  hit_count INTEGER NOT NULL
+);
 `);
 
 // This service has not been deployed with durable user accounts. The encrypted
@@ -76,6 +81,24 @@ export const sha256 = (value: string) => createHash('sha256').update(value).dige
 const fingerprintKey = createHmac('sha256', encryptionKey).update('gws-plus:mcp:parent-fingerprint:v1').digest();
 export const fingerprint = (value: string) => createHmac('sha256', fingerprintKey).update(value).digest('hex');
 export const opaque = (bytes = 32) => randomBytes(bytes).toString('base64url');
+
+const rateLimitLookup = db.prepare('SELECT window_started,hit_count FROM rate_limits WHERE key_hash=?');
+const rateLimitStart = db.prepare(`INSERT INTO rate_limits(key_hash,window_started,hit_count) VALUES(?,?,1)
+  ON CONFLICT(key_hash) DO UPDATE SET window_started=excluded.window_started,hit_count=1`);
+const rateLimitIncrement = db.prepare('UPDATE rate_limits SET hit_count=hit_count+1 WHERE key_hash=?');
+const consumeRateLimitTransaction = db.transaction((keyHash: string, timestamp: number, maxHits: number, windowSeconds: number) => {
+  const row = rateLimitLookup.get(keyHash) as { window_started: number; hit_count: number } | undefined;
+  if (!row || timestamp - row.window_started >= windowSeconds || timestamp < row.window_started) {
+    rateLimitStart.run(keyHash, timestamp);
+    return { allowed: true, retryAfter: 0 };
+  }
+  if (row.hit_count >= maxHits) return { allowed: false, retryAfter: Math.max(1, row.window_started + windowSeconds - timestamp) };
+  rateLimitIncrement.run(keyHash);
+  return { allowed: true, retryAfter: 0 };
+});
+export function consumeRateLimit(action: string, ipAddress: string, maxHits: number, windowSeconds: number, timestamp: number) {
+  return consumeRateLimitTransaction(fingerprint(`rate-limit:${action}:${ipAddress}`), timestamp, maxHits, windowSeconds);
+}
 
 export function encrypt(value: string): string {
   const iv = randomBytes(12);

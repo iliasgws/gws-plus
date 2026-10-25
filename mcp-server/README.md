@@ -43,7 +43,13 @@ private path for `DATABASE_PATH`. For local HTTP development, set
 `NODE_ENV=development` and `PUBLIC_URL=http://localhost:3000`. In production,
 `PUBLIC_URL` must be the public HTTPS origin and TLS must terminate at a
 trusted reverse proxy. The proxy must preserve the original host and forward
-only to this service. Do not expose the SQLite file or encryption key.
+only to this service. Do not expose the SQLite file or encryption key. The
+service rate-limits school logins, OAuth client registrations, authorization
+starts, and token requests; client addresses are stored only as keyed hashes.
+If the service is behind a proxy, configure `TRUSTED_PROXY_CIDRS` with the
+proxy's exact internal IP or CIDR and block direct public access to the app
+port. The proxy must replace incoming forwarded-IP headers. An incorrect trust
+setting can let clients spoof their rate-limit identity.
 
 The Docker image listens on port 3000. Mount a durable private volume at
 `/var/lib/gws-mcp` and provide `PUBLIC_URL`, `DATA_ENCRYPTION_KEY`, and other
@@ -104,8 +110,8 @@ reads and requires a separate human elicitation.
 
 This is an implementation starter, not a production identity deployment.
 Before exposing it to families, an operator must provision a stable HTTPS
-origin, durable encrypted backups, secret rotation/recovery, monitoring and
-login abuse controls, retention/deletion policy, and privacy/legal review for
+origin, durable encrypted backups, secret rotation/recovery, monitoring,
+retention/deletion policy, and privacy/legal review for
 handling school-linked personal data. The small first-party login form cannot
 complete school-side identity assurance, parent/student authorization checks,
 or account recovery beyond Boti's own login response. The parent selects and

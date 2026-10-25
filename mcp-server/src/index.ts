@@ -3,7 +3,7 @@ import express, { type Request, type Response, type NextFunction } from 'express
 import { createMcpHandler, McpServer } from '@modelcontextprotocol/server';
 import { toNodeHandler } from '@modelcontextprotocol/node';
 import { getWithRefresh, login, sendPlainTextMessage, postVerifiedForm, type BotiAccount, type BotiSessionUpdate, type BotiStudent } from './boti.js';
-import { db, decrypt, encrypt, fingerprint, opaque, sha256 } from './store.js';
+import { consumeRateLimit, db, decrypt, encrypt, fingerprint, opaque, sha256 } from './store.js';
 import { registerReadTools } from './read-tools.js';
 import { registerMessageTools } from './message-tools.js';
 import { registerShopWriteTools } from './shop-write-tools.js';
@@ -16,6 +16,9 @@ if (prod && publicUrl.protocol !== 'https:') throw new Error('PUBLIC_URL must us
 const mcpUrl = new URL('/mcp', publicUrl).href;
 const app = express();
 app.disable('x-powered-by');
+const trustedProxyCidrs = (process.env.TRUSTED_PROXY_CIDRS ?? '').split(',').map(value => value.trim()).filter(Boolean);
+if (trustedProxyCidrs.includes('*')) throw new Error('TRUSTED_PROXY_CIDRS must list only trusted proxy addresses or CIDRs');
+if (trustedProxyCidrs.length) app.set('trust proxy', trustedProxyCidrs);
 app.use(express.json({ limit: '256kb', type: ['application/json', 'application/*+json'] }));
 app.use(express.urlencoded({ extended: false, limit: '16kb' }));
 app.use((req, res, next) => {
@@ -49,6 +52,7 @@ function cleanExpiredRows() {
   db.prepare('DELETE FROM authorizations WHERE expires_at<=?').run(timestamp);
   db.prepare('DELETE FROM codes WHERE expires_at<=?').run(timestamp);
   db.prepare('DELETE FROM tokens WHERE expires_at<=? OR revoked=1').run(timestamp);
+  db.prepare('DELETE FROM rate_limits WHERE window_started<?').run(timestamp - 24 * 60 * 60);
   db.prepare(`DELETE FROM accounts
     WHERE account_id NOT IN (SELECT account_id FROM tokens WHERE revoked=0 AND expires_at>?)
       AND account_id NOT IN (SELECT account_id FROM browser_sessions WHERE expires_at>?)`).run(timestamp, timestamp);
@@ -63,6 +67,18 @@ function setSession(res: Response, session: string) {
 function clearSession(res: Response) { res.setHeader('Set-Cookie', `${cookieName}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${prod ? '; Secure' : ''}`); }
 function html(title: string, body: string) {
   return `<!doctype html><html lang="fr"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>${title}</title><style>body{font:16px system-ui;max-width:36rem;margin:3rem auto;padding:0 1rem;color:#24221f}input,button{font:inherit;padding:.65rem;margin:.3rem 0}input{width:100%;box-sizing:border-box}button{cursor:pointer}label{display:block;margin-top:1rem}.card{border:1px solid #ddd;border-radius:12px;padding:1.2rem}small{color:#555}</style><main class="card"><h1>${title}</h1>${body}</main></html>`;
+}
+function rateLimit(action: string, maxHits: number, windowSeconds: number) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    const address = req.ip || req.socket.remoteAddress || 'unknown';
+    const result = consumeRateLimit(action, address, maxHits, windowSeconds, now());
+    if (result.allowed) return next();
+    res.setHeader('Retry-After', String(result.retryAfter));
+    if (req.path === '/login' || req.path === '/account/login') {
+      return res.status(429).send(html('Trop de tentatives', `<p>Pour protéger votre compte, réessayez dans ${result.retryAfter} secondes.</p>`));
+    }
+    return res.status(429).json({ error: 'rate_limited', retry_after_seconds: result.retryAfter });
+  };
 }
 function string(value: unknown): string { return typeof value === 'string' ? value : ''; }
 function clientRedirects(clientId: string): string[] {
@@ -115,7 +131,7 @@ app.get('/.well-known/oauth-authorization-server', (_req, res) => res.json({
 app.get('/.well-known/oauth-protected-resource', (_req, res) => res.json({ resource: mcpUrl, authorization_servers: [publicUrl.origin], bearer_methods_supported: ['header'], scopes_supported: supportedScopes }));
 app.get('/.well-known/oauth-protected-resource/mcp', (_req, res) => res.json({ resource: mcpUrl, authorization_servers: [publicUrl.origin], bearer_methods_supported: ['header'], scopes_supported: supportedScopes }));
 
-app.post('/register', (req, res) => {
+app.post('/register', rateLimit('client-registration', 30, 60 * 60), (req, res) => {
   const redirects = req.body?.redirect_uris;
   if (!Array.isArray(redirects) || redirects.length < 1 || redirects.length > 10 || redirects.some((u: unknown) => typeof u !== 'string' || !isAllowedRedirect(u))) {
     return res.status(400).json({ error: 'invalid_client_metadata' });
@@ -134,7 +150,7 @@ function isAllowedRedirect(raw: string): boolean {
   } catch { return false; }
 }
 
-app.get('/authorize', (req, res) => {
+app.get('/authorize', rateLimit('authorization-start', 120, 15 * 60), (req, res) => {
   const clientId = string(req.query.client_id);
   const redirect = string(req.query.redirect_uri);
   const state = string(req.query.state);
@@ -206,7 +222,7 @@ app.get('/login', (req, res) => {
   if (!auth) return res.status(400).send(html('Connexion expirée', '<p>Relancez la connexion depuis votre client MCP.</p>'));
   res.send(html('Connexion à Greenwood School', `<p>Les identifiants sont envoyés à Boti Education pour créer une session de lecture.</p><form method="post" action="/login"><input type="hidden" name="tx" value="${auth.auth_id}"><label>Téléphone ou identifiant<input name="login" autocomplete="username" required maxlength="128"></label><label>Mot de passe<input name="password" type="password" autocomplete="current-password" required maxlength="256"></label><button>Se connecter</button></form><small>Le mot de passe est utilisé uniquement pour cette demande et n’est pas enregistré.</small>`));
 });
-app.post('/login', async (req, res) => {
+app.post('/login', rateLimit('school-login', 8, 15 * 60), async (req, res) => {
   const tx = string(req.body?.tx);
   const auth = db.prepare('SELECT * FROM authorizations WHERE auth_id=? AND expires_at>?').get(tx, now()) as any;
   const loginName = string(req.body?.login).trim();
@@ -269,7 +285,7 @@ app.post('/consent', (req, res) => {
   res.redirect(303, safeReturn(auth.redirect_uri, { code, state: auth.state, iss: publicUrl.origin }));
 });
 
-app.post('/token', (req, res) => {
+app.post('/token', rateLimit('oauth-token', 120, 15 * 60), (req, res) => {
   const grant = string(req.body?.grant_type);
   if (grant === 'authorization_code') {
     const code = string(req.body?.code);
@@ -341,7 +357,7 @@ app.get('/account', (req, res) => {
     : '<p>Aucun accès MCP actif pour cette session.</p>';
   res.send(html('Gestion des accès MCP', `<p>Les accès ci-dessous sont liés à ce compte scolaire.</p>${list}<form method="post" action="/account/logout"><button>Fermer cette session de gestion</button></form>`));
 });
-app.post('/account/login', async (req, res) => {
+app.post('/account/login', rateLimit('school-login', 8, 15 * 60), async (req, res) => {
   if (req.get('origin') !== publicUrl.origin) return res.status(403).send(html('Requête refusée', '<p>Rechargez la page puis réessayez.</p>'));
   const loginName = string(req.body?.login).trim();
   const password = string(req.body?.password);
