@@ -24,8 +24,8 @@ android {
         applicationId = "school.greenwood.plus"
         minSdk = 26
         targetSdk = 36
-        versionCode = 120
-        versionName = "0.10.0"
+        versionCode = 132
+        versionName = "0.10.4-beta.1"
         buildConfigField("String", "GWS_MCP_PUBLIC_URL", "\"$gwsMcpPublicUrl\"")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

@@ -6,6 +6,10 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
 
 ## [Non publié]
 
+## [0.10.4-beta.1] — 2026-10-25
+
+### Préversion (bêta)
+
 ### Ajouté
 
 - Le serveur MCP hébergé (#159) propose des outils de lecture pour les
