@@ -28,6 +28,11 @@ raw probe responses stay out of the repository (personal data).
       require explicit human confirmation for every supported write.
 - [x] Warn that the OAuth client name is unverified, show its client ID and
       redirect origin, and refresh an expired Boti session once for reads.
+- [x] Allow only the registered callback origin in the final consent page's
+      form CSP so mobile browsers can follow approval/refusal redirects.
+      Reproduced the blocked redirect in Chromium, then verified browser
+      approval, code exchange, refresh-token rotation, refusal, and rejection
+      of an unrelated form destination with synthetic account data.
 - [x] Provide `/account` sign-in, parent-account-wide connection review and
       revocation, hourly expired-row cleanup, and an Android Settings link when
       a public HTTPS origin is configured at build time.

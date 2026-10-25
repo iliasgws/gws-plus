@@ -47,6 +47,13 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
   Sans, apparence claire ou sombre selon le système. Aucun script n’y est
   chargé et la politique de sécurité de contenu reste fermée par défaut.
 
+### Corrigé
+
+- L’autorisation MCP ne reste plus bloquée après « Autoriser » dans les
+  navigateurs qui contrôlent la redirection du formulaire : la page de
+  consentement autorise uniquement l’origine de retour enregistrée du client.
+  Les formulaires de connexion conservent leur restriction au serveur.
+
 ## [0.10.0] — 2026-10-10
 
 Version stable après les bêtas 0.9.14-beta.1 à 0.9.14-beta.3 et

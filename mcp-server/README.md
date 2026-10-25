@@ -90,6 +90,12 @@ The shell loads no script: every effect is CSS, so the pages keep a
 served under `/assets` with a ten-minute cache and revalidation; nothing else
 is exposed, and directory traversal is rejected.
 
+The final consent page also permits its one registered callback origin in
+`form-action`: Chrome and Safari apply that directive to the redirect after
+the consent form POST. Login and account pages retain `form-action 'self'`.
+Approval and refusal can therefore return to the assistant without allowing
+password forms to submit to external origins.
+
 Deployments must ship `public/` next to `dist/`: the running service resolves
 `../public/` from its compiled entry point. The Docker image copies it, and a
 manual deployment has to copy both directories. When the stylesheet or an

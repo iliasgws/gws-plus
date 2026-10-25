@@ -35,13 +35,14 @@ for (const origin of configuredOrigins) {
 }
 const allowedOrigins = new Set([publicUrl.origin, ...configuredOrigins]);
 const htmlPaths = new Set(['/login', '/student', '/consent', '/authorize', '/authorize/continue', '/account', '/account/login', '/account/logout', '/account/revoke']);
+const browserCsp = "default-src 'none'; style-src 'self'; img-src 'self'; font-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'";
 app.use(express.json({ limit: '256kb', type: ['application/json', 'application/*+json'] }));
 app.use(express.urlencoded({ extended: false, limit: '16kb' }));
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Referrer-Policy', 'no-referrer');
   res.setHeader('Cache-Control', 'no-store');
-  res.setHeader('Content-Security-Policy', "default-src 'none'; style-src 'self'; img-src 'self'; font-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'");
+  res.setHeader('Content-Security-Policy', browserCsp);
   if (req.get('host')?.toLowerCase() !== publicUrl.host.toLowerCase()) return res.sendStatus(421);
   const origin = req.get('origin');
   // The HTML consent flow is a same-site form flow protected by the SameSite=Lax session cookie.
@@ -248,6 +249,8 @@ function isAllowedRedirect(raw: string): boolean {
   try {
     const u = new URL(raw);
     if (u.username || u.password || u.hash) return false;
+    // Registered callback origins also become CSP sources on the consent page.
+    if (!/^https?:\/\/[A-Za-z0-9._:[\]-]+$/.test(u.origin)) return false;
     if (u.protocol === 'https:') return true;
     return u.protocol === 'http:' && ['127.0.0.1', 'localhost', '[::1]'].includes(u.hostname);
   } catch { return false; }
@@ -302,6 +305,10 @@ function renderConsent(res: Response, auth: any, account: ReturnType<typeof acco
   if (!student) return res.status(400).send(html('Choix de l’élève invalide', '<p>Relancez la demande depuis le client MCP.</p>'));
   const client = db.prepare('SELECT name FROM clients WHERE client_id=?').get(auth.client_id) as { name: string };
   const redirectOrigin = new URL(auth.redirect_uri).origin;
+  if (!isAllowedRedirect(auth.redirect_uri)) return res.status(400).send(html('Redirection invalide', '<p>Relancez la connexion depuis votre client MCP.</p>'));
+  // Chrome and Safari apply form-action to the 303 after POST /consent too.
+  // Permit only this registered callback origin, on this password-free page.
+  res.setHeader('Content-Security-Policy', browserCsp.replace("form-action 'self'", `form-action 'self' ${redirectOrigin}`));
   const labels: Record<string, string> = {
     'homework:read': 'Lire les devoirs et leurs détails',
     'homework:write': 'Marquer un devoir comme fait après confirmation ponctuelle — action définitive visible par l’école (nécessite aussi homework:read)',
