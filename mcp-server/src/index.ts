@@ -32,6 +32,7 @@ for (const origin of configuredOrigins) {
   }
 }
 const allowedOrigins = new Set([publicUrl.origin, ...configuredOrigins]);
+const htmlPaths = new Set(['/login', '/student', '/consent', '/authorize', '/authorize/continue', '/account', '/account/login', '/account/logout', '/account/revoke']);
 app.use(express.json({ limit: '256kb', type: ['application/json', 'application/*+json'] }));
 app.use(express.urlencoded({ extended: false, limit: '16kb' }));
 app.use((req, res, next) => {
@@ -41,8 +42,11 @@ app.use((req, res, next) => {
   res.setHeader('Content-Security-Policy', "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'");
   if (req.get('host')?.toLowerCase() !== publicUrl.host.toLowerCase()) return res.sendStatus(421);
   const origin = req.get('origin');
-  if (origin && !allowedOrigins.has(origin)) return res.sendStatus(403);
-  if (origin) {
+  // The HTML consent flow is a same-site form flow protected by the SameSite=Lax session cookie.
+  // Some embedded browsers and webviews send an opaque or app-specific Origin, so only the API
+  // endpoints enforce the CORS allowlist.
+  if (origin && !allowedOrigins.has(origin) && !htmlPaths.has(req.path)) return res.sendStatus(403);
+  if (origin && allowedOrigins.has(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Vary', 'Origin');
     res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type, Mcp-Session-Id, Mcp-Protocol-Version, Mcp-Method, Mcp-Name, Last-Event-Id');
@@ -271,7 +275,6 @@ app.get('/authorize/continue', (req, res) => {
   db.prepare('DELETE FROM authorizations WHERE auth_id=?').run(tx);
 });
 app.post('/student', (req, res) => {
-  if (req.get('origin') !== publicUrl.origin) return res.status(403).send(html('Requête refusée', '<p>Relancez l’autorisation depuis votre client MCP.</p>'));
   const authId = string(req.body?.auth_id);
   const auth = db.prepare('SELECT * FROM authorizations WHERE auth_id=? AND expires_at>?').get(authId, now()) as any;
   const session = getSession(req);
@@ -287,7 +290,6 @@ app.post('/student', (req, res) => {
   renderConsent(res, { ...auth, student_cipher: studentCipher }, account);
 });
 app.post('/consent', (req, res) => {
-  if (req.get('origin') !== publicUrl.origin) return res.status(403).send(html('Requête refusée', '<p>Relancez l’autorisation depuis votre client MCP.</p>'));
   const authId = string(req.body?.auth_id);
   const auth = db.prepare('SELECT * FROM authorizations WHERE auth_id=? AND expires_at>?').get(authId, now()) as any;
   const session = getSession(req);
@@ -382,7 +384,6 @@ app.get('/account', (req, res) => {
   res.send(html('Gestion des accès MCP', `<p>Les accès ci-dessous sont liés à ce compte scolaire.</p>${list}<form method="post" action="/account/logout"><button>Fermer cette session de gestion</button></form>`));
 });
 app.post('/account/login', rateLimit('school-login', 8, 15 * 60), async (req, res) => {
-  if (req.get('origin') !== publicUrl.origin) return res.status(403).send(html('Requête refusée', '<p>Rechargez la page puis réessayez.</p>'));
   const loginName = string(req.body?.login).trim();
   const password = string(req.body?.password);
   if (!loginName || loginName.length > 128 || !password || password.length > 256) return res.status(400).send(html('Connexion invalide', '<p>Vérifiez le formulaire puis réessayez.</p>'));
@@ -400,14 +401,12 @@ app.post('/account/login', rateLimit('school-login', 8, 15 * 60), async (req, re
   }
 });
 app.post('/account/logout', (req, res) => {
-  if (req.get('origin') !== publicUrl.origin) return res.status(403).send(html('Requête refusée', '<p>Rechargez la page puis réessayez.</p>'));
   const session = getSession(req);
   if (session) db.prepare('DELETE FROM browser_sessions WHERE session_hash=?').run(session.session_hash);
   clearSession(res);
   res.redirect(303, '/account');
 });
 app.post('/account/revoke', (req, res) => {
-  if (req.get('origin') !== publicUrl.origin) return res.status(403).send(html('Requête refusée', '<p>Ouvrez la page de gestion des accès puis réessayez.</p>'));
   const session = getSession(req);
   if (!session?.account_id) return res.status(401).send(html('Connexion requise', '<p>La session a expiré. Reconnectez-vous pour gérer les accès.</p>'));
   const account = accountFor(session.account_id);
