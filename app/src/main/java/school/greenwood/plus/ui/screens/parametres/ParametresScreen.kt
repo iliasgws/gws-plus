@@ -1,5 +1,7 @@
 package school.greenwood.plus.ui.screens.parametres
 
+import android.content.Intent
+import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -282,6 +284,36 @@ fun ParametresScreen(
                 color = RegistreTheme.colors.chalk,
                 modifier = Modifier.padding(top = 6.dp, start = 4.dp, end = 4.dp),
             )
+
+            if (BuildConfig.GWS_MCP_PUBLIC_URL.isNotBlank()) {
+                SectionLabel("Accès à un assistant IA")
+                GwsCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                val url = "${BuildConfig.GWS_MCP_PUBLIC_URL}/account"
+                                ContextCompat.startActivity(
+                                    contexte,
+                                    Intent(Intent.ACTION_VIEW, Uri.parse(url)),
+                                    null,
+                                )
+                            }
+                            .padding(horizontal = 14.dp, vertical = 12.dp),
+                    ) {
+                        Text(
+                            text = "Gérer les accès MCP",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = RegistreTheme.colors.ink,
+                        )
+                        Text(
+                            text = "Consulter ou révoquer les autorisations données à tes assistants IA.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = RegistreTheme.colors.chalk,
+                        )
+                    }
+                }
+            }
 
             SectionLabel("Assistant IA")
 

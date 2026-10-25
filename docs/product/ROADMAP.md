@@ -13,22 +13,32 @@ raw probe responses stay out of the repository (personal data).
 - [x] Add a separate Node.js Streamable HTTP MCP service with OAuth
       authorization-code flow, PKCE S256, consent, hashed bearer and refresh
       tokens, token rotation/revocation, and encrypted Boti session storage.
-- [x] Expose read-only homework and library-document tools. The service does
-      not issue writes or reminders; it does not pass the Boti key to clients.
+- [x] Expose bounded read tools for homework/details, timetable, interactive
+      resources, quizzes, library documents and PDF downloads, news,
+      conversations, administrative requests, school contact, shop products/
+      history, and guest-meal planning. Absence records remain excluded because
+      their item shape is unverified. The service never passes the Boti key to
+      clients.
 - [x] Add a Docker image and deployment configuration example for a future
       Linux container deployment.
-- [x] Provide a browser-based `/account` page that revokes grants and deletes
-      its encrypted Boti key.
-- [ ] Before deployment: provide a student selector and Android in-app access
-      management,
-      rate limits, expired-record cleanup, operational monitoring, durable
-      encrypted backups, terms/privacy review, and verify parent/student
-      authorization with the school. No public service URL is configured.
-- [ ] Add document download/content delivery, reminders, and approval-gated
-      messaging only after their data, delivery, and human-confirmation
-      contracts are implemented and reviewed.
-- [ ] Add app-side access management once a production service origin and
-      account-management endpoint are available.
+- [x] Bind each authorization to a parent-confirmed student; encrypt account
+      identifiers, roster, selected student, and Boti key at rest.
+- [x] Provide `/account` sign-in, parent-account-wide connection review and
+      revocation, hourly expired-row cleanup, and an Android Settings link when
+      a public HTTPS origin is configured at build time.
+- [ ] Before deployment: add login abuse controls, operational monitoring,
+      durable encrypted backups, terms/privacy review, and verify
+      parent/student authorization with the school. No public service URL is
+      configured.
+- [x] Add text-only message preparation/sending, quiz attempts, and shop order
+      create/edit/delete tools. Each write requires its own scope and fresh MCP
+      elicitation that displays the exact action; attachments and voice are
+      excluded from messaging.
+- [ ] Add homework attachments/submission and other writes only after their
+      contracts are verified. Administrative request, news, and community writes
+      remain excluded until their protocols and safeguards are validated.
+- [ ] Define a delivery and opt-in contract for remote reminders; the mobile
+      app currently has no school-reminder scheduling feature.
 
 ## Registre startup performance (issue #145)
 

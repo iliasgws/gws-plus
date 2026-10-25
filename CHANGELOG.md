@@ -8,13 +8,14 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
 
 ### Ajouté
 
-- Première base du serveur MCP hébergé (#159) : service Streamable HTTP
-  séparé, autorisation OAuth avec PKCE et consentement, jetons révocables,
-  stockage chiffré de la session Boti et outils en lecture seule pour les
-  devoirs et les documents de bibliothèque. Image Docker et exemple de
-  configuration inclus ; le service n'est pas encore déployé et nécessite
-  des travaux de sécurité, de confidentialité et de gestion de compte avant
-  une ouverture aux familles.
+- Le serveur MCP hébergé (#159) propose des outils de lecture pour les
+  principales sections scolaires, le téléchargement borné des PDF de la
+  Bibliothèque et des actions de messages, quiz et boutique soumises chacune à
+  confirmation, lie chaque autorisation à l’élève confirmé par le
+  parent, chiffre les secrets de session et permet de consulter ou révoquer les
+  accès depuis `/account`. Un lien peut apparaître dans Paramètres
+  lorsque `GWS_MCP_PUBLIC_URL` est configuré. Le service reste à valider et
+  nécessite une revue sécurité/confidentialité avant déploiement.
 
 ## [0.10.0] — 2026-10-10
 

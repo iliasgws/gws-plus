@@ -1,5 +1,5 @@
 import Database from 'better-sqlite3';
-import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:crypto';
+import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes } from 'node:crypto';
 
 const dbPath = process.env.DATABASE_PATH ?? './data.sqlite';
 const rawKey = process.env.DATA_ENCRYPTION_KEY;
@@ -19,10 +19,11 @@ CREATE TABLE IF NOT EXISTS clients (
 );
 CREATE TABLE IF NOT EXISTS accounts (
   account_id TEXT PRIMARY KEY,
-  user_id TEXT NOT NULL,
-  parent_id TEXT NOT NULL,
-  student_id TEXT NOT NULL,
-  key_cipher TEXT NOT NULL,
+  user_cipher TEXT NOT NULL,
+  parent_cipher TEXT NOT NULL,
+  parent_hash TEXT NOT NULL,
+  students_cipher TEXT NOT NULL,
+  key_cipher TEXT,
   created_at INTEGER NOT NULL
 );
 CREATE TABLE IF NOT EXISTS browser_sessions (
@@ -40,6 +41,7 @@ CREATE TABLE IF NOT EXISTS authorizations (
   challenge TEXT NOT NULL,
   resource TEXT NOT NULL,
   scope TEXT NOT NULL,
+  student_cipher TEXT,
   expires_at INTEGER NOT NULL,
   FOREIGN KEY(client_id) REFERENCES clients(client_id) ON DELETE CASCADE
 );
@@ -54,6 +56,7 @@ CREATE TABLE IF NOT EXISTS tokens (
   token_type TEXT NOT NULL,
   client_id TEXT NOT NULL,
   account_id TEXT NOT NULL,
+  student_cipher TEXT NOT NULL,
   resource TEXT NOT NULL,
   scope TEXT NOT NULL,
   family_id TEXT NOT NULL,
@@ -64,7 +67,14 @@ CREATE TABLE IF NOT EXISTS tokens (
 );
 `);
 
+// This service has not been deployed with durable user accounts. The encrypted
+// account/token columns are therefore initialized on a fresh database; do not
+// reuse a pre-parity database without a migration that decrypts and reseals its
+// old plaintext user_id/parent_id/student_id fields.
+
 export const sha256 = (value: string) => createHash('sha256').update(value).digest('hex');
+const fingerprintKey = createHmac('sha256', encryptionKey).update('gws-plus:mcp:parent-fingerprint:v1').digest();
+export const fingerprint = (value: string) => createHmac('sha256', fingerprintKey).update(value).digest('hex');
 export const opaque = (bytes = 32) => randomBytes(bytes).toString('base64url');
 
 export function encrypt(value: string): string {

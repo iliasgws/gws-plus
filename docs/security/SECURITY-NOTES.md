@@ -121,17 +121,28 @@ certificate only establishes install-chain continuity.
 
 ## GWS+ note — hosted MCP service (issue #159)
 
-The initial `mcp-server/` implementation is a deployment starter, not yet
-approved for family use. OAuth bearer and refresh tokens are opaque and stored
-as hashes; the Boti `keyToken` is encrypted in SQLite with an operator-provided
-AES-256-GCM key. The school password is sent to Boti over TLS and is not
-persisted. Never enable request-body logging at the reverse proxy, and protect
-the database, encryption key, backups, and host as sensitive account data.
+The `mcp-server/` implementation is not yet approved for family use. OAuth
+bearer and refresh tokens are opaque and stored as hashes. Boti session values,
+parent/student identifiers, and the student roster are encrypted in SQLite
+with an operator-provided AES-256-GCM key. A keyed HMAC fingerprint groups
+records for parent-account-wide revocation. The school password is sent to
+Boti over TLS and is not persisted. Never enable request-body logging at the
+reverse proxy, and protect the database, encryption key, backups, and host as
+sensitive account data.
 
-Before public deployment, add and verify student selection and authorization,
-rate limiting, cleanup/retention, monitoring, recovery and
-backup procedures, and reviewed terms/privacy disclosures. The first release
-has read-only tools only. It does not support message sending, reminders,
-PDF downloads, Android in-app access management, or a public service URL.
-Browser revocation at `/account` deletes that login's Boti key and OAuth grants.
-Do not treat the starter as a production-ready OAuth identity provider.
+Each OAuth grant is bound to a student confirmed during authorization, and
+request parameters cannot override that binding. `/account` supports a fresh
+Boti login, lists active connections across the same parent account, and
+revokes them together. Expired rows are cleaned hourly. The Android Settings
+link is available only when `GWS_MCP_PUBLIC_URL` is configured at build time.
+
+Before public deployment, add login abuse controls, monitoring, recovery and
+backup procedures, and reviewed terms/privacy disclosures; verify
+parent/student authorization with the school. The service has bounded read
+tools and verified PDF download from Bibliothèque attachments (15 MiB maximum;
+strict host validation; no redirects; no persistence).
+Text messages, quiz attempts, and shop order create/edit/delete operations each
+require a separate scope and fresh client elicitation showing the exact action;
+clients that cannot elicit cannot write. Attachments and voice messaging,
+reminder delivery, and a configured public service URL are not available. Do
+not treat this implementation as a production-ready OAuth identity provider.

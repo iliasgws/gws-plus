@@ -1,11 +1,20 @@
 # Greenwood School + hosted MCP service
 
-An initial hosted Streamable HTTP MCP service exposing read-only homework and
-library data from the Boti API. It implements OAuth authorization code with
-PKCE (S256), a browser login and explicit consent screen, dynamic public-client
+An initial hosted Streamable HTTP MCP service exposing school data and selected
+confirmed actions through the Boti API. It implements OAuth authorization code
+with PKCE (S256), a browser login and explicit consent screen, dynamic public-client
 registration, short-lived access tokens, rotating refresh tokens, and token
-revocation. The MCP tools are `get_homework`, `get_document_units`,
-`list_documents`, and `get_document_details`.
+revocation. Grants are bound to a student confirmed by the parent. Read tools
+cover homework and details, timetable, interactive resources and quizzes,
+library documents, news, conversations, administrative requests, school
+contact, shop products and history, and guest-meal planning. Absences are
+excluded because their item shape is unverified. `prepare_message` previews a
+text message or reply; `send_message` requires fresh MCP elicitation that
+confirms the exact recipient/thread, subject, category, and text. Attachments,
+voice, and reminder delivery are not supported yet. `download_library_pdf`
+returns a verified Bibliothèque PDF as an embedded MCP resource. `submit_quiz_attempt`,
+`place_shop_order`, and `delete_shop_order` each require a distinct write scope
+and a fresh elicitation showing the exact persistent action.
 
 The server follows the official MCP TypeScript SDK's current `McpServer`,
 `createMcpHandler`, and Node adapter APIs. OAuth authorization-server endpoints
@@ -54,10 +63,11 @@ codes are stored as SHA-256 hashes. Refresh tokens rotate and revoke their old
 token family. `/revoke` revokes the token family associated with a presented
 token. Tokens expire after one hour (access) and 30 days (refresh).
 
-The browser session has a `/account` page. It lists active MCP clients for
-that Boti login; the user can revoke all grants for the login and erase its
-encrypted Boti key. This is currently a browser page on the service, not an
-Android in-app screen.
+The `/account` page supports a fresh Boti login, lists active MCP clients for
+the parent account, and can revoke all associated grants and erase encrypted
+session keys. A short-lived browser session can be explicitly closed. The
+Android Settings page can link to this service when `GWS_MCP_PUBLIC_URL` is
+configured at build time.
 
 The Boti password is used only in the login request and is not written to the
 database. The Boti `keyToken` is encrypted with AES-256-GCM using
@@ -67,11 +77,13 @@ also contains account identifiers required to make requests to the parent’s
 school account, so it must be protected as personal data. Do not enable HTTP
 request-body logging at the reverse proxy or application host.
 
-The login page sends credentials directly to Boti's documented `POST login`
-endpoint over HTTPS, with `remembreMe=false`. Read tools use authenticated
-`GET devoirs`, `GET bibliotheque`, and `GET ressource_details` requests. No
-write endpoints are exposed. Signed file URLs returned by Boti expire and are
-passed through as data; the service does not download or persist files.
+The MCP initialize response automatically supplies agent instructions for the
+selected-student boundary, scope-dependent tool discovery, data privacy, and
+fresh confirmation requirements. Clients can also fetch the
+`greenwood_agent_guide` prompt for the same instructions. The service downloads
+only PDFs from verified Bibliothèque detail attachments, with a 15 MiB cap,
+strict media-host validation, no redirects, and no persistence. Other signed
+file URLs returned by Boti expire and are not stable links.
 
 ## Production setup still required
 
@@ -81,14 +93,11 @@ origin, durable encrypted backups, secret rotation/recovery, monitoring and
 login abuse controls, retention/deletion policy, and privacy/legal review for
 handling school-linked personal data. The small first-party login form cannot
 complete school-side identity assurance, parent/student authorization checks,
-or account recovery beyond Boti's own login response. It links the student ID
-returned as `eleveId` (or the first entry in `eleves`) and currently has no
-student picker. Verify that behavior and the vendor's terms with the school
-before production use. If Boti changes its undocumented API or invalidates
+or account recovery beyond Boti's own login response. The parent selects and
+confirms a student during authorization, and the selected ID is bound to the
+grant. Verify the vendor's terms with the school before production use. If Boti changes its undocumented API or invalidates
 sessions, users will need to sign in again.
 
-The initial service has no administrator dashboard, Android in-app access
-management, rate limiting, consent history UI, or automated cleanup job for
-expired rows. Reviewed privacy disclosures and terms of service must be
-prepared before broad production use. OAuth revocation is available at
-`/revoke` and `/account`.
+The service has no administrator dashboard, login abuse controls, consent
+history UI, or reviewed privacy disclosures and terms. Hourly cleanup removes
+expired rows. OAuth revocation is available at `/revoke` and `/account`.

@@ -1,6 +1,12 @@
 const baseUrl = process.env.BOTI_BASE_URL ?? 'https://boti.education/p/greenwood/botiapi/';
 if (new URL(baseUrl).protocol !== 'https:') throw new Error('BOTI_BASE_URL must use HTTPS');
+const botiHeaders = {
+  accept: 'application/json',
+  'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36',
+};
 
+export type BotiStudent = { id: string; name: string };
+export type BotiLogin = { userId: string; parentId: string; keyToken: string; students: BotiStudent[] };
 export type BotiAccount = { userId: string; parentId: string; studentId: string; keyToken: string };
 
 function endpoint(name: string): URL {
@@ -15,27 +21,39 @@ async function parseResponse(response: Response): Promise<Record<string, any>> {
   return body;
 }
 
-export async function login(login: string, password: string): Promise<BotiAccount> {
+export async function login(login: string, password: string): Promise<BotiLogin> {
   const form = new FormData();
   form.set('login', login);
   form.set('password', password);
   form.set('privacy', 'true');
   form.set('remembreMe', 'false');
-  const response = await fetch(endpoint('login'), { method: 'POST', body: form, signal: AbortSignal.timeout(15_000) });
+  const response = await fetch(endpoint('login'), { method: 'POST', body: form, headers: botiHeaders, signal: AbortSignal.timeout(15_000) });
   const body = await parseResponse(response);
   if (typeof body.keyToken !== 'string' || typeof body.userId !== 'string' || typeof body.parentId !== 'string') {
     throw new Error('Boti login response did not include a usable parent session');
   }
-  const students = Array.isArray(body.eleves) ? body.eleves : [];
-  const requestedStudent = String(body.eleveId ?? students[0]?.id ?? '');
-  if (!requestedStudent || !students.some((student: any) => String(student.id) === requestedStudent)) {
+  const rawStudents = Array.isArray(body.eleves) ? body.eleves : [];
+  const students: BotiStudent[] = rawStudents.flatMap((student: any) => {
+    if (!student || (typeof student.id !== 'string' && typeof student.id !== 'number')) return [];
+    const id = String(student.id);
+    if (!id || id.length > 128) return [];
+    const name = [student.prenom, student.nom].filter((part: unknown) => typeof part === 'string' && part.trim()).join(' ').trim()
+      || [student.firstName, student.lastName].filter((part: unknown) => typeof part === 'string' && part.trim()).join(' ').trim()
+      || (typeof student.nomcomplet === 'string' ? student.nomcomplet.trim() : '')
+      || (typeof student.name === 'string' ? student.name.trim() : '');
+    if (!name || name.length > 160) return [];
+    return [{ id, name }];
+  });
+  if (!students.length || students.length !== rawStudents.length || new Set(students.map(student => student.id)).size !== students.length) {
     throw new Error('Boti login response did not include a linked student');
   }
-  return { userId: body.userId, parentId: body.parentId, studentId: requestedStudent, keyToken: body.keyToken };
+  return { userId: body.userId, parentId: body.parentId, keyToken: body.keyToken, students };
 }
 
 export async function get(account: BotiAccount, route: string, params: Record<string, string> = {}) {
   const url = endpoint(route);
+  for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value);
+  // Account identity and selected child are grant-bound; route arguments cannot override them.
   url.searchParams.set('key', account.keyToken);
   url.searchParams.set('user_id', account.userId);
   url.searchParams.set('eleveId', account.studentId);
@@ -43,7 +61,71 @@ export async function get(account: BotiAccount, route: string, params: Record<st
   url.searchParams.set('versionCode', process.env.BOTI_APP_VERSION_CODE ?? '85');
   url.searchParams.set('versionNumber', process.env.BOTI_APP_VERSION ?? '0.8.5');
   url.searchParams.set('paltform', process.env.BOTI_PLATFORM ?? 'android');
-  for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value);
-  const response = await fetch(url, { headers: { accept: 'application/json' }, signal: AbortSignal.timeout(20_000) });
+  const response = await fetch(url, { headers: botiHeaders, signal: AbortSignal.timeout(20_000) });
+  return parseResponse(response);
+}
+
+/** Send one verified plain-text message; all account identity comes from the OAuth grant. */
+export async function sendPlainTextMessage(account: BotiAccount, fields: Record<string, string>) {
+  const reply = typeof fields.ref === 'string';
+  const allowed = reply
+    ? new Set(['ref', 'sujet', 'message', 'theme', 'index'])
+    : new Set(['sujet', 'message', 'theme']);
+  if (Object.keys(fields).some(key => !allowed.has(key))) throw new Error('Unsupported message fields');
+  for (const required of ['sujet', 'message', 'theme']) {
+    if (typeof fields[required] !== 'string' || !fields[required].trim()) throw new Error(`Missing ${required}`);
+  }
+  if (reply && (!fields.ref || !/^\d+$/.test(fields.index ?? ''))) throw new Error('Reply thread metadata is invalid');
+  if (!reply && fields.index !== undefined) throw new Error('New thread must not include a reply index');
+
+  const form = new FormData();
+  for (const [key, value] of Object.entries(fields)) form.set(key, value);
+  form.set('eleve_id', account.studentId);
+  form.set('parent_id', account.parentId);
+  form.set('key', account.keyToken);
+  if (!reply) form.set('user_id', account.userId);
+  form.set('versionCode', process.env.BOTI_APP_VERSION_CODE ?? '24140');
+  form.set('versionNumber', process.env.BOTI_APP_VERSION ?? '2.4.14');
+  form.set('paltform', process.env.BOTI_PLATFORM ?? 'android');
+  form.set('lang', 'fr');
+  const response = await fetch(endpoint('nouveau-message'), {
+    method: 'POST', body: form, headers: botiHeaders, signal: AbortSignal.timeout(60_000),
+  });
+  return parseResponse(response);
+}
+
+/** Submit only the verified quiz and shop multipart contracts. */
+export async function postVerifiedForm(account: BotiAccount, route: 'quiz' | 'shop', fields: Record<string, string>) {
+  const allowed = route === 'quiz'
+    ? new Set(['quiz_id', 'questions'])
+    : fields.delete_history === 'true'
+      ? new Set(['commande', 'detailsId', 'delete_history'])
+      : new Set(['product', 'commande', 'variants', 'size', 'quantity', 'comment', 'price']);
+  if (Object.keys(fields).some(key => !allowed.has(key))) throw new Error('Unsupported school action fields');
+  if (route === 'quiz') {
+    if (!fields.quiz_id || !fields.questions) throw new Error('Missing quiz submission fields');
+    const questions = JSON.parse(fields.questions);
+    if (!Array.isArray(questions)) throw new Error('Quiz questions must be a JSON array');
+  } else if (fields.delete_history === 'true') {
+    if (!fields.commande || (fields.detailsId !== undefined && !fields.detailsId)) {
+      throw new Error('Order deletion fields are invalid');
+    }
+  } else if (!fields.product || !/^\d+$/.test(fields.quantity ?? '') || fields.comment === undefined || fields.price === undefined) {
+    throw new Error('Order fields are invalid');
+  }
+
+  const form = new FormData();
+  for (const [key, value] of Object.entries(fields)) form.set(key, value);
+  form.set('eleve_id', account.studentId);
+  form.set('user_id', account.userId);
+  form.set('parent_id', account.parentId);
+  form.set('key', account.keyToken);
+  form.set('versionCode', process.env.BOTI_APP_VERSION_CODE ?? '24140');
+  form.set('versionNumber', process.env.BOTI_APP_VERSION ?? '2.4.14');
+  form.set('paltform', process.env.BOTI_PLATFORM ?? 'android');
+  form.set('lang', 'fr');
+  const response = await fetch(endpoint(route), {
+    method: 'POST', body: form, headers: botiHeaders, signal: AbortSignal.timeout(60_000),
+  });
   return parseResponse(response);
 }
