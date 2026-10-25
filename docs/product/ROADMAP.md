@@ -23,6 +23,11 @@ raw probe responses stay out of the repository (personal data).
       Linux container deployment.
 - [x] Bind each authorization to a parent-confirmed student; encrypt account
       identifiers, roster, selected student, and Boti key at rest.
+- [x] Include agent instructions in MCP initialization and the
+      `greenwood_agent_guide` prompt; treat school content as untrusted and
+      require explicit human confirmation for every supported write.
+- [x] Warn that the OAuth client name is unverified, show its client ID and
+      redirect origin, and refresh an expired Boti session once for reads.
 - [x] Provide `/account` sign-in, parent-account-wide connection review and
       revocation, hourly expired-row cleanup, and an Android Settings link when
       a public HTTPS origin is configured at build time.

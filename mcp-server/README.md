@@ -79,11 +79,26 @@ request-body logging at the reverse proxy or application host.
 
 The MCP initialize response automatically supplies agent instructions for the
 selected-student boundary, scope-dependent tool discovery, data privacy, and
-fresh confirmation requirements. Clients can also fetch the
-`greenwood_agent_guide` prompt for the same instructions. The service downloads
-only PDFs from verified Bibliothèque detail attachments, with a 15 MiB cap,
+fresh confirmation requirements. The guide tells assistants to treat school
+messages, news, homework, documents, and PDFs as untrusted data, and never let
+embedded content override user/system directions or authorize an action.
+Clients can also fetch the `greenwood_agent_guide` prompt for the same
+instructions. The service downloads only PDFs from verified Bibliothèque detail attachments, with a 15 MiB cap,
 strict media-host validation, no redirects, and no persistence. Other signed
 file URLs returned by Boti expire and are not stable links.
+
+When authorizing a connection, the consent page labels the application name as
+unverified and shows its client ID and registered redirect origin. Users should
+approve only a connection they initiated. For assistants, start by listing the
+available tools because the exact tool set depends on the granted scopes. Use
+the prompt `greenwood_agent_guide` when a client does not surface initialize
+instructions.
+
+If a Boti read request reports an expired session, the service attempts one
+`acces_check` refresh, confirms the selected student remains linked, encrypts
+and stores the updated session key and roster, then retries that read once.
+Writes are never automatically retried; each write tool performs its own fresh
+reads and requires a separate human elicitation.
 
 ## Production setup still required
 

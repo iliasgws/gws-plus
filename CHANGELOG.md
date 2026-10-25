@@ -15,7 +15,10 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
   parent, chiffre les secrets de session et permet de consulter ou révoquer les
   accès depuis `/account`. Un lien peut apparaître dans Paramètres
   lorsque `GWS_MCP_PUBLIC_URL` est configuré. Le service reste à valider et
-  nécessite une revue sécurité/confidentialité avant déploiement.
+  nécessite une revue sécurité/confidentialité avant déploiement. Il transmet
+  aussi des instructions de sécurité aux agents connectés, signale les données
+  scolaires comme non fiables, clarifie l’identité OAuth affichée et renouvelle
+  une session expirée lors d’une lecture.
 
 ## [0.10.0] — 2026-10-10
 

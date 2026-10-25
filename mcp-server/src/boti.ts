@@ -8,6 +8,9 @@ const botiHeaders = {
 export type BotiStudent = { id: string; name: string };
 export type BotiLogin = { userId: string; parentId: string; keyToken: string; students: BotiStudent[] };
 export type BotiAccount = { userId: string; parentId: string; studentId: string; keyToken: string };
+export type BotiSessionUpdate = { keyToken: string; students: BotiStudent[] };
+
+class BotiSessionExpiredError extends Error {}
 
 function endpoint(name: string): URL {
   return new URL(name, baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`);
@@ -16,7 +19,7 @@ function endpoint(name: string): URL {
 async function parseResponse(response: Response): Promise<Record<string, any>> {
   if (!response.ok) throw new Error(`Boti returned HTTP ${response.status}`);
   const body = await response.json() as Record<string, any>;
-  if (body.disconnect === true) throw new Error('The school session has expired. Sign in again.');
+  if (body.disconnect === true) throw new BotiSessionExpiredError('The school session has expired. Sign in again.');
   if (body.error) throw new Error(String(body.msg ?? 'Boti rejected the request'));
   return body;
 }
@@ -50,19 +53,66 @@ export async function login(login: string, password: string): Promise<BotiLogin>
   return { userId: body.userId, parentId: body.parentId, keyToken: body.keyToken, students };
 }
 
-export async function get(account: BotiAccount, route: string, params: Record<string, string> = {}) {
-  const url = endpoint(route);
-  for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value);
-  // Account identity and selected child are grant-bound; route arguments cannot override them.
+export async function getWithRefresh(
+  account: BotiAccount,
+  route: string,
+  params: Record<string, string> = {},
+  persistRefresh?: (update: BotiSessionUpdate) => Promise<BotiSessionUpdate>,
+) {
+  const request = async () => {
+    const url = endpoint(route);
+    for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value);
+    // Account identity and selected child are grant-bound; route arguments cannot override them.
+    url.searchParams.set('key', account.keyToken);
+    url.searchParams.set('user_id', account.userId);
+    url.searchParams.set('eleveId', account.studentId);
+    url.searchParams.set('lang', 'fr');
+    url.searchParams.set('versionCode', process.env.BOTI_APP_VERSION_CODE ?? '24140');
+    url.searchParams.set('versionNumber', process.env.BOTI_APP_VERSION ?? '2.4.14');
+    url.searchParams.set('paltform', process.env.BOTI_PLATFORM ?? 'android');
+    const response = await fetch(url, { headers: botiHeaders, signal: AbortSignal.timeout(20_000) });
+    return parseResponse(response);
+  };
+  try {
+    return await request();
+  } catch (error) {
+    if (!(error instanceof BotiSessionExpiredError) || !persistRefresh) throw error;
+    const update = await refreshSession(account);
+    if (!update.students.some(student => student.id === account.studentId)) {
+      throw new Error('The selected student is no longer linked to this school account. Reauthorize the MCP connection.');
+    }
+    const persisted = await persistRefresh(update);
+    account.keyToken = persisted.keyToken;
+    return request();
+  }
+}
+
+async function refreshSession(account: BotiAccount): Promise<BotiSessionUpdate> {
+  const url = endpoint('acces_check');
   url.searchParams.set('key', account.keyToken);
   url.searchParams.set('user_id', account.userId);
+  url.searchParams.set('parent_id', account.parentId);
   url.searchParams.set('eleveId', account.studentId);
   url.searchParams.set('lang', 'fr');
-  url.searchParams.set('versionCode', process.env.BOTI_APP_VERSION_CODE ?? '85');
-  url.searchParams.set('versionNumber', process.env.BOTI_APP_VERSION ?? '0.8.5');
+  url.searchParams.set('versionCode', process.env.BOTI_APP_VERSION_CODE ?? '24140');
+  url.searchParams.set('versionNumber', process.env.BOTI_APP_VERSION ?? '2.4.14');
   url.searchParams.set('paltform', process.env.BOTI_PLATFORM ?? 'android');
   const response = await fetch(url, { headers: botiHeaders, signal: AbortSignal.timeout(20_000) });
-  return parseResponse(response);
+  const body = await parseResponse(response);
+  if (typeof body.keyToken !== 'string' || body.userId !== account.userId || body.parentId !== account.parentId || !Array.isArray(body.eleves)) {
+    throw new Error('The school could not refresh this session. Sign in again.');
+  }
+  const students: BotiStudent[] = body.eleves.flatMap((student: any) => {
+    if (!student || (typeof student.id !== 'string' && typeof student.id !== 'number')) return [];
+    const id = String(student.id);
+    const name = [student.prenom, student.nom].filter((part: unknown) => typeof part === 'string' && part.trim()).join(' ').trim()
+      || (typeof student.nomcomplet === 'string' ? student.nomcomplet.trim() : '');
+    return id && id.length <= 128 && name && name.length <= 160 ? [{ id, name }] : [];
+  });
+  if (!students.length || students.length !== body.eleves.length || new Set(students.map(student => student.id)).size !== students.length) {
+    throw new Error('The school returned an invalid student roster during session refresh');
+  }
+  return { keyToken: body.keyToken, students };
 }
 
 /** Send one verified plain-text message; all account identity comes from the OAuth grant. */
