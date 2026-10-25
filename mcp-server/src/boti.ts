@@ -63,9 +63,13 @@ export async function getWithRefresh(
     const url = endpoint(route);
     for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value);
     // Account identity and selected child are grant-bound; route arguments cannot override them.
+    // The school reads expect the app's snake_case envelope: `parent_id` and `eleve_id`
+    // together. Sending `eleveId` alone makes Boti answer a PHP notice or `print_r`
+    // dump instead of JSON (verified live on `devoirs` and `cours_v2`, 2026-10-25).
     url.searchParams.set('key', account.keyToken);
     url.searchParams.set('user_id', account.userId);
-    url.searchParams.set('eleveId', account.studentId);
+    url.searchParams.set('parent_id', account.parentId);
+    url.searchParams.set('eleve_id', account.studentId);
     url.searchParams.set('lang', 'fr');
     url.searchParams.set('versionCode', process.env.BOTI_APP_VERSION_CODE ?? '24140');
     url.searchParams.set('versionNumber', process.env.BOTI_APP_VERSION ?? '2.4.14');
@@ -92,7 +96,7 @@ async function refreshSession(account: BotiAccount): Promise<BotiSessionUpdate> 
   url.searchParams.set('key', account.keyToken);
   url.searchParams.set('user_id', account.userId);
   url.searchParams.set('parent_id', account.parentId);
-  url.searchParams.set('eleveId', account.studentId);
+  url.searchParams.set('eleve_id', account.studentId);
   url.searchParams.set('lang', 'fr');
   url.searchParams.set('versionCode', process.env.BOTI_APP_VERSION_CODE ?? '24140');
   url.searchParams.set('versionNumber', process.env.BOTI_APP_VERSION ?? '2.4.14');
