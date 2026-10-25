@@ -142,9 +142,10 @@ Every tool also carries a French display title, MCP annotations
 (`readOnlyHint`, `destructiveHint`, `idempotentHint`, `openWorldHint`) and its
 OAuth policy: a call that lacks a scope gets a proper challenge, and the tool
 descriptor publishes the back-compat `_meta.securitySchemes` mirror that ChatGPT
-reads. `offline_access` is advertised in the authorization-server and
-protected-resource metadata, so clients such as ChatGPT can keep a refresh token
-instead of losing access when the access token expires. The service downloads only PDFs from verified Bibliothèque detail attachments, with a 15 MiB cap,
+reads. `offline_access` is advertised in the authorization-server metadata and
+accepted by `/authorize`; the protected-resource metadata lists only Greenwood
+API scopes. This lets clients such as ChatGPT request a refresh token without
+advertising `offline_access` as a resource permission. The service downloads only PDFs from verified Bibliothèque detail attachments, with a 15 MiB cap,
 strict media-host validation, no redirects, and no persistence. Other signed
 file URLs returned by Boti expire and are not stable links.
 

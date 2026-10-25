@@ -31,7 +31,10 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
   d’action est signée, limitée dans le temps et utilisable une seule fois.
   Les outils exposent un titre, des annotations (lecture seule, destructif,
   idempotent) et leur politique OAuth ; le serveur annonce `offline_access`
-  pour que les clients comme ChatGPT conservent un jeton de rafraîchissement.
+  dans les métadonnées du serveur d’autorisation et l’accepte à `/authorize`,
+  tout en le retirant des métadonnées de ressource qui ne listent que les
+  scopes de l’API scolaire, afin que les clients comme ChatGPT conservent un
+  jeton de rafraîchissement sans le traiter comme une permission de ressource.
   Les absences et retards sont accessibles avec un scope dédié, en conservant
   la réponse source sans supposer la forme des éléments non vérifiés.
   Le marquage officiel d’un devoir comme fait est proposé sous le scope
