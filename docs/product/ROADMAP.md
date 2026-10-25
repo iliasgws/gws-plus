@@ -4,6 +4,17 @@ Living checklist for the first application milestone. Agent-facing doc (English)
 Probe findings are distilled into `docs/api/BOTI-API.md` and `docs/api/ENDPOINT-MAP.md`;
 raw probe responses stay out of the repository (personal data).
 
+## Hosted MCP entry in settings (issue #161)
+
+- [x] Replace the generic MCP link with a dedicated Liquid Glass settings
+  section, shown only when `GWS_MCP_PUBLIC_URL` is configured. It explains
+  free encrypted access, parent-controlled revocation, MCP compatibility,
+  and the non-official status of the service; the primary action opens
+  `/account` and the secondary action copies `/mcp`.
+- [ ] Add the French promotional banner supplied by the project owner. The
+  issue currently has no attached image available to this checkout, and its
+  instructions say not to recreate or replace that artwork.
+
 ## Legend
 
 `[x]` done · `[~]` in progress · `[ ]` todo · `(!)` needs a decision or a real-device check

@@ -1,5 +1,7 @@
 package school.greenwood.plus.ui.screens.parametres
 
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -14,6 +16,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -24,12 +27,13 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.ErrorOutline
 import androidx.compose.material.icons.rounded.Logout
+import androidx.compose.material3.Button
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -40,9 +44,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import school.greenwood.plus.AppContainer
@@ -62,6 +67,7 @@ import school.greenwood.plus.ui.components.GwsLoadingIndicator
 import school.greenwood.plus.ui.components.SectionLabel
 import school.greenwood.plus.ui.theme.AnnotationShape
 import school.greenwood.plus.ui.theme.ControlShape
+import school.greenwood.plus.ui.theme.PageShape
 import school.greenwood.plus.ui.theme.RegistreTheme
 
 /*
@@ -81,6 +87,103 @@ private val OptionsActualisation = listOf(
     OptionActualisation(5, "5 minutes"),
     OptionActualisation(10, "10 minutes"),
 )
+
+/** Carte MCP distincte, teintée et légère, avec une bordure spéculaire. */
+@Composable
+private fun SectionMcp(urlPublique: String) {
+    val contexte = LocalContext.current
+    val pressePapiers = contexte.getSystemService(ClipboardManager::class.java)
+    var adresseCopiée by remember { mutableStateOf(false) }
+    val url = urlPublique.trimEnd('/')
+    val accent = RegistreTheme.colors.accents["plus"] ?: RegistreTheme.accent
+    val bordure = Brush.linearGradient(
+        listOf(
+            Color.White.copy(alpha = 0.78f),
+            accent.teinte.copy(alpha = 0.44f),
+            RegistreTheme.colors.sage.copy(alpha = 0.68f),
+        ),
+    )
+
+    SectionLabel("Assistants IA et MCP")
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(bordure, PageShape)
+            .padding(1.dp)
+            .clip(PageShape)
+            .background(RegistreTheme.colors.page.copy(alpha = 0.88f), PageShape),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .background(
+                        Brush.horizontalGradient(
+                            listOf(Color.Transparent, Color.White.copy(alpha = 0.72f), Color.Transparent),
+                        ),
+                    ),
+            )
+            Text(
+                text = "Connecter un assistant IA",
+                style = MaterialTheme.typography.titleLarge,
+                color = RegistreTheme.colors.ink,
+            )
+            Text(
+                text = "Connecte ChatGPT ou Claude au serveur MCP de Greenwood School +. " +
+                    "Le service est gratuit et chiffre les accès ; tu gardes le contrôle " +
+                    "et peux révoquer les autorisations à tout moment.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = RegistreTheme.colors.ink,
+            )
+            Text(
+                text = "MCP est un protocole ouvert. La compatibilité dépend des capacités " +
+                    "OAuth et MCP de chaque assistant.",
+                style = MaterialTheme.typography.bodySmall,
+                color = RegistreTheme.colors.chalk,
+            )
+            Button(
+                onClick = {
+                    contexte.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("$url/account")))
+                },
+                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                shape = ControlShape,
+            ) {
+                Text("Gérer les accès MCP")
+            }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 48.dp)
+                    .clip(ControlShape)
+                    .clickable(role = Role.Button) {
+                        pressePapiers?.setPrimaryClip(ClipData.newPlainText("Adresse MCP", "$url/mcp"))
+                        adresseCopiée = true
+                    }
+                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = if (adresseCopiée) "Adresse MCP copiée" else "Copier l'adresse MCP",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = accent.teinte,
+                )
+            }
+            Text(
+                text = "Greenwood School + est une application non officielle. " +
+                    "ChatGPT, Claude et MCP appartiennent à leurs propriétaires respectifs " +
+                    "et ne sont pas affiliés à Greenwood School +.",
+                style = MaterialTheme.typography.bodySmall,
+                color = RegistreTheme.colors.chalk,
+            )
+        }
+    }
+}
 
 @Composable
 private fun RéglageBannière(titre: String, actif: Boolean, surChangement: (Boolean) -> Unit) {
@@ -286,33 +389,7 @@ fun ParametresScreen(
             )
 
             if (BuildConfig.GWS_MCP_PUBLIC_URL.isNotBlank()) {
-                SectionLabel("Accès à un assistant IA")
-                GwsCard(modifier = Modifier.fillMaxWidth()) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                val url = "${BuildConfig.GWS_MCP_PUBLIC_URL}/account"
-                                ContextCompat.startActivity(
-                                    contexte,
-                                    Intent(Intent.ACTION_VIEW, Uri.parse(url)),
-                                    null,
-                                )
-                            }
-                            .padding(horizontal = 14.dp, vertical = 12.dp),
-                    ) {
-                        Text(
-                            text = "Gérer les accès MCP",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = RegistreTheme.colors.ink,
-                        )
-                        Text(
-                            text = "Consulter ou révoquer les autorisations données à tes assistants IA.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = RegistreTheme.colors.chalk,
-                        )
-                    }
-                }
+                SectionMcp(urlPublique = BuildConfig.GWS_MCP_PUBLIC_URL)
             }
 
             SectionLabel("Assistant IA")

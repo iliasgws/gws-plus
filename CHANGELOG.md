@@ -46,6 +46,11 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
   de verre dépoli avec reflet et liseré, polices Bricolage Grotesque et Public
   Sans, apparence claire ou sombre selon le système. Aucun script n’y est
   chargé et la politique de sécurité de contenu reste fermée par défaut.
+- Paramètres présente le serveur MCP hébergé dans une carte Liquid Glass
+  lorsque son URL publique est configurée : gestion des accès, copie de
+  l'adresse MCP, compatibilité expliquée et transparence sur le caractère
+  non officiel du service (#161). La bannière promotionnelle dédiée reste à
+  intégrer dès que son fichier sera disponible.
 
 ## [0.10.0] — 2026-10-10
 
