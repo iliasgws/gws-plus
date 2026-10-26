@@ -40,6 +40,8 @@ Current contents (update this section whenever files are added or removed):
 | `docs/security/` | `SECURITY-NOTES.md` |
 | `settings.gradle.kts`, `build.gradle.kts`, `gradle.properties`, `gradlew`, `gradle/wrapper/` | Gradle 9.6 build (AGP 9.4.1, Kotlin 2.4.20, built-in Kotlin — no `kotlin.android` plugin) |
 | `app/` | The Android application (`:app` module), namespace `school.greenwood.plus` |
+| `…/documents/Wordcraft{Activity,Intents,Policy,Sandbox,Settings}.kt`, `app/src/main/assets/wordcraft/`, `third_party/wordcraft/` | Default-off WordCraft beta attachment preview; bounded local document, bundled pinned WASM engine, strict offline WebView allowlist and external fallback; upstream licenses/attribution and Android adaptation retained |
+| `docs/development/WORDCRAFT.md`, `app/src/test/java/school/greenwood/plus/WordcraftPolicyTest.kt`, `app/src/androidTest/java/school/greenwood/plus/WordcraftViewerTest.kt` | WordCraft scope/privacy/build contract, routing/allowlist tests and synthetic DOCX Android smoke check |
 | `app/src/main/res/drawable/ic_launcher_monochrome.xml`, `app/src/main/res/mipmap-anydpi-v26/` | Adaptive launcher icons; alpha-only tree, shield and plus for Android 13+ Monet themed icons |
 | `app/src/main/java/school/greenwood/plus/` | Sources — key entries below |
 | `…/GwsApplication.kt` | Manual DI container (`AppContainer`), including homework refresh signals |
@@ -53,6 +55,12 @@ Current contents (update this section whenever files are added or removed):
 | `…/ui/components/BanniereOnglet.kt` | Shared banner artwork, 140/40 dp dimensions and 64 dp fade for Registre, Cours, Devoirs, Documents, and Actualités |
 | `…/ui/components/EcranBanniere.kt` | Shared collapsing-banner list viewport for Devoirs, Documents, and Actualités; optional pull-to-refresh and status-bar appearance lifecycle |
 | `…/ui/components/GwsLoadingIndicator.kt` | Shared official AndroidX Material 3 Expressive morphing loader for circular loading states; `GwsPullToRefreshBox` uses the native expressive refresh indicator, including drag-driven morphing, offset below enabled banners; Apache-2.0 dependency, no Metrolist source copied |
+| `…/ui/components/GlassScene.kt`, `GlassControls.kt`, `GlassPolicy.kt` | Liquid Glass (issue #155): owner-local sibling-gradient sampling, shared surfaces/actions/dialogs/menus/picker and API fallback; shell screen capture is sampled only by the external bottom tabs |
+| `…/ui/components/GlassFloatingScaffold.kt` | Fixed transparent chrome above a separately recorded scrolling sibling; measured header insets belong inside scroll content, preserving live refraction and reachable final actions in Boutique and post/homework/product details |
+| `…/ui/components/GlassScene.kt` (`MessagingGlass`), `GlassFloatingScaffold.kt` footer | Scoped 32 dp frosting for Messages/composers/account; measured floating composer footer reserves scroll padding without shortening the viewport; account sheet uses a window-local glass scene and spring corner/scale morph |
+| `…/ui/components/GlassMotion.kt`, `app/src/test/java/school/greenwood/plus/GlassMotionTest.kt` | Shared original Kyant-template deformation applied to whole buttons, icon actions and clickable surfaces; bottom tabs retain stable theme tints (adaptive bitmap probing removed) |
+| `app/src/main/java/com/kyant/backdrop/catalog/`, `third_party/kyant-backdrop/` | Adapted Kyant liquid buttons/tabs/toggles and interaction utilities; upstream revision, Apache-2.0 license and modifications recorded alongside the vendored sources |
+| `docs/development/LIQUID-GLASS.md`, `app/src/test/java/school/greenwood/plus/GlassPolicyTest.kt`, `app/src/androidTest/java/school/greenwood/plus/GlassControlsTest.kt` | Rendering/interaction contract, API policy tests and Compose component checks; real-handset authenticated smoke review remains required |
 | `…/ui/screens/devoirs/CalendrierDevoirs.kt` | Monday-first monthly homework calendar, due-date status dots, month navigation and today shortcut; grid edge cases covered by `CalendrierDevoirsTest.kt` |
 | `…/ui/screens/registre/BanniereRegistre.kt` | Full school banner that scrolls up, then pins at its reduced lower strip; 64 dp bottom paper fade and content scrolling behind it, no fullscreen viewer action; persisted on/off switch under Settings → Appearance |
 | `…/ui/AppViewModels.kt` | One ViewModel per screen; Registre loads refresh signed profile-photo URLs through `acces_check` |
@@ -125,6 +133,14 @@ included in a published beta of that version. If new changes land after the
 latest beta, publish another beta before preparing the stable. A hotfix
 request starts with `X.Y.Z-beta.1`; publishing the beta does not authorize
 publishing the stable or merging its PR.
+
+**Scoped exception (2026-10-19):** the user explicitly authorized a different
+signature for `0.10.2-beta.1` in PR #156 after the historical-key mismatch was
+reported. This beta may use the local `4ff056a3…` certificate, with a prominent
+uninstall/local-session-and-cache-loss warning. This is not blanket permission
+to change future signing keys, merge the PR, or publish a stable release.
+Follow-up `0.10.2` betas retain this same local identity so they update beta.1
+without another uninstall; this does not authorize any additional key change.
 
 ```bash
 # 1. Version bump on a feature branch + PR titled « Préparer la version X.Y.Z »

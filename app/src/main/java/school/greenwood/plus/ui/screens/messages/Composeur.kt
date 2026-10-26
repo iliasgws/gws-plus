@@ -24,9 +24,9 @@ import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.OpenInFull
 import androidx.compose.material.icons.rounded.Stop
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import school.greenwood.plus.ui.components.GlassIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
+import school.greenwood.plus.ui.components.GlassSurface as Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -80,7 +80,7 @@ fun Composeur(
     enCours: Boolean = false,
     limitePièces: Boolean = false,
     ia: RéglagesIA? = null,
-) {
+) = school.greenwood.plus.ui.components.MessagingGlass {
     val context = LocalContext.current
     val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
 
@@ -137,6 +137,7 @@ fun Composeur(
         }
 
         Surface(
+            floating = true,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 8.dp),

@@ -54,6 +54,10 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import school.greenwood.plus.AppContainer
 import school.greenwood.plus.ui.components.BarreOnglets
+import school.greenwood.plus.ui.components.GlassScene
+import school.greenwood.plus.ui.components.LocalScreenBackdrop
+import com.kyant.backdrop.backdrops.layerBackdrop
+import com.kyant.backdrop.backdrops.rememberLayerBackdrop
 import school.greenwood.plus.ui.screens.LoginScreen
 import school.greenwood.plus.ui.screens.OnboardingScreen
 import school.greenwood.plus.ui.screens.boutique.BoutiqueHistoriqueScreen
@@ -133,13 +137,17 @@ fun AppNav(container: AppContainer) {
     Crossfade(targetState = écran, animationSpec = tween(250), label = "racine") { é ->
         when (é) {
             ÉcranRacine.Chargement -> Box(Modifier.fillMaxSize().background(RegistreTheme.colors.paper))
-            ÉcranRacine.Onboarding -> OnboardingScreen(
-                onFini = { portée.launch { container.session.marquerOnboardingVu() } },
-            )
-            ÉcranRacine.Connexion -> LoginScreen(
-                onConnecté = { /* l'état de session bascule vers le registre */ },
-                container = container,
-            )
+            ÉcranRacine.Onboarding -> GlassScene {
+                OnboardingScreen(
+                    onFini = { portée.launch { container.session.marquerOnboardingVu() } },
+                )
+            }
+            ÉcranRacine.Connexion -> GlassScene {
+                LoginScreen(
+                    onConnecté = { /* l'état de session bascule vers le registre */ },
+                    container = container,
+                )
+            }
             ÉcranRacine.Registre -> Shell(container = container)
         }
     }
@@ -226,9 +234,11 @@ fun Shell(container: AppContainer) {
         }
     }
 
-    CompositionLocalProvider(LocalGwsAccent provides accentAnimé) {
+    val screenBackdrop = rememberLayerBackdrop()
+    CompositionLocalProvider(LocalGwsAccent provides accentAnimé, LocalScreenBackdrop provides screenBackdrop) {
+        GlassScene(Modifier.fillMaxSize()) {
         Scaffold(
-            containerColor = RegistreTheme.colors.paper,
+            containerColor = androidx.compose.ui.graphics.Color.Transparent,
             bottomBar = {
                 BarreOnglets(
                     onglets = Onglets,
@@ -246,6 +256,7 @@ fun Shell(container: AppContainer) {
             startDestination = RouteDépart,
             modifier = Modifier
                 .fillMaxSize()
+                .layerBackdrop(screenBackdrop)
                 .background(RegistreTheme.colors.paper),
             enterTransition = { fadeIn(tween(180)) + slideInVertically(tween(220)) { it / 24 } },
             exitTransition = { fadeOut(tween(140)) },
@@ -432,6 +443,7 @@ fun Shell(container: AppContainer) {
             }
         }
         }
+        }
 
         // Sortie d'un quiz en jeu confirmée : on dépille le quiz sans
         // sauvegarde puis l'onglet demandé est suivi (le modèle de piles
@@ -465,7 +477,7 @@ private fun NavGraphBuilder.écran(
         CompositionLocalProvider(
             LocalGwsAccent provides accentDe(entrée.destination.route, RegistreTheme.colors),
         ) {
-            Box(
+            GlassScene(
                 Modifier.fillMaxSize()
                     .graphicsLayer {
                         shape = RoundedCornerShape(arrondi.dp)

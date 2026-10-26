@@ -14,13 +14,18 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
@@ -28,12 +33,12 @@ import androidx.compose.material.icons.automirrored.rounded.ReceiptLong
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.SearchOff
 import androidx.compose.material.icons.rounded.ShoppingBag
-import androidx.compose.material3.Button
+import school.greenwood.plus.ui.components.GlassButton as Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import school.greenwood.plus.ui.components.GlassIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
+import school.greenwood.plus.ui.components.GlassSurface as Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -45,7 +50,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -61,6 +68,7 @@ import school.greenwood.plus.ui.components.BlocSquelette
 import school.greenwood.plus.ui.components.EmptyState
 import school.greenwood.plus.ui.components.ErrorInline
 import school.greenwood.plus.ui.components.GwsCard
+import school.greenwood.plus.ui.components.GlassFloatingScaffold
 import school.greenwood.plus.ui.theme.AnnotationShape
 import school.greenwood.plus.ui.theme.ControlShape
 import school.greenwood.plus.ui.theme.PageShape
@@ -84,13 +92,9 @@ fun BoutiqueScreen(
     val vm: BoutiqueViewModel = viewModel { BoutiqueViewModel(container) }
     val état by vm.état.collectAsStateWithLifecycle()
     var jourChoisi by remember { mutableStateOf<CantineJour?>(null) }
+    val direction = LocalLayoutDirection.current
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(RegistreTheme.colors.paper)
-            .padding(padding),
-    ) {
+    GlassFloatingScaffold(padding = padding, header = {
         Column(Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
@@ -121,6 +125,7 @@ fun BoutiqueScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .selectableGroup()
                         .horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
@@ -138,13 +143,20 @@ fun BoutiqueScreen(
                 valeur = état.recherche,
                 onChange = vm::modifierRecherche,
             )
+            if (état.produits.isNotEmpty()) {
+                état.erreur?.let { message ->
+                    BandeauErreur(message = message, réessayer = { vm.charger(force = true) })
+                }
+            }
         }
-
+    }) { contentInsets ->
+    Box(Modifier.fillMaxSize().background(RegistreTheme.colors.paper)) {
         when {
-            état.chargement -> SqueletteBoutique()
+            état.chargement -> Box(Modifier.fillMaxSize().padding(contentInsets)) { SqueletteBoutique() }
             état.erreur != null && état.produits.isEmpty() -> Column(
                 Modifier
                     .fillMaxWidth()
+                    .padding(contentInsets)
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
@@ -163,13 +175,6 @@ fun BoutiqueScreen(
             else -> {
                 val filtrés = filtrerProduits(état.produits, état.recherche)
                 Column(Modifier.fillMaxSize()) {
-                    état.erreur?.let { message ->
-                        BandeauErreur(
-                            message = message,
-                            réessayer = { vm.charger(force = true) },
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                        )
-                    }
                     when {
                         // La rubrique « Repas invité » ne porte pas de produits :
                         // le serveur y met le planning des menus (cantines[]).
@@ -178,12 +183,18 @@ fun BoutiqueScreen(
                                 jours = état.cantines,
                                 envoi = état.envoiRepas,
                                 surRéserver = { jour -> jourChoisi = jour },
+                                contentPadding = PaddingValues(
+                                    start = contentInsets.calculateStartPadding(direction) + 16.dp,
+                                    end = contentInsets.calculateEndPadding(direction) + 16.dp,
+                                    top = contentInsets.calculateTopPadding() + 4.dp,
+                                    bottom = contentInsets.calculateBottomPadding() + 16.dp,
+                                ),
                             )
                         filtrés.isEmpty() && état.recherche.isNotBlank() ->
                             Box(
                                 Modifier
                                     .fillMaxWidth()
-                                    .weight(1f),
+                                    .weight(1f).padding(contentInsets),
                                 contentAlignment = Alignment.Center,
                             ) {
                                 EmptyState(
@@ -194,13 +205,13 @@ fun BoutiqueScreen(
                             }
                         filtrés.isEmpty() ->
                             Box(
-                                Modifier
-                                    .fillMaxWidth()
-                                    .weight(1f),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                EmptyState(
-                                    titre = "Boutique vide",
+                                 Modifier
+                                     .fillMaxWidth()
+                                     .weight(1f).padding(contentInsets),
+                                 contentAlignment = Alignment.Center,
+                             ) {
+                                 EmptyState(
+                                     titre = "Boutique vide",
                                     message = "Aucun produit dans cette rubrique pour le moment.",
                                     icone = Icons.Rounded.ShoppingBag,
                                 )
@@ -212,10 +223,10 @@ fun BoutiqueScreen(
                                     .fillMaxWidth()
                                     .weight(1f),
                                 contentPadding = PaddingValues(
-                                    start = 16.dp,
-                                    end = 16.dp,
-                                    top = 4.dp,
-                                    bottom = 16.dp,
+                                    start = contentInsets.calculateStartPadding(direction) + 16.dp,
+                                    end = contentInsets.calculateEndPadding(direction) + 16.dp,
+                                    top = contentInsets.calculateTopPadding() + 4.dp,
+                                    bottom = contentInsets.calculateBottomPadding() + 16.dp,
                                 ),
                                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                                 verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -234,6 +245,7 @@ fun BoutiqueScreen(
         }
     }
 
+    }
     jourChoisi?.let { jour ->
         DialogueConfirmationRepas(
             jour = jour,
@@ -265,13 +277,15 @@ private fun PuceRubrique(
     val accent = RegistreTheme.accent
     Surface(
         shape = ControlShape,
+        floating = true,
         color = if (sélectionnée) accent.conteneur else RegistreTheme.colors.page,
         border = if (sélectionnée) null else BorderStroke(1.dp, RegistreTheme.colors.sage),
-        modifier = Modifier.clickable(onClick = onClick),
+        modifier = Modifier.heightIn(min = 48.dp)
+            .selectable(selected = sélectionnée, role = Role.Tab, onClick = onClick),
     ) {
         Text(
             text = rubrique.label.ifBlank { "Tout" },
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
             style = MaterialTheme.typography.labelMedium,
             color = if (sélectionnée) accent.surConteneur else RegistreTheme.colors.chalk,
         )
@@ -286,11 +300,13 @@ private fun ChampRecherche(
 ) {
     Surface(
         shape = ControlShape,
+        floating = true,
         color = RegistreTheme.colors.page,
+        modifier = Modifier.heightIn(min = 48.dp),
         border = BorderStroke(1.dp, RegistreTheme.colors.sage),
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 12.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
@@ -301,6 +317,7 @@ private fun ChampRecherche(
                 modifier = Modifier.size(18.dp),
             )
             BasicTextField(
+                modifier = Modifier.weight(1f),
                 value = valeur,
                 onValueChange = onChange,
                 singleLine = true,

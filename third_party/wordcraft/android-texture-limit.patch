@@ -1,0 +1,22 @@
+diff --git i/apps/wordcraft-web/src/web.rs w/apps/wordcraft-web/src/web.rs
+index 0e40099..5e8cde8 100644
+--- i/apps/wordcraft-web/src/web.rs
++++ w/apps/wordcraft-web/src/web.rs
+@@ -33,6 +33,17 @@ pub fn start() {
+             log::error!("no unsaved-changes guard: {e}");
+         }
+         let mut options = eframe::WebOptions::default();
++        // GWS+: Android WebView/SwiftShader may expose a 4096 texture limit.
++        // Keep egui's descriptor, but never request a texture larger than the adapter.
++        if let eframe::egui_wgpu::WgpuSetup::CreateNew(create) = &mut options.wgpu_options.wgpu_setup {
++            let descriptor = create.device_descriptor.clone();
++            create.device_descriptor = std::sync::Arc::new(move |adapter| {
++                let mut device = descriptor(adapter);
++                device.required_limits.max_texture_dimension_2d = device.required_limits.max_texture_dimension_2d
++                    .min(adapter.limits().max_texture_dimension_2d);
++                device
++            });
++        }
+         if query().contains("webgl")
+             && let eframe::egui_wgpu::WgpuSetup::CreateNew(create) = &mut options.wgpu_options.wgpu_setup
+         {

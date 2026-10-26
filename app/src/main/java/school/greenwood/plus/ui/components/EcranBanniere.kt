@@ -5,6 +5,9 @@ import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
@@ -36,6 +39,7 @@ internal fun EcranBanniere(
     liste: LazyListState,
     rafraîchissement: Boolean = false,
     surActualiser: (() -> Unit)? = null,
+    fixedHeader: (@Composable () -> Unit)? = null,
     content: LazyListScope.() -> Unit,
 ) {
     val activité = LocalContext.current as? ComponentActivity
@@ -51,20 +55,21 @@ internal fun EcranBanniere(
             if (précédente != null) contrôleur.isAppearanceLightStatusBars = précédente
         }
     }
-    val flux: @Composable () -> Unit = {
+    val flux: @Composable (androidx.compose.ui.unit.Dp) -> Unit = { headerInset ->
         LazyColumn(
             state = liste,
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
                 start = 16.dp,
                 end = 16.dp,
-                top = if (activée) HauteurBannièreComplète + 12.dp else 12.dp,
+                top = maxOf(headerInset, if (activée) HauteurBannièreComplète + 12.dp else 12.dp),
                 bottom = padding.calculateBottomPadding() + 24.dp,
             ),
             verticalArrangement = Arrangement.spacedBy(12.dp),
             content = content,
         )
     }
+    val viewport: @Composable (PaddingValues) -> Unit = { insets ->
     Box(Modifier.fillMaxSize().clipToBounds().background(RegistreTheme.colors.paper)) {
         if (activée) {
             BanniereOnglet(
@@ -85,8 +90,17 @@ internal fun EcranBanniere(
                     onRefresh = surActualiser,
                     modifier = Modifier.fillMaxSize(),
                     indicatorTopInset = if (activée) HauteurBannièreComplète else 0.dp,
-                ) { flux() }
-            } else flux()
+                ) { flux((insets.calculateTopPadding() - padding.calculateTopPadding()).coerceAtLeast(0.dp)) }
+            } else flux((insets.calculateTopPadding() - padding.calculateTopPadding()).coerceAtLeast(0.dp))
         }
+    }
+    }
+    if (fixedHeader == null) viewport(padding) else {
+        GlassFloatingScaffold(padding = padding, header = {
+            Column {
+                if (activée) Spacer(Modifier.height(HauteurBannièreRéduite))
+                fixedHeader()
+            }
+        }, content = viewport)
     }
 }

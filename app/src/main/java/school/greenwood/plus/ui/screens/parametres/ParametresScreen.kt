@@ -21,19 +21,20 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.ErrorOutline
 import androidx.compose.material.icons.rounded.Logout
-import androidx.compose.material3.Button
-import androidx.compose.material3.Surface
+import school.greenwood.plus.ui.components.GlassSurface as Surface
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import school.greenwood.plus.ui.components.GlassIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import school.greenwood.plus.ui.components.GlassSwitch as Switch
+import school.greenwood.plus.ui.components.GlassButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -41,6 +42,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
@@ -63,6 +65,8 @@ import school.greenwood.plus.ui.components.DialogueDéconnexion
 import school.greenwood.plus.ui.components.DialogueOublierCompte
 import school.greenwood.plus.ui.components.ErrorInline
 import school.greenwood.plus.ui.components.GwsCard
+import school.greenwood.plus.ui.components.GlassPicker
+import androidx.compose.foundation.selection.selectable
 import school.greenwood.plus.ui.components.GwsLoadingIndicator
 import school.greenwood.plus.ui.components.SectionLabel
 import school.greenwood.plus.ui.theme.AnnotationShape
@@ -105,13 +109,11 @@ private fun SectionMcp(urlPublique: String) {
     )
 
     SectionLabel("Assistants IA et MCP")
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(bordure, PageShape)
-            .padding(1.dp)
-            .clip(PageShape)
-            .background(RegistreTheme.colors.page.copy(alpha = 0.88f), PageShape),
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = PageShape,
+        color = RegistreTheme.colors.page.copy(alpha = 0.88f),
+        border = BorderStroke(1.dp, bordure),
     ) {
         Column(
             modifier = Modifier
@@ -147,7 +149,7 @@ private fun SectionMcp(urlPublique: String) {
                 style = MaterialTheme.typography.bodySmall,
                 color = RegistreTheme.colors.chalk,
             )
-            Button(
+            GlassButton(
                 onClick = {
                     contexte.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("$url/account")))
                 },
@@ -221,6 +223,9 @@ fun ParametresScreen(
     val majÉtat by container.misesÀJour.état.collectAsStateWithLifecycle()
     val canalBêta by majVm.canalBêta.collectAsStateWithLifecycle()
     val contexte = LocalContext.current
+    var wordcraftActif by remember {
+        mutableStateOf(school.greenwood.plus.documents.WordcraftSettings.enabled(contexte))
+    }
     var notificationsAccordées by remember { mutableStateOf(container.misesÀJour.notificationsAccordées()) }
     // Déconnexion (issue #101) : second accès, pour la découvrabilité — le
     // chemin principal reste la pilule profil.
@@ -271,6 +276,33 @@ fun ParametresScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp),
         ) {
+            SectionLabel("Fonctionnalités expérimentales")
+            GwsCard(modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    Modifier.fillMaxWidth().toggleable(
+                        value = wordcraftActif, role = Role.Switch,
+                        onValueChange = {
+                            wordcraftActif = it
+                            school.greenwood.plus.documents.WordcraftSettings.setEnabled(contexte, it)
+                        },
+                    ).padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text("Lecteur WordCraft — bêta", style = MaterialTheme.typography.titleSmall)
+                        Text(
+                            "Ouvrir Word, ODT, RTF et les textes dans l’app, hors ligne. " +
+                                "Expérimental : présentation variable, 10 Mo maximum, " +
+                                "modifications non enregistrées. PDF, Excel et PowerPoint restent externes.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = RegistreTheme.colors.chalk,
+                        )
+                    }
+                    Switch(checked = wordcraftActif, onCheckedChange = null)
+                }
+            }
+            Spacer(Modifier.height(16.dp))
             SectionLabel("Apparence")
             GwsCard(modifier = Modifier.fillMaxWidth()) {
                 Row(
@@ -332,14 +364,22 @@ fun ParametresScreen(
             RéglageBannière("Bannière des Actualités", état.bannièreActualitésActivée, vm::définirBannièreActualités)
             SectionLabel("Actualisation des données")
 
-            GwsCard(modifier = Modifier.fillMaxWidth()) {
+            GlassPicker(
+                title = "Actualiser au retour · " + (OptionsActualisation.firstOrNull { it.minutes == état.minutesRetour }?.libellé
+                    ?: "${état.minutesRetour} minutes"),
+                modifier = Modifier.fillMaxWidth(),
+            ) { fermer ->
                 Column(modifier = Modifier.padding(vertical = 4.dp)) {
                     OptionsActualisation.forEach { option ->
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(ControlShape)
-                                .clickable { vm.choisirDurée(option.minutes) }
+                                .selectable(
+                                    selected = état.minutesRetour == option.minutes,
+                                    role = Role.RadioButton,
+                                    onClick = { vm.choisirDurée(option.minutes); fermer() },
+                                )
                                 .padding(horizontal = 14.dp, vertical = 12.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(10.dp),

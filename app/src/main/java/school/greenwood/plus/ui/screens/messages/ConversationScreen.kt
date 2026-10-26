@@ -22,12 +22,12 @@ import androidx.compose.material.icons.rounded.Attachment
 import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
-import androidx.compose.material3.Button
+import school.greenwood.plus.ui.components.GlassButton as Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import school.greenwood.plus.ui.components.GlassIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
+import school.greenwood.plus.ui.components.GlassSurface as Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -89,25 +89,50 @@ fun ConversationScreen(
     padding: PaddingValues,
     conversationId: String,
     retour: () -> Unit,
-) {
+) = school.greenwood.plus.ui.components.MessagingGlass {
     val vm: ConversationViewModel = viewModel { ConversationViewModel(container, conversationId) }
     val état by vm.état.collectAsStateWithLifecycle()
     // Réglages du composeur IA (issue #56) — null tant que non configuré.
     val réglagesIA by container.session.réglagesIA.collectAsStateWithLifecycle(initialValue = null)
     val context = LocalContext.current
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(RegistreTheme.colors.paper)
-            // Le clavier repousse le contenu (composeur visible au-dessus).
-            .padding(padding)
-            // Les insets du Scaffold (barre d'onglets, barre système) sont
-            // consommés : le clavier ne s'ajoute plus par-dessus — le
-            // composeur colle au clavier, sans vide.
-            .consumeWindowInsets(padding)
-            .imePadding(),
-    ) {
+    school.greenwood.plus.ui.components.GlassFloatingScaffold(
+        padding = padding,
+        modifier = Modifier.consumeWindowInsets(padding).imePadding(),
+        footer = {
+            if (!état.chargement && état.conversation?.messages?.isNotEmpty() == true) {
+                Column {
+                    val conversation = état.conversation
+                    val refusCatégorie = refusCatégorieRéponse(
+                        choisi = état.themeChoisi, fil = conversation?.theme,
+                        themes = état.themes, themesEnÉchec = état.themesErreur,
+                        chargement = état.themesChargement,
+                    )
+                    ChoixCatégorie(
+                        themes = état.themes, choisi = état.themeChoisi ?: conversation?.theme,
+                        onChoisir = { theme -> vm.choisirTheme(theme.id) },
+                        chargement = état.themesChargement, erreur = état.themesErreur,
+                        réessayer = vm::chargerThemes, hint = refusCatégorie,
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                    )
+                    Composeur(
+                        texte = état.texte, onTexte = vm::modifierTexte,
+                        pièces = état.pièces, onAjouterPièces = vm::ajouterPièces,
+                        onRetirerPièce = vm::retirerPièce,
+                        audio = état.audio, onRetirerAudio = vm::retirerAudio,
+                        enregistre = état.enregistre,
+                        onDémarrerEnregistrement = vm::démarrerEnregistrement,
+                        onArrêterEnregistrement = vm::arrêterEnregistrement,
+                        onAnnulerEnregistrement = vm::annulerEnregistrement,
+                        envoiPossible = état.erreur == null && refusCatégorie == null,
+                        onEnvoyer = vm::envoyer,
+                        enCours = état.envois.any { it.statut == MessageEnvoi.Statut.EnCours },
+                        ia = réglagesIA,
+                    )
+                }
+            }
+        },
+        header = {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -141,11 +166,14 @@ fun ConversationScreen(
             }
         }
 
+    }) { insets ->
+        Column(Modifier.fillMaxSize().background(RegistreTheme.colors.paper)) {
         when {
-            état.chargement -> SqueletteConversation()
+            état.chargement -> Box(Modifier.padding(insets)) { SqueletteConversation() }
             état.erreur != null && état.conversation == null -> Column(
                 Modifier
                     .fillMaxWidth()
+                    .padding(insets)
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
@@ -162,7 +190,7 @@ fun ConversationScreen(
                 }
             }
             état.conversation?.messages?.isEmpty() != false ->
-                Column(Modifier.fillMaxSize()) {
+                Column(Modifier.fillMaxSize().padding(insets)) {
                     état.erreur?.let { message ->
                         // Le fil reste en place malgré l'échec (issue #21).
                         BandeauErreur(
@@ -191,7 +219,7 @@ fun ConversationScreen(
                 // Nombre d'éléments rendus (séparateurs + bulles + envois en
                 // attente), pour l'ouverture en bas de fil comme une vraie
                 // messagerie.
-                val compteÉléments = remember(conversation, état.envois) {
+                val compteÉléments = remember(conversation, état.envois, état.erreur) {
                     var n = 0
                     var précédent: java.time.LocalDate? = null
                     messages.forEach { m ->
@@ -200,20 +228,10 @@ fun ConversationScreen(
                         n++
                         précédent = m.date?.toLocalDate()
                     }
-                    n + état.envois.size
+                    n + état.envois.size + if (état.erreur != null) 1 else 0
                 }
                 LaunchedEffect(conversation?.id, compteÉléments) {
                     if (compteÉléments > 0) liste.scrollToItem(compteÉléments - 1)
-                }
-
-                // Bandeau discret au-dessus du fil quand un échec réseau laisse
-                // la conversation connue affichée (issue #21).
-                état.erreur?.let { message ->
-                    BandeauErreur(
-                        message = message,
-                        réessayer = { vm.charger(force = true) },
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                    )
                 }
 
                 LazyColumn(
@@ -222,9 +240,20 @@ fun ConversationScreen(
                         .fillMaxWidth()
                         .weight(1f)
                         .padding(horizontal = 16.dp),
-                    contentPadding = PaddingValues(vertical = 8.dp),
+                    contentPadding = PaddingValues(
+                        top = insets.calculateTopPadding() + 8.dp,
+                        bottom = insets.calculateBottomPadding() + 8.dp,
+                    ),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
+                    état.erreur?.let { message ->
+                        item(key = "erreur") {
+                            BandeauErreur(
+                                message = message,
+                                réessayer = { vm.charger(force = true) },
+                            )
+                        }
+                    }
                     messages.forEachIndexed { index, message ->
                         val jour = message.date?.toLocalDate()
                         val précédent = messages.getOrNull(index - 1)?.date?.toLocalDate()
@@ -250,47 +279,8 @@ fun ConversationScreen(
                     }
                 }
 
-                // Issue #99 : la catégorie du fil est visible et modifiable
-                // au composeur de réponse — jamais de `theme = ""` à l'aveugle.
-                val refusCatégorie = refusCatégorieRéponse(
-                    choisi = état.themeChoisi,
-                    fil = conversation?.theme,
-                    themes = état.themes,
-                    themesEnÉchec = état.themesErreur,
-                    chargement = état.themesChargement,
-                )
-                ChoixCatégorie(
-                    themes = état.themes,
-                    choisi = état.themeChoisi ?: conversation?.theme,
-                    onChoisir = { theme -> vm.choisirTheme(theme.id) },
-                    chargement = état.themesChargement,
-                    erreur = état.themesErreur,
-                    réessayer = vm::chargerThemes,
-                    hint = refusCatégorie,
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                )
-
-                Composeur(
-                    texte = état.texte,
-                    onTexte = vm::modifierTexte,
-                    pièces = état.pièces,
-                    onAjouterPièces = vm::ajouterPièces,
-                    onRetirerPièce = vm::retirerPièce,
-                    audio = état.audio,
-                    onRetirerAudio = vm::retirerAudio,
-                    enregistre = état.enregistre,
-                    onDémarrerEnregistrement = vm::démarrerEnregistrement,
-                    // Arrêter = repasser en composeur avec le vocal prêt
-                    // (puce « Message vocal prêt ») ; l'envoi reste un
-                    // geste séparé, comme pour une pièce jointe.
-                    onArrêterEnregistrement = vm::arrêterEnregistrement,
-                    onAnnulerEnregistrement = vm::annulerEnregistrement,
-                    envoiPossible = état.erreur == null && refusCatégorie == null,
-                    onEnvoyer = vm::envoyer,
-                    enCours = état.envois.any { it.statut == MessageEnvoi.Statut.EnCours },
-                    ia = réglagesIA,
-                )
             }
+        }
         }
     }
 }
@@ -385,7 +375,7 @@ private fun BulleEnvoi(
                         style = MaterialTheme.typography.labelSmall,
                         color = RegistreTheme.colors.redPen,
                     )
-                    androidx.compose.material3.TextButton(onClick = onRelancer) {
+                    school.greenwood.plus.ui.components.GlassTextButton(onClick = onRelancer) {
                         Text(
                             text = "Réessayer",
                             style = MaterialTheme.typography.labelSmall,
