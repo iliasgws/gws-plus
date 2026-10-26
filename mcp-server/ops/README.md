@@ -73,3 +73,16 @@ Only encrypted snapshots are published into the durable backup directory.
 Restore verification invalidates all saved OAuth tokens, browser sessions,
 authorization codes and action confirmations before publishing: reconnect clients
 after recovery. Old backups must never resurrect a revoked grant.
+
+For Nginx Proxy Manager, disable access logging in this host's persistent
+Advanced configuration (`access_log off;`) so OAuth transaction/query values
+are not written into a proxy request-URI log. Keep the application audit log
+limited to fixed routes/status/duration. Validate `nginx -t` and reload only
+after testing the host configuration; do not change logging for other hosts.
+
+When verifying client attribution from two LAN machines, connect to the proxy
+with HTTPS/SNI and `curl --resolve <public-host>:443:<proxy-IP>` so a shared
+public NAT address does not make the two probes look like one client. Send
+forged forwarded-IP headers and verify that the keyed client buckets use the
+actual source addresses. Direct access to the listener must fail even with a
+forged public Host header. No raw addresses or headers need to be logged.

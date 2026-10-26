@@ -19,6 +19,10 @@ raw probe responses stay out of the repository (personal data).
       (issue #164), guarded network/type limits and automated security checks.
 - [x] Add minimal route/status logs, database-aware health checks, encrypted
       SQLite backup/restore tooling and monitoring/backup systemd timers.
+- [x] Restrict the production listener to its verified reverse proxy; confirm
+      separate real-client rate buckets, ignored forged forwarded headers,
+      blocked direct access, successful health checks and encrypted restore
+      with invalidated grants. Disable this host's proxy request-URI log.
 - [x] Link technical French privacy/terms notices from consent and browser pages.
 - [ ] Verify the revised guide in a new real ChatGPT conversation, including
       contextual follow-ups and expired-session recovery.

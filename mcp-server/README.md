@@ -228,3 +228,6 @@ formats are refused. OOXML containers are checked for bounded size/expansion,
 consistent local/directory records and required XML parts; macros, embedded
 objects and executable entries are rejected. These checks are not malware
 scanning or a guarantee that opening a document is safe. No converter runs.
+
+Boti API JSON responses are capped at 5 MiB, parsed without exposing malformed
+response fragments, and fetched with deadlines and redirects disabled.
