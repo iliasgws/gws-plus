@@ -25,14 +25,17 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.BrokenImage
 import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material3.Button
+import school.greenwood.plus.ui.components.GlassButton as Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import school.greenwood.plus.ui.components.GlassIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import school.greenwood.plus.ui.components.GlassTextButton as TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import com.kyant.backdrop.backdrops.layerBackdrop
+import com.kyant.backdrop.backdrops.rememberLayerBackdrop
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
@@ -154,6 +157,7 @@ fun VisualiseurImages(
         // Vrai tant que deux doigts sont posés : le pager ne doit pas
         // s'emparer du pincement en vol.
         val gesteMultiple: MutableState<Boolean> = remember { mutableStateOf(false) }
+        val imageBackdrop = rememberLayerBackdrop()
 
         Box(
             Modifier
@@ -166,7 +170,7 @@ fun VisualiseurImages(
 
             HorizontalPager(
                 state = pagerState,
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier.fillMaxSize().layerBackdrop(imageBackdrop).background(Color.Black),
                 userScrollEnabled = !gesteMultiple.value &&
                     (zooms[pagerState.currentPage] ?: 1f) <= 1f,
             ) { page ->
@@ -294,6 +298,7 @@ fun VisualiseurImages(
             }
 
             // La barre est dessinée après le pager : elle reste au-dessus.
+            CompositionLocalProvider(LocalGlassScene provides GlassSceneOwner(vue, imageBackdrop)) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -301,12 +306,26 @@ fun VisualiseurImages(
                     .padding(horizontal = 8.dp, vertical = 6.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                IconButton(onClick = fermer) {
+                IconButton(
+                    onClick = fermer,
+                    modifier = Modifier.size(48.dp),
+                    containerColor = Color.Black.copy(alpha = 0.24f),
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                    // A thin dark outline keeps the white cross legible over bright photos too.
+                    Icon(
+                        imageVector = Icons.Rounded.Close,
+                        contentDescription = null,
+                        tint = Color.Black.copy(alpha = 0.8f),
+                        modifier = Modifier.size(27.dp),
+                    )
                     Icon(
                         imageVector = Icons.Rounded.Close,
                         contentDescription = "Fermer",
                         tint = Color.White,
+                        modifier = Modifier.size(24.dp),
                     )
+                    }
                 }
                 Spacer(Modifier.weight(1f))
                 GalerieImages.libelléPosition(
@@ -329,6 +348,7 @@ fun VisualiseurImages(
                             },
                     )
                 }
+            }
             }
         }
     }

@@ -6,6 +6,18 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
 
 ## [Non publié]
 
+## [0.10.4-beta.2] — 2026-10-26
+
+### Préversion (bêta)
+
+### Corrigé
+
+- La bêta précédente, construite depuis une branche basée sur la version stable 0.10.0, n’incluait pas les changements visuels et expérimentaux du train 0.10.3. Cette version cumulative réintègre l’interface Liquid Glass de la PR #156 et le lecteur WordCraft de la PR #158, tout en conservant l’accès MCP de la PR #160 et les réglages de la PR #162.
+
+## [0.10.4-beta.1] — 2026-10-25
+
+### Préversion (bêta)
+
 ### Ajouté
 
 - Le connecteur MCP (#159, #164) reçoit une identité officielle (titre et icône
@@ -56,6 +68,133 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
   de verre dépoli avec reflet et liseré, polices Bricolage Grotesque et Public
   Sans, apparence claire ou sombre selon le système. Aucun script n’y est
   chargé et la politique de sécurité de contenu reste fermée par défaut.
+- Paramètres présente le serveur MCP hébergé dans une carte Liquid Glass
+  lorsque son URL publique est configurée : gestion des accès, copie de
+  l'adresse MCP, compatibilité expliquée et transparence sur le caractère
+  non officiel du service (#161). La bannière promotionnelle dédiée reste à
+  intégrer dès que son fichier sera disponible.
+
+## [0.10.3-beta.1] — 2026-10-20
+
+### Préversion (bêta)
+
+### Ajouté
+
+- Paramètres → Fonctionnalités expérimentales : « Lecteur WordCraft — bêta »,
+  désactivé par défaut. Aperçu local de Word, ODT, RTF et textes dans l’app,
+  sans téléversement ; moteur embarqué, limite de 10 Mo et ouverture externe
+  toujours disponible. PDF, Excel et PowerPoint restent externes.
+- Présentation expérimentale : les modifications dans le lecteur ne sont pas
+  enregistrées ; compatibilité et mise en page variables selon l’appareil.
+
+## [0.10.2-beta.5] — 2026-10-20
+
+### Préversion (bêta)
+
+Même certificat `4ff056a3…` que les bêtas 1 à 4 : mise à jour directe,
+sans désinstallation.
+
+### Changé
+
+- Messages, conversations et nouveau message : en-têtes transparents fixes,
+  contenu défilant derrière les commandes et le composeur, sans bandes opaques.
+- Verre très givré dans la messagerie et « Mon compte » : flou de fond de
+  32 dp sur les appareils compatibles, sans flouter le texte ni les icônes.
+- Composeur fixe au-dessus du clavier, avec sa hauteur réservée dans le
+  contenu défilant ; catégories, pièces jointes, vocal et panneau IA conservés.
+- « Mon compte » : feuille en verre arrondi avec ouverture et fermeture
+  souples combinant expansion et transformation de la courbure.
+
+## [0.10.2-beta.4] — 2026-10-20
+
+### Préversion (bêta)
+
+Même certificat `4ff056a3…` que les bêtas 1 à 3 : mise à jour directe,
+sans désinstallation.
+
+### Corrigé
+
+- Registre : suppression du geste de balayage du menu latéral ; le bouton
+  Menu, le retour Android et l’actualisation par glissement restent disponibles.
+- Boutons, icônes et profil : étirement du modèle Kyant appliqué à toute la
+  commande, contenu compris, et non au seul fond de verre.
+- Onglets : suppression de la recoloration adaptative ; retour aux couleurs
+  stables du thème, sans lecture de pixels en arrière-plan.
+- Demandes : en-tête transparent fixe au-dessus de la liste, sans bande opaque.
+- Documents : recherche et filtres fixes en haut ; contenu défilant derrière
+  les commandes et les onglets, sans bande de pied de page opaque.
+
+## [0.10.2-beta.3] — 2026-10-20
+
+### Préversion (bêta)
+
+Même certificat `4ff056a3…` que les bêtas 1 et 2 : mise à jour directe,
+sans désinstallation.
+
+### Corrigé
+
+- Dialogue : le fond dégradé du verre est découpé sur la forme arrondie —
+  plus de coins blancs carrés autour de la bulle.
+- Devoirs : la bascule « fait pour moi » redevient un cercle de verre net
+  de 40 dp, ni débordant ni rogné par la carte.
+
+### Changé
+
+- Barre d’onglets : disparition de l’aberration chromatique, flou porté à
+  6 dp, et adaptation automatique des icônes/libellés au fond — ils passent
+  au clair dès qu’un contenu sombre touche leur zone, même partiellement.
+- Pilule profil : bénéficie du même étirement au glisser que les boutons
+  de verre.
+
+## [0.10.2-beta.2] — 2026-10-19
+
+### Préversion (bêta)
+
+Même certificat `4ff056a3…` que la 0.10.2-beta.1 : cette mise à jour s’installe
+au-dessus de la bêta 1 sans désinstallation. Les versions signées autrement
+nécessitent toujours une désinstallation préalable, avec perte de la session
+et des caches locaux.
+
+### Corrigé
+
+- Verre nettement moins givré : flou des commandes réduit à 0,75 dp,
+  teinte des commandes flottantes à 16 %, réfraction renforcée et légère
+  aberration chromatique sur les appareils compatibles. Les cartes de lecture
+  restent suffisamment opaques pour préserver la lisibilité.
+- Boutique : suppression des bandes opaques au-dessus et au-dessous de la
+  grille. Recherche, rubriques et historique restent visibles et échantillonnent
+  les produits qui défilent derrière eux ; la dernière ligne peut toujours
+  être dégagée au-dessus des onglets.
+- Retour des actualités, devoirs et produits : commandes fixes au-dessus du
+  contenu défilant, sans panneau d’en-tête opaque. Les piles et le retour
+  prédictif Android restent inchangés.
+- Visualiseur d’images : croix blanche lisible sur un bouton sombre transparent,
+  avec le même flou réduit, réfraction renforcée et aberration chromatique.
+  Le bouton reste fixe au-dessus des images et échantillonne le visualiseur
+  lui-même, jamais un fond clair provenant d’une autre fenêtre.
+
+## [0.10.2-beta.1] — 2026-10-19
+
+### Préversion (bêta)
+
+Exception de signature explicitement autorisée par l’utilisateur : cette bêta
+utilise le certificat local `4ff056a3…`, différent du certificat historique
+`775498f7…` et de celui de la 0.10.1-beta.5 (`5680e661…`). Elle ne s’installe
+pas au-dessus de ces versions : il faut désinstaller l’application précédente,
+ce qui supprime sa session et ses caches locaux. Cette branche part
+de la version stable 0.10.0 ; elle n’intègre pas les changements non fusionnés
+des bêtas 0.10.1 (Copier, ChatGPT et correctif des délais de téléchargement).
+
+### Modifié
+
+- Interface Liquid Glass (#155) : cartes, actions, barre à six onglets,
+  interrupteurs, dialogues et menus utilisent de vrais fonds échantillonnés
+  avec Kyant Backdrop ; les accents de chaque section sont conservés. Le choix
+  du délai d’actualisation se déploie avec un ressort et se referme par Retour.
+  Les surfaces restent plus opaques avant Android 12 ; l’effet de lentille
+  nécessite Android 13. Les actions scolaires, les piles de navigation et la
+  confirmation de sortie du quiz sont conservées. Validation sur téléphone
+  encore requise avant fusion ou publication stable.
 
 ### Corrigé
 

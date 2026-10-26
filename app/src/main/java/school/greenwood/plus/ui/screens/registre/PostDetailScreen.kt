@@ -31,15 +31,15 @@ import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.RadioButtonChecked
 import androidx.compose.material.icons.rounded.RadioButtonUnchecked
-import androidx.compose.material3.AlertDialog
+import school.greenwood.plus.ui.components.GlassAlertDialog as AlertDialog
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import school.greenwood.plus.ui.components.GlassIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Surface
+import school.greenwood.plus.ui.components.GlassSurface as Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import school.greenwood.plus.ui.components.GlassTextButton as TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
@@ -85,6 +85,7 @@ import school.greenwood.plus.util.Fichiers
 import school.greenwood.plus.util.frenchFull
 import school.greenwood.plus.util.frenchShort
 import school.greenwood.plus.util.htmlToPlainMultiline
+import school.greenwood.plus.ui.components.GlassFloatingScaffold
 
 /**
  * Détail d'une actualité (GET `post_view?post=<id>`).
@@ -112,19 +113,11 @@ fun PostDetailScreen(
         GalerieImages.liste(état.detail?.image, état.detail?.images.orEmpty())
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(RegistreTheme.colors.paper)
-            .padding(padding)
-            .padding(horizontal = 16.dp)
-            .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
+    GlassFloatingScaffold(padding = padding, header = {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 4.dp),
+                .padding(horizontal = 16.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             IconButton(onClick = retour) {
@@ -135,7 +128,16 @@ fun PostDetailScreen(
                 )
             }
         }
-
+    }) { contentInsets ->
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(RegistreTheme.colors.paper)
+            .verticalScroll(rememberScrollState())
+            .padding(contentInsets)
+            .padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
         état.erreur?.let { err ->
             BandeauErreur(
                 message = err,
@@ -443,6 +445,7 @@ fun PostDetailScreen(
         }
 
         Spacer(Modifier.height(16.dp))
+    }
     }
 
     if (état.alertMerci) {

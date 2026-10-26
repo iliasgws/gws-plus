@@ -1,8 +1,8 @@
 package school.greenwood.plus.ui.components
 
-import androidx.compose.material3.AlertDialog
+import school.greenwood.plus.ui.components.GlassAlertDialog as AlertDialog
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import school.greenwood.plus.ui.components.GlassTextButton as TextButton
 import androidx.compose.runtime.Composable
 import school.greenwood.plus.ui.theme.RegistreTheme
 

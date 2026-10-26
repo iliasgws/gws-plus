@@ -40,6 +40,11 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".documents.WordcraftActivity"
+            android:exported="false"
+            android:theme="@style/Theme.GwsPlus" />
+
         <!-- Ouverture native des pièces jointes (PDF, images) depuis l'espace
              privé de l'app, sans permission de stockage. -->
         <provider
