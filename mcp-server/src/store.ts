@@ -85,9 +85,9 @@ CREATE TABLE IF NOT EXISTS reminders (
 CREATE INDEX IF NOT EXISTS reminders_owner_due ON reminders(account_id,student_hash,due_at);
 `);
 
-// This service has not been deployed with durable user accounts. The encrypted
-// account/token columns are therefore initialized on a fresh database; do not
-// reuse a pre-parity database without a migration that decrypts and reseals its
+// Encrypted account/token columns were initialized on a fresh database before
+// the hosted deployment. Do not reuse a pre-parity plaintext database without
+// a migration that decrypts and reseals its
 // old plaintext user_id/parent_id/student_id fields.
 
 export const sha256 = (value: string) => createHash('sha256').update(value).digest('hex');

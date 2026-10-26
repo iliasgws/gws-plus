@@ -10,7 +10,7 @@
  */
 
 /** Bumped when site.css or the served assets change, to refresh long-lived caches. */
-export const assetVersion = '1';
+export const assetVersion = '2';
 
 export function escapeHtml(value: string) {
   return value.replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]!));
@@ -44,7 +44,7 @@ export function html(title: string, body: string, heading = title) {
 <h1>${escapeHtml(heading)}</h1>
 ${body}
 </section>
-<footer class="pied">Greenwood School +</footer>
+<footer class="pied">Greenwood School + · <a href="/privacy">Confidentialité</a> · <a href="/terms">Conditions d’utilisation</a></footer>
 </main>
 </body>
 </html>`;

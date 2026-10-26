@@ -162,6 +162,19 @@ allows one submission only. Declining or canceling has no side effect. MCP
 reminders are encrypted and bound to the selected student and account, and
 creation requires fresh elicitation.
 They are surfaced only when an agent calls `list_reminders`; no push, email,
-SMS, or proactive delivery channel exists. Attachments and voice messaging and
-a configured public service URL are not available. Do not treat this
+SMS, or proactive delivery channel exists. Outgoing attachments and voice
+messaging remain unavailable. Do not treat this
 implementation as a production-ready OAuth identity provider.
+
+
+Hosted MCP follow-up (#159/#164): homework downloads are resolved from current
+student-bound detail metadata, never a client URL. The media transport pins
+validated public DNS results to TLS, rejects redirects, applies file/type and
+resource budgets and never executes documents. The final consent page permits
+only its registered callback origin in form-action; login forms stay self-only.
+Public privacy/terms pages document the technical behavior; they do not replace
+human legal review. Operational logs include fixed routes, status and duration
+only. Backups encrypt the full consistent SQLite snapshot with a separate key,
+retain snapshots 14 days, and invalidate grants on restore. Contact details,
+an off-host backup destination and independent recovery key storage remain
+operator tasks. See mcp-server/ops/README.md for installation and tests.

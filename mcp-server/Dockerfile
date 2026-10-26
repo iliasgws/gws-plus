@@ -13,6 +13,7 @@ COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 COPY --from=build /srv/mcp/dist ./dist
 COPY public ./public
+COPY ops ./ops
 RUN mkdir -p /var/lib/gws-mcp && chown -R node:node /srv/mcp /var/lib/gws-mcp
 USER node
 EXPOSE 3000

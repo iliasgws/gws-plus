@@ -152,6 +152,13 @@ largely mirrors the `acces_check` body. Errors arrive as
 
 ## devoirs — homework (cahier de liaison)
 
+Hosted MCP read-only verification, 2026-10-26: a single-homework response is
+a flat object containing `id`, `files`, `file` and the other detail fields,
+without an outer `data` object. Attachment tooling accepts this observed
+shape and the older wrapped probe shape. An authorized PDF attachment was
+downloaded successfully through the bounded, DNS-pinned media transport;
+no source URL, account identifiers or file contents were logged.
+
 **GET** `devoirs` — probe params: `start=0`, `limit=30` (`devoirs.json`).
 
 The server **ignores any date param** here — there is no server-side date

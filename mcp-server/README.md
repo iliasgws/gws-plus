@@ -21,12 +21,17 @@ attachments and voice are not supported. `schedule_reminder`, `list_reminders`,
 reminders in the MCP service; creation requires fresh elicitation. Reminders
 are returned when an agent checks the list. There is no push, email, SMS, or
 proactive notification delivery. `download_library_pdf`
-returns a verified Bibliothèque PDF as an embedded MCP resource. `submit_quiz_attempt`,
+returns a verified Bibliothèque PDF as an embedded MCP resource. `download_homework_attachment`
+retrieves an attachment by homework ID and original `files[]` index, under
+`homework:read`. It supports the configured document/image types and returns
+an embedded binary resource with filename, MIME and size. `submit_quiz_attempt`,
 `place_shop_order`, and `delete_shop_order` each require a distinct write scope
 and a fresh elicitation showing the exact persistent action.
 
 The server uses MCP TypeScript SDK v2 (`@modelcontextprotocol/server`),
-including `McpServer`, `createMcpHandler`, and the Node adapter. It routes the
+including `McpServer`, `createMcpHandler`, and the Node adapter. MCP server
+identity includes the title `Greenwood School +` and a public square PNG
+derived from the official Android adaptive launcher layers. It routes the
 2026-07-28 protocol through the SDK handler and serves 2025-era clients through
 sessionful Streamable HTTP transports. Legacy sessions are capped, expire after
 30 minutes idle, and are bound to the OAuth token family, client, account,
@@ -153,7 +158,12 @@ accepted by `/authorize`; the protected-resource metadata lists only Greenwood
 API scopes. This lets clients such as ChatGPT request a refresh token without
 advertising `offline_access` as a resource permission. The service downloads only PDFs from verified Bibliothèque detail attachments, with a 15 MiB cap,
 strict media-host validation, no redirects, and no persistence. Other signed
-file URLs returned by Boti expire and are not stable links.
+file URLs returned by Boti expire and are not stable links. Download helpers
+validate and pin public DNS addresses to the TLS request; they accept only the
+approved Boti media origin, reject redirects, validate file types and bound
+time, bytes, concurrency and per-account/student download budgets. Downloaded
+files are never executed or stored. Binary extraction/rendering depends on the
+assistant; receiving bytes does not prove the client can read every format.
 
 When authorizing a connection, the consent page labels the application name as
 unverified and shows its client ID and registered redirect origin. Users should
@@ -181,6 +191,40 @@ confirms a student during authorization, and the selected ID is bound to the
 grant. Verify the vendor's terms with the school before production use. If Boti changes its undocumented API or invalidates
 sessions, users will need to sign in again.
 
-The service has no administrator dashboard, login abuse controls, consent
-history UI, or reviewed privacy disclosures and terms. Hourly cleanup removes
+The service has no administrator dashboard or consent history UI. Its technical
+privacy/terms notices still require operator and legal review. Hourly cleanup removes
 expired rows. OAuth revocation is available at `/revoke` and `/account`.
+
+## Operations and notices
+
+See [ops/README.md](ops/README.md) for consistent encrypted SQLite backups,
+restore verification, systemd monitoring/timers and the narrow proxy firewall.
+Set `HTTP_AUDIT_LOG=true` for fixed-route/method/status/duration logs only; the
+error boundary suppresses exception bodies. `/healthz` checks SQLite reachability.
+No request parameters, identifiers, bearer tokens, signed file URLs or school
+content are written by these application logs.
+
+The consent screen links to French `/terms` and `/privacy` notices. These
+describe the actual data paths, token lifetimes, revocation and 14-day backup
+retention. Operator contact details and an off-host recovery destination have
+not been supplied; do not claim disaster recovery or legal approval. Legal and
+school-side review remain required before inviting families.
+
+Checks: `npm run build`, `npm test`, and `node --test ops/test/*.test.mjs`. The
+OAuth integration checks use an isolated database and synthetic account, cover
+PKCE/code replay, scopes, student selection, server identity, token rotation
+and revocation, and assert credentials do not appear in logs. Confirmation
+checks cover signatures, grant binding, changed drafts, expiry and replay.
+The guide is shared between initialization and `greenwood_agent_guide`.
+
+Attachment defaults: 15 MiB per file, 20-second DNS and transfer deadlines,
+eight simultaneous transfers globally and three per account/student,
+20 attempts and 60 MiB per account/student per hour. Configure the bounded
+`MEDIA_*` values in `.env.example`; in-memory budgets reset on restart.
+Allowed kinds default to PDF, DOCX, XLSX, PPTX, PNG, JPEG, GIF, WebP, UTF-8-like
+text and CSV. The library tool remains PDF-only. Extension, declared/header
+MIME and file signature must agree; generic ZIP/octet-stream or legacy Office
+formats are refused. OOXML containers are checked for bounded size/expansion,
+consistent local/directory records and required XML parts; macros, embedded
+objects and executable entries are rejected. These checks are not malware
+scanning or a guarantee that opening a document is safe. No converter runs.

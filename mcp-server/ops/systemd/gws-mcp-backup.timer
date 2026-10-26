@@ -1,0 +1,11 @@
+[Unit]
+Description=Daily encrypted SQLite backup for Greenwood School MCP
+
+[Timer]
+OnCalendar=*-*-* 02:20:00
+RandomizedDelaySec=20m
+Persistent=true
+Unit=gws-mcp-backup.service
+
+[Install]
+WantedBy=timers.target

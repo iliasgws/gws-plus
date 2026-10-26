@@ -8,6 +8,16 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
 
 ### Ajouté
 
+- Le connecteur MCP (#159, #164) reçoit une identité officielle (titre et icône
+  de l’application), des instructions d’agent réorganisées et un outil de
+  téléchargement borné des pièces jointes de devoirs, avec vérification des
+  formats et protections réseau. Les pages présentent les notices techniques
+  de confidentialité et d’utilisation. Des contrôles OAuth automatisés, une
+  surveillance du service et des sauvegardes SQLite chiffrées avec restauration
+  contrôlée complètent l’exploitation ; la restauration invalide les anciens
+  accès. La destination de sauvegarde externe et le contact de l’exploitant
+  restent à définir.
+
 - Le serveur MCP hébergé (#159) propose des outils de lecture pour les
   principales sections scolaires, le téléchargement borné des PDF de la
   Bibliothèque et des actions de messages, quiz et boutique soumises chacune à

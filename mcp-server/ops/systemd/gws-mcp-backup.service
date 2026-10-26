@@ -1,0 +1,28 @@
+[Unit]
+Description=Create encrypted SQLite backup for Greenwood School MCP
+After=gws-mcp.service
+
+[Service]
+Type=oneshot
+User=gws-mcp
+Group=gws-mcp
+WorkingDirectory=/opt/gws-mcp
+Environment=DATABASE_PATH=/var/lib/gws-mcp/data.sqlite
+Environment=BACKUP_ENCRYPTION_KEY_FILE=/etc/gws-mcp/backup.key
+ExecStart=/usr/bin/node /opt/gws-mcp/ops/backup.mjs --output-dir /var/lib/gws-mcp/backups --retention-days 14
+RuntimeDirectory=gws-mcp-backup
+RuntimeDirectoryMode=0700
+Environment=BACKUP_TEMP_DIR=/run/gws-mcp-backup
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadOnlyPaths=/var/lib/gws-mcp
+ReadOnlyPaths=/etc/gws-mcp/backup.key
+ReadWritePaths=/var/lib/gws-mcp/backups /run/gws-mcp-backup
+RestrictSUIDSGID=true
+LockPersonality=true
+CapabilityBoundingSet=
+RestrictAddressFamilies=AF_UNIX
+SystemCallArchitectures=native

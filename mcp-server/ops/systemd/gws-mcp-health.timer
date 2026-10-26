@@ -1,0 +1,11 @@
+[Unit]
+Description=Run Greenwood School MCP health check every 15 minutes
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=15min
+Unit=gws-mcp-health.service
+Persistent=true
+
+[Install]
+WantedBy=timers.target

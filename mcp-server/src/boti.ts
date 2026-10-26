@@ -16,9 +16,28 @@ function endpoint(name: string): URL {
   return new URL(name, baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`);
 }
 
-async function parseResponse(response: Response): Promise<Record<string, any>> {
-  if (!response.ok) throw new Error(`Boti returned HTTP ${response.status}`);
-  const body = await response.json() as Record<string, any>;
+export async function parseResponse(response: Response): Promise<Record<string, any>> {
+  if (!response.ok) { await response.body?.cancel(); throw new Error(`Boti returned HTTP ${response.status}`); }
+  const maxBytes = 5 * 1024 * 1024;
+  const length = response.headers.get('content-length');
+  if (length && /^\d+$/.test(length) && Number(length) > maxBytes) {
+    await response.body?.cancel(); throw new Error('Boti response exceeds the size limit');
+  }
+  if (!response.body) throw new Error('Boti response has no body');
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = []; let total = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read(); if (done) break;
+      total += value.byteLength;
+      if (total > maxBytes) { await reader.cancel(); throw new Error('Boti response exceeds the size limit'); }
+      chunks.push(value);
+    }
+  } finally { reader.releaseLock(); }
+  let body: Record<string, any>;
+  try { body = JSON.parse(Buffer.concat(chunks, total).toString('utf8')); }
+  catch { throw new Error('Boti returned invalid JSON'); }
+  if (!body || typeof body !== 'object') throw new Error('Boti response has an invalid shape');
   if (body.disconnect === true) throw new BotiSessionExpiredError('The school session has expired. Sign in again.');
   if (body.error) throw new Error(String(body.msg ?? 'Boti rejected the request'));
   return body;
@@ -30,7 +49,7 @@ export async function login(login: string, password: string): Promise<BotiLogin>
   form.set('password', password);
   form.set('privacy', 'true');
   form.set('remembreMe', 'false');
-  const response = await fetch(endpoint('login'), { method: 'POST', body: form, headers: botiHeaders, signal: AbortSignal.timeout(15_000) });
+  const response = await fetch(endpoint('login'), { method: 'POST', body: form, headers: botiHeaders, redirect: 'error', signal: AbortSignal.timeout(15_000) });
   const body = await parseResponse(response);
   if (typeof body.keyToken !== 'string' || typeof body.userId !== 'string' || typeof body.parentId !== 'string') {
     throw new Error('Boti login response did not include a usable parent session');
@@ -74,7 +93,7 @@ export async function getWithRefresh(
     url.searchParams.set('versionCode', process.env.BOTI_APP_VERSION_CODE ?? '24140');
     url.searchParams.set('versionNumber', process.env.BOTI_APP_VERSION ?? '2.4.14');
     url.searchParams.set('paltform', process.env.BOTI_PLATFORM ?? 'android');
-    const response = await fetch(url, { headers: botiHeaders, signal: AbortSignal.timeout(20_000) });
+    const response = await fetch(url, { headers: botiHeaders, redirect: 'error', signal: AbortSignal.timeout(20_000) });
     return parseResponse(response);
   };
   try {
@@ -101,7 +120,7 @@ async function refreshSession(account: BotiAccount): Promise<BotiSessionUpdate> 
   url.searchParams.set('versionCode', process.env.BOTI_APP_VERSION_CODE ?? '24140');
   url.searchParams.set('versionNumber', process.env.BOTI_APP_VERSION ?? '2.4.14');
   url.searchParams.set('paltform', process.env.BOTI_PLATFORM ?? 'android');
-  const response = await fetch(url, { headers: botiHeaders, signal: AbortSignal.timeout(20_000) });
+  const response = await fetch(url, { headers: botiHeaders, redirect: 'error', signal: AbortSignal.timeout(20_000) });
   const body = await parseResponse(response);
   if (typeof body.keyToken !== 'string' || body.userId !== account.userId || body.parentId !== account.parentId || !Array.isArray(body.eleves)) {
     throw new Error('The school could not refresh this session. Sign in again.');
@@ -143,7 +162,7 @@ export async function sendPlainTextMessage(account: BotiAccount, fields: Record<
   form.set('paltform', process.env.BOTI_PLATFORM ?? 'android');
   form.set('lang', 'fr');
   const response = await fetch(endpoint('nouveau-message'), {
-    method: 'POST', body: form, headers: botiHeaders, signal: AbortSignal.timeout(60_000),
+    method: 'POST', body: form, headers: botiHeaders, redirect: 'error', signal: AbortSignal.timeout(60_000),
   });
   return parseResponse(response);
 }
@@ -162,7 +181,7 @@ export async function markHomeworkDone(account: BotiAccount, homeworkId: string)
   form.set('paltform', process.env.BOTI_PLATFORM ?? 'android');
   form.set('lang', 'fr');
   const response = await fetch(endpoint('devoirs_date_v2'), {
-    method: 'POST', body: form, headers: botiHeaders, signal: AbortSignal.timeout(60_000),
+    method: 'POST', body: form, headers: botiHeaders, redirect: 'error', signal: AbortSignal.timeout(60_000),
   });
   return parseResponse(response);
 }
@@ -198,7 +217,7 @@ export async function postVerifiedForm(account: BotiAccount, route: 'quiz' | 'sh
   form.set('paltform', process.env.BOTI_PLATFORM ?? 'android');
   form.set('lang', 'fr');
   const response = await fetch(endpoint(route), {
-    method: 'POST', body: form, headers: botiHeaders, signal: AbortSignal.timeout(60_000),
+    method: 'POST', body: form, headers: botiHeaders, redirect: 'error', signal: AbortSignal.timeout(60_000),
   });
   return parseResponse(response);
 }

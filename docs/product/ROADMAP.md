@@ -10,6 +10,21 @@ raw probe responses stay out of the repository (personal data).
 
 ## Hosted MCP account access (issue #159)
 
+- [x] Reorganize the agent guide into identity/trust, current reads, tool
+      routing, answers and exact human-confirmed writes, with common examples
+      and no redundant reads within one request.
+- [x] Advertise the official square Android launcher icon and human title in
+      MCP server identity; serve the icon without authentication or redirects.
+- [x] Add account/student-bound homework attachment download by source index
+      (issue #164), guarded network/type limits and automated security checks.
+- [x] Add minimal route/status logs, database-aware health checks, encrypted
+      SQLite backup/restore tooling and monitoring/backup systemd timers.
+- [x] Link technical French privacy/terms notices from consent and browser pages.
+- [ ] Verify the revised guide in a new real ChatGPT conversation, including
+      contextual follow-ups and expired-session recovery.
+- [ ] Supply an operator contact and off-host recovery destination; store the
+      backup key separately and obtain human legal/school-side review.
+
 - [x] Add a separate Node.js Streamable HTTP MCP service with OAuth
       authorization-code flow, PKCE S256, consent, hashed bearer and refresh
       tokens, token rotation/revocation, and encrypted Boti session storage.
@@ -44,10 +59,10 @@ raw probe responses stay out of the repository (personal data).
       requests; bind capped, idle-expiring legacy sessions to the OAuth grant.
 - [x] Bind write confirmations to signed, expiring action state and consume a
       server-side nonce once before submitting each persistent action.
-- [ ] Before deployment: add operational monitoring, durable encrypted
-      backups, terms/privacy review, and verify
-      parent/student authorization with the school. No public service URL is
-      configured.
+- [ ] Before opening to other families: provision off-host encrypted recovery,
+      independent backup-key storage and operator contact details; obtain
+      terms/privacy review and verify parent/student authorization with the school.
+      Local monitoring/backups and the HTTPS service are configured separately.
 - [x] Add text-only message preparation/sending, quiz attempts, and shop order
       create/edit/delete tools. Each write requires its own scope and fresh MCP
       elicitation that displays the exact action; attachments and voice are
