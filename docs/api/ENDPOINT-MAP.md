@@ -59,7 +59,8 @@ https://boti.education/p/greenwood/botiapi/<endpoint>
    `Jui` (not `Juin`). duplicated consecutive messages exist server-side.
 8. **Pagination/echo fields.** Lists echo context back: `p_count`,
    `im_here`, `eleve` (display name of the selected élève), `start`/`limit`
-   or `page`.
+   or `page`. The page size is a request, not a guarantee: on 2026-10-25 a
+   live `limit=3` still returned 15 homework items and 10 news items.
 
 ## Standard request envelope
 
@@ -67,7 +68,7 @@ https://boti.education/p/greenwood/botiapi/<endpoint>
 |---|---|---|
 | `user_id` | from login / acces_check | required |
 | `key` | `keyToken` from login / acces_check | required — the session key |
-| `parent_id`, `eleve_id` | from login / acces_check | sent by the official app; the probe's read calls succeeded with `user_id` + `key` only |
+| `parent_id`, `eleve_id` | from login / acces_check | sent by the official app. Live check on 2026-10-25: `devoirs` and `cours_v2` return clean JSON only with **both** `parent_id` and `eleve_id`; with `eleveId` alone (or without `eleve_id`) Boti answers a PHP `Notice`/`print_r` dump with `Content-Type: text/html` instead of JSON. |
 | `versionCode` | `24140` | |
 | `versionNumber` | `2.4.14` | |
 | `paltform` | `android` | typo mandatory |
@@ -150,6 +151,13 @@ largely mirrors the `acces_check` body. Errors arrive as
 `{"error": true, "msg": "…"}` with HTTP 200.
 
 ## devoirs — homework (cahier de liaison)
+
+Hosted MCP read-only verification, 2026-10-26: a single-homework response is
+a flat object containing `id`, `files`, `file` and the other detail fields,
+without an outer `data` object. Attachment tooling accepts this observed
+shape and the older wrapped probe shape. An authorized PDF attachment was
+downloaded successfully through the bounded, DNS-pinned media transport;
+no source URL, account identifiers or file contents were logged.
 
 **GET** `devoirs` — probe params: `start=0`, `limit=30` (`devoirs.json`).
 

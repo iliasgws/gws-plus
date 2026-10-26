@@ -1,0 +1,22 @@
+[Unit]
+Description=Check Greenwood School MCP health and OAuth metadata
+After=network-online.target gws-mcp.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=gws-mcp
+Group=gws-mcp
+WorkingDirectory=/opt/gws-mcp
+Environment=PUBLIC_URL=https://mcp.example.invalid
+Environment=HEALTH_TIMEOUT_MS=5000
+ExecStart=/usr/bin/node /opt/gws-mcp/ops/health-check.mjs
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+RestrictSUIDSGID=true
+LockPersonality=true
+CapabilityBoundingSet=
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+SystemCallArchitectures=native

@@ -118,3 +118,63 @@ Before any future migration, all of the following must be true:
 The current debug key's exposure is not treated as an authorization
 boundary: updates are trusted via the GitHub Releases source, and the
 certificate only establishes install-chain continuity.
+
+## GWS+ note — hosted MCP service (issue #159)
+
+The `mcp-server/` implementation is not yet approved for family use. OAuth
+bearer and refresh tokens are opaque and stored as hashes. Boti session values,
+parent/student identifiers, and the student roster are encrypted in SQLite
+with an operator-provided AES-256-GCM key. A keyed HMAC fingerprint groups
+records for parent-account-wide revocation. The school password is sent to
+Boti over TLS and is not persisted. Never enable request-body logging at the
+reverse proxy, and protect the database, encryption key, backups, and host as
+sensitive account data.
+
+Each OAuth grant is bound to a student confirmed during authorization, and
+request parameters cannot override that binding. `/account` supports a fresh
+Boti login, lists active connections across the same parent account, and
+revokes them together. Expired rows are cleaned hourly. The Android Settings
+link is available only when `GWS_MCP_PUBLIC_URL` is configured at build time.
+
+The service applies persistent rate limits to school login, OAuth client
+registration, authorization starts, and token requests. Rate-limit identities
+are keyed hashes, not stored IP addresses. Behind a reverse proxy, configure
+`TRUSTED_PROXY_CIDRS` with only the proxy's internal addresses, block direct
+access to the app port, and configure the proxy to replace forwarded-IP
+headers; otherwise requests share the proxy's rate-limit identity.
+The Express boundary also requires the Host header to match `PUBLIC_URL` and
+rejects browser Origins outside that public origin and the exact
+`ALLOWED_ORIGINS` list.
+
+Before public deployment, add monitoring, recovery and backup procedures, and
+reviewed terms/privacy disclosures; verify parent/student authorization with
+the school. The service has bounded read
+tools and verified PDF download from Bibliothèque attachments (15 MiB maximum;
+strict host validation; no redirects; no persistence).
+`list_attendance_records` is limited by the separate `attendance:read` scope
+and returns the raw school response because non-empty item fields have not
+been verified.
+Text messages, quiz attempts, and shop order create/edit/delete operations each
+require a separate scope and fresh client elicitation showing the exact action;
+clients that cannot elicit cannot write. Confirmation round-trips include
+signed state bound to the OAuth grant and action digest; a server-side nonce
+allows one submission only. Declining or canceling has no side effect. MCP
+reminders are encrypted and bound to the selected student and account, and
+creation requires fresh elicitation.
+They are surfaced only when an agent calls `list_reminders`; no push, email,
+SMS, or proactive delivery channel exists. Outgoing attachments and voice
+messaging remain unavailable. Do not treat this
+implementation as a production-ready OAuth identity provider.
+
+
+Hosted MCP follow-up (#159/#164): homework downloads are resolved from current
+student-bound detail metadata, never a client URL. The media transport pins
+validated public DNS results to TLS, rejects redirects, applies file/type and
+resource budgets and never executes documents. The final consent page permits
+only its registered callback origin in form-action; login forms stay self-only.
+Public privacy/terms pages document the technical behavior; they do not replace
+human legal review. Operational logs include fixed routes, status and duration
+only. Backups encrypt the full consistent SQLite snapshot with a separate key,
+retain snapshots 14 days, and invalidate grants on restore. Contact details,
+an off-host backup destination and independent recovery key storage remain
+operator tasks. See mcp-server/ops/README.md for installation and tests.

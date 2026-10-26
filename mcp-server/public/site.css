@@ -1,0 +1,605 @@
+/*
+ * « École vivante » on the web — the app's connexion screen, ported.
+ *
+ * Tokens come from app/src/main/java/school/greenwood/plus/ui/theme/Color.kt
+ * (light and dark roles) and Type.kt (Bricolage Grotesque for display,
+ * Public Sans for text). Panels use the app's 78 %-opaque surfaces, upgraded
+ * on the web with a real backdrop blur, a specular sheen and a gradient rim:
+ * the « liquid glass » of the app, composed in several layers.
+ */
+
+@font-face {
+  font-family: "Bricolage Grotesque";
+  src: url("/assets/fonts/bricolage_grotesque.woff2") format("woff2");
+  font-weight: 200 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Public Sans";
+  src: url("/assets/fonts/public_sans.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  color-scheme: light dark;
+
+  /* Encre, papier, page, craie — les rôles clairs de l'app. */
+  --ink: #1f3324;
+  --ink-fonce: #16281b;
+  --paper: #f7f1e5;
+  --page: #ffffff;
+  --chalk: #5e6b5c;
+  --sage: #ebe6d7;
+  --contour: rgba(31, 51, 36, 0.16);
+  --accent: #ddebd3;
+  --accent-teinte: #256b3b;
+  --verre-teinte: 255, 255, 255;
+  --verre-alpha: 0.78;
+  --verre-rim: rgba(255, 255, 255, 0.55);
+
+  --display: "Bricolage Grotesque", "Public Sans", system-ui, sans-serif;
+  --texte: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100svh;
+  padding: 28px 16px calc(28px + env(safe-area-inset-bottom));
+  display: grid;
+  place-items: center;
+  font-family: var(--texte);
+  font-size: 15px;
+  line-height: 22px;
+  color: var(--ink);
+  background: var(--paper);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* — Le fond : l'illustration fournie, plein écran, légèrement voilée. */
+.fond {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background-image: url("/assets/login-background.webp");
+  background-position: 50% 36%;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+
+.fond::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(247, 241, 229, 0.24),
+    rgba(247, 241, 229, 0.02) 38%,
+    rgba(247, 241, 229, 0.3)
+  );
+}
+
+.page {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 460px);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/*
+ * — Le verre, multi-composé.
+ *   1. la teinte translucide du panneau (78 %, comme dans l'app) ;
+ *   2. le flou d'arrière-plan et sa saturation ;
+ *   3. le reflet spéculaire, qui balaie lentement la surface ;
+ *   4. le liseré lumineux, en dégradé, qui dessine l'épaisseur du verre ;
+ *   5. l'ombre portée, profonde et douce.
+ */
+.verre {
+  position: relative;
+  isolation: isolate;
+  background:
+    linear-gradient(
+      148deg,
+      rgba(var(--verre-teinte), calc(var(--verre-alpha) + 0.06)) 0%,
+      rgba(var(--verre-teinte), var(--verre-alpha)) 42%,
+      rgba(var(--verre-teinte), calc(var(--verre-alpha) - 0.04)) 100%
+    );
+  -webkit-backdrop-filter: blur(28px) saturate(165%);
+  backdrop-filter: blur(28px) saturate(165%);
+  box-shadow:
+    0 26px 60px -26px rgba(20, 35, 22, 0.55),
+    0 8px 22px -14px rgba(20, 35, 22, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    inset 0 -1px 0 rgba(31, 51, 36, 0.05);
+}
+
+.verre::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    radial-gradient(130% 90% at 8% -12%, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0) 58%),
+    radial-gradient(100% 80% at 94% 112%, rgba(221, 235, 211, 0.5), rgba(221, 235, 211, 0) 62%),
+    linear-gradient(112deg, rgba(255, 255, 255, 0) 34%, rgba(255, 255, 255, 0.5) 46%, rgba(255, 255, 255, 0) 58%);
+  background-size: 100% 100%, 100% 100%, 240% 100%;
+  background-position: 0 0, 0 0, -140% 0;
+  background-repeat: no-repeat;
+  opacity: 0.6;
+  animation: miroitement 16s cubic-bezier(0.4, 0, 0.2, 1) 1.2s infinite;
+}
+
+.verre::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  padding: 1px;
+  pointer-events: none;
+  background: linear-gradient(
+    150deg,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(255, 255, 255, 0.35) 28%,
+    rgba(31, 51, 36, 0.12) 62%,
+    rgba(255, 255, 255, 0.72) 100%
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+}
+
+@keyframes miroitement {
+  from {
+    background-position: 0 0, 0 0, -140% 0;
+  }
+  to {
+    background-position: 0 0, 0 0, 240% 0;
+  }
+}
+
+/* — La marque : le logo de l'app, « GWS+ », et le trait de surligneur. */
+.marque {
+  align-self: center;
+  max-width: 100%;
+  padding: 12px 20px 14px;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  animation: monte 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.marque-ligne {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.logo {
+  display: block;
+  width: 80px;
+  height: 80px;
+  flex: none;
+}
+
+.mot {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 30px;
+  line-height: 34px;
+  letter-spacing: -0.5px;
+  color: var(--ink);
+}
+
+.surligneur {
+  width: 56px;
+  height: 5px;
+  border-radius: 10px;
+  background: var(--accent);
+}
+
+/* — La page : titre, texte, formulaires. */
+.card {
+  border-radius: 24px;
+  padding: 22px 20px;
+  animation: monte 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) 0.06s both;
+}
+
+@keyframes monte {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+h1 {
+  margin: 0;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 24px;
+  line-height: 28px;
+  letter-spacing: -0.3px;
+  color: var(--ink);
+  text-wrap: balance;
+}
+
+p {
+  margin: 12px 0 0;
+}
+
+.card > p:first-of-type {
+  color: var(--ink);
+}
+
+strong {
+  font-weight: 600;
+}
+
+small {
+  display: block;
+  margin-top: 14px;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--chalk);
+}
+
+a {
+  color: var(--accent-teinte);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  border-radius: 4px;
+}
+
+a:hover {
+  text-decoration-thickness: 2px;
+}
+
+a:focus-visible {
+  outline: 3px solid rgba(37, 107, 59, 0.35);
+  outline-offset: 2px;
+}
+
+ul {
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 7px;
+}
+
+li {
+  position: relative;
+  padding-left: 20px;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+li::before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 7px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-teinte);
+}
+
+dl {
+  margin: 16px 0 0;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(235, 230, 215, 0.55);
+  border: 1px solid var(--contour);
+  font-size: 13px;
+  line-height: 18px;
+}
+
+dt {
+  font-weight: 500;
+  color: var(--chalk);
+}
+
+dd {
+  margin: 2px 0 10px;
+}
+
+dd:last-child {
+  margin-bottom: 0;
+}
+
+code {
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+/* — Les champs : 16 px de rayon, comme les contrôles de l'app. */
+form {
+  margin: 0;
+}
+
+label {
+  display: block;
+  margin-top: 14px;
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 500;
+  color: var(--chalk);
+}
+
+label.confirmation {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 16px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(var(--verre-teinte), 0.5);
+  border: 1px solid var(--contour);
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--ink);
+}
+
+input,
+select {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  padding: 12px 14px;
+  font: inherit;
+  font-size: 16px;
+  line-height: 22px;
+  color: var(--ink);
+  background: rgba(var(--verre-teinte), 0.62);
+  border: 1px solid var(--contour);
+  border-radius: 16px;
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+select {
+  appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--chalk) 50%),
+    linear-gradient(135deg, var(--chalk) 50%, transparent 50%);
+  background-position:
+    calc(100% - 20px) calc(50% + 2px),
+    calc(100% - 15px) calc(50% + 2px);
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  padding-right: 40px;
+}
+
+label.confirmation input {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  flex: none;
+  accent-color: var(--accent-teinte);
+}
+
+input:hover,
+select:hover {
+  background-color: rgba(var(--verre-teinte), 0.78);
+}
+
+input:focus,
+select:focus {
+  outline: none;
+  background-color: rgba(var(--verre-teinte), 0.96);
+  border-color: var(--accent-teinte);
+  box-shadow: 0 0 0 3px rgba(37, 107, 59, 0.2);
+}
+
+/* — Les boutons : encre pleine, 48 px de haut, 16 px de rayon. */
+button {
+  width: 100%;
+  min-height: 48px;
+  margin-top: 18px;
+  padding: 12px 18px;
+  font: inherit;
+  font-weight: 500;
+  font-size: 15px;
+  line-height: 20px;
+  color: var(--page);
+  background: var(--ink);
+  border: 0;
+  border-radius: 16px;
+  cursor: pointer;
+  box-shadow:
+    0 10px 22px -12px rgba(20, 35, 22, 0.7),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  transition:
+    transform 0.16s cubic-bezier(0.2, 0.8, 0.2, 1),
+    background 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+button:hover {
+  background: var(--ink-fonce);
+  box-shadow:
+    0 14px 26px -12px rgba(20, 35, 22, 0.75),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+button:active {
+  transform: scale(0.985);
+}
+
+button:focus-visible {
+  outline: 3px solid rgba(37, 107, 59, 0.4);
+  outline-offset: 2px;
+}
+
+button.secondaire {
+  color: var(--ink);
+  background: rgba(var(--verre-teinte), 0.45);
+  border: 1px solid var(--contour);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+button.secondaire:hover {
+  background: rgba(var(--verre-teinte), 0.7);
+}
+
+.choix {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.choix button {
+  flex: 1 1 0;
+  margin-top: 0;
+}
+
+.actions {
+  margin-top: 18px;
+}
+
+.actions button {
+  margin-top: 0;
+}
+
+/* — Le pied : une petite pastille de verre sombre sur l'illustration. */
+.pied {
+  align-self: center;
+  padding: 6px 14px;
+  border-radius: 10px;
+  font-size: 12px;
+  line-height: 16px;
+  letter-spacing: 0.2px;
+  color: #f7f1e5;
+  background: rgba(20, 35, 22, 0.4);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+/* — Le mode sombre reprend les rôles sombres de l'app. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ink: #e9f0e6;
+    --ink-fonce: #f4f9f2;
+    --paper: #141b15;
+    --page: #1d271e;
+    --chalk: #9aab97;
+    --sage: #262f24;
+    --contour: rgba(233, 240, 230, 0.22);
+    --accent: #35603f;
+    --accent-teinte: #8ed6a4;
+    --verre-teinte: 29, 39, 30;
+    --verre-alpha: 0.74;
+  }
+
+  .fond::after {
+    background: linear-gradient(
+      180deg,
+      rgba(20, 27, 21, 0.58),
+      rgba(20, 27, 21, 0.34) 40%,
+      rgba(20, 27, 21, 0.62)
+    );
+  }
+
+  .verre {
+    box-shadow:
+      0 26px 60px -26px rgba(0, 0, 0, 0.75),
+      0 8px 22px -14px rgba(0, 0, 0, 0.55),
+      inset 0 1px 0 rgba(255, 255, 255, 0.12),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.3);
+  }
+
+  .verre::before {
+    opacity: 0.4;
+  }
+
+  .verre::after {
+    background: linear-gradient(
+      150deg,
+      rgba(255, 255, 255, 0.42) 0%,
+      rgba(255, 255, 255, 0.08) 30%,
+      rgba(0, 0, 0, 0.25) 65%,
+      rgba(255, 255, 255, 0.18) 100%
+    );
+  }
+
+  button {
+    color: #141b15;
+    background: #e9f0e6;
+    box-shadow:
+      0 10px 22px -12px rgba(0, 0, 0, 0.8),
+      inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  }
+
+  button:hover {
+    background: #f4f9f2;
+  }
+
+  button.secondaire {
+    color: var(--ink);
+    background: rgba(233, 240, 230, 0.1);
+    border-color: var(--contour);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  }
+
+  button.secondaire:hover {
+    background: rgba(233, 240, 230, 0.18);
+  }
+
+  input:focus,
+  select:focus {
+    box-shadow: 0 0 0 3px rgba(142, 214, 164, 0.28);
+  }
+
+  dl {
+    background: rgba(38, 47, 36, 0.6);
+  }
+}
+
+@media (max-width: 380px) {
+  .logo {
+    width: 64px;
+    height: 64px;
+  }
+
+  .mot {
+    font-size: 26px;
+    line-height: 30px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

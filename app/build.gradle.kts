@@ -1,7 +1,19 @@
+import java.net.URI
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.plugin.compose")
     id("org.jetbrains.kotlin.plugin.serialization")
+}
+
+val gwsMcpPublicUrl = providers.gradleProperty("gwsMcpPublicUrl").orElse("").get().trimEnd('/')
+if (gwsMcpPublicUrl.isNotBlank()) {
+    val mcpUri = URI(gwsMcpPublicUrl)
+    require(mcpUri.scheme == "https" && mcpUri.host != null && mcpUri.userInfo == null &&
+        mcpUri.query == null && mcpUri.fragment == null &&
+        (mcpUri.path.isNullOrEmpty() || mcpUri.path == "/")) {
+        "gwsMcpPublicUrl must be an HTTPS origin without path, query, or credentials"
+    }
 }
 
 android {
@@ -14,6 +26,7 @@ android {
         targetSdk = 36
         versionCode = 120
         versionName = "0.10.0"
+        buildConfigField("String", "GWS_MCP_PUBLIC_URL", "\"$gwsMcpPublicUrl\"")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 

@@ -1,0 +1,10 @@
+# Replace the proxy address with the verified TCP peer, and the app port if changed.
+# This table only protects the MCP listener; other host services are unaffected.
+table inet gws_mcp_guard {
+  chain input {
+    type filter hook input priority -10; policy accept;
+    iifname "lo" tcp dport 3000 accept
+    ip saddr 192.0.2.10 tcp dport 3000 accept
+    tcp dport 3000 drop
+  }
+}

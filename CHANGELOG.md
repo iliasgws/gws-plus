@@ -6,6 +6,64 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
 
 ## [Non publié]
 
+### Ajouté
+
+- Le connecteur MCP (#159, #164) reçoit une identité officielle (titre et icône
+  de l’application), des instructions d’agent réorganisées et un outil de
+  téléchargement borné des pièces jointes de devoirs, avec vérification des
+  formats et protections réseau. Les pages présentent les notices techniques
+  de confidentialité et d’utilisation. Des contrôles OAuth automatisés, une
+  surveillance du service et des sauvegardes SQLite chiffrées avec restauration
+  contrôlée complètent l’exploitation ; la restauration invalide les anciens
+  accès. La destination de sauvegarde externe et le contact de l’exploitant
+  restent à définir.
+
+- Le serveur MCP hébergé (#159) propose des outils de lecture pour les
+  principales sections scolaires, le téléchargement borné des PDF de la
+  Bibliothèque et des actions de messages, quiz et boutique soumises chacune à
+  confirmation, lie chaque autorisation à l’élève confirmé par le
+  parent, chiffre les secrets de session et permet de consulter ou révoquer les
+  accès depuis `/account`. Un lien peut apparaître dans Paramètres
+  lorsque `GWS_MCP_PUBLIC_URL` est configuré. Le service reste à valider et
+  nécessite une revue sécurité/confidentialité avant déploiement. Il transmet
+  aussi aux agents connectés des instructions détaillées (ce qu’est le portail,
+  l’enchaînement des outils, les cas où leur usage est pertinent ou non),
+  signale les données scolaires comme non fiables, clarifie l’identité OAuth
+  affichée et renouvelle
+  une session expirée lors d’une lecture. Les connexions et les principaux
+  points d’entrée OAuth sont limités par des seuils persistants sans stocker
+  directement les adresses IP ; l’hôte et l’origine des requêtes sont aussi
+  contrôlés. Des rappels chiffrés, liés à l’élève et au compte
+  MCP, peuvent être programmés après confirmation puis consultés, annulés ou
+  terminés depuis les outils MCP ; aucune notification proactive n’est envoyée.
+  Le serveur MCP accepte aussi les clients des deux générations de protocole ;
+  les sessions héritées sont liées au compte OAuth, et chaque confirmation
+  d’action est signée, limitée dans le temps et utilisable une seule fois.
+  Les outils exposent un titre, des annotations (lecture seule, destructif,
+  idempotent) et leur politique OAuth ; le serveur annonce `offline_access`
+  dans les métadonnées du serveur d’autorisation et l’accepte à `/authorize`,
+  tout en le retirant des métadonnées de ressource qui ne listent que les
+  scopes de l’API scolaire, afin que les clients comme ChatGPT conservent un
+  jeton de rafraîchissement sans le traiter comme une permission de ressource.
+  Les absences et retards sont accessibles avec un scope dédié, en conservant
+  la réponse source sans supposer la forme des éléments non vérifiés.
+  Le marquage officiel d’un devoir comme fait est proposé sous le scope
+  `homework:write`, après une confirmation montrant le titre, la matière et
+  l’échéance ; aucune pièce jointe ni copie n’est envoyée par ce chemin.
+  Les pages web du serveur (connexion, choix de l’élève, autorisation,
+  gestion des accès) reprennent l’identité de l’écran de connexion de
+  l’application : illustration de l’école en fond, icône et « GWS+ », panneaux
+  de verre dépoli avec reflet et liseré, polices Bricolage Grotesque et Public
+  Sans, apparence claire ou sombre selon le système. Aucun script n’y est
+  chargé et la politique de sécurité de contenu reste fermée par défaut.
+
+### Corrigé
+
+- L’autorisation MCP ne reste plus bloquée après « Autoriser » dans les
+  navigateurs qui contrôlent la redirection du formulaire : la page de
+  consentement autorise uniquement l’origine de retour enregistrée du client.
+  Les formulaires de connexion conservent leur restriction au serveur.
+
 ## [0.10.0] — 2026-10-10
 
 Version stable après les bêtas 0.9.14-beta.1 à 0.9.14-beta.3 et

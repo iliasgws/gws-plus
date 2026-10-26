@@ -1,0 +1,15 @@
+[Unit]
+Description=Restrict the MCP listener to its trusted reverse proxy
+After=nftables.service network-online.target
+Before=gws-mcp.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStartPre=-/usr/sbin/nft delete table inet gws_mcp_guard
+ExecStart=/usr/sbin/nft -f /etc/gws-mcp/firewall.nft
+ExecStop=/usr/sbin/nft delete table inet gws_mcp_guard
+
+[Install]
+WantedBy=multi-user.target

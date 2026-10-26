@@ -8,6 +8,89 @@ raw probe responses stay out of the repository (personal data).
 
 `[x]` done · `[~]` in progress · `[ ]` todo · `(!)` needs a decision or a real-device check
 
+## Hosted MCP account access (issue #159)
+
+- [x] Reorganize the agent guide into identity/trust, current reads, tool
+      routing, answers and exact human-confirmed writes, with common examples
+      and no redundant reads within one request.
+- [x] Advertise the official square Android launcher icon and human title in
+      MCP server identity; serve the icon without authentication or redirects.
+- [x] Add account/student-bound homework attachment download by source index
+      (issue #164), guarded network/type limits and automated security checks.
+- [x] Add minimal route/status logs, database-aware health checks, encrypted
+      SQLite backup/restore tooling and monitoring/backup systemd timers.
+- [x] Restrict the production listener to its verified reverse proxy; confirm
+      separate real-client rate buckets, ignored forged forwarded headers,
+      blocked direct access, successful health checks and encrypted restore
+      with invalidated grants. Disable this host's proxy request-URI log.
+- [x] Link technical French privacy/terms notices from consent and browser pages.
+- [ ] Verify the revised guide in a new real ChatGPT conversation, including
+      contextual follow-ups and expired-session recovery.
+- [ ] Supply an operator contact and off-host recovery destination; store the
+      backup key separately and obtain human legal/school-side review.
+
+- [x] Add a separate Node.js Streamable HTTP MCP service with OAuth
+      authorization-code flow, PKCE S256, consent, hashed bearer and refresh
+      tokens, token rotation/revocation, and encrypted Boti session storage.
+- [x] Expose bounded read tools for homework/details, timetable, interactive
+      resources, quizzes, library documents and PDF downloads, raw attendance,
+      news, conversations, administrative requests, school contact, shop
+      products/history, and guest-meal planning. Attendance uses a dedicated
+      scope and returns the source response without assuming unverified item
+      fields or completeness. The service never passes the Boti key to clients.
+- [x] Add a Docker image and deployment configuration example for a future
+      Linux container deployment.
+- [x] Bind each authorization to a parent-confirmed student; encrypt account
+      identifiers, roster, selected student, and Boti key at rest.
+- [x] Include agent instructions in MCP initialization and the
+      `greenwood_agent_guide` prompt; treat school content as untrusted and
+      require explicit human confirmation for every supported write.
+- [x] Warn that the OAuth client name is unverified, show its client ID and
+      redirect origin, and refresh an expired Boti session once for reads.
+- [x] Allow only the registered callback origin in the final consent page's
+      form CSP so mobile browsers can follow approval/refusal redirects.
+      Reproduced the blocked redirect in Chromium, then verified browser
+      approval, code exchange, refresh-token rotation, refusal, and rejection
+      of an unrelated form destination with synthetic account data.
+- [x] Provide `/account` sign-in, parent-account-wide connection review and
+      revocation, hourly expired-row cleanup, and an Android Settings link when
+      a public HTTPS origin is configured at build time.
+- [x] Add persistent, keyed-hash rate limits for school login, OAuth client
+      registration, authorization starts, and token requests.
+- [x] Validate Host and Origin headers against the configured public origin and
+      exact allowed browser origins before serving OAuth or MCP requests.
+- [x] Support both modern MCP protocol requests and sessionful 2025-era client
+      requests; bind capped, idle-expiring legacy sessions to the OAuth grant.
+- [x] Bind write confirmations to signed, expiring action state and consume a
+      server-side nonce once before submitting each persistent action.
+- [ ] Before opening to other families: provision off-host encrypted recovery,
+      independent backup-key storage and operator contact details; obtain
+      terms/privacy review and verify parent/student authorization with the school.
+      Local monitoring/backups and the HTTPS service are configured separately.
+- [x] Add text-only message preparation/sending, quiz attempts, and shop order
+      create/edit/delete tools. Each write requires its own scope and fresh MCP
+      elicitation that displays the exact action; attachments and voice are
+      excluded from messaging.
+- [x] Add official homework submission as `submit_homework`: it marks one
+      homework item as done through the verified `devoirs_date_v2` contract
+      (bundle-derived fields, exercised on device by the app) behind the
+      dedicated `homework:write` scope and a fresh elicitation showing the
+      title, subject, and due date. It sends no attachment or submitted copy;
+      homework copies, administrative request, news, and community writes
+      remain excluded until their protocols and safeguards are validated.
+- [x] Add encrypted reminders bound to the selected student and MCP account,
+      with confirmed scheduling, due/upcoming listing, cancel, and complete
+      actions. Agents retrieve due items with `list_reminders`.
+- [x] Style the browser pages as the app's connexion screen: full-screen school
+      illustration, app icon and `GWS+` wordmark, translucent « liquid glass »
+      panels with backdrop blur, specular sheen and gradient rim, the app's
+      Bricolage Grotesque / Public Sans fonts, light and dark appearance, and
+      reduced-motion support. No script runs; the Content-Security-Policy stays
+      closed by default and the static assets are served from `public/`.
+- [ ] Define an opt-in delivery channel for proactive reminder notifications;
+      the MCP service currently stores reminders but does not send alerts, and
+      the mobile app has no school-reminder scheduling feature.
+
 ## Registre startup performance (issue #145)
 
 - [x] Parallel load: the four independent registre sources (devoirs, nouveautes,

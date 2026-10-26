@@ -13,6 +13,17 @@
 Le wrapper Gradle (9.6.0) télécharge tout le reste — AGP 9.4.1, Kotlin 2.4.20
 intégré, pas de plugin `kotlin.android` séparé.
 
+Quand le serveur MCP aura un domaine de production, l'accès à sa page de
+gestion peut être intégré dans Paramètres → Accès à un assistant IA. Pour une
+variante configurée, fournissez uniquement son origine HTTPS :
+
+```bash
+./gradlew :app:assembleRelease -PgwsMcpPublicUrl=https://mcp.example.org
+```
+
+Sans cette propriété, la section est masquée. N'intégrez pas une URL locale,
+de préproduction ou non validée dans un APK destiné aux familles.
+
 ## Commandes
 
 ```bash
