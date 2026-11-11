@@ -15,6 +15,7 @@ la racine reste la porte d'entrée ; tout le reste vit ici.
 
 | Doc | Contenu |
 | --- | --- |
+| [`../web/README.md`](../web/README.md) | Prototype Compose/Wasm, composants Liquid Glass et compétence d’agent réutilisable |
 | [`development/SETUP.md`](development/SETUP.md) | Toolchain, build, tests, structure du dépôt |
 | [`development/ARCHITECTURE.md`](development/ARCHITECTURE.md) | Couches (UI → ViewModel → Repository → BotiClient), session, médias signés |
 | [`development/NAVIGATION.md`](development/NAVIGATION.md) | Le contrat de navigation : onglets, piles, retour prédictif |

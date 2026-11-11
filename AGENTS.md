@@ -39,6 +39,7 @@ Current contents (update this section whenever files are added or removed):
 | `docs/api/` | `BOTI-API.md` (protocol), `ENDPOINT-MAP.md` (observed shapes), `ENDPOINTS.md` (100-endpoint inventory) |
 | `docs/security/` | `SECURITY-NOTES.md` |
 | `settings.gradle.kts`, `build.gradle.kts`, `gradle.properties`, `gradlew`, `gradle/wrapper/` | Gradle 9.6 build (AGP 9.4.1, Kotlin 2.4.20, built-in Kotlin — no `kotlin.android` plugin) |
+| `web/` | Compose/Wasm Liquid Glass playground, Yarn dependency lock, and reusable agent skill under `web/skills/gws-web-liquid-glass/`; start with `web/README.md` |
 | `app/` | The Android application (`:app` module), namespace `school.greenwood.plus` |
 | `app/src/main/res/drawable/ic_launcher_monochrome.xml`, `app/src/main/res/mipmap-anydpi-v26/` | Adaptive launcher icons; alpha-only tree, shield and plus for Android 13+ Monet themed icons |
 | `app/src/main/java/school/greenwood/plus/` | Sources — key entries below |

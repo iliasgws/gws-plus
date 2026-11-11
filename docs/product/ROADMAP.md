@@ -1520,3 +1520,13 @@ so the back-stack contract (`docs/development/NAVIGATION.md`) is untouched.
 - [ ] On-device check: tap → viewer → pinch → swipe → close, long-press
       preview → « Agrandir », 1 image / several images / missing image /
       slow network, and the Android back gesture from the viewer
+
+### Web Liquid Glass prototype (issue #165)
+
+- [x] Add a standalone Compose/Wasm playground under `web/` using KMPLiquidGlass and the supplied wallpaper.
+- [x] Extract reusable glass surface, spring button and controlled navigation bar.
+- [ ] Wire production Web routes and platform integrations.
+
+- [x] Share velocity-driven lens deformation and spring settling between tab clicks and drag release.
+
+- [x] Package the reusable workflow in `web/skills/gws-web-liquid-glass/SKILL.md`.

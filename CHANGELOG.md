@@ -6,6 +6,14 @@ version correspond à une [release GitHub](https://github.com/iliasgws/gws-plus/
 
 ## [Non publié]
 
+### Ajouté
+
+- Prototype Web Compose/Wasm dans `web/` (#165), avec le vrai moteur KMPLiquidGlass,
+  le fond fourni, un bouton ancré à déformation élastique et une barre de navigation
+  tactile à lentille mobile, réfraction chromatique et flou arrière léger.
+- Composants réutilisables, documentation et compétence d’agent dédiée ; clics et
+  glissements partagent la compression et le rebond du sélecteur.
+
 ## [0.10.0] — 2026-10-10
 
 Version stable après les bêtas 0.9.14-beta.1 à 0.9.14-beta.3 et
